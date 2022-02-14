@@ -3,6 +3,7 @@ const path = require("path");
 const Jimp = require("jimp");
 const { randomColor, rarityWeightedChoice, rarity } = require("./utils");
 // const { create } = require("ipfs");
+const pinataSDK = require("@pinata/sdk");
 const hre = require("hardhat");
 const dotenv = require("dotenv");
 
@@ -14,6 +15,7 @@ class Factory {
   layers;
   buffers;
   // ipfs;
+  pinata;
 
   imagesCID;
   metadataCID;
@@ -266,6 +268,15 @@ class Factory {
 
   //   return this.imagesCID;
   // }
+
+  ensurePinata() {
+    if (this.pinata === undefined) {
+      this.pinata = pinataSDK(
+        process.env.PINATA_API_KEY,
+        process.env.PINATA_SECRET_API_KEY
+      );
+    }
+  }
 
   async ensureContract() {
     await hre.run("compile");
