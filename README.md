@@ -80,7 +80,7 @@ Files for the server and electron configuration are located in the `helper/publi
 
 Once both components are launched, you should be greeted with `'Connected'` status' on both components. If one component disconnects, the other will automatically recognize this disconnect as well, and the changes should be reflected with a `'Disconnected'` status.
 
-![Plugin Screenshot](./images/connection.png)
+![Plugin Screenshot](./.assets/connection.png)
 
 Since it's an embedded server, its worth noting that this only runs on `localhost` and only administers communication between a single instance of the helper app and the UXP plugin. By default, the websocket server runs on port `4040` and the Electron helper app is served from port `3000`.
 

@@ -1,13 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from "react";
+import ReactDOM from "react-dom";
 import {
   Provider as SpectrumProvider,
   defaultTheme,
-} from '@adobe/react-spectrum';
+} from "@adobe/react-spectrum";
 
-import './index.css';
-import App from './App';
-import { SocketContext, socket } from './components/SocketContext';
+import "./index.css";
+import App from "./App";
+import { SocketContext, socket } from "./components/SocketContext";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -17,5 +17,5 @@ ReactDOM.render(
       </SpectrumProvider>
     </SocketContext.Provider>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );

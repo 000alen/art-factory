@@ -9,16 +9,34 @@ import {
   Item,
   Button,
 } from "@adobe/react-spectrum";
-import { ipcRenderer } from "electron";
 
 export function HomePage() {
   const onClickNew = () => {
-    console.log("New");
-    // ipcRenderer.send("new-file");
+    window.ipcRenderer.once(
+      "showOpenDialogResult",
+      ({ canceled, filePaths }) => {
+        if (canceled) return;
+        console.log(filePaths);
+      }
+    );
+
+    window.ipcRenderer.send("showOpenDialog", {
+      properties: ["openDirectory"],
+    });
   };
 
   const onClickOpen = () => {
-    console.log("Open");
+    window.ipcRenderer.once(
+      "showOpenDialogResult",
+      ({ canceled, filePaths }) => {
+        if (canceled) return;
+        console.log(filePaths);
+      }
+    );
+
+    window.ipcRenderer.send("showOpenDialog", {
+      properties: ["openDirectory"],
+    });
   };
 
   return (
