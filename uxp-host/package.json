@@ -1,5 +1,5 @@
 {
-  "name": "com.adobe.example.desktop-helper-app",
+  "name": "art-factory.uxp-host",
   "version": "1.0.0",
   "license": "none",
   "private": true,
@@ -25,7 +25,6 @@
     "@babel/core": "^7.16.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
     "@svgr/webpack": "^5.5.0",
-    "art": "github:000alen/art",
     "babel-jest": "^27.4.2",
     "babel-loader": "^8.2.3",
     "babel-plugin-named-asset-import": "^0.3.8",
