@@ -1,24 +1,43 @@
-import { Flex, Heading, Text } from '@adobe/react-spectrum';
+import { HomePage } from "./pages/HomePage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { SocketContext } from "./components/SocketContext";
 
-import OptionsMenu from './components/OptionsMenu';
+import { Flex, StatusLight } from "@adobe/react-spectrum";
+import React, { useState, useEffect, useContext } from "react";
 
 const App = () => {
+  const socket = useContext(SocketContext);
+  const [connectionStatus, setConnectionStatus] = useState(false);
+
+  useEffect(() => {
+    socket.on("uxp-connected", (isUXPConnected) => {
+      setConnectionStatus(isUXPConnected);
+    });
+  }, []);
+
+  const connectionStatusLight = connectionStatus ? (
+    <StatusLight variant="positive">Connected to UXP</StatusLight>
+  ) : (
+    <StatusLight variant="negative">Disconnected from UXP</StatusLight>
+  );
+
   return (
-    <Flex
-      direction="column"
-      gap="size-100"
-      alignItems="center"
-      justifyContent="center"
-      height="100vh"
-    >
-      <Heading level={2} marginBottom={-2}>
-        Welcome to the UXP Helper App
-      </Heading>
-      <Text marginBottom={8}>
-        <i>To start, load the UXP plugin into Photoshop and send a message</i>
-      </Text>
-      <OptionsMenu />
-    </Flex>
+    <Router>
+      <Flex direction="column" gap="size-100" height="100vh">
+        <Flex
+          direction="row"
+          gap="size-100"
+          alignItems="center"
+          height="size-800"
+        >
+          {connectionStatusLight}
+        </Flex>
+
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+        </Routes>
+      </Flex>
+    </Router>
   );
 };
 

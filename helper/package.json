@@ -8,7 +8,7 @@
   "scripts": {
     "start": "concurrently -k \"npm:start:react\" \"npm:start:electron\"",
     "start:react": "cross-env BROWSER=none react-scripts start",
-    "start:electron": "wait-on tcp:3000 && electron public/electron.js",
+    "start:electron": "electron public/electron.js",
     "build": "npm run build:react && npm run build:electron",
     "build:react": "react-scripts build",
     "build:electron": "electron-builder",
@@ -28,6 +28,7 @@
     "express": "^4.17.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-router-dom": "^6.2.1",
     "socket.io": "^4.1.2",
     "socket.io-client": "^4.1.3"
   },
