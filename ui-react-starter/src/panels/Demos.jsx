@@ -1,11 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { ColorPicker } from "../components/ColorPicker.jsx";
 
 export const Demos = () => {
-    return (
-        <>
-            <ColorPicker />
-        </>
-    )
-}
+//   useEffect(() => {}, [
+
+//   ]);
+
+  return (
+    <>
+      <ColorPicker />
+    </>
+  );
+};
