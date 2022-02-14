@@ -25,6 +25,18 @@ export function HomePage() {
     });
   };
 
+  const onClickTest = () => {
+    window.ipcRenderer.once("factoryTestResult", (result) => {
+      console.log(result);
+    });
+
+    window.ipcRenderer.send(
+      "factoryTest",
+      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\input",
+      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\output"
+    );
+  };
+
   const onClickOpen = () => {
     window.ipcRenderer.once(
       "showOpenDialogResult",
@@ -79,6 +91,10 @@ export function HomePage() {
 
               <Button marginTop={8} onPress={onClickNew}>
                 Open directory
+              </Button>
+
+              <Button marginTop={8} onPress={onClickTest}>
+                Test Factory
               </Button>
             </Item>
             <Item key="open">

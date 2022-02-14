@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const isDevelopment = require("electron-is-dev");
 const path = require("path");
-// const { NFTFactory } = require("./art/src/NFTFactory");
+const { Factory } = require("./art");
 
 require("./server.js");
 
@@ -52,29 +52,31 @@ ipcMain.on("showSaveDialog", async (event, ...args) => {
   event.reply("showSaveDialogResult", result);
 });
 
-// ipcMain.on("nftFactoryTest", async (event, inputDir, outputDir) => {
-//   const factory = new NFTFactory(
-//     {
-//       name: "Test",
-//       symbol: "TEST",
-//       description: "Test",
-//       width: 512,
-//       height: 512,
-//       generateBackground: true,
-//       layers: ["Eyeball", "Eye color", "Shine", "Iris"],
-//     },
-//     inputDir,
-//     outputDir
-//   );
+ipcMain.on("factoryTest", async (event, inputDir, outputDir) => {
+  const factory = new Factory(
+    {
+      name: "Test",
+      symbol: "TEST",
+      description: "Test",
+      width: 512,
+      height: 512,
+      generateBackground: true,
+      layers: ["Eyeball", "Eye color", "Shine", "Iris"],
+    },
+    inputDir,
+    outputDir
+  );
 
-//   await factory.loadLayers();
-//   await factory.bootstrapOutput();
-//   const attributes = factory.generateRandomAttributes(10);
-//   await factory.generateImages(attributes);
+  await factory.loadLayers();
+  await factory.bootstrapOutput();
+  const attributes = factory.generateRandomAttributes(10);
+  await factory.generateImages(attributes);
 
-//   // const imagesCID = await factory.deployImages();
-//   // await factory.generateMetadata(imagesCID, attributes);
-//   // await factory.deployMetadata();
-//   // await factory.deployContract();
-//   // await factory.verifyContract();
-// });
+  // const imagesCID = await factory.deployImages();
+  // await factory.generateMetadata(imagesCID, attributes);
+  // await factory.deployMetadata();
+  // await factory.deployContract();
+  // await factory.verifyContract();
+
+  event.reply("factoryTestResult", true);
+});
