@@ -15,7 +15,6 @@ entrypoints.setup({
 
 let socket = io("http://127.0.0.1:4040");
 
-// Attempt to reconnect if server isn't running
 socket.on("connect_error", () => {
   updateConnectionStatus(false);
   socket.emit("reconnect", true);
