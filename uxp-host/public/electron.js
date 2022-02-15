@@ -76,7 +76,7 @@ ipcMain.on("factoryTest", async (event, inputDir, outputDir) => {
   await factory.generateMetadata(imagesCID, attributes);
   const jsonCID = await factory.deployMetadata();
 
-  // await factory.deployContract();
+  await factory.deployContract();
   // await factory.verifyContract();
 
   event.reply("factoryTestResult", {

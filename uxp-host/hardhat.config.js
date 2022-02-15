@@ -28,7 +28,7 @@ task("deploy")
 const config = {
   solidity: "0.8.4",
   // defaultNetwork: "ropsten",
-  defaultNetwork: "rinkeby",
+  // defaultNetwork: "rinkeby",
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",

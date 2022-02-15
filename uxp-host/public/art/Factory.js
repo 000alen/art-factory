@@ -305,8 +305,8 @@ class Factory {
         `WARN: Contract address is undefined even with contract deployed`
       );
 
-    // Make sure if the contract exist
-    await this.verifyContract();
+    // // Make sure if the contract exist
+    // await this.verifyContract();
 
     // Contract data
     const contractInstance = {
