@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from '@react-spectrum/view';
+import { View } from '@adobe/react-spectrum';
 
 const TextContainer = ({ children }) => {
   return (

@@ -3,8 +3,6 @@ const path = require("path");
 const axios = require("axios");
 const fs = require("fs");
 const FormData = require("form-data");
-const recursive = require("recursive-fs");
-const basePathConverter = require("base-path-converter");
 
 const RARITY_DELIMITER = "#";
 

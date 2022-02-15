@@ -2,8 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const Jimp = require("jimp");
 const { randomColor, rarityWeightedChoice, rarity } = require("./utils");
-const pinataSDK = require("@pinata/sdk");
-const hre = require("hardhat");
 const dotenv = require("dotenv");
 const { pinDirectoryToIPFS } = require("./utils");
 
@@ -243,9 +241,9 @@ class Factory {
     return this.imagesCID;
   }
 
-  async ensureContract() {
-    await hre.run("compile");
-  }
+  // async ensureContract() {
+  //   await hre.run("compile");
+  // }
 
   async deployMetadata(force = false) {
     if (this.metadataCID !== undefined && !force) {
@@ -271,81 +269,81 @@ class Factory {
   }
 
   // ! TODO: Implement
-  async deployContract(force = false) {
-    if (this.contractAddress !== undefined && !force) {
-      console.warn(
-        `WARN: contract has already been deployed (address: ${this.contractAddress})`
-      );
-      return this.contractAddress;
-    }
+  // async deployContract(force = false) {
+  //   if (this.contractAddress !== undefined && !force) {
+  //     console.warn(
+  //       `WARN: contract has already been deployed (address: ${this.contractAddress})`
+  //     );
+  //     return this.contractAddress;
+  //   }
 
-    await this.ensureContract();
+  //   await this.ensureContract();
 
-    if (this.metadataCID == undefined)
-      console.log(
-        "DANGER: Metadata CID is undefined, high change it doesnt exist"
-      );
+  //   if (this.metadataCID == undefined)
+  //     console.log(
+  //       "DANGER: Metadata CID is undefined, high change it doesnt exist"
+  //     );
 
-    if (this.imagesCID == undefined)
-      console.log(
-        "DANGER: Images CID is undefined, high change it doesnt exist"
-      );
+  //   if (this.imagesCID == undefined)
+  //     console.log(
+  //       "DANGER: Images CID is undefined, high change it doesnt exist"
+  //     );
 
-    const contractArgs = {
-      name: this.configuration.name,
-      symbol: this.configuration.symbol,
-      initBaseURI: `ipfs://${this.metadataCID}/`,
-      initNotRevealedURI: `ipfs://${this.metadataCID}/`,
-    };
+  //   const contractArgs = {
+  //     name: this.configuration.name,
+  //     symbol: this.configuration.symbol,
+  //     initBaseURI: `ipfs://${this.metadataCID}/`,
+  //     initNotRevealedURI: `ipfs://${this.metadataCID}/`,
+  //   };
 
-    this.contractAddress = await hre.run("deploy", contractArgs);
+  //   this.contractAddress = await hre.run("deploy", contractArgs);
 
-    if (this.contractAddress == undefined)
-      console.log(
-        `WARN: Contract address is undefined even with contract deployed`
-      );
+  //   if (this.contractAddress == undefined)
+  //     console.log(
+  //       `WARN: Contract address is undefined even with contract deployed`
+  //     );
 
-    // // Make sure if the contract exist
-    // await this.verifyContract();
+  //   // // Make sure if the contract exist
+  //   // await this.verifyContract();
 
-    // Contract data
-    const contractInstance = {
-      ...contractArgs,
-      metadadataCID: this.metadataCID,
-      imageCID: this.imagesCID,
-      contractAddress: this.contractAddress,
-    };
+  //   // Contract data
+  //   const contractInstance = {
+  //     ...contractArgs,
+  //     metadadataCID: this.metadataCID,
+  //     imageCID: this.imagesCID,
+  //     contractAddress: this.contractAddress,
+  //   };
 
-    // Parse the Javascript Object to JSON String
-    const contractInstanceJSON = JSON.stringify(contractInstance);
+  //   // Parse the Javascript Object to JSON String
+  //   const contractInstanceJSON = JSON.stringify(contractInstance);
 
-    // Write JSON string
-    await fs.promises.writeFile(
-      path.join(this.outputDir, "instance.json"),
-      contractInstanceJSON
-    );
+  //   // Write JSON string
+  //   await fs.promises.writeFile(
+  //     path.join(this.outputDir, "instance.json"),
+  //     contractInstanceJSON
+  //   );
 
-    return this.contractAddress;
-  }
+  //   return this.contractAddress;
+  // }
 
-  async verifyContract() {
-    const contractArgs = {
-      name: this.configuration.name,
-      symbol: this.configuration.symbol,
-      initBaseURI: `ipfs://${this.metadataCID}/`,
-      initNotRevealedURI: `ipfs://${this.metadataCID}/`,
-    };
+  // async verifyContract() {
+  //   const contractArgs = {
+  //     name: this.configuration.name,
+  //     symbol: this.configuration.symbol,
+  //     initBaseURI: `ipfs://${this.metadataCID}/`,
+  //     initNotRevealedURI: `ipfs://${this.metadataCID}/`,
+  //   };
 
-    await hre.run("verify:verify", {
-      address: this.contractAddress,
-      constructorArguments: [
-        contractArgs.name,
-        contractArgs.symbol,
-        contractArgs.initBaseURI,
-        contractArgs.initNotRevealedURI,
-      ],
-    });
-  }
+  //   await hre.run("verify:verify", {
+  //     address: this.contractAddress,
+  //     constructorArguments: [
+  //       contractArgs.name,
+  //       contractArgs.symbol,
+  //       contractArgs.initBaseURI,
+  //       contractArgs.initNotRevealedURI,
+  //     ],
+  //   });
+  // }
 }
 
 module.exports = { Factory };

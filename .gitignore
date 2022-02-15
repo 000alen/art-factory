@@ -1,7 +1,6 @@
 output/
-cache/
 typechain-types/
-artifacts/
+build/
 
 # Logs
 logs

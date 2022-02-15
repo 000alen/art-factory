@@ -4,11 +4,8 @@ const { Server } = require('socket.io');
 
 const startServer = async () => {
   const port = 4040;
-
   const app = express();
-
   const server = http.createServer(app);
-
   const io = new Server(server, {
     cors: {
       origin: '*',
