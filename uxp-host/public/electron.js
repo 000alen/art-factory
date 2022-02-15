@@ -72,21 +72,15 @@ ipcMain.on("factoryTest", async (event, inputDir, outputDir) => {
   const attributes = factory.generateRandomAttributes(10);
   await factory.generateImages(attributes);
 
-  factory.ensurePinata();
-  factory.pinata
-    .testAuthentication()
-    .then((result) => {
-      console.log(result);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+  const imagesCID = await factory.deployImages();
+  await factory.generateMetadata(imagesCID, attributes);
+  const jsonCID = await factory.deployMetadata();
 
-  // const imagesCID = await factory.deployImages();
-  // await factory.generateMetadata(imagesCID, attributes);
-  // await factory.deployMetadata();
   // await factory.deployContract();
   // await factory.verifyContract();
 
-  event.reply("factoryTestResult", true);
+  event.reply("factoryTestResult", {
+    imagesCID,
+    jsonCID,
+  });
 });

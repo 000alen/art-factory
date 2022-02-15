@@ -1,5 +1,10 @@
 const Jimp = require("jimp");
 const path = require("path");
+const axios = require("axios");
+const fs = require("fs");
+const FormData = require("form-data");
+const recursive = require("recursive-fs");
+const basePathConverter = require("base-path-converter");
 
 const RARITY_DELIMITER = "#";
 
@@ -66,9 +71,41 @@ function rarityWeightedChoice(
   }
 }
 
+// Source: https://docs.pinata.cloud/api-pinning/pin-file
+// {
+//   IpfsHash: This is the IPFS multi-hash provided back for your content,
+//   PinSize: This is how large (in bytes) the content you just pinned is,
+//   Timestamp: This is the timestamp for your content pinning (represented in ISO 8601 format)
+// }
+async function pinDirectoryToIPFS(pinataApiKey, pinataSecretApiKey, src) {
+  const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+  const base = path.parse(src).base;
+
+  const data = new FormData();
+  (await fs.promises.readdir(src))
+    .filter((file) => !file.startsWith("."))
+    .forEach((file) => {
+      data.append("file", fs.createReadStream(path.join(src, file)), {
+        filepath: path.join(base, path.parse(file).base),
+      });
+    });
+
+  return axios
+    .post(url, data, {
+      maxBodyLength: "Infinity",
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
+        pinata_api_key: pinataApiKey,
+        pinata_secret_api_key: pinataSecretApiKey,
+      },
+    })
+    .then((response) => response.data);
+}
+
 module.exports = {
   RARITY_DELIMITER,
   randomColor,
   rarity,
   rarityWeightedChoice,
+  pinDirectoryToIPFS,
 };

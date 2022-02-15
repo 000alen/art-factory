@@ -26,8 +26,8 @@ export function HomePage() {
   };
 
   const onClickTest = () => {
-    window.ipcRenderer.once("factoryTestResult", (result) => {
-      console.log(result);
+    window.ipcRenderer.once("factoryTestResult", ({ imagesCID, jsonCID }) => {
+      console.log(imagesCID, jsonCID);
     });
 
     window.ipcRenderer.send(

@@ -2,10 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const Jimp = require("jimp");
 const { randomColor, rarityWeightedChoice, rarity } = require("./utils");
-// const { create } = require("ipfs");
 const pinataSDK = require("@pinata/sdk");
 const hre = require("hardhat");
 const dotenv = require("dotenv");
+const { pinDirectoryToIPFS } = require("./utils");
 
 dotenv.config();
 
@@ -14,8 +14,6 @@ dotenv.config();
 class Factory {
   layers;
   buffers;
-  // ipfs;
-  pinata;
 
   imagesCID;
   metadataCID;
@@ -225,97 +223,52 @@ class Factory {
     );
   }
 
-  // async ensureIPFS() {
-  //   if (this.ipfs === undefined) {
-  //     this.ipfs = await create();
-
-  //     // if (process.env.PINATA_KEY !== undefined) {
-  //     //   this.ipfs!.pin.remote.service.add("pinata", {
-  //     //     endpoint: new URL("https://api.pinata.cloud"),
-  //     //     key: process.env.PINATA_KEY,
-  //     //   });
-  //     // }
-  //   }
-  // }
-
-  // // ! TODO: Optimize; buffers might be loaded in this.buffers (use this.ensureBuffer)
-  // async deployImages(force = false) {
-  //   if (this.imagesCID !== undefined && !force) {
-  //     console.warn(
-  //       `WARN: images have already been deployed to IPFS (cid: ${this.imagesCID})`
-  //     );
-  //     return this.imagesCID;
-  //   }
-
-  //   const imagesDir = path.join(this.outputDir, "images");
-  //   const imageFiles = (await fs.promises.readdir(imagesDir))
-  //     .filter((file) => !file.startsWith("."))
-  //     .map((fileName) => ({
-  //       path: path.join("images", fileName),
-  //       content: fs.createReadStream(path.join(imagesDir, fileName)),
-  //     }));
-
-  //   await this.ensureIPFS();
-
-  //   for await (const result of this.ipfs.addAll(imageFiles))
-  //     if (result.path == "images") this.imagesCID = result.cid.toString();
-
-  //   // if (process.env.PINATA_KEY !== undefined) {
-  //   //   await this.ipfs!.pin.remote.add(CID.parse(this.imagesCID!), {
-  //   //     service: "pinata",
-  //   //   });
-  //   // }
-
-  //   return this.imagesCID;
-  // }
-
-  ensurePinata() {
-    if (this.pinata === undefined) {
-      this.pinata = pinataSDK(
-        process.env.PINATA_API_KEY,
-        process.env.PINATA_SECRET_API_KEY
+  // ! TODO: Optimize; buffers might be loaded in this.buffers (use this.ensureBuffer)
+  async deployImages(force = false) {
+    if (this.imagesCID !== undefined && !force) {
+      console.warn(
+        `WARN: images have already been deployed to IPFS (cid: ${this.imagesCID})`
       );
+      return this.imagesCID;
     }
+
+    const imagesDir = path.join(this.outputDir, "images");
+    const { IpfsHash } = await pinDirectoryToIPFS(
+      process.env.PINATA_API_KEY,
+      process.env.PINATA_SECRET_API_KEY,
+      imagesDir
+    );
+    this.imagesCID = IpfsHash;
+
+    return this.imagesCID;
   }
 
   async ensureContract() {
     await hre.run("compile");
   }
 
-  // async deployMetadata(force = false) {
-  //   if (this.metadataCID !== undefined && !force) {
-  //     console.warn(
-  //       `WARN: metadata has already been deployed to IPFS (cid: ${this.metadataCID})`
-  //     );
-  //     return this.metadataCID;
-  //   }
+  async deployMetadata(force = false) {
+    if (this.metadataCID !== undefined && !force) {
+      console.warn(
+        `WARN: metadata has already been deployed to IPFS (cid: ${this.metadataCID})`
+      );
+      return this.metadataCID;
+    }
 
-  //   if (this.imagesCID === undefined)
-  //     throw new Error("Images have not been deployed to IPFS");
+    if (this.imagesCID === undefined)
+      throw new Error("Images have not been deployed to IPFS");
 
-  //   await this.ensureIPFS();
+    const jsonDir = path.join(this.outputDir, "json");
 
-  //   const jsonDir = path.join(this.outputDir, "json");
-  //   const jsonFiles = (await fs.promises.readdir(jsonDir))
-  //     .filter((file) => !file.startsWith("."))
-  //     .map((fileName) => ({
-  //       path: path.join("json", fileName),
-  //       content: fs.createReadStream(path.join(jsonDir, fileName)),
-  //     }));
+    const { IpfsHash } = await pinDirectoryToIPFS(
+      process.env.PINATA_API_KEY,
+      process.env.PINATA_SECRET_API_KEY,
+      jsonDir
+    );
+    this.metadataCID = IpfsHash;
 
-  //   await this.ensureIPFS();
-
-  //   for await (const result of this.ipfs.addAll(jsonFiles))
-  //     if (result.path == "json") this.metadataCID = result.cid.toString();
-
-  //   // if (process.env.PINATA_KEY !== undefined) {
-  //   //   await this.ipfs!.pin.remote.add(CID.parse(this.metadataCID!), {
-  //   //     service: "pinata",
-  //   //   });
-  //   // }
-
-  //   return this.metadataCID;
-  // }
+    return this.metadataCID;
+  }
 
   // ! TODO: Implement
   async deployContract(force = false) {
