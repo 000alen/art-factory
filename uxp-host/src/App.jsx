@@ -1,9 +1,11 @@
 import { HomePage } from "./pages/HomePage";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { SocketContext } from "./components/SocketContext";
-
 import { Flex, StatusLight } from "@adobe/react-spectrum";
 import React, { useState, useEffect, useContext } from "react";
+import { GenerationPage } from "./pages/GenerationPage";
+import { QualityPage } from "./pages/QualityPage";
+import { DeployPage } from "./pages/DeployPage";
 
 const App = () => {
   const socket = useContext(SocketContext);
@@ -35,6 +37,9 @@ const App = () => {
 
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/generation" element={<GenerationPage />} />
+          <Route path="/quality" element={<QualityPage />} />
+          <Route path="/deploy" element={<DeployPage />} />
         </Routes>
       </Flex>
     </Router>

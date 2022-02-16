@@ -7,32 +7,13 @@ import {
   TabList,
   TabPanels,
   Item,
-  Button,
 } from "@adobe/react-spectrum";
 import { NewTab } from "../components/NewTab";
 import { OpenTab } from "../components/OpenTab";
+import { Link } from "react-router-dom";
+import { TestTab } from "../components/TestTab";
 
 export function HomePage() {
-  const onClickFactoryTest = () => {
-    window.ipcRenderer.once("factoryTestResult", ({ imagesCID, jsonCID }) => {
-      console.log(imagesCID, jsonCID);
-    });
-
-    window.ipcRenderer.send(
-      "factoryTest",
-      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\input",
-      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\output"
-    );
-  };
-
-  const onClickGetContract = () => {
-    window.ipcRenderer.once("getContractResult", (output) => {
-      console.log(output);
-    });
-
-    window.ipcRenderer.send("getContract");
-  };
-
   return (
     <Flex
       direction="column"
@@ -40,6 +21,11 @@ export function HomePage() {
       alignItems="center"
       justifyContent="center"
     >
+      <Link to="/">Home</Link>
+      <Link to="/generation">Generation</Link>
+      <Link to="/quality">Quality</Link>
+      <Link to="/deploy">Deploy</Link>
+
       <Heading level={2} marginBottom={-2}>
         Welcome to the NFT Factory App
       </Heading>
@@ -48,19 +34,12 @@ export function HomePage() {
         To start, load the UXP plugin into Photoshop or open a directory
       </Text>
 
-      <Button marginTop={8} onPress={onClickFactoryTest}>
-        Test Factory
-      </Button>
-
-      <Button marginTop={8} onPress={onClickGetContract}>
-        Get Contract
-      </Button>
-
       <Flex width="size-6000" height="size-8000">
         <Tabs aria-label="UXP Helper Options">
           <TabList>
             <Item key="new">Create a new Collection</Item>
             <Item key="open">Open a Collection</Item>
+            <Item key="test">Test</Item>
           </TabList>
 
           <TabPanels>
@@ -69,6 +48,9 @@ export function HomePage() {
             </Item>
             <Item key="open">
               <OpenTab />
+            </Item>
+            <Item key="test">
+              <TestTab />
             </Item>
           </TabPanels>
         </Tabs>
