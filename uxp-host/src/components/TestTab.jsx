@@ -3,23 +3,23 @@ import { Heading, Text, Button } from "@adobe/react-spectrum";
 
 export function TestTab() {
   const onClickFactoryTest = () => {
-    window.ipcRenderer.once("factoryTestResult", ({ imagesCID, jsonCID }) => {
-      console.log(imagesCID, jsonCID);
-    });
+    // window.ipcRenderer.once("factoryTestResult", ({ imagesCID, jsonCID }) => {
+    //   console.log(imagesCID, jsonCID);
+    // });
 
-    window.ipcRenderer.send(
-      "factoryTest",
-      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\input",
-      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\output"
-    );
+    // window.ipcRenderer.send(
+    //   "factoryTest",
+    //   "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\input",
+    //   "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\output"
+    // );
   };
 
   const onClickGetContract = () => {
-    window.ipcRenderer.once("getContractResult", (output) => {
-      console.log(output);
-    });
+    // window.ipcRenderer.once("getContractResult", (output) => {
+    //   console.log(output);
+    // });
 
-    window.ipcRenderer.send("getContract");
+    // window.ipcRenderer.send("getContract");
   };
 
   return (

@@ -10,7 +10,6 @@ import {
 } from "@adobe/react-spectrum";
 import { NewTab } from "../components/NewTab";
 import { OpenTab } from "../components/OpenTab";
-import { Link } from "react-router-dom";
 import { TestTab } from "../components/TestTab";
 
 export function HomePage() {
@@ -21,11 +20,6 @@ export function HomePage() {
       alignItems="center"
       justifyContent="center"
     >
-      <Link to="/">Home</Link>
-      <Link to="/generation">Generation</Link>
-      <Link to="/quality">Quality</Link>
-      <Link to="/deploy">Deploy</Link>
-
       <Heading level={2} marginBottom={-2}>
         Welcome to the NFT Factory App
       </Heading>
@@ -37,9 +31,9 @@ export function HomePage() {
       <Flex width="size-6000" height="size-8000">
         <Tabs aria-label="UXP Helper Options">
           <TabList>
-            <Item key="new">Create a new Collection</Item>
-            <Item key="open">Open a Collection</Item>
-            <Item key="test">Test</Item>
+            <Item key="new">New Collection</Item>
+            <Item key="open">Open an existing Collection</Item>
+            <Item key="test">Testing</Item>
           </TabList>
 
           <TabPanels>

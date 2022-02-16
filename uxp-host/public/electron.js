@@ -7,6 +7,8 @@ const fs = require("fs");
 
 require("./server.js");
 
+const factories = {};
+
 const createWindow = () => {
   const window = new BrowserWindow({
     autoHideMenuBar: true,
@@ -56,37 +58,99 @@ ipcMain.on("showSaveDialog", async (event, ...args) => {
   event.reply("showSaveDialogResult", result);
 });
 
-ipcMain.on("factoryTest", async (event, inputDir, outputDir) => {
-  const factory = new Factory(
-    {
-      name: "Test",
-      symbol: "TEST",
-      description: "Test",
-      width: 512,
-      height: 512,
-      generateBackground: true,
-      layers: ["Eyeball", "Eye color", "Shine", "Iris"],
-    },
-    inputDir,
-    outputDir
-  );
+// ipcMain.on("factoryTest", async (event, inputDir, outputDir) => {
+//   const factory = new Factory(
+//     {
+//       name: "Test",
+//       symbol: "TEST",
+//       description: "Test",
+//       width: 512,
+//       height: 512,
+//       generateBackground: true,
+//       layers: ["Eyeball", "Eye color", "Shine", "Iris"],
+//     },
+//     inputDir,
+//     outputDir
+//   );
 
+//   await factory.loadLayers();
+//   await factory.bootstrapOutput();
+//   const attributes = factory.generateRandomAttributes(10);
+//   await factory.generateImages(attributes);
+
+//   const imagesCID = await factory.deployImages();
+//   await factory.generateMetadata(imagesCID, attributes);
+//   const jsonCID = await factory.deployMetadata();
+
+//   // await factory.deployContract();
+//   // await factory.verifyContract();
+
+//   event.reply("factoryTestResult", {
+//     imagesCID,
+//     jsonCID,
+//   });
+// });
+
+ipcMain.on("createFactory", (event, id, config, inputDir, outputDir) => {
+  const factory = new Factory(config, inputDir, outputDir);
+  factories[id] = factory;
+  event.reply("createFactoryResult", factory.id);
+});
+
+ipcMain.on("factoryMaxCombinations", (event, id) => {
+  event.reply("factoryMaxCombinationsResult", factories[id].maxCombinations);
+});
+
+ipcMain.on("factoryInstance", (event, id) => {
+  event.reply("factoryInstanceResult", factories[id].instance);
+});
+
+ipcMain.on("factoryLoadLayers", async (event, id) => {
+  const factory = factories[id];
   await factory.loadLayers();
+  event.reply("factoryLoadLayersResult", factory.id);
+});
+
+ipcMain.on("factoryBootstrapOutput", async (event, id) => {
+  const factory = factories[id];
   await factory.bootstrapOutput();
-  const attributes = factory.generateRandomAttributes(10);
+  event.reply("factoryBootstrapOutputResult", factory.id);
+});
+
+ipcMain.on("factoryGenerateRandomAttributes", (event, id, n) => {
+  const factory = factories[id];
+  const attributes = factory.generateRandomAttributes(n);
+  event.reply("factoryGenerateRandomAttributesResult", attributes);
+});
+
+ipcMain.on("factoryGenerateAllAttributes", (event, id) => {
+  const factory = factories[id];
+  const attributes = factory.generateAllAttributes();
+  event.reply("factoryGenerateAllAttributesResult", attributes);
+});
+
+ipcMain.on("factoryGenerateImages", async (event, id, attributes) => {
+  const factory = factories[id];
   await factory.generateImages(attributes);
+  event.reply("factoryGenerateImagesResult", factory.id);
+});
 
-  const imagesCID = await factory.deployImages();
-  await factory.generateMetadata(imagesCID, attributes);
-  const jsonCID = await factory.deployMetadata();
+ipcMain.on("factoryGenerateMetadata", async (event, id, cid, attributes) => {
+  const factory = factories[id];
+  await factory.generateMetadata(cid, attributes);
+  event.reply("factoryGenerateMetadataResult", factory.id);
+});
 
-  // await factory.deployContract();
-  // await factory.verifyContract();
+ipcMain.on("factoryDeployImages", async (event, id) => {
+  const factory = factories[id];
+  const cid = await factory.deployImages();
+  event.reply("factoryDeployImagesResult", cid);
+});
 
-  event.reply("factoryTestResult", {
-    imagesCID,
-    jsonCID,
-  });
+ipcMain.on("factoryDeployMetadata", async (event, id) => {
+  const factory = factories[id];
+  const cid = await factory.deployMetadata();
+  event.reply("factoryDeployMetadataResult", cid);
 });
 
 ipcMain.on("compilerTest", (event) => {

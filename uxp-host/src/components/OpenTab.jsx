@@ -1,33 +1,38 @@
-import React from "react";
-import { Heading, Text, Button } from "@adobe/react-spectrum";
+import React, { useState } from "react";
+import { Button, Flex, TextField } from "@adobe/react-spectrum";
+import { showOpenDialog } from "../ipcRenderer";
 
 export function OpenTab() {
-  const onClickOpen = () => {
-    window.ipcRenderer.once(
-      "showOpenDialogResult",
-      ({ canceled, filePaths }) => {
-        if (canceled) return;
-        console.log(filePaths);
-      }
-    );
+  const [instanceDir, setInstanceDir] = useState("");
 
-    window.ipcRenderer.send("showOpenDialog", {
+  const onClickInstanceDir = async () => {
+    const { canceled, filePaths } = await showOpenDialog({
       properties: ["openDirectory"],
     });
+
+    if (canceled) return;
+
+    setInstanceDir(filePaths[0]);
   };
+
+  const onClickOpen = async () => {};
 
   return (
     <>
-      <Heading level={3} marginBottom={-2}>
-        Open a directory
-      </Heading>
-      <Text>
-        Open a directory and interact with your NFTs
-        <br />
-      </Text>
+      <Flex direction="row" alignItems="end" gap="size-100">
+        <TextField label="Instance Directory" value={instanceDir} isReadOnly />
 
-      <Button marginTop={8} onPress={onClickOpen}>
-        Open directory
+        <Button onPress={onClickInstanceDir}>Pick</Button>
+      </Flex>
+      <br />
+
+      <Button
+        variant="cta"
+        marginTop={8}
+        onPress={onClickOpen}
+        isDisabled={!instanceDir}
+      >
+        Open!
       </Button>
     </>
   );

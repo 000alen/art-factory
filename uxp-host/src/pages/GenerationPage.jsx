@@ -1,14 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export function GenerationPage() {
+  const { state } = useLocation();
+  const { inputDir, outputDir, configuration } = state;
+
   return (
     <div>
-      <Link to="/">Home</Link>
-      <Link to="/generation">Generation</Link>
-      <Link to="/quality">Quality</Link>
-      <Link to="/deploy">Deploy</Link>
       GenerationPage
+      <br />
+      {inputDir}
+      <br />
+      {outputDir}
+      <br />
+      {JSON.stringify(configuration)}
     </div>
   );
 }

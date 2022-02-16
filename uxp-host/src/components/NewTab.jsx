@@ -1,38 +1,67 @@
-import React from "react";
-import { Heading, Text, Button } from "@adobe/react-spectrum";
+import React, { useState } from "react";
+import { TextField, Button, Flex } from "@adobe/react-spectrum";
+import { showOpenDialog } from "../ipcRenderer";
+import { useNavigate } from "react-router-dom";
 
 export function NewTab() {
-  const onClickNew = () => {
-    window.ipcRenderer.once(
-      "showOpenDialogResult",
-      ({ canceled, filePaths }) => {
-        if (canceled) return;
-        console.log(filePaths);
-      }
-    );
+  const navigator = useNavigate();
+  const [inputDir, setInputDir] = useState("");
+  const [outputDir, setOutputDir] = useState("");
 
-    window.ipcRenderer.send("showOpenDialog", {
+  const onClickInputDir = async () => {
+    const { canceled, filePaths } = await showOpenDialog({
       properties: ["openDirectory"],
+    });
+
+    if (canceled) return;
+
+    setInputDir(filePaths[0]);
+  };
+
+  const onClickOutputDir = async () => {
+    const { canceled, filePaths } = await showOpenDialog({
+      properties: ["openDirectory"],
+    });
+
+    if (canceled) return;
+
+    setOutputDir(filePaths[0]);
+  };
+
+  const onClickGenerate = async () => {
+    navigator("/configuration", {
+      state: {
+        inputDir,
+        outputDir,
+      },
     });
   };
 
   return (
     <>
-      <Heading level={3} marginBottom={-2}>
-        From Photoshop
-      </Heading>
-      <Text>Load the UXP plugin into Photoshop and start creating NFTs</Text>
+      <Flex direction="row" alignItems="end" gap="size-100">
+        <TextField label="Input Directory" value={inputDir} isReadOnly />
 
-      <Heading level={3} marginBottom={-2}>
-        Or, open a directory
-      </Heading>
+        <Button onPress={onClickInputDir}>Pick</Button>
+      </Flex>
 
-      <Text>
-        Open a directory and start creating NFTs <br />
-      </Text>
+      <br />
 
-      <Button marginTop={8} onPress={onClickNew}>
-        Open directory
+      <Flex direction="row" alignItems="end" gap="size-100">
+        <TextField label="Output Directory" value={outputDir} isReadOnly />
+
+        <Button onPress={onClickOutputDir}>Pick</Button>
+      </Flex>
+
+      <br />
+
+      <Button
+        variant="cta"
+        marginTop={8}
+        onPress={onClickGenerate}
+        isDisabled={!inputDir || !outputDir}
+      >
+        Generate!
       </Button>
     </>
   );

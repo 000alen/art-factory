@@ -6,6 +6,8 @@ import React, { useState, useEffect, useContext } from "react";
 import { GenerationPage } from "./pages/GenerationPage";
 import { QualityPage } from "./pages/QualityPage";
 import { DeployPage } from "./pages/DeployPage";
+import { ConfigurationPage } from "./pages/ConfigurationPage";
+import { InstancePage } from "./pages/InstancePage";
 
 const App = () => {
   const socket = useContext(SocketContext);
@@ -37,9 +39,11 @@ const App = () => {
 
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/configuration" element={<ConfigurationPage />} />
           <Route path="/generation" element={<GenerationPage />} />
           <Route path="/quality" element={<QualityPage />} />
           <Route path="/deploy" element={<DeployPage />} />
+          <Route path="/instance" element={<InstancePage />} />
         </Routes>
       </Flex>
     </Router>
