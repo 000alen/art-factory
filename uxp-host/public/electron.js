@@ -1,12 +1,16 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const isDevelopment = require("electron-is-dev");
 const path = require("path");
+const solc = require("solc");
 const { Factory } = require("./art");
+const fs = require("fs");
 
 require("./server.js");
 
 const createWindow = () => {
   const window = new BrowserWindow({
+    autoHideMenuBar: true,
+    resizable: false,
     width: 800,
     height: 600,
     webPreferences: {
@@ -76,11 +80,42 @@ ipcMain.on("factoryTest", async (event, inputDir, outputDir) => {
   await factory.generateMetadata(imagesCID, attributes);
   const jsonCID = await factory.deployMetadata();
 
-  await factory.deployContract();
+  // await factory.deployContract();
   // await factory.verifyContract();
 
   event.reply("factoryTestResult", {
     imagesCID,
     jsonCID,
   });
+});
+
+ipcMain.on("compilerTest", (event) => {
+  const input = {
+    language: "Solidity",
+    sources: {
+      "test.sol": {
+        content: "contract C { function f() public { } }",
+      },
+    },
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["*"],
+        },
+      },
+    },
+  };
+
+  const output = JSON.parse(solc.compile(JSON.stringify(input)));
+  event.reply("compilerTestResult", output);
+});
+
+ipcMain.on("getContract", async (event) => {
+  const contractSource = await fs.promises.readFile(
+    path.join(__dirname, "contracts", "NFT.sol"),
+    {
+      encoding: "utf8",
+    }
+  );
+  event.reply("getContractResult", contractSource);
 });

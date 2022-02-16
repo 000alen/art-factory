@@ -9,23 +9,11 @@ import {
   Item,
   Button,
 } from "@adobe/react-spectrum";
+import { NewTab } from "../components/NewTab";
+import { OpenTab } from "../components/OpenTab";
 
 export function HomePage() {
-  const onClickNew = () => {
-    window.ipcRenderer.once(
-      "showOpenDialogResult",
-      ({ canceled, filePaths }) => {
-        if (canceled) return;
-        console.log(filePaths);
-      }
-    );
-
-    window.ipcRenderer.send("showOpenDialog", {
-      properties: ["openDirectory"],
-    });
-  };
-
-  const onClickTest = () => {
+  const onClickFactoryTest = () => {
     window.ipcRenderer.once("factoryTestResult", ({ imagesCID, jsonCID }) => {
       console.log(imagesCID, jsonCID);
     });
@@ -37,18 +25,12 @@ export function HomePage() {
     );
   };
 
-  const onClickOpen = () => {
-    window.ipcRenderer.once(
-      "showOpenDialogResult",
-      ({ canceled, filePaths }) => {
-        if (canceled) return;
-        console.log(filePaths);
-      }
-    );
-
-    window.ipcRenderer.send("showOpenDialog", {
-      properties: ["openDirectory"],
+  const onClickGetContract = () => {
+    window.ipcRenderer.once("getContractResult", (output) => {
+      console.log(output);
     });
+
+    window.ipcRenderer.send("getContract");
   };
 
   return (
@@ -61,9 +43,18 @@ export function HomePage() {
       <Heading level={2} marginBottom={-2}>
         Welcome to the NFT Factory App
       </Heading>
+
       <Text marginBottom={8}>
-        <i>To start, load the UXP plugin into Photoshop or open a directory</i>
+        To start, load the UXP plugin into Photoshop or open a directory
       </Text>
+
+      <Button marginTop={8} onPress={onClickFactoryTest}>
+        Test Factory
+      </Button>
+
+      <Button marginTop={8} onPress={onClickGetContract}>
+        Get Contract
+      </Button>
 
       <Flex width="size-6000" height="size-8000">
         <Tabs aria-label="UXP Helper Options">
@@ -74,41 +65,10 @@ export function HomePage() {
 
           <TabPanels>
             <Item key="new">
-              <Heading level={3} marginBottom={-2}>
-                From Photoshop
-              </Heading>
-              <Text>
-                Load the UXP plugin into Photoshop and start creating NFTs
-              </Text>
-
-              <Heading level={3} marginBottom={-2}>
-                Or, open a directory
-              </Heading>
-
-              <Text>
-                Open a directory and start creating NFTs <br />
-              </Text>
-
-              <Button marginTop={8} onPress={onClickNew}>
-                Open directory
-              </Button>
-
-              <Button marginTop={8} onPress={onClickTest}>
-                Test Factory
-              </Button>
+              <NewTab />
             </Item>
             <Item key="open">
-              <Heading level={3} marginBottom={-2}>
-                Open a directory
-              </Heading>
-              <Text>
-                Open a directory and interact with your NFTs
-                <br />
-              </Text>
-
-              <Button marginTop={8} onPress={onClickOpen}>
-                Open directory
-              </Button>
+              <OpenTab />
             </Item>
           </TabPanels>
         </Tabs>

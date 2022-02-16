@@ -1,5 +1,5 @@
 import { HomePage } from "./pages/HomePage";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { SocketContext } from "./components/SocketContext";
 
 import { Flex, StatusLight } from "@adobe/react-spectrum";
