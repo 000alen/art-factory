@@ -157,7 +157,7 @@ class Factory {
 
   // ! TODO: Careful with memory usage
   // ! TODO: Change the algorithm complexity from O(n) to O(log n)
-  async generateImages(attributes) {
+  async generateImages(attributes, callback) {
     await Promise.all(
       attributes.map(async (traits, i) => {
         const image = await Jimp.create(
@@ -178,6 +178,8 @@ class Factory {
         await image.writeAsync(
           path.join(this.outputDir, "images", `${i + 1}.png`)
         );
+
+        if (callback !== undefined) callback(i + 1);
       })
     );
   }
@@ -262,6 +264,13 @@ class Factory {
     this.metadataCID = IpfsHash;
 
     return this.metadataCID;
+  }
+
+  getRandomGeneratedImage(attributes) {
+    const index = Math.floor(Math.random() * attributes.length);
+    return fs.readFileSync(
+      path.join(this.outputDir, "images", `${index + 1}.png`)
+    );
   }
 }
 

@@ -3,7 +3,7 @@ import React from "react";
 import { versions } from "uxp";
 import os from "os";
 
-import "./About.css";
+import "../css/About.css";
 
 export const About = (props) => {
   return (

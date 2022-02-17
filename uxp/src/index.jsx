@@ -1,12 +1,11 @@
 import React from "react";
 import { io } from "socket.io-client";
 
-import "./styles.css";
+import "./css/styles.css";
 import { PanelController } from "./controllers/PanelController.jsx";
 import { CommandController } from "./controllers/CommandController.jsx";
 import { About } from "./components/About.jsx";
 import { Demos } from "./panels/Demos.jsx";
-import { MoreDemos } from "./panels/MoreDemos.jsx";
 
 import { entrypoints } from "uxp";
 
@@ -35,6 +34,7 @@ const aboutController = new CommandController(
     size: { width: 480, height: 480 },
   }
 );
+
 const demosController = new PanelController(() => <Demos />, {
   id: "demos",
   menuItems: [
@@ -54,18 +54,6 @@ const demosController = new PanelController(() => <Demos />, {
     },
   ],
 });
-const moreDemosController = new PanelController(() => <MoreDemos />, {
-  id: "moreDemos",
-  menuItems: [
-    {
-      id: "reload2",
-      label: "Reload Plugin",
-      enabled: true,
-      checked: false,
-      oninvoke: () => location.reload(),
-    },
-  ],
-});
 
 entrypoints.setup({
   plugin: {
@@ -81,6 +69,5 @@ entrypoints.setup({
   },
   panels: {
     demos: demosController,
-    moreDemos: moreDemosController,
   },
 });

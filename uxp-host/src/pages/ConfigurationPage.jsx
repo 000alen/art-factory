@@ -35,8 +35,6 @@ export function ConfigurationPage() {
     layers.length > 0 &&
     layers.every((layer) => layer.length > 0);
 
-  console.log(isAbleContinue);
-
   const onClickAddLayer = () => {
     setLayers([...layers, ""]);
   };
@@ -110,6 +108,7 @@ export function ConfigurationPage() {
             {layers.map((layer, index) => (
               <TextField
                 key={index}
+                aria-label={`Layer ${index + 1}`}
                 value={layer}
                 onChange={(value) => onEditLayer(index, value)}
               />

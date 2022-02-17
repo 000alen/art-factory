@@ -1,35 +1,66 @@
-import React from "react";
-import { Heading, Text, Button } from "@adobe/react-spectrum";
+import React, { useState } from "react";
+import { Button } from "@adobe/react-spectrum";
+import {
+  createFactory,
+  factoryLoadLayers,
+  factoryBootstrapOutput,
+  factoryGenerateRandomAttributes,
+  factoryGetRandomGeneratedImage,
+  factoryGenerateImages,
+} from "../ipcRenderer";
 
 export function TestTab() {
-  const onClickFactoryTest = () => {
-    // window.ipcRenderer.once("factoryTestResult", ({ imagesCID, jsonCID }) => {
-    //   console.log(imagesCID, jsonCID);
-    // });
+  const [imgSrc, setImgSrc] = useState("");
 
-    // window.ipcRenderer.send(
-    //   "factoryTest",
-    //   "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\input",
-    //   "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\output"
-    // );
-  };
+  const onClickTest = async () => {
+    const id = "test";
+    const n = 10;
+    const configuration = {
+      name: "test",
+      symbol: "test",
+      width: 512,
+      height: 512,
+      generateBackground: true,
+      layers: [
+        "Eyeball",
+        "Eye color",
+        "Iris",
+        "Shine",
+        "Bottom lid",
+        "Top lid",
+      ],
+    };
+    const inputDir =
+      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\input\\";
+    const outputDir =
+      "C:\\Users\\alenk\\Desktop\\art-factory\\uxp-host\\sample\\output\\";
 
-  const onClickGetContract = () => {
-    // window.ipcRenderer.once("getContractResult", (output) => {
-    //   console.log(output);
-    // });
+    await createFactory(id, configuration, inputDir, outputDir);
+    await factoryLoadLayers(id);
+    await factoryBootstrapOutput(id);
+    const attributes = await factoryGenerateRandomAttributes(id, n);
+    await factoryGenerateImages(id, attributes, (i) => {
+      console.log(`Generated image ${i}`);
+    });
+    const randomImage = await factoryGetRandomGeneratedImage(id, attributes); // UInt8Array
+    const blob = new Blob([randomImage], { type: "image/png" });
+    const url = URL.createObjectURL(blob);
 
-    // window.ipcRenderer.send("getContract");
+    setImgSrc(url);
+
+    // fetch(metadataURI)
+    // .then((metadataResponse) => metadataResponse.json())
+    // .then((metadata) => fetch(gateway(`${metadata.image.slice(7)}`)))
+    // .then((imageResponse) => imageResponse.blob())
+    // .then((imageBlob) => setImageUrl(URL.createObjectURL(imageBlob)));
   };
 
   return (
     <>
-      <Button marginTop={8} onPress={onClickFactoryTest}>
-        Test Factory
-      </Button>
+      <img alt="" src={imgSrc} />
 
-      <Button marginTop={8} onPress={onClickGetContract}>
-        Get Contract
+      <Button marginTop={8} onPress={onClickTest}>
+        Test
       </Button>
     </>
   );

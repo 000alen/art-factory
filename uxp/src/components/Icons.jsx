@@ -1,6 +1,6 @@
 import React from "react";
 
-import "./Icons.css";
+import "../css/Icons.css";
 
 export const PlayIcon = () => (
   <svg

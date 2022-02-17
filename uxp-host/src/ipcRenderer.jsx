@@ -1,127 +1,146 @@
-export const showOpenDialog = (...args) => {
+export const showOpenDialog = (options) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("showOpenDialogResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("showOpenDialog", ...args);
+    window.ipcRenderer.send("showOpenDialog", options);
   });
 };
 
-export const showSaveDialog = (...args) => {
+export const showSaveDialog = (options) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("showSaveDialogResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("showSaveDialog", ...args);
+    window.ipcRenderer.send("showSaveDialog", options);
   });
 };
 
-export const createFactory = (...args) => {
+export const createFactory = (id, config, inputDir, outputDir) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("createFactoryResult", (result) => resolve(result));
 
-    window.ipcRenderer.send("createFactory", ...args);
+    window.ipcRenderer.send("createFactory", id, config, inputDir, outputDir);
   });
 };
 
-export const factoryMaxCombinations = (...args) => {
+export const factoryMaxCombinations = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryMaxCombinationsResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryMaxCombinations", ...args);
+    window.ipcRenderer.send("factoryMaxCombinations", id);
   });
 };
 
-export const factoryInstance = (...args) => {
+export const factoryInstance = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryInstanceResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryInstance", ...args);
+    window.ipcRenderer.send("factoryInstance", id);
   });
 };
 
-export const factoryLoadLayers = (...args) => {
+export const factoryLoadLayers = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryLoadLayersResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryLoadLayers", ...args);
+    window.ipcRenderer.send("factoryLoadLayers", id);
   });
 };
 
-export const factoryBootstrapOutput = (...args) => {
+export const factoryBootstrapOutput = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryBootstrapOutputResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryBootstrapOutput", ...args);
+    window.ipcRenderer.send("factoryBootstrapOutput", id);
   });
 };
 
-export const factoryGenerateRandomAttributes = (...args) => {
+export const factoryGenerateRandomAttributes = (id, n) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryGenerateRandomAttributesResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryGenerateRandomAttributes", ...args);
+    window.ipcRenderer.send("factoryGenerateRandomAttributes", id, n);
   });
 };
 
-export const factoryGenerateAllAttributes = (...args) => {
+export const factoryGenerateAllAttributes = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryGenerateAllAttributesResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryGenerateAllAttributes", ...args);
+    window.ipcRenderer.send("factoryGenerateAllAttributes", id);
   });
 };
 
-export const factoryGenerateImages = (...args) => {
+export const factoryGenerateImages = (id, attributes, onProgress) => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer.once("factoryGenerateImagesResult", (result) =>
-      resolve(result)
-    );
+    const _onProgress = ({ id: _id, i }) => {
+      // if (_id === id && onProgress !== undefined) onProgress(i);
+    };
+    const onResult = (result) => {
+      window.ipcRenderer.removeListener(
+        "factoryGenerateImagesProgress",
+        _onProgress
+      );
+      resolve(result);
+    };
 
-    window.ipcRenderer.send("factoryGenerateImages", ...args);
+    window.ipcRenderer.on("factoryGenerateImagesProgress", _onProgress);
+    window.ipcRenderer.once("factoryGenerateImagesResult", onResult);
+    window.ipcRenderer.send("factoryGenerateImages", id, attributes);
   });
 };
 
-export const factoryGenerateMetadata = (...args) => {
+export const factoryGenerateMetadata = (id, cid, attributes) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryGenerateMetadataResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryGenerateMetadata", ...args);
+    window.ipcRenderer.send("factoryGenerateMetadata", id, cid, attributes);
   });
 };
 
-export const factoryDeployImages = (...args) => {
+export const factoryDeployImages = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryDeployImagesResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryDeployImages", ...args);
+    window.ipcRenderer.send("factoryDeployImages", id);
   });
 };
 
-export const factoryDeployMetadata = (...args) => {
+export const factoryDeployMetadata = (id) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("factoryDeployMetadataResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryDeployMetadata", ...args);
+    window.ipcRenderer.send("factoryDeployMetadata", id);
+  });
+};
+
+export const factoryGetRandomGeneratedImage = (id, attributes) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("factoryGetRandomGeneratedImageResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("factoryGetRandomGeneratedImage", id, attributes);
   });
 };

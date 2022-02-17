@@ -14,6 +14,7 @@ const sendWhitelist = [
   "factoryGenerateMetadata",
   "factoryDeployImages",
   "factoryDeployMetadata",
+  "factoryGetRandomGeneratedImage",
 ];
 
 const onWhitelist = [
@@ -26,10 +27,12 @@ const onWhitelist = [
   "factoryBootstrapOutputResult",
   "factoryGenerateRandomAttributesResult",
   "factoryGenerateAllAttributesResult",
+  "factoryGenerateImagesProgress",
   "factoryGenerateImagesResult",
   "factoryGenerateMetadataResult",
   "factoryDeployImagesResult",
   "factoryDeployMetadataResult",
+  "factoryGetRandomGeneratedImageResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -46,6 +49,11 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   once: (channel, listener) => {
     if (onWhitelist.includes(channel)) {
       return ipcRenderer.once(channel, (event, ...args) => listener(...args));
+    }
+  },
+  removeListener: (channel, listener) => {
+    if (onWhitelist.includes(channel)) {
+      return ipcRenderer.removeListener(channel, listener);
     }
   },
 });

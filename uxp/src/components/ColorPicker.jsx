@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react";
 
-import { WC } from "../components/WC.jsx";
+import { WC } from "./WC";
 
-import "./ColorPicker.css";
+import "../css/ColorPicker.css";
 
 export const ColorPicker = () => {
   const _sldR = useRef(null);
