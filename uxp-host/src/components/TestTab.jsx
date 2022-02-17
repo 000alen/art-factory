@@ -6,7 +6,19 @@ export function TestTab() {
   const navigator = useNavigate();
 
   const onClickTest = async () => {
-    navigator("/deploy");
+    navigator("/deploy", {
+      state: {
+        id: "x",
+        toReview: [],
+        attributes: [],
+        inputDir: "",
+        outputDir: "",
+        configuration: {
+          name: "",
+          symbol: "",
+        },
+      },
+    });
   };
 
   return (

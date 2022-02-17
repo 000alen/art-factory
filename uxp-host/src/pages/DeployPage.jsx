@@ -1,51 +1,72 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { Button } from "@adobe/react-spectrum";
-import Web3 from "web3";
-import QRCode from "react-qr-code";
+import { getContract } from "../ipcRenderer";
+import { providers, ContractFactory } from "ethers";
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export function DeployPage() {
+  const navigator = useNavigate();
+  const { state } = useLocation();
+  const { id, toReview, attributes, inputDir, outputDir, configuration } =
+    state;
+
   const [provider, setProvider] = useState(null);
-  const [web3, setWeb3] = useState(null);
-  // const [qrUri, setQrUri] = useState(null);
+  const [web3Provider, setWeb3Provider] = useState(null);
+  const [signer, setSigner] = useState(null);
 
   useEffect(() => {
     const _provider = new WalletConnectProvider({
       infuraId: "50adf8db20234b2d80ea3f1e23acef34",
-      // qrcode: false,
+      chainId: 3,
     });
-
-    // _provider.connector.on("display_uri", (err, payload) => {
-    //   const uri = payload.params[0];
-    //   setQrUri(uri);
-    // });
 
     setProvider(_provider);
   }, []);
 
   const onClickConnect = async () => {
     await provider.enable();
-    const _web3 = new Web3(provider);
+    const _web3Provider = new providers.Web3Provider(provider);
+    const _signer = await _web3Provider.getSigner();
 
-    setWeb3(_web3);
+    setWeb3Provider(_web3Provider);
+    setSigner(_signer);
+  };
+
+  const onClickTest = async () => {
+    const { contracts } = await getContract("NFT");
+
+    const { NFT } = contracts.NFT;
+    const { abi, evm } = NFT;
+    const { bytecode } = evm;
+    const { object } = bytecode;
+    const factory = new ContractFactory(abi, object, signer);
+
+    try {
+      const contract = await factory.deploy(
+        configuration.name,
+        configuration.symbol,
+        "x",
+        "y"
+      );
+
+      console.log(contract);
+    } catch (err) {}
   };
 
   return (
     <div>
-      {/* {qrUri ? (
-        <div className="w-screen h-screen flex justify-center items-center">
-          <QRCode value={qrUri} />
-        </div>
-      ) : ( */}
-        <>
-          <Link to="/">Home</Link>
-          <br />
-          DeployPage
-          <br />
-          <Button onPress={onClickConnect}>Connect</Button>
-        </>
-      {/* )} */}
+      <Link to="/">Home</Link>
+      <br />
+      DeployPage
+      <br />
+      <Button onPress={onClickConnect}>Connect</Button>
+      <br />
+      <Button onPress={onClickTest}>Test</Button>
     </div>
   );
 }

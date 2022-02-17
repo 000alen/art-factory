@@ -135,33 +135,30 @@ ipcMain.on("factoryGetImage", async (event, id, requestId, index) => {
   event.reply("factoryGetImageResult", requestId, image);
 });
 
-// ipcMain.on("compilerTest", (event) => {
-//   const input = {
-//     language: "Solidity",
-//     sources: {
-//       "test.sol": {
-//         content: "contract C { function f() public { } }",
-//       },
-//     },
-//     settings: {
-//       outputSelection: {
-//         "*": {
-//           "*": ["*"],
-//         },
-//       },
-//     },
-//   };
+ipcMain.on("getContract", async (event, name) => {
+  const content = await fs.promises.readFile(
+    path.join(__dirname, "contracts", `${name}.sol`),
+    {
+      encoding: "utf8",
+    }
+  );
 
-//   const output = JSON.parse(solc.compile(JSON.stringify(input)));
-//   event.reply("compilerTestResult", output);
-// });
+  const input = {
+    language: "Solidity",
+    sources: {
+      [name]: {
+        content,
+      },
+    },
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["*"],
+        },
+      },
+    },
+  };
 
-// ipcMain.on("getContract", async (event) => {
-//   const contractSource = await fs.promises.readFile(
-//     path.join(__dirname, "contracts", "NFT.sol"),
-//     {
-//       encoding: "utf8",
-//     }
-//   );
-//   event.reply("getContractResult", contractSource);
-// });
+  const output = JSON.parse(solc.compile(JSON.stringify(input)));
+  event.reply("getContractResult", output);
+});

@@ -162,3 +162,11 @@ export const factoryGetImage = (id, index) => {
     window.ipcRenderer.send("factoryGetImage", id, requestId, index);
   });
 };
+
+export const getContract = (name) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("getContractResult", (result) => resolve(result));
+
+    window.ipcRenderer.send("getContract", name);
+  });
+};
