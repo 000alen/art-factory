@@ -128,6 +128,12 @@ ipcMain.on("factoryGetRandomGeneratedImage", async (event, id, attributes) => {
   event.reply("factoryGetRandomGeneratedImageResult", image);
 });
 
+ipcMain.on("factoryGetImage", async (event, id, requestId, index) => {
+  const factory = factories[id];
+  const image = factory.getImage(index);
+  event.reply("factoryGetImageResult", requestId, image);
+});
+
 // ipcMain.on("compilerTest", (event) => {
 //   const input = {
 //     language: "Solidity",

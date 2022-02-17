@@ -100,10 +100,20 @@ async function pinDirectoryToIPFS(pinataApiKey, pinataSecretApiKey, src) {
     .then((response) => response.data);
 }
 
+function getTraitValueByFilename(filename) {
+  const trait_value = filename.split("#");
+
+  if (trait_value.length != 2)
+    throw new Error(`File ${filename} doesnt have the correct format`);
+
+  return trait_value[0];
+}
+
 module.exports = {
   RARITY_DELIMITER,
   randomColor,
   rarity,
   rarityWeightedChoice,
   pinDirectoryToIPFS,
+  getTraitValueByFilename,
 };

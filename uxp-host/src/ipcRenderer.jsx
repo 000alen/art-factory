@@ -1,3 +1,5 @@
+import { v4 as uuid } from "uuid";
+
 export const showOpenDialog = (options) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("showOpenDialogResult", (result) =>
@@ -142,5 +144,21 @@ export const factoryGetRandomGeneratedImage = (id, attributes) => {
     );
 
     window.ipcRenderer.send("factoryGetRandomGeneratedImage", id, attributes);
+  });
+};
+
+export const factoryGetImage = (id, index) => {
+  const requestId = uuid();
+
+  return new Promise((resolve, reject) => {
+    const listener = (_requestId, result) => {
+      if (_requestId === requestId) {
+        window.ipcRenderer.removeListener("factoryGetImageResult", listener);
+        resolve(result);
+      }
+    };
+
+    window.ipcRenderer.on("factoryGetImageResult", listener);
+    window.ipcRenderer.send("factoryGetImage", id, requestId, index);
   });
 };

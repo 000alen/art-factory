@@ -3,12 +3,10 @@ const path = require("path");
 const Jimp = require("jimp");
 const { randomColor, rarityWeightedChoice, rarity } = require("./utils");
 const dotenv = require("dotenv");
-const { pinDirectoryToIPFS } = require("./utils");
+const { pinDirectoryToIPFS, getTraitValueByFilename } = require("./utils");
 
 dotenv.config();
 
-// ! TODO: Support vectorized images
-// TODO: Support 3D assets
 class Factory {
   layers;
   buffers;
@@ -46,34 +44,27 @@ class Factory {
   }
 
   async loadLayers() {
-    try {
-      // Read the layers folders
-      const layersNames = (await fs.promises.readdir(this.inputDir)).filter(
-        (file) => !file.startsWith(".")
-      );
+    const layersNames = (await fs.promises.readdir(this.inputDir)).filter(
+      (file) => !file.startsWith(".")
+    );
 
-      // Read the files from layers
-      const layersElements = await Promise.all(
-        layersNames.map(async (layerName) =>
-          (
-            await fs.promises.readdir(path.join(this.inputDir, layerName))
-          ).filter((file) => !file.startsWith("."))
-        )
-      );
+    const layersElements = await Promise.all(
+      layersNames.map(async (layerName) =>
+        (
+          await fs.promises.readdir(path.join(this.inputDir, layerName))
+        ).filter((file) => !file.startsWith("."))
+      )
+    );
 
-      // Put the layers on a map
-      layersNames.forEach((layerName, i) => {
-        this.layers.set(
-          layerName,
-          layersElements[i].map((layerElement) => ({
-            name: layerElement,
-            rarity: rarity(layerElement),
-          }))
-        );
-      });
-    } catch (error) {
-      throw error;
-    }
+    layersNames.forEach((layerName, i) => {
+      this.layers.set(
+        layerName,
+        layersElements[i].map((layerElement) => ({
+          name: layerElement,
+          rarity: rarity(layerElement),
+        }))
+      );
+    });
   }
 
   async bootstrapOutput() {
@@ -184,15 +175,6 @@ class Factory {
     );
   }
 
-  getTraitValueByFilename(filename) {
-    const trait_value = filename.split("#");
-
-    if (trait_value.length != 2)
-      throw new Error(`File ${filename} doesnt have the correct format`);
-
-    return trait_value[0];
-  }
-
   async generateMetadata(cid, attributes) {
     const metadatas = [];
     for (let i = 0; i < attributes.length; i++) {
@@ -206,7 +188,7 @@ class Factory {
         date: Date.now(),
         attributes: traits.map((trait) => ({
           trait_type: trait.name,
-          value: this.getTraitValueByFilename(trait.value),
+          value: getTraitValueByFilename(trait.value),
         })),
       };
       metadatas.push(metadata);
@@ -223,7 +205,6 @@ class Factory {
     );
   }
 
-  // ! TODO: Optimize; buffers might be loaded in this.buffers (use this.ensureBuffer)
   async deployImages(force = false) {
     if (this.imagesCID !== undefined && !force) {
       console.warn(
@@ -268,6 +249,12 @@ class Factory {
 
   getRandomGeneratedImage(attributes) {
     const index = Math.floor(Math.random() * attributes.length);
+    return fs.readFileSync(
+      path.join(this.outputDir, "images", `${index + 1}.png`)
+    );
+  }
+
+  getImage(index) {
     return fs.readFileSync(
       path.join(this.outputDir, "images", `${index + 1}.png`)
     );

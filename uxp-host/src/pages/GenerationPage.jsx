@@ -19,14 +19,14 @@ import {
 export function GenerationPage() {
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir, configuration } = state;
+  const { n, inputDir, outputDir, configuration } = state;
 
   const [id, setId] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
-  const [maxGenerations, setMaxGenerations] = useState(100);
   const [currentGeneration, setCurrentGeneration] = useState(0);
+  const [attributes, setAttributes] = useState([]);
 
   useEffect(() => {
     const _id = uuid();
@@ -43,14 +43,15 @@ export function GenerationPage() {
     setIsGenerating(true);
     await factoryLoadLayers(id);
     await factoryBootstrapOutput(id);
-    const attributes = await factoryGenerateRandomAttributes(id, 100);
-    await factoryGenerateImages(id, attributes, onProgress);
+    const _attributes = await factoryGenerateRandomAttributes(id, n);
+    await factoryGenerateImages(id, _attributes, onProgress);
 
-    const buffer = await factoryGetRandomGeneratedImage(id, attributes);
+    const buffer = await factoryGetRandomGeneratedImage(id, _attributes);
     const blob = new Blob([buffer], { type: "image/png" });
     const url = URL.createObjectURL(blob);
 
     setImageUrl(url);
+    setAttributes(_attributes);
     setIsGenerating(false);
     setGenerationDone(true);
   };
@@ -59,6 +60,7 @@ export function GenerationPage() {
     navigator("/quality", {
       state: {
         id,
+        attributes,
         inputDir,
         outputDir,
         configuration,
@@ -78,7 +80,7 @@ export function GenerationPage() {
         {isGenerating ? (
           <ProgressCircle aria-label="Loading…" isIndeterminate />
         ) : generationDone ? (
-          <img className="rounded-md w-56 h-56" src={imageUrl}></img>
+          <img className="rounded-md w-full h-full" src={imageUrl}></img>
         ) : (
           <></>
         )}
@@ -88,7 +90,7 @@ export function GenerationPage() {
         <ProgressBar
           label="Generating..."
           minValue={0}
-          maxValue={maxGenerations}
+          maxValue={n}
           value={currentGeneration}
         />
       ) : generationDone ? (

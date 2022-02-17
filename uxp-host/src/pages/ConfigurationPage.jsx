@@ -6,8 +6,11 @@ import {
   Flex,
   Heading,
   TextField,
+  NumberField,
   Switch,
   ActionButton,
+  Text,
+  TextArea,
 } from "@adobe/react-spectrum";
 
 import Add from "@spectrum-icons/workflow/Add";
@@ -19,7 +22,9 @@ export function ConfigurationPage() {
   const { inputDir, outputDir } = state;
 
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
+  const [n, setN] = useState(1);
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
@@ -52,10 +57,12 @@ export function ConfigurationPage() {
   const onClickContinue = () => {
     navigator("/generation", {
       state: {
+        n,
         inputDir,
         outputDir,
         configuration: {
           name,
+          description,
           symbol,
           width: Number(width),
           height: Number(height),
@@ -75,11 +82,14 @@ export function ConfigurationPage() {
 
       <Flex direction="row" alignSelf="center" gap="size-600">
         <Flex direction="column">
-          <Heading> General configuration </Heading>
           <TextField label="Name" value={name} onChange={setName} />
+          <TextArea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+          />
+
           <TextField label="Symbol" value={symbol} onChange={setSymbol} />
-          <TextField label="Width" value={width} onChange={setWidth} />
-          <TextField label="Height" value={height} onChange={setHeight} />
 
           <Switch
             margin="size-10"
@@ -102,7 +112,19 @@ export function ConfigurationPage() {
           height="size-500"
           overflow="hidden visible"
         >
-          <Heading> Layers configuration </Heading>
+          <Flex gap="size-100">
+            <NumberField
+              label="N"
+              defaultValue={10}
+              minValue={1}
+              value={n}
+              onChange={setN}
+            />
+            <NumberField label="Width" value={width} onChange={setWidth} />
+            <NumberField label="Height" value={height} onChange={setHeight} />
+          </Flex>
+
+          <Text>Layers</Text>
 
           <Flex direction="column" gap="size-100">
             {layers.map((layer, index) => (
@@ -111,6 +133,7 @@ export function ConfigurationPage() {
                 aria-label={`Layer ${index + 1}`}
                 value={layer}
                 onChange={(value) => onEditLayer(index, value)}
+                width="100%"
               />
             ))}
           </Flex>
