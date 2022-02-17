@@ -91,7 +91,7 @@ export const factoryGenerateAllAttributes = (id) => {
 export const factoryGenerateImages = (id, attributes, onProgress) => {
   return new Promise((resolve, reject) => {
     const _onProgress = ({ id: _id, i }) => {
-      // if (_id === id && onProgress !== undefined) onProgress(i);
+      if (_id === id && onProgress !== undefined) onProgress(i);
     };
     const onResult = (result) => {
       window.ipcRenderer.removeListener(

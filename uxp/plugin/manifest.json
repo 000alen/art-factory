@@ -18,9 +18,9 @@
     },
     {
       "type": "panel",
-      "id": "demos",
+      "id": "configuration",
       "label": {
-        "default": "Demo Panel"
+        "default": "Configuration"
       },
       "minimumSize": { "width": 230, "height": 200 },
       "maximumSize": { "width": 2000, "height": 2000 },
