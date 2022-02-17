@@ -21,7 +21,7 @@ export const ConfigurationPanel = () => {
         <sp-label slot="label">Default Background</sp-label>
       </sp-textfield>
 
-      <div>
+      <div className="flex flex-row">
         <sp-textfield>
           <sp-label slot="label">N</sp-label>
         </sp-textfield>
@@ -31,7 +31,7 @@ export const ConfigurationPanel = () => {
         </sp-textfield>
 
         <sp-textfield>
-          <sp-label slot="label">Width</sp-label>
+          <sp-label slot="label">Height</sp-label>
         </sp-textfield>
       </div>
 
