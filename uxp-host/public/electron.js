@@ -12,9 +12,10 @@ const factories = {};
 const createWindow = () => {
   const window = new BrowserWindow({
     autoHideMenuBar: true,
-    resizable: false,
-    width: 800,
-    height: 600,
+    minWidth: 1024,
+    minHeight: 768,
+    width: 1024,
+    height: 768,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },

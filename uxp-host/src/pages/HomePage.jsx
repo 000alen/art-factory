@@ -16,6 +16,7 @@ export function HomePage() {
   return (
     <Flex
       direction="column"
+      height="100%"
       gap="size-100"
       alignItems="center"
       justifyContent="center"

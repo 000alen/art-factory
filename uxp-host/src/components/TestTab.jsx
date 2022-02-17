@@ -6,7 +6,7 @@ export function TestTab() {
   const navigator = useNavigate();
 
   const onClickTest = async () => {
-    navigator("/quality");
+    navigator("/deploy");
   };
 
   return (
