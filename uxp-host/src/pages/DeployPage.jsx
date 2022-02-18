@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { Button } from "@adobe/react-spectrum";
 import { getContract } from "../ipcRenderer";
-import { providers, ContractFactory } from "ethers";
+import { providers, ContractFactory, ethers } from "ethers";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -46,16 +46,25 @@ export function DeployPage() {
     const { object } = bytecode;
     const factory = new ContractFactory(abi, object, signer);
 
+    console.log("Starting");
+
     try {
       const contract = await factory.deploy(
         configuration.name,
         configuration.symbol,
         "x",
-        "y"
+        "y",
+        {
+          gasPrice: ethers.utils.parseUnits("10", "gwei"),
+        }
       );
 
-      console.log(contract);
-    } catch (err) {}
+      console.log("Waiting for transaction to be mined...");
+      await contract.deployTransaction.wait();
+      console.log("Transaction mined!");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
