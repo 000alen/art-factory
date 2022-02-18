@@ -8,6 +8,7 @@ import { About } from "./components/About";
 import { ConfigurationPanel } from "./panels/ConfigurationPanel";
 
 import { entrypoints } from "uxp";
+import { TestPanel } from "./panels/TestPanel";
 
 const socket = io("http://127.0.0.1:4040");
 
@@ -55,11 +56,32 @@ const configurationController = new PanelController(
   }
 );
 
+const testController = new PanelController(() => <TestPanel />, {
+  id: "test",
+  menuItems: [
+    {
+      id: "reload2",
+      label: "Reload Plugin",
+      enabled: true,
+      checked: false,
+      oninvoke: () => location.reload(),
+    },
+    {
+      id: "dialog2",
+      label: "About this Plugin",
+      enabled: true,
+      checked: false,
+      oninvoke: () => aboutController.run(),
+    },
+  ],
+});
+
 entrypoints.setup({
   commands: {
     showAbout: aboutController,
   },
   panels: {
     configuration: configurationController,
+    test: testController,
   },
 });
