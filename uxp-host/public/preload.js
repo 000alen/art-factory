@@ -17,6 +17,7 @@ const sendWhitelist = [
   "factoryGetRandomGeneratedImage",
   "factoryGetImage",
   "getContract",
+  "getOutputDir",
 ];
 
 const onWhitelist = [
@@ -37,6 +38,7 @@ const onWhitelist = [
   "factoryGetRandomGeneratedImageResult",
   "factoryGetImageResult",
   "getContractResult",
+  "getOutputDirResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

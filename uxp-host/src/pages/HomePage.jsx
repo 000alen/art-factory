@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import {
   Flex,
   Heading,
@@ -11,8 +11,30 @@ import {
 import { NewTab } from "../components/NewTab";
 import { OpenTab } from "../components/OpenTab";
 import { TestTab } from "../components/TestTab";
+import { useNavigate } from "react-router-dom";
+import { getOutputDir } from "../ipcRenderer";
+import { SocketContext } from "../components/SocketContext";
 
 export function HomePage() {
+  const navigator = useNavigate();
+
+  const socket = useContext(SocketContext);
+
+  useEffect(() => {
+    socket.on("uxp-generate", async ({ n, inputDir, configuration }) => {
+      const outputDir = await getOutputDir(inputDir);
+
+      navigator("/generation", {
+        state: {
+          n: Number(n),
+          inputDir,
+          outputDir,
+          configuration,
+        },
+      });
+    });
+  }, []);
+
   return (
     <Flex
       direction="column"

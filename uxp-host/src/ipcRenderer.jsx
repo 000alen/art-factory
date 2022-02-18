@@ -170,3 +170,11 @@ export const getContract = (name) => {
     window.ipcRenderer.send("getContract", name);
   });
 };
+
+export const getOutputDir = (inputDir) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("getOutputDirResult", (result) => resolve(result));
+
+    window.ipcRenderer.send("getOutputDir", inputDir);
+  });
+};

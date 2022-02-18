@@ -162,3 +162,11 @@ ipcMain.on("getContract", async (event, name) => {
   const output = JSON.parse(solc.compile(JSON.stringify(input)));
   event.reply("getContractResult", output);
 });
+
+ipcMain.on("getOutputDir", (event, inputDir) => {
+  const outputDir = path.join(
+    path.dirname(inputDir),
+    `${path.basename(inputDir)}_build`
+  );
+  event.reply("getOutputDirResult", outputDir);
+});

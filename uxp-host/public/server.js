@@ -1,6 +1,6 @@
-const http = require('http');
-const express = require('express');
-const { Server } = require('socket.io');
+const http = require("http");
+const express = require("express");
+const { Server } = require("socket.io");
 
 const startServer = async () => {
   const port = 4040;
@@ -8,9 +8,9 @@ const startServer = async () => {
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
-      origin: '*',
-      methods: ['GET'],
-      transports: ['websocket'],
+      origin: "*",
+      methods: ["GET"],
+      transports: ["websocket"],
     },
   });
 
@@ -18,34 +18,38 @@ const startServer = async () => {
     console.log(`[server] Server listening on port ${port}`);
   });
 
-  io.on('connection', (socket) => {
-    io.emit('server-connection', true);
+  io.on("connection", (socket) => {
+    io.emit("server-connection", true);
 
-    socket.on('uxp-connected', () => {
-      io.emit('uxp-connected', true);
+    socket.on("uxp-connected", () => {
+      io.emit("uxp-connected", true);
     });
 
-    socket.on('message', (message) => {
-      io.emit('uxp-message', message);
+    socket.on("message", (message) => {
+      io.emit("uxp-message", message);
     });
 
-    socket.on('helper-message', (message) => {
-      io.emit('message', message);
+    socket.on("helper-message", (message) => {
+      io.emit("message", message);
     });
 
-    socket.on('disconnect', () => {
-      io.emit('uxp-connected', false);
+    socket.on("disconnect", () => {
+      io.emit("uxp-connected", false);
+    });
+
+    socket.on("uxp-generate", ({ n, inputDir, configuration }) => {
+      io.emit("uxp-generate", { n, inputDir, configuration });
     });
   });
 
   // Emit connect when uxp attempts to reconnect
-  io.on('reconnect', () => {
-    io.emit('server-connection', true);
+  io.on("reconnect", () => {
+    io.emit("server-connection", true);
   });
 
   // Emit disconnect when helper app closes
-  process.on('exit', () => {
-    io.emit('server-connection', false);
+  process.on("exit", () => {
+    io.emit("server-connection", false);
   });
 };
 

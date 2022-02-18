@@ -41,11 +41,11 @@ export function GenerationPage() {
 
   const onClickGenerate = async () => {
     setIsGenerating(true);
+
     await factoryLoadLayers(id);
     await factoryBootstrapOutput(id);
     const _attributes = await factoryGenerateRandomAttributes(id, n);
     await factoryGenerateImages(id, _attributes, onProgress);
-
     const buffer = await factoryGetRandomGeneratedImage(id, _attributes);
     const blob = new Blob([buffer], { type: "image/png" });
     const url = URL.createObjectURL(blob);

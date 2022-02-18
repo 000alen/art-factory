@@ -18,7 +18,7 @@ export async function exportAll(executionControl, userFolder) {
     layer.visible = true;
 
     const layerFolder = await userFolder.createFolder(
-      `${i + 1}. ${layer.name}`
+      `${doc.layers.length - i}. ${layer.name}`
     );
     for (const layerElement of layer.layers) {
       layerElement.visible = true;

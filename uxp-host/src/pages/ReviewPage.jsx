@@ -10,12 +10,14 @@ export function ReviewPage() {
 
   const onClickContinue = async () => {
     navigator("/deploy", {
-      id,
-      toReview,
-      attributes,
-      inputDir,
-      outputDir,
-      configuration,
+      state: {
+        id,
+        toReview,
+        attributes,
+        inputDir,
+        outputDir,
+        configuration,
+      },
     });
   };
 
