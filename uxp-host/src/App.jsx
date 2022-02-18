@@ -11,12 +11,34 @@ import { InstancePage } from "./pages/InstancePage";
 import { ReviewPage } from "./pages/ReviewPage";
 
 const App = () => {
+  // const navigator = useNavigate();
+
   const socket = useContext(SocketContext);
   const [connectionStatus, setConnectionStatus] = useState(false);
+  const [x, setX] = useState(false);
 
   useEffect(() => {
     socket.on("uxp-connected", (isUXPConnected) => {
       setConnectionStatus(isUXPConnected);
+    });
+
+    socket.on("uxp-generate", ({ n, inputDir, outputDir, configuration }) => {
+      console.log({
+        n,
+        inputDir,
+        outputDir,
+        configuration,
+      });
+      setX(true);
+
+      // navigator("/generate", {
+      //   state: {
+      //     n,
+      //     inputDir,
+      //     outputDir,
+      //     configuration,
+      //   },
+      // });
     });
   }, []);
 
@@ -28,6 +50,10 @@ const App = () => {
 
   return (
     <Router>
+      {/* {connectionStatusLight} */}
+
+      {x ? <div>RECIBIDO</div> : <></>}
+
       <Flex direction="column" gap="size-100" height="100vh">
         <Routes>
           <Route path="/" element={<HomePage />} />

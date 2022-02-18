@@ -2,6 +2,7 @@ output/
 typechain-types/
 build/
 BoredApe/
+BoredApeBuild/
 
 # Logs
 logs

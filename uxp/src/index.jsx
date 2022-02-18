@@ -1,16 +1,14 @@
 import React from "react";
-import { io } from "socket.io-client";
 
 import "./css/index.css";
 import { PanelController } from "./controllers/PanelController";
 import { CommandController } from "./controllers/CommandController";
 import { About } from "./components/About";
 import { ConfigurationPanel } from "./panels/ConfigurationPanel";
+import { socket, SocketContext } from "./components/SocketContext";
 
 import { entrypoints } from "uxp";
 import { TestPanel } from "./panels/TestPanel";
-
-const socket = io("http://127.0.0.1:4040");
 
 socket.on("connect_error", () => {
   socket.emit("reconnect", true);
@@ -34,7 +32,11 @@ const aboutController = new CommandController(
 );
 
 const configurationController = new PanelController(
-  () => <ConfigurationPanel />,
+  () => (
+    <SocketContext.Provider value={socket}>
+      <ConfigurationPanel />
+    </SocketContext.Provider>
+  ),
   {
     id: "configuration",
     menuItems: [
@@ -56,25 +58,32 @@ const configurationController = new PanelController(
   }
 );
 
-const testController = new PanelController(() => <TestPanel />, {
-  id: "test",
-  menuItems: [
-    {
-      id: "reload2",
-      label: "Reload Plugin",
-      enabled: true,
-      checked: false,
-      oninvoke: () => location.reload(),
-    },
-    {
-      id: "dialog2",
-      label: "About this Plugin",
-      enabled: true,
-      checked: false,
-      oninvoke: () => aboutController.run(),
-    },
-  ],
-});
+const testController = new PanelController(
+  () => (
+    <SocketContext.Provider value={socket}>
+      <TestPanel />
+    </SocketContext.Provider>
+  ),
+  {
+    id: "test",
+    menuItems: [
+      {
+        id: "reload2",
+        label: "Reload Plugin",
+        enabled: true,
+        checked: false,
+        oninvoke: () => location.reload(),
+      },
+      {
+        id: "dialog2",
+        label: "About this Plugin",
+        enabled: true,
+        checked: false,
+        oninvoke: () => aboutController.run(),
+      },
+    ],
+  }
+);
 
 entrypoints.setup({
   commands: {
