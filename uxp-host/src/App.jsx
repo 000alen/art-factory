@@ -22,14 +22,16 @@ const App = () => {
   }, []);
 
   const connectionStatusLight = connectionStatus ? (
-    <StatusLight variant="positive">Connected to UXP</StatusLight>
+    <StatusLight variant="positive">Connected</StatusLight>
   ) : (
-    <StatusLight variant="negative">Disconnected from UXP</StatusLight>
+    <StatusLight variant="negative">Disconnected</StatusLight>
   );
 
   return (
     <Router>
       <Flex direction="column" gap="size-100" height="100vh">
+        {connectionStatusLight}
+
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/configuration" element={<ConfigurationPage />} />

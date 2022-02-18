@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const isDevelopment = require("electron-is-dev");
 const path = require("path");
 const solc = require("solc");
-const { Factory } = require("./art");
+const { Factory, loadInstance } = require("./art");
 const fs = require("fs");
 
 require("./server.js");
@@ -49,6 +49,11 @@ app.on("activate", () => {
   }
 });
 
+ipcMain.on("mkDir", async (event, ...args) => {
+  await fs.promises.mkdir(...args);
+  event.send("mkDirResult", true);
+});
+
 ipcMain.on("showOpenDialog", async (event, ...args) => {
   const result = await dialog.showOpenDialog(...args);
   event.reply("showOpenDialogResult", result);
@@ -59,8 +64,27 @@ ipcMain.on("showSaveDialog", async (event, ...args) => {
   event.reply("showSaveDialogResult", result);
 });
 
-ipcMain.on("createFactory", (event, id, config, inputDir, outputDir) => {
+ipcMain.on("createFactory", (event, id, config, inputDir, outputDir, props) => {
   const factory = new Factory(config, inputDir, outputDir);
+  if (props) {
+    const {
+      n,
+      attributes,
+      generated,
+      metadataGenerated,
+      imagesCID,
+      metadataCID,
+      contractAddress,
+    } = props;
+    factory.n = n;
+    factory.attributes = attributes;
+    factory.generated = generated;
+    factory.metadataGenerated = metadataGenerated;
+    factory.imagesCID = imagesCID;
+    factory.metadataCID = metadataCID;
+    factory.contractAddress = contractAddress;
+  }
+
   factories[id] = factory;
   event.reply("createFactoryResult", id);
 });
@@ -71,6 +95,18 @@ ipcMain.on("factoryMaxCombinations", (event, id) => {
 
 ipcMain.on("factoryInstance", (event, id) => {
   event.reply("factoryInstanceResult", factories[id].instance);
+});
+
+ipcMain.on("factorySaveInstance", async (event, id) => {
+  const factory = factories[id];
+  const instancePath = await factory.saveInstance();
+  event.reply("factorySaveInstanceResult", instancePath);
+});
+
+ipcMain.on("factoryLoadInstance", async (event, id, instancePath) => {
+  const factory = await loadInstance(instancePath);
+  factories[id] = factory;
+  event.reply("factoryLoadInstanceResult", id);
 });
 
 ipcMain.on("factoryLoadLayers", async (event, id) => {

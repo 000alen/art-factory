@@ -12,7 +12,7 @@ function sleep(ms) {
 export function DeployPage() {
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { id, toReview, attributes, inputDir, outputDir, configuration } =
+  const { id, attributes, inputDir, outputDir, configuration } =
     state;
 
   const [provider, setProvider] = useState(null);

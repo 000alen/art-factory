@@ -12,7 +12,6 @@ export function ReviewPage() {
     navigator("/deploy", {
       state: {
         id,
-        toReview,
         attributes,
         inputDir,
         outputDir,

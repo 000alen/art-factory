@@ -1,23 +1,17 @@
 import React, { useContext, useEffect } from "react";
-import {
-  Flex,
-  Heading,
-  Text,
-  Tabs,
-  TabList,
-  TabPanels,
-  Item,
-} from "@adobe/react-spectrum";
-import { NewTab } from "../components/NewTab";
-import { OpenTab } from "../components/OpenTab";
-import { TestTab } from "../components/TestTab";
+import { Flex, Heading, Text, Button } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
-import { getOutputDir } from "../ipcRenderer";
+import {
+  factoryInstance,
+  factoryLoadInstance,
+  getOutputDir,
+} from "../ipcRenderer";
 import { SocketContext } from "../components/SocketContext";
+import { showOpenDialog } from "../ipcRenderer";
+import { v4 as uuid } from "uuid";
 
 export function HomePage() {
   const navigator = useNavigate();
-
   const socket = useContext(SocketContext);
 
   useEffect(() => {
@@ -35,6 +29,87 @@ export function HomePage() {
     });
   }, []);
 
+  const onOpenDirectory = async () => {
+    const { canceled, filePaths } = await showOpenDialog({
+      properties: ["openFile", "openDirectory"],
+    });
+
+    if (canceled) return;
+
+    const [inputDir] = filePaths;
+    const outputDir = await getOutputDir(inputDir);
+
+    navigator("/configuration", {
+      state: {
+        inputDir,
+        outputDir,
+      },
+    });
+  };
+
+  const onOpenInstance = async () => {
+    const { canceled, filePaths } = await showOpenDialog({
+      properties: ["openFile"],
+      filters: [
+        {
+          name: "Instance",
+          extensions: ["json"],
+        },
+      ],
+    });
+
+    if (canceled) return;
+
+    const [instancePath] = filePaths;
+
+    const id = uuid();
+    await factoryLoadInstance(id, instancePath);
+    const {
+      inputDir,
+      outputDir,
+      configuration,
+      n,
+      attributes,
+      generated,
+      metadataGenerated,
+      imagesCID,
+      metadataCID,
+      contractAddress,
+    } = await factoryInstance(id);
+
+    if (!attributes || !generated) {
+      navigator("/generation", {
+        state: { id, n, inputDir, outputDir, configuration },
+      });
+    } else if (
+      !metadataGenerated ||
+      !imagesCID ||
+      !metadataCID ||
+      !contractAddress
+    ) {
+      navigator("/quality", {
+        state: {
+          id,
+          attributes,
+          inputDir,
+          outputDir,
+          configuration,
+        },
+      });
+    } else if (contractAddress) {
+      navigator("/instance", {
+        state: {
+          id,
+          attributes,
+          inputDir,
+          outputDir,
+          configuration,
+          contractAddress,
+        },
+      });
+    }
+  };
+
   return (
     <Flex
       direction="column"
@@ -51,26 +126,12 @@ export function HomePage() {
         To start, load the UXP plugin into Photoshop or open a directory
       </Text>
 
-      <Flex width="size-6000" height="size-8000">
-        <Tabs aria-label="UXP Helper Options">
-          <TabList>
-            <Item key="new">New Collection</Item>
-            <Item key="open">Open an existing Collection</Item>
-            <Item key="test">Testing</Item>
-          </TabList>
+      <Flex gap="size-100">
+        <Button variant="cta" onPress={onOpenDirectory}>
+          Open Directory!
+        </Button>
 
-          <TabPanels>
-            <Item key="new">
-              <NewTab />
-            </Item>
-            <Item key="open">
-              <OpenTab />
-            </Item>
-            <Item key="test">
-              <TestTab />
-            </Item>
-          </TabPanels>
-        </Tabs>
+        <Button onPress={onOpenInstance}>Open Instance!</Button>
       </Flex>
     </Flex>
   );

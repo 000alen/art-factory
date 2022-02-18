@@ -11,6 +11,10 @@ class Factory {
   layers;
   buffers;
 
+  n;
+  attributes;
+  generated;
+  metadataGenerated;
   imagesCID;
   metadataCID;
   contractAddress;
@@ -31,16 +35,28 @@ class Factory {
 
   get instance() {
     return {
+      inputDir: this.inputDir,
+      outputDir: this.outputDir,
+      configuration: this.configuration,
+
+      n: this.n,
+      attributes: this.attributes,
+      generated: this.generated,
+      metadataGenerated: this.metadataGenerated,
       imagesCID: this.imagesCID,
       metadataCID: this.metadataCID,
       contractAddress: this.contractAddress,
     };
   }
 
-  loadInstance({ imagesCID, metadataCID, contractAddress }) {
-    this.imagesCID = imagesCID;
-    this.metadataCID = metadataCID;
-    this.contractAddress = contractAddress;
+  async saveInstance() {
+    await this.bootstrapOutput();
+
+    const instance = this.instance;
+    const instancePath = path.join(this.outputDir, "instance.json");
+    await fs.promises.writeFile(instancePath, JSON.stringify(instance));
+
+    return instancePath;
   }
 
   async loadLayers() {
@@ -68,10 +84,16 @@ class Factory {
   }
 
   async bootstrapOutput() {
-    if (fs.existsSync(this.outputDir))
-      fs.rmSync(this.outputDir, { recursive: true });
-    fs.mkdirSync(this.outputDir);
+    if (!fs.existsSync(this.outputDir))
+      //   fs.rmSync(this.outputDir, { recursive: true });
+      fs.mkdirSync(this.outputDir);
+
+    if (fs.existsSync(path.join(this.outputDir, "json")))
+      fs.rmSync(path.join(this.outputDir, "json"), { recursive: true });
     fs.mkdirSync(path.join(this.outputDir, "json"));
+
+    if (fs.existsSync(path.join(this.outputDir, "images")))
+      fs.rmSync(path.join(this.outputDir, "images"), { recursive: true });
     fs.mkdirSync(path.join(this.outputDir, "images"));
   }
 
@@ -80,6 +102,8 @@ class Factory {
       console.warn(
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
+
+    this.n = n;
 
     const attributes = [];
 
@@ -99,10 +123,14 @@ class Factory {
       attributes.push(attribute);
     }
 
+    this.attributes = attributes;
+
     return attributes;
   }
 
   generateAllAttributes() {
+    this.n = this.maxCombinations;
+
     const attributes = [];
 
     function* generator(configuration, layers, n) {
@@ -128,6 +156,8 @@ class Factory {
     )) {
       attributes.push(attribute);
     }
+
+    this.attributes = attributes;
 
     return attributes;
   }
@@ -173,6 +203,7 @@ class Factory {
         if (callback !== undefined) callback(i + 1);
       })
     );
+    this.generated = true;
   }
 
   async generateMetadata(cid, attributes) {
@@ -203,6 +234,8 @@ class Factory {
       path.join(this.outputDir, "json", "metadata.json"),
       JSON.stringify(metadatas)
     );
+
+    this.metadataGenerated = true;
   }
 
   async deployImages(force = false) {
@@ -261,4 +294,28 @@ class Factory {
   }
 }
 
-module.exports = { Factory };
+async function loadInstance(instancePath) {
+  const {
+    inputDir,
+    outputDir,
+    configuration,
+    n,
+    attributes,
+    generated,
+    metadataGenerated,
+    imagesCID,
+    metadataCID,
+    contractAddress,
+  } = JSON.parse(await fs.promises.readFile(instancePath, "utf8"));
+  const factory = new Factory(configuration, inputDir, outputDir);
+  factory.n = n;
+  factory.attributes = attributes;
+  factory.generated = generated;
+  factory.metadataGenerated = metadataGenerated;
+  factory.imagesCID = imagesCID;
+  factory.metadataCID = metadataCID;
+  factory.contractAddress = contractAddress;
+  return factory;
+}
+
+module.exports = { Factory, loadInstance };

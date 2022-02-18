@@ -1,11 +1,14 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 const sendWhitelist = [
+  "mkDir",
   "showOpenDialog",
   "showSaveDialog",
   "createFactory",
   "factoryMaxCombinations",
   "factoryInstance",
+  "factorySaveInstance",
+  "factoryLoadInstance",
   "factoryLoadLayers",
   "factoryBootstrapOutput",
   "factoryGenerateRandomAttributes",
@@ -21,11 +24,14 @@ const sendWhitelist = [
 ];
 
 const onWhitelist = [
+  "mkDirResult",
   "showOpenDialogResult",
   "showSaveDialogResult",
   "createFactoryResult",
   "factoryMaxCombinationsResult",
   "factoryInstanceResult",
+  "factorySaveInstanceResult",
+  "factoryLoadInstanceResult",
   "factoryLoadLayersResult",
   "factoryBootstrapOutputResult",
   "factoryGenerateRandomAttributesResult",

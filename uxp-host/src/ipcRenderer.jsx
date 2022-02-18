@@ -1,5 +1,13 @@
 import { v4 as uuid } from "uuid";
 
+export const mkDir = (dir, options) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("mkDirResult", (result) => resolve(result));
+
+    window.ipcRenderer.send("mkDir", dir, options);
+  });
+};
+
 export const showOpenDialog = (options) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("showOpenDialogResult", (result) =>
@@ -20,11 +28,18 @@ export const showSaveDialog = (options) => {
   });
 };
 
-export const createFactory = (id, config, inputDir, outputDir) => {
+export const createFactory = (id, config, inputDir, outputDir, props) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("createFactoryResult", (result) => resolve(result));
 
-    window.ipcRenderer.send("createFactory", id, config, inputDir, outputDir);
+    window.ipcRenderer.send(
+      "createFactory",
+      id,
+      config,
+      inputDir,
+      outputDir,
+      props
+    );
   });
 };
 
@@ -45,6 +60,26 @@ export const factoryInstance = (id) => {
     );
 
     window.ipcRenderer.send("factoryInstance", id);
+  });
+};
+
+export const factorySaveInstance = (id) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("factorySaveInstanceResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("factorySaveInstance", id);
+  });
+};
+
+export const factoryLoadInstance = (id, instancePath) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("factoryLoadInstanceResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("factoryLoadInstance", id, instancePath);
   });
 };
 

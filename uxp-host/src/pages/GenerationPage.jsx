@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  createFactory,
   factoryBootstrapOutput,
   factoryGenerateImages,
   factoryLoadLayers,
   factoryGenerateRandomAttributes,
   factoryGetRandomGeneratedImage,
 } from "../ipcRenderer";
-import { v4 as uuid } from "uuid";
 import {
   Button,
   Flex,
@@ -19,21 +17,13 @@ import {
 export function GenerationPage() {
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { n, inputDir, outputDir, configuration } = state;
+  const { id, n, inputDir, outputDir, configuration } = state;
 
-  const [id, setId] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [attributes, setAttributes] = useState([]);
-
-  useEffect(() => {
-    const _id = uuid();
-    createFactory(_id, configuration, inputDir, outputDir).then(() => {
-      setId(_id);
-    });
-  }, []);
 
   const onProgress = (i) => {
     setCurrentGeneration((prevGeneration) => prevGeneration + 1);

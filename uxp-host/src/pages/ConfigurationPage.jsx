@@ -15,6 +15,8 @@ import {
 
 import Add from "@spectrum-icons/workflow/Add";
 import Remove from "@spectrum-icons/workflow/Remove";
+import { createFactory, factorySaveInstance, mkDir } from "../ipcRenderer";
+import { v4 as uuid } from "uuid";
 
 export function ConfigurationPage() {
   const navigator = useNavigate();
@@ -54,22 +56,31 @@ export function ConfigurationPage() {
     }
   };
 
-  const onClickContinue = () => {
+  const onClickContinue = async () => {
+    const configuration = {
+      name,
+      description,
+      symbol,
+      width: Number(width),
+      height: Number(height),
+      generateBackground,
+      defaultBackground,
+      layers,
+    };
+
+    const id = uuid();
+    await createFactory(id, configuration, inputDir, outputDir, {
+      n,
+    });
+    await factorySaveInstance(id);
+
     navigator("/generation", {
       state: {
+        id,
         n,
         inputDir,
         outputDir,
-        configuration: {
-          name,
-          description,
-          symbol,
-          width: Number(width),
-          height: Number(height),
-          generateBackground,
-          defaultBackground,
-          layers,
-        },
+        configuration,
       },
     });
   };
