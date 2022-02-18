@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import { hideAll, exportAll } from "../jobs";
 import { SocketContext } from "../components/SocketContext";
 import { WC } from "../components/WC";
@@ -17,21 +17,35 @@ export const ConfigurationPanel = () => {
   const generateBackgroundRef = useRef(null);
   const defaultBackgroundRef = useRef(null);
   const nRef = useRef(null);
+  const continueRef = useRef(null);
 
+  const [connectionStatus, setConnectionStatus] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
   const [generateBackground, setGenerateBackground] = useState(true);
-  const [defaultBackground, setDefaultBackground] = useState("");
-  const [n, setN] = useState(0);
+  const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
+  const [n, setN] = useState(10);
+
+  useEffect(() => {
+    socket.on("connect_error", () => {
+      socket.emit("reconnect", true);
+      setConnectionStatus(false);
+    });
+
+    socket.on("server-connection", (connection) => {
+      socket.emit("uxp-connected", true);
+      setConnectionStatus(true);
+    });
+  }, []);
 
   const asyncJob = () => {
     return new Promise(async (resolve, reject) => {
       await photoshop.core.executeAsModal(hideAll);
 
-      const layers = doc.layers.map(
-        (layer, i) => `${doc.layers.length - i}. ${layer.name}`
-      ).reverse();
+      const layers = doc.layers
+        .map((layer, i) => `${doc.layers.length - i}. ${layer.name}`)
+        .reverse();
 
       return await photoshop.core.executeAsModal(async (executionControl) => {
         const userFolder = await uxp.storage.localFileSystem.getFolder();
@@ -42,6 +56,8 @@ export const ConfigurationPanel = () => {
   };
 
   const onClickContinue = () => {
+    if (!connectionStatus) return;
+
     asyncJob().then(({ userFolder, layers }) => {
       const inputDir = userFolder.nativePath;
       socket.emit("uxp-generate", {
@@ -62,8 +78,11 @@ export const ConfigurationPanel = () => {
   };
 
   const onInput = (event) => {
+    if (event._reactName === undefined) return;
+
     const target = event.target;
     const part = target.getAttribute("data-part");
+
     switch (part) {
       case "name":
         setName(target.value);
@@ -88,51 +107,81 @@ export const ConfigurationPanel = () => {
     }
   };
 
+  const onClick = (event) => {
+    if (event._reactName === undefined) return;
+
+    const target = event.target;
+    const part = target.getAttribute("data-part");
+
+    switch (part) {
+      case "continue":
+        onClickContinue();
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
-    <div>
-      <WC className="flex flex-col" onInput={onInput}>
-        <sp-textfield ref={nameRef} data-part="name" value={name}>
-          <sp-label slot="label">Name</sp-label>
-        </sp-textfield>
+    <WC className="flex flex-col space-y-2" onInput={onInput} onClick={onClick}>
+      <div className="flex flex-row space-x-1 items-center">
+        <div
+          className={`w-2 h-2 rounded-full ${
+            connectionStatus ? "bg-green-600" : "bg-red-600"
+          }`}
+        />
+        <sp-body size="xs">
+          {connectionStatus ? "Connected" : "Disconnected"}
+        </sp-body>
+      </div>
 
-        <sp-textarea
-          ref={descriptionRef}
-          data-part="description"
-          value={description}
-        >
-          <sp-label slot="label">Description</sp-label>
-        </sp-textarea>
+      <sp-textfield ref={nameRef} data-part="name" value={name}>
+        <sp-label slot="label" isrequired="true">
+          Name
+        </sp-label>
+      </sp-textfield>
 
-        <sp-textfield ref={symbolRef} data-part="symbol" value={symbol}>
-          <sp-label slot="label">Symbol</sp-label>
-        </sp-textfield>
+      <sp-textarea
+        ref={descriptionRef}
+        data-part="description"
+        value={description}
+      >
+        <sp-label slot="label" isrequired="true">
+          Description
+        </sp-label>
+      </sp-textarea>
 
-        <sp-checkbox
-          ref={generateBackgroundRef}
-          data-part="generateBackground"
-          value={generateBackground}
-        >
-          Generate Background
-        </sp-checkbox>
+      <sp-textfield ref={symbolRef} data-part="symbol" value={symbol}>
+        <sp-label slot="label" isrequired="true">
+          Symbol
+        </sp-label>
+      </sp-textfield>
 
-        <sp-textfield
-          ref={defaultBackgroundRef}
-          data-part="defaultBackground"
-          value={defaultBackground}
-        >
-          <sp-label slot="label">Default Background</sp-label>
-        </sp-textfield>
+      <sp-checkbox
+        ref={generateBackgroundRef}
+        data-part="generateBackground"
+        checked={generateBackground}
+      >
+        Generate Background
+      </sp-checkbox>
 
-        <sp-textfield ref={nRef} data-part="n" value={n}>
-          <sp-label slot="label">N</sp-label>
-        </sp-textfield>
-      </WC>
+      <sp-textfield
+        ref={defaultBackgroundRef}
+        data-part="defaultBackground"
+        value={defaultBackground}
+      >
+        <sp-label slot="label">Default Background</sp-label>
+      </sp-textfield>
 
-      <button onClick={onClickContinue}>Continue</button>
+      <sp-textfield ref={nRef} data-part="n" value={n} type="number">
+        <sp-label slot="label" isrequired="true">
+          N
+        </sp-label>
+      </sp-textfield>
 
-      {/* <WC onClick={onClickContinue}>
-        <sp-button variant="cta">Continue!</sp-button>
-      </WC> */}
-    </div>
+      <sp-button ref={continueRef} data-part="continue" variant="cta">
+        Continue!
+      </sp-button>
+    </WC>
   );
 };

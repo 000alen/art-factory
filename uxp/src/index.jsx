@@ -10,18 +10,6 @@ import { socket, SocketContext } from "./components/SocketContext";
 import { entrypoints } from "uxp";
 import { TestPanel } from "./panels/TestPanel";
 
-socket.on("connect_error", () => {
-  socket.emit("reconnect", true);
-});
-
-socket.on("server-connection", (connection) => {
-  socket.emit("uxp-connected", true);
-});
-
-socket.on("message", (helperMessage) => {
-  console.log(helperMessage);
-});
-
 const aboutController = new CommandController(
   ({ dialog }) => <About dialog={dialog} />,
   {

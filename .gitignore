@@ -1,8 +1,10 @@
-output/
-typechain-types/
+Eyes_build/
+BoredApes/
+BoredApes_build/
+
+
 build/
-BoredApe/
-BoredApe_build/
+typechain-types/
 
 # Logs
 logs
