@@ -3,6 +3,14 @@ const path = require("path");
 const solc = require("solc");
 const { Factory, loadInstance } = require("./art");
 const fs = require("fs");
+const {
+  setPinataApiKey,
+  getPinataApiKey,
+  setPinataSecretApiKey,
+  getPinataSecretApiKey,
+  setInfuraId,
+  getInfuraId,
+} = require("./store");
 
 const factories = {};
 
@@ -176,4 +184,31 @@ ipcMain.on("getOutputDir", (event, inputDir) => {
     `${path.basename(inputDir)}_build`
   );
   event.reply("getOutputDirResult", outputDir);
+});
+
+ipcMain.on("setPinataApiKey", (event, pinataApiKey) => {
+  setPinataApiKey(pinataApiKey);
+  event.reply("setPinataApiKeyResult", true);
+});
+
+ipcMain.on("getPinataApiKey", (event) => {
+  event.reply("getPinataApiKeyResult", getPinataApiKey());
+});
+
+ipcMain.on("setPinataSecretApiKey", (event, pinataSecretApiKey) => {
+  setPinataSecretApiKey(pinataSecretApiKey);
+  event.reply("setPinataSecretApiKeyResult", true);
+});
+
+ipcMain.on("getPinataSecretApiKey", (event) => {
+  event.reply("getPinataSecretApiKeyResult", getPinataSecretApiKey());
+});
+
+ipcMain.on("setInfuraId", (event, infuraId) => {
+  setInfuraId(infuraId);
+  event.reply("setInfuraIdResult", true);
+});
+
+ipcMain.on("getInfuraId", (event) => {
+  event.reply("getInfuraIdResult", getInfuraId());
 });

@@ -11,6 +11,7 @@ import {
   Text,
   ButtonGroup,
   Button,
+  ActionButton,
 } from "@adobe/react-spectrum";
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { GenerationPage } from "./pages/GenerationPage";
@@ -20,6 +21,8 @@ import { ConfigurationPage } from "./pages/ConfigurationPage";
 import { InstancePage } from "./pages/InstancePage";
 import { SocketContext } from "./components/SocketContext";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import Settings from "@spectrum-icons/workflow/Settings";
+import { SecretsDialog } from "./components/SecretsDialog";
 
 export const DialogContext = createContext();
 
@@ -75,11 +78,20 @@ const App = () => {
             </Dialog>
           </DialogTrigger>
 
-          {connectionStatus ? (
-            <StatusLight variant="positive">Connected</StatusLight>
-          ) : (
-            <StatusLight variant="negative">Disconnected</StatusLight>
-          )}
+          <Flex justifyContent="space-between" margin="size-100">
+            {connectionStatus ? (
+              <StatusLight variant="positive">Connected</StatusLight>
+            ) : (
+              <StatusLight variant="negative">Disconnected</StatusLight>
+            )}
+
+            <DialogTrigger>
+              <ActionButton>
+                <Settings />
+              </ActionButton>
+              {(close) => <SecretsDialog close={close} />}
+            </DialogTrigger>
+          </Flex>
 
           <Routes>
             <Route path="/" element={<HomePage />} />

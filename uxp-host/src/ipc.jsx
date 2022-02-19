@@ -221,3 +221,59 @@ export const getOutputDir = (inputDir) => {
     window.ipcRenderer.send("getOutputDir", inputDir);
   });
 };
+
+export const setPinataApiKey = (pinataApiKey) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("setPinataApiKeyResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("setPinataApiKey", pinataApiKey);
+  });
+};
+
+export const getPinataApiKey = () => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("getPinataApiKeyResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("getPinataApiKey");
+  });
+};
+
+export const setPinataSecretApiKey = (pinataSecretApiKey) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("setPinataSecretApiKeyResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("setPinataSecretApiKey", pinataSecretApiKey);
+  });
+};
+
+export const getPinataSecretApiKey = () => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("getPinataSecretApiKeyResult", (result) =>
+      resolve(result)
+    );
+
+    window.ipcRenderer.send("getPinataSecretApiKey");
+  });
+};
+
+export const setInfuraId = (infuraId) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("setInfuraIdResult", (result) => resolve(result));
+
+    window.ipcRenderer.send("setInfuraId", infuraId);
+  });
+};
+
+export const getInfuraId = () => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("getInfuraIdResult", (result) => resolve(result));
+
+    window.ipcRenderer.send("getInfuraId");
+  });
+};

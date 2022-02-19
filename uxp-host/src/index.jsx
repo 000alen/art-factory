@@ -10,12 +10,10 @@ import App from "./App";
 import { SocketContext, socket } from "./components/SocketContext";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <SocketContext.Provider value={socket}>
-      <SpectrumProvider theme={defaultTheme}>
-        <App />
-      </SpectrumProvider>
-    </SocketContext.Provider>
-  </React.StrictMode>,
+  <SocketContext.Provider value={socket}>
+    <SpectrumProvider theme={defaultTheme}>
+      <App />
+    </SpectrumProvider>
+  </SocketContext.Provider>,
   document.getElementById("root")
 );

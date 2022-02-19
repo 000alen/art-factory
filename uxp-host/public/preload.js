@@ -22,6 +22,12 @@ const sendWhitelist = [
   "factoryGetImage",
   "getContract",
   "getOutputDir",
+  "setPinataApiKey",
+  "getPinataApiKey",
+  "setPinataSecretApiKey",
+  "getPinataSecretApiKey",
+  "setInfuraId",
+  "getInfuraId",
 ];
 
 const onWhitelist = [
@@ -47,6 +53,12 @@ const onWhitelist = [
   "factoryGetImageResult",
   "getContractResult",
   "getOutputDirResult",
+  "setPinataApiKeyResult",
+  "getPinataApiKeyResult",
+  "setPinataSecretApiKeyResult",
+  "getPinataSecretApiKeyResult",
+  "setInfuraIdResult",
+  "getInfuraIdResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

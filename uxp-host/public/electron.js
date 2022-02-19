@@ -2,8 +2,9 @@ const { app, BrowserWindow } = require("electron");
 const isDevelopment = require("electron-is-dev");
 const path = require("path");
 
-require("./server.js");
 require("./ipc.js");
+require("./server.js");
+require("./store");
 
 const createWindow = () => {
   const window = new BrowserWindow({
