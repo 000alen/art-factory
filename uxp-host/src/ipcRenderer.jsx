@@ -8,6 +8,14 @@ export const mkDir = (dir, options) => {
   });
 };
 
+export const writeFile = (file, data, options) => {
+  return new Promise((resolve, reject) => {
+    window.ipcRenderer.once("writeFileResult", (result) => resolve(result));
+
+    window.ipcRenderer.send("writeFile", file, data, options);
+  });
+};
+
 export const showOpenDialog = (options) => {
   return new Promise((resolve, reject) => {
     window.ipcRenderer.once("showOpenDialogResult", (result) =>

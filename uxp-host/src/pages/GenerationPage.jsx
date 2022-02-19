@@ -6,6 +6,7 @@ import {
   factoryLoadLayers,
   factoryGenerateRandomAttributes,
   factoryGetRandomGeneratedImage,
+  factorySaveInstance,
 } from "../ipcRenderer";
 import {
   Button,
@@ -39,6 +40,7 @@ export function GenerationPage() {
     const buffer = await factoryGetRandomGeneratedImage(id, _attributes);
     const blob = new Blob([buffer], { type: "image/png" });
     const url = URL.createObjectURL(blob);
+    await factorySaveInstance(id);
 
     setImageUrl(url);
     setAttributes(_attributes);

@@ -9,6 +9,7 @@ import { ConfigurationPage } from "./pages/ConfigurationPage";
 import { InstancePage } from "./pages/InstancePage";
 import { ReviewPage } from "./pages/ReviewPage";
 import { SocketContext } from "./components/SocketContext";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 const App = () => {
   const socket = useContext(SocketContext);
@@ -40,6 +41,7 @@ const App = () => {
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/deploy" element={<DeployPage />} />
           <Route path="/instance" element={<InstancePage />} />
+          <Route path="/*" element={<NotFoundPage />} />
         </Routes>
       </Flex>
     </Router>

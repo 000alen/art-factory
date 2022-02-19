@@ -95,6 +95,10 @@ class Factory {
     if (fs.existsSync(path.join(this.outputDir, "images")))
       fs.rmSync(path.join(this.outputDir, "images"), { recursive: true });
     fs.mkdirSync(path.join(this.outputDir, "images"));
+
+    if (fs.existsSync(path.join(this.outputDir, "psd")))
+      fs.rmSync(path.join(this.outputDir, "psd"), { recursive: true });
+    fs.mkdirSync(path.join(this.outputDir, "psd"));
   }
 
   generateRandomAttributes(n) {

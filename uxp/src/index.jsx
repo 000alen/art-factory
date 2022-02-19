@@ -10,6 +10,32 @@ import { socket, SocketContext } from "./components/SocketContext";
 import { entrypoints } from "uxp";
 import { TestPanel } from "./panels/TestPanel";
 
+socket.on("host-edit", ({ name, traits }) => {
+  const uxp = require("uxp");
+  const photoshop = require("photoshop");
+  const app = photoshop.app;
+  const doc = app.activeDocument;
+
+  photoshop.core.executeAsModal(async () => {
+    const newDoc = await app.createDocument({
+      name,
+      width: doc.width,
+      height: doc.height,
+    });
+
+    for (let i = doc.layers.length - 1; i >= 0; i--) {
+      const layer = doc.layers[i];
+      for (const layerElement of layer.layers) {
+        const target = traits[doc.layers.length - i - 1].value;
+        if (target === layerElement.name) {
+          const newLayerElement = await layerElement.duplicate(newDoc);
+          newLayerElement.visible = true;
+        }
+      }
+    }
+  });
+});
+
 const aboutController = new CommandController(
   ({ dialog }) => <About dialog={dialog} />,
   {

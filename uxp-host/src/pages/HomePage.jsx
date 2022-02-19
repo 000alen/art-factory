@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { Flex, Heading, Text, Button } from "@adobe/react-spectrum";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   factoryInstance,
   factoryLoadInstance,
@@ -9,6 +9,7 @@ import {
 import { SocketContext } from "../components/SocketContext";
 import { showOpenDialog } from "../ipcRenderer";
 import { v4 as uuid } from "uuid";
+import { writePsdBuffer } from "ag-psd";
 
 export function HomePage() {
   const navigator = useNavigate();
@@ -110,6 +111,21 @@ export function HomePage() {
     }
   };
 
+  const onClickTest = () => {
+    console.log("sending host-edit");
+    socket.emit("host-edit", {
+      name: "HOLI",
+      traits: [
+        { name: "1. Background", value: "Pink" },
+        { name: "2. Fur", value: "Green" },
+        { name: "3. Clothes", value: "Dress Shirt" },
+        { name: "4. Mouth Accessories", value: "Cigarette" },
+        { name: "5. Eyes", value: "Heart Glasses" },
+        { name: "6. Head Accessories", value: "Halo" },
+      ],
+    });
+  };
+
   return (
     <Flex
       direction="column"
@@ -132,6 +148,8 @@ export function HomePage() {
         </Button>
 
         <Button onPress={onOpenInstance}>Open Instance!</Button>
+
+        <Button onPress={onClickTest}>Test</Button>
       </Flex>
     </Flex>
   );

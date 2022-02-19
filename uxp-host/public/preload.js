@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 const sendWhitelist = [
+  "writeFile",
   "mkDir",
   "showOpenDialog",
   "showSaveDialog",
@@ -24,6 +25,7 @@ const sendWhitelist = [
 ];
 
 const onWhitelist = [
+  "writeFileResult",
   "mkDirResult",
   "showOpenDialogResult",
   "showSaveDialogResult",

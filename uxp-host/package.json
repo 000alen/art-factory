@@ -31,6 +31,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
     "@svgr/webpack": "^5.5.0",
     "@walletconnect/web3-provider": "^1.7.1",
+    "ag-psd": "^14.3.5",
     "assert": "^2.0.0",
     "axios": "^0.26.0",
     "babel-jest": "^27.4.2",

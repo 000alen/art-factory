@@ -12,8 +12,8 @@ const factories = {};
 const createWindow = () => {
   const window = new BrowserWindow({
     autoHideMenuBar: true,
-    minWidth: 1024,
-    minHeight: 768,
+    // minWidth: 1024,
+    // minHeight: 768,
     width: 1024,
     height: 768,
     webPreferences: {
@@ -49,9 +49,14 @@ app.on("activate", () => {
   }
 });
 
+ipcMain.on("writeFile", async (event, file, data, options) => {
+  await fs.promises.writeFile(file, data, options);
+  event.reply("writeFileResult", true);
+});
+
 ipcMain.on("mkDir", async (event, ...args) => {
   await fs.promises.mkdir(...args);
-  event.send("mkDirResult", true);
+  event.reply("mkDirResult", true);
 });
 
 ipcMain.on("showOpenDialog", async (event, ...args) => {

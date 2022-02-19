@@ -25,13 +25,13 @@ const startServer = async () => {
       io.emit("uxp-connected", true);
     });
 
-    socket.on("message", (message) => {
-      io.emit("uxp-message", message);
-    });
+    // socket.on("message", (message) => {
+    //   io.emit("uxp-message", message);
+    // });
 
-    socket.on("helper-message", (message) => {
-      io.emit("message", message);
-    });
+    // socket.on("helper-message", (message) => {
+    //   io.emit("message", message);
+    // });
 
     socket.on("disconnect", () => {
       io.emit("uxp-connected", false);
@@ -39,6 +39,10 @@ const startServer = async () => {
 
     socket.on("uxp-generate", ({ n, inputDir, configuration }) => {
       io.emit("uxp-generate", { n, inputDir, configuration });
+    });
+
+    socket.on("host-edit", ({ name, traits }) => {
+      io.emit("host-edit", { name, traits });
     });
   });
 

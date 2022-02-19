@@ -1,10 +1,16 @@
 import React from "react";
 
+const uxp = require("uxp");
+const photoshop = require("photoshop");
+const app = photoshop.app;
+const doc = app.activeDocument;
+
 export function TestPanel() {
-  const onClick = async () => {};
+  const onClick = () => {};
+
   return (
     <div>
-      <sp-button>Test</sp-button>
+      <button onClick={onClick}>Test</button>
     </div>
   );
 }
