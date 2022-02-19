@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 
 import {
   Flex,
@@ -20,28 +20,49 @@ import {
   setPinataSecretApiKey,
   setInfuraId,
 } from "../ipc";
+import { DialogContext } from "../App";
 
 export function SecretsDialog({ close }) {
+  const dialogContext = useContext(DialogContext);
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
   const [infuraId, _setInfuraId] = useState("");
 
   useEffect(() => {
-    getPinataApiKey().then((_pinataApiKey) => {
-      _setPinataApiKey(_pinataApiKey || "");
-    });
-    getPinataSecretApiKey().then((_pinataSecretApiKey) => {
-      _setPinataSecretApiKey(_pinataSecretApiKey || "");
-    });
-    getInfuraId().then((_infuraId) => {
-      _setInfuraId(_infuraId || "");
-    });
+    // ! TODO
+    getPinataApiKey()
+      .then((_pinataApiKey) => _setPinataApiKey(_pinataApiKey || ""))
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+      });
+
+    // ! TODO
+    getPinataSecretApiKey()
+      .then((_pinataSecretApiKey) =>
+        _setPinataSecretApiKey(_pinataSecretApiKey || "")
+      )
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+      });
+
+    // ! TODO
+    getInfuraId()
+      .then((_infuraId) => _setInfuraId(_infuraId || ""))
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+      });
   }, []);
 
   const onSave = () => {
-    setPinataApiKey(pinataApiKey);
-    setPinataSecretApiKey(pinataSecretApiKey);
-    setInfuraId(infuraId);
+    setPinataApiKey(pinataApiKey).catch((error) => {
+      dialogContext.setDialog("Error", error.message, null, true);
+    });
+    setPinataSecretApiKey(pinataSecretApiKey).catch((error) => {
+      dialogContext.setDialog("Error", error.message, null, true);
+    });
+    setInfuraId(infuraId).catch((error) => {
+      dialogContext.setDialog("Error", error.message, null, true);
+    });
     close();
   };
 

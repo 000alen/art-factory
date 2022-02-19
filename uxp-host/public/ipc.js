@@ -12,145 +12,194 @@ const {
   getInfuraId,
 } = require("./store");
 
+const ipcTask = (task, callback) => {
+  ipcMain.on(task, (event, ...args) => {
+    let error = null;
+    let result = null;
+    try {
+      result = callback(...args);
+    } catch (_error) {
+      error = _error;
+    } finally {
+      event.reply(`${task}Result`, { error, result });
+    }
+  });
+};
+
+const ipcAsyncTask = (task, callback) => {
+  ipcMain.on(task, async (event, ...args) => {
+    let error = null;
+    let result = null;
+    try {
+      result = await callback(...args);
+    } catch (_error) {
+      error = _error;
+    } finally {
+      event.reply(`${task}Result`, { error, result });
+    }
+  });
+};
+
+const ipcTaskWithProgress = (task, callback) => {
+  ipcMain.on(task, async (event, id, ...args) => {
+    let error = null;
+    let result = null;
+    try {
+      result = await callback(
+        (i) => {
+          event.reply(`${task}Progress`, { id, i });
+        },
+        id,
+        ...args
+      );
+    } catch (_error) {
+      error = _error;
+    } finally {
+      event.reply(`${task}Result`, { error, result });
+    }
+  });
+};
+
+const ipcTaskWithRequestId = (task, callback) => {
+  ipcMain.on(task, async (event, requestId, ...args) => {
+    let error = null;
+    let result = null;
+    try {
+      result = await callback(...args);
+    } catch (_error) {
+      error = _error;
+    } finally {
+      event.reply(`${task}Result`, { requestId, error, result });
+    }
+  });
+};
+
+const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+const ipcSetterAndGetter = (property, setter, getter) => {
+  ipcAsyncTask(
+    `set${capitalize(property)}`,
+    async (value) => await setter(value)
+  );
+  ipcAsyncTask(`get${capitalize(property)}`, async () => await getter());
+};
+
 const factories = {};
 
-ipcMain.on("writeFile", async (event, file, data, options) => {
-  await fs.promises.writeFile(file, data, options);
-  event.reply("writeFileResult", true);
-});
-
-ipcMain.on("mkDir", async (event, path, options) => {
-  await fs.promises.mkdir(path, options);
-  event.reply("mkDirResult", true);
-});
-
-ipcMain.on("showOpenDialog", async (event, options) => {
-  const result = await dialog.showOpenDialog(options);
-  event.reply("showOpenDialogResult", result);
-});
-
-ipcMain.on("showSaveDialog", async (event, options) => {
-  const result = await dialog.showSaveDialog(options);
-  event.reply("showSaveDialogResult", result);
-});
-
-ipcMain.on(
-  "createFactory",
-  (event, id, configuration, inputDir, outputDir, props) => {
-    const factory = new Factory(configuration, inputDir, outputDir);
-    if (props) {
-      const {
-        n,
-        attributes,
-        generated,
-        metadataGenerated,
-        imagesCID,
-        metadataCID,
-        contractAddress,
-      } = props;
-      factory.n = n;
-      factory.attributes = attributes;
-      factory.generated = generated;
-      factory.metadataGenerated = metadataGenerated;
-      factory.imagesCID = imagesCID;
-      factory.metadataCID = metadataCID;
-      factory.contractAddress = contractAddress;
-    }
-
-    factories[id] = factory;
-    event.reply("createFactoryResult", id);
-  }
+ipcTaskWithRequestId("factoryGetImage", async (id, index) =>
+  factories[id].getImage(index)
 );
 
-ipcMain.on("factoryMaxCombinations", (event, id) => {
-  event.reply("factoryMaxCombinationsResult", factories[id].maxCombinations);
+ipcTaskWithProgress(
+  "factoryGenerateImages",
+  async (onProgress, id, attributes) =>
+    await factories[id].generateImages(attributes, onProgress)
+);
+
+ipcAsyncTask("writeFile", async (file, data, options) => {
+  await fs.promises.writeFile(file, data, options);
+  return true;
 });
 
-ipcMain.on("factoryInstance", (event, id) => {
-  event.reply("factoryInstanceResult", factories[id].instance);
+ipcAsyncTask("mkDir", async (path, options) => {
+  await fs.promises.mkdir(path, options);
+  return true;
 });
 
-ipcMain.on("factoryLoadSecrets", (event, secrets) => {
-  const factory = factories[id];
-  factory.loadSecrets(secrets);
-  event.reply("factoryLoadSecrets", true);
-});
+ipcAsyncTask(
+  "showOpenDialog",
+  async (options) => await dialog.showOpenDialog(options)
+);
 
-ipcMain.on("factorySaveInstance", async (event, id) => {
-  const factory = factories[id];
-  const instancePath = await factory.saveInstance();
-  event.reply("factorySaveInstanceResult", instancePath);
-});
+ipcAsyncTask(
+  "showSaveDialog",
+  async (options) => await dialog.showSaveDialog(options)
+);
 
-ipcMain.on("factoryLoadInstance", async (event, id, instancePath) => {
-  const factory = await loadInstance(instancePath);
+ipcTask("createFactory", (id, configuration, inputDir, outputDir, props) => {
+  const factory = new Factory(configuration, inputDir, outputDir);
+  if (props) {
+    const {
+      n,
+      attributes,
+      generated,
+      metadataGenerated,
+      imagesCID,
+      metadataCID,
+      contractAddress,
+    } = props;
+    factory.n = n;
+    factory.attributes = attributes;
+    factory.generated = generated;
+    factory.metadataGenerated = metadataGenerated;
+    factory.imagesCID = imagesCID;
+    factory.metadataCID = metadataCID;
+    factory.contractAddress = contractAddress;
+  }
+
   factories[id] = factory;
-  event.reply("factoryLoadInstanceResult", id);
+  return true;
 });
 
-ipcMain.on("factoryEnsureLayers", async (event, id) => {
+ipcTask("factoryMaxCombinations", (id) => factories[id].maxCombinations);
+
+ipcTask("factoryInstance", (id) => factories[id].instance);
+
+ipcTask("factoryLoadSecrets", (id, secrets) => {
+  factories[id].loadSecrets(secrets);
+  return true;
+});
+
+ipcAsyncTask(
+  "factorySaveInstance",
+  async (id) => await factories[id].saveInstance()
+);
+
+ipcAsyncTask("factoryLoadInstance", async (id, instancePath) => {
+  factories[id] = await loadInstance(instancePath);
+  return true;
+});
+
+ipcAsyncTask("factoryEnsureLayers", async (id) => {
   const factory = factories[id];
   await factory.ensureLayers();
-  event.reply("factoryEnsureLayersResult", id);
+  return true;
 });
 
-ipcMain.on("factoryEnsureOutputDir", async (event, id) => {
+ipcAsyncTask("factoryEnsureOutputDir", async (id) => {
   const factory = factories[id];
   await factory.ensureOutputDir();
-  event.reply("factoryEnsureOutputDirResult", id);
+  return true;
 });
 
-ipcMain.on("factoryGenerateRandomAttributes", (event, id, n) => {
-  const factory = factories[id];
-  const attributes = factory.generateRandomAttributes(n);
-  event.reply("factoryGenerateRandomAttributesResult", attributes);
+ipcTask("factoryGenerateRandomAttributes", (id, n) =>
+  factories[id].generateRandomAttributes(n)
+);
+
+ipcTask("factoryGenerateAttributes", (id) =>
+  factories[id].generateAttributes()
+);
+
+ipcAsyncTask("factoryGenerateMetadata", async (id, cid, attributes) => {
+  await factories[id].generateMetadata(cid, attributes);
+  return true;
 });
 
-ipcMain.on("factoryGenerateAttributes", (event, id) => {
-  const factory = factories[id];
-  const attributes = factory.generateAttributes();
-  event.reply("factoryGenerateAttributesResult", attributes);
-});
+ipcAsyncTask(
+  "factoryDeployImages",
+  async (id) => await factories[id].deployImages()
+);
 
-ipcMain.on("factoryGenerateImages", async (event, id, attributes) => {
-  const factory = factories[id];
-  await factory.generateImages(attributes, (i) => {
-    event.reply("factoryGenerateImagesProgress", { id, i });
-  });
-  event.reply("factoryGenerateImagesResult", id);
-});
+ipcAsyncTask(
+  "factoryDeployMetadata",
+  async (id) => await factories[id].deployMetadata()
+);
 
-ipcMain.on("factoryGenerateMetadata", async (event, id, cid, attributes) => {
-  const factory = factories[id];
-  await factory.generateMetadata(cid, attributes);
-  event.reply("factoryGenerateMetadataResult", id);
-});
+ipcTask("factoryGetRandomImage", (id, attributes) =>
+  factories[id].getRandomImage(attributes)
+);
 
-ipcMain.on("factoryDeployImages", async (event, id) => {
-  const factory = factories[id];
-  const cid = await factory.deployImages();
-  event.reply("factoryDeployImagesResult", cid);
-});
-
-ipcMain.on("factoryDeployMetadata", async (event, id) => {
-  const factory = factories[id];
-  const cid = await factory.deployMetadata();
-  event.reply("factoryDeployMetadataResult", cid);
-});
-
-ipcMain.on("factoryGetRandomImage", async (event, id, attributes) => {
-  const factory = factories[id];
-  const image = factory.getRandomImage(attributes);
-  event.reply("factoryGetRandomImageResult", image);
-});
-
-ipcMain.on("factoryGetImage", async (event, id, requestId, index) => {
-  const factory = factories[id];
-  const image = factory.getImage(index);
-  event.reply("factoryGetImageResult", requestId, image);
-});
-
-ipcMain.on("getContract", async (event, name) => {
+ipcAsyncTask("getContract", async (name) => {
   const content = await fs.promises.readFile(
     path.join(__dirname, "contracts", `${name}.sol`),
     {
@@ -174,41 +223,19 @@ ipcMain.on("getContract", async (event, name) => {
     },
   };
 
-  const output = JSON.parse(solc.compile(JSON.stringify(input)));
-  event.reply("getContractResult", output);
+  return JSON.parse(solc.compile(JSON.stringify(input)));
 });
 
-ipcMain.on("getOutputDir", (event, inputDir) => {
-  const outputDir = path.join(
-    path.dirname(inputDir),
-    `${path.basename(inputDir)}_build`
-  );
-  event.reply("getOutputDirResult", outputDir);
-});
+ipcTask("getOutputDir", (inputDir) =>
+  path.join(path.dirname(inputDir), `${path.basename(inputDir)}_build`)
+);
 
-ipcMain.on("setPinataApiKey", (event, pinataApiKey) => {
-  setPinataApiKey(pinataApiKey);
-  event.reply("setPinataApiKeyResult", true);
-});
+ipcSetterAndGetter("pinataApiKey", setPinataApiKey, getPinataApiKey);
 
-ipcMain.on("getPinataApiKey", (event) => {
-  event.reply("getPinataApiKeyResult", getPinataApiKey());
-});
+ipcSetterAndGetter(
+  "pinataSecretApiKey",
+  setPinataSecretApiKey,
+  getPinataSecretApiKey
+);
 
-ipcMain.on("setPinataSecretApiKey", (event, pinataSecretApiKey) => {
-  setPinataSecretApiKey(pinataSecretApiKey);
-  event.reply("setPinataSecretApiKeyResult", true);
-});
-
-ipcMain.on("getPinataSecretApiKey", (event) => {
-  event.reply("getPinataSecretApiKeyResult", getPinataSecretApiKey());
-});
-
-ipcMain.on("setInfuraId", (event, infuraId) => {
-  setInfuraId(infuraId);
-  event.reply("setInfuraIdResult", true);
-});
-
-ipcMain.on("getInfuraId", (event) => {
-  event.reply("getInfuraIdResult", getInfuraId());
-});
+ipcSetterAndGetter("infuraId", setInfuraId, getInfuraId);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   factoryEnsureOutputDir,
@@ -14,8 +14,10 @@ import {
   ProgressBar,
   ProgressCircle,
 } from "@adobe/react-spectrum";
+import { DialogContext } from "../App";
 
 export function GenerationPage() {
+  const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
   const { id, n, inputDir, outputDir, configuration } = state;
@@ -33,12 +35,21 @@ export function GenerationPage() {
   const onClickGenerate = async () => {
     setIsGenerating(true);
 
-    await factoryEnsureLayers(id);
-    await factoryEnsureOutputDir(id);
-    const _attributes = await factoryGenerateRandomAttributes(id, n);
-    await factoryGenerateImages(id, _attributes, onProgress);
-    const imageBuffer = await factoryGetRandomImage(id, _attributes);
-    await factorySaveInstance(id);
+    let _attributes;
+    let imageBuffer;
+
+    // ! TODO
+    try {
+      await factoryEnsureLayers(id);
+      await factoryEnsureOutputDir(id);
+      _attributes = await factoryGenerateRandomAttributes(id, n);
+      await factoryGenerateImages(id, _attributes, onProgress);
+      imageBuffer = await factoryGetRandomImage(id, _attributes);
+      await factorySaveInstance(id);
+    } catch (error) {
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
 
     const imageBlob = new Blob([imageBuffer], { type: "image/png" });
     const _imageUrl = URL.createObjectURL(imageBlob);
@@ -65,9 +76,10 @@ export function GenerationPage() {
     <Flex
       direction="column"
       height="100%"
+      margin="size-100"
+      gap="size-100"
       justifyContent="center"
       alignItems="center"
-      gap="size-250"
     >
       <div className="w-56 h-56 p-2 border-dashed border-2 border-white rounded-md flex justify-center items-center">
         {isGenerating ? (

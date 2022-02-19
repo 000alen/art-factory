@@ -45,10 +45,11 @@ const App = () => {
     setDialogShown(true);
   };
 
-  const setDialog = (title, content, buttons) => {
+  const setDialog = (title, content, buttons, show) => {
     setDialogTitle(title);
     setDialogContent(content);
     setDialogButtons(buttons);
+    if (show) showDialog();
   };
 
   const hideDialog = () => {

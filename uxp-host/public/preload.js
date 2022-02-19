@@ -28,6 +28,7 @@ const sendWhitelist = [
   "getPinataSecretApiKey",
   "setInfuraId",
   "getInfuraId",
+  "factoryLoadSecrets",
 ];
 
 const onWhitelist = [
@@ -59,6 +60,7 @@ const onWhitelist = [
   "getPinataSecretApiKeyResult",
   "setInfuraIdResult",
   "getInfuraIdResult",
+  "factoryLoadSecretsResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

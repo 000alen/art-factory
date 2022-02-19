@@ -281,7 +281,7 @@ class Factory {
     const imagesDir = path.join(this.outputDir, "images");
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
-      this.secrets.pinataSecretKey,
+      this.secrets.pinataSecretApiKey,
       imagesDir
     );
     this.imagesCID = IpfsHash;
@@ -304,7 +304,7 @@ class Factory {
 
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
-      this.secrets.pinataSecretKey,
+      this.secrets.pinataSecretApiKey,
       jsonDir
     );
     this.metadataCID = IpfsHash;

@@ -29,6 +29,8 @@
     "@babel/runtime": "^7.17.2",
     "@openzeppelin/contracts": "^4.5.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
+    "@react-spectrum/color": "^3.0.0-beta.8",
+    "@spectrum-css/fieldlabel": "^4.0.13",
     "@svgr/webpack": "^5.5.0",
     "@walletconnect/web3-provider": "^1.7.1",
     "ag-psd": "^14.3.5",

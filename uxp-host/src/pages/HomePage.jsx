@@ -1,5 +1,11 @@
 import React, { useContext, useEffect } from "react";
-import { Flex, Heading, Text, Button } from "@adobe/react-spectrum";
+import {
+  Flex,
+  Heading,
+  Text,
+  Button,
+  ButtonGroup,
+} from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
 import {
   showOpenDialog,
@@ -15,14 +21,21 @@ import { DialogContext } from "../App";
 export function HomePage() {
   const navigator = useNavigate();
   const socket = useContext(SocketContext);
-  const { showDialog, setDialog } = useContext(DialogContext);
+  const dialogContext = useContext(DialogContext);
 
   useEffect(() => {
     socket.on("uxp-generate", async ({ n, inputDir, configuration }) => {
-      const outputDir = await getOutputDir(inputDir);
       const id = uuid();
+      let outputDir;
 
-      await createFactory(id, configuration, inputDir, outputDir, { n });
+      // ! TODO
+      try {
+        outputDir = await getOutputDir(inputDir);
+        await createFactory(id, configuration, inputDir, outputDir, { n });
+      } catch (error) {
+        dialogContext.setDialog("Error", error.message, null, true);
+        return;
+      }
 
       navigator("/generation", {
         state: {
@@ -37,14 +50,23 @@ export function HomePage() {
   }, []);
 
   const onOpenDirectory = async () => {
-    const { canceled, filePaths } = await showOpenDialog({
-      properties: ["openFile", "openDirectory"],
-    });
+    let inputDir;
+    let outputDir;
 
-    if (canceled) return;
+    // ! TODO
+    try {
+      const { canceled, filePaths } = await showOpenDialog({
+        properties: ["openFile", "openDirectory"],
+      });
 
-    const [inputDir] = filePaths;
-    const outputDir = await getOutputDir(inputDir);
+      if (canceled) return;
+
+      inputDir = filePaths[0];
+      outputDir = await getOutputDir(inputDir);
+    } catch (error) {
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
 
     navigator("/configuration", {
       state: {
@@ -55,34 +77,53 @@ export function HomePage() {
   };
 
   const onOpenInstance = async () => {
-    const { canceled, filePaths } = await showOpenDialog({
-      properties: ["openFile"],
-      filters: [
-        {
-          name: "Instance",
-          extensions: ["json"],
-        },
-      ],
-    });
-
-    if (canceled) return;
-
-    const [instancePath] = filePaths;
-
     const id = uuid();
-    await factoryLoadInstance(id, instancePath);
-    const {
-      inputDir,
-      outputDir,
-      configuration,
-      n,
-      attributes,
-      generated,
-      metadataGenerated,
-      imagesCID,
-      metadataCID,
-      contractAddress,
-    } = await factoryInstance(id);
+
+    let instancePath;
+    let inputDir;
+    let outputDir;
+    let configuration;
+    let n;
+    let attributes;
+    let generated;
+    let metadataGenerated;
+    let imagesCID;
+    let metadataCID;
+    let contractAddress;
+
+    // ! TODO
+    try {
+      const { canceled, filePaths } = await showOpenDialog({
+        properties: ["openFile"],
+        filters: [
+          {
+            name: "Instance",
+            extensions: ["json"],
+          },
+        ],
+      });
+
+      if (canceled) return;
+
+      instancePath = filePaths[0];
+
+      await factoryLoadInstance(id, instancePath);
+      ({
+        inputDir,
+        outputDir,
+        configuration,
+        n,
+        attributes,
+        generated,
+        metadataGenerated,
+        imagesCID,
+        metadataCID,
+        contractAddress,
+      } = await factoryInstance(id));
+    } catch (error) {
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
 
     if (!attributes || !generated) {
       navigator("/generation", {
@@ -130,19 +171,19 @@ export function HomePage() {
     //     { name: "6. Head Accessories", value: "Halo" },
     //   ],
     // });
-    setDialog("Test", "This is a test dialog", null);
-    showDialog();
+    dialogContext.setDialog("Test", "Test dialog", null, true);
   };
 
   return (
     <Flex
       direction="column"
       height="100%"
+      margin="size-100"
       gap="size-100"
       alignItems="center"
       justifyContent="center"
     >
-      <Heading level={2} marginBottom={-2}>
+      <Heading level={1} marginBottom={-2}>
         Welcome to the NFT Factory App
       </Heading>
 
@@ -150,7 +191,7 @@ export function HomePage() {
         To start, load the UXP plugin into Photoshop or open a directory
       </Text>
 
-      <Flex gap="size-100">
+      <ButtonGroup>
         <Button variant="cta" onPress={onOpenDirectory}>
           Open Directory!
         </Button>
@@ -158,7 +199,7 @@ export function HomePage() {
         <Button onPress={onOpenInstance}>Open Instance!</Button>
 
         <Button onPress={onClickTest}>Test</Button>
-      </Flex>
+      </ButtonGroup>
     </Flex>
   );
 }

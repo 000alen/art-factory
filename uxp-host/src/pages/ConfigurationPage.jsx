@@ -1,24 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Button,
-  View,
   Flex,
   Heading,
   TextField,
   NumberField,
   Switch,
   ActionButton,
-  Text,
   TextArea,
+  ButtonGroup,
 } from "@adobe/react-spectrum";
+import { ColorSlider } from "@react-spectrum/color";
 
 import Add from "@spectrum-icons/workflow/Add";
 import Remove from "@spectrum-icons/workflow/Remove";
 import { createFactory, factorySaveInstance } from "../ipc";
 import { v4 as uuid } from "uuid";
+import "@spectrum-css/fieldlabel/dist/index-vars.css";
+import { DialogContext } from "../App";
+
+const Item = ({ value, index, onChange, onRemove }) => {
+  return (
+    <Flex gap="size-100">
+      <TextField
+        aria-label={`Layer ${index}: ${value}`}
+        value={value}
+        onChange={(_value) => onChange(index, _value)}
+      />
+      <ActionButton onPress={() => onRemove(index)}>
+        <Remove />
+      </ActionButton>
+    </Flex>
+  );
+};
+
+function ColorPicker({ color, setColor, isDisabled }) {
+  return (
+    <Flex direction="column">
+      <ColorSlider
+        isDisabled={isDisabled}
+        channel="red"
+        value={color}
+        onChange={setColor}
+      />
+      <ColorSlider
+        isDisabled={isDisabled}
+        channel="green"
+        value={color}
+        onChange={setColor}
+      />
+      <ColorSlider
+        isDisabled={isDisabled}
+        channel="blue"
+        value={color}
+        onChange={setColor}
+      />
+      <ColorSlider
+        isDisabled={isDisabled}
+        channel="alpha"
+        value={color}
+        onChange={setColor}
+      />
+    </Flex>
+  );
+}
 
 export function ConfigurationPage() {
+  const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
   const { inputDir, outputDir } = state;
@@ -50,10 +99,8 @@ export function ConfigurationPage() {
     setLayers(layers.map((layer, index) => (index === i ? value : layer)));
   };
 
-  const onClickRemoveLayer = () => {
-    if (layers.length > 1) {
-      setLayers(layers.slice(0, layers.length - 1));
-    }
+  const onRemoveLayer = (i) => {
+    setLayers(layers.filter((layer, index) => index !== i));
   };
 
   const onClickContinue = async () => {
@@ -69,10 +116,17 @@ export function ConfigurationPage() {
     };
 
     const id = uuid();
-    await createFactory(id, configuration, inputDir, outputDir, {
-      n,
-    });
-    await factorySaveInstance(id);
+
+    // ! TODO
+    try {
+      await createFactory(id, configuration, inputDir, outputDir, {
+        n,
+      });
+      await factorySaveInstance(id);
+    } catch (error) {
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
 
     navigator("/generation", {
       state: {
@@ -86,12 +140,17 @@ export function ConfigurationPage() {
   };
 
   return (
-    <View marginX="size-250" gap="size-100" justifyContent="center">
-      <Heading level={2} marginBottom={-2} alignSelf="center">
-        Collection configuration
+    <Flex direction="column" height="100%" margin="size-100" gap="size-100">
+      <Heading level={1} marginStart={16}>
+        Configuration
       </Heading>
 
-      <Flex direction="row" alignSelf="center" gap="size-600">
+      <Flex
+        direction="row"
+        height="100%"
+        gap="size-100"
+        justifyContent="space-evenly"
+      >
         <Flex direction="column">
           <TextField label="Name" value={name} onChange={setName} />
           <TextArea
@@ -110,64 +169,61 @@ export function ConfigurationPage() {
             Generate Background
           </Switch>
 
-          <TextField
-            label="Default Background"
-            value={defaultBackground}
-            onChange={setDefaultBackground}
-            isDisabled={generateBackground}
-          />
-        </Flex>
-        <Flex
-          direction="column"
-          gap="size-100"
-          height="size-500"
-          overflow="hidden visible"
-        >
-          <Flex gap="size-100">
-            <NumberField
-              label="N"
-              defaultValue={10}
-              minValue={1}
-              value={n}
-              onChange={setN}
-            />
-            <NumberField label="Width" value={width} onChange={setWidth} />
-            <NumberField label="Height" value={height} onChange={setHeight} />
-          </Flex>
+          <div>
+            <label className="spectrum-FieldLabel">Default Background</label>
 
-          <Text>Layers</Text>
+            <ColorPicker
+              color={defaultBackground}
+              setColor={setDefaultBackground}
+              isDisabled={generateBackground}
+            />
+          </div>
+        </Flex>
+
+        <Flex direction="column">
+          <NumberField
+            label="N"
+            defaultValue={10}
+            minValue={1}
+            value={n}
+            onChange={setN}
+          />
+          <NumberField label="Width" value={width} onChange={setWidth} />
+          <NumberField label="Height" value={height} onChange={setHeight} />
+        </Flex>
+
+        <Flex direction="column">
+          <label className="spectrum-FieldLabel">Layers</label>
 
           <Flex direction="column" gap="size-100">
             {layers.map((layer, index) => (
-              <TextField
+              <Item
                 key={index}
-                aria-label={`Layer ${index + 1}`}
                 value={layer}
-                onChange={(value) => onEditLayer(index, value)}
-                width="100%"
+                index={index}
+                onChange={onEditLayer}
+                onRemove={onRemoveLayer}
               />
             ))}
           </Flex>
 
-          <Flex>
-            <ActionButton aria-label="Icon only" onPress={onClickAddLayer}>
+          <ButtonGroup marginTop="size-100">
+            <ActionButton onPress={onClickAddLayer}>
               <Add />
             </ActionButton>
-            <ActionButton aria-label="Icon only" onPress={onClickRemoveLayer}>
-              <Remove />
-            </ActionButton>
-          </Flex>
+          </ButtonGroup>
         </Flex>
       </Flex>
 
-      <Button
-        variant="cta"
-        marginTop="size-250"
-        onPress={onClickContinue}
-        isDisabled={!isAbleContinue}
-      >
-        Continue!
-      </Button>
-    </View>
+      <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
+        <Button
+          variant="cta"
+          onPress={onClickContinue}
+          isDisabled={!isAbleContinue}
+        >
+          Continue!
+        </Button>
+      </ButtonGroup>
+    </Flex>
   );
 }
