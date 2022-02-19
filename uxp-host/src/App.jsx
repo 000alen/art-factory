@@ -1,20 +1,36 @@
 import { HomePage } from "./pages/HomePage";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
-import { Flex, StatusLight } from "@adobe/react-spectrum";
-import React, { useState, useEffect, useContext } from "react";
+import {
+  Flex,
+  StatusLight,
+  DialogTrigger,
+  Dialog,
+  Heading,
+  Divider,
+  Content,
+  Text,
+  ButtonGroup,
+  Button,
+} from "@adobe/react-spectrum";
+import React, { useState, useEffect, useContext, createContext } from "react";
 import { GenerationPage } from "./pages/GenerationPage";
 import { QualityPage } from "./pages/QualityPage";
 import { DeployPage } from "./pages/DeployPage";
 import { ConfigurationPage } from "./pages/ConfigurationPage";
 import { InstancePage } from "./pages/InstancePage";
-import { ReviewPage } from "./pages/ReviewPage";
 import { SocketContext } from "./components/SocketContext";
 import { NotFoundPage } from "./pages/NotFoundPage";
+
+export const DialogContext = createContext();
 
 const App = () => {
   const socket = useContext(SocketContext);
 
   const [connectionStatus, setConnectionStatus] = useState(false);
+  const [dialogShown, setDialogShown] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("Lorem ipsum");
+  const [dialogContent, setDialogContent] = useState("Lorem ipsum");
+  const [dialogButtons, setDialogButtons] = useState(null);
 
   useEffect(() => {
     socket.on("uxp-connected", (isUXPConnected) => {
@@ -22,29 +38,61 @@ const App = () => {
     });
   }, []);
 
-  const connectionStatusLight = connectionStatus ? (
-    <StatusLight variant="positive">Connected</StatusLight>
-  ) : (
-    <StatusLight variant="negative">Disconnected</StatusLight>
-  );
+  const showDialog = () => {
+    setDialogShown(true);
+  };
+
+  const setDialog = (title, content, buttons) => {
+    setDialogTitle(title);
+    setDialogContent(content);
+    setDialogButtons(buttons);
+  };
+
+  const hideDialog = () => {
+    setDialogShown(false);
+  };
 
   return (
-    <Router>
-      <Flex direction="column" gap="size-100" height="100vh">
-        {connectionStatusLight}
+    <DialogContext.Provider value={{ showDialog, setDialog, hideDialog }}>
+      <Router>
+        <Flex direction="column" gap="size-100" height="100vh">
+          <DialogTrigger isOpen={dialogShown}>
+            {null}
+            <Dialog>
+              <Heading>{dialogTitle}</Heading>
+              <Divider />
+              <Content>
+                <Text>{dialogContent}</Text>
+              </Content>
 
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/configuration" element={<ConfigurationPage />} />
-          <Route path="/generation" element={<GenerationPage />} />
-          <Route path="/quality" element={<QualityPage />} />
-          <Route path="/review" element={<ReviewPage />} />
-          <Route path="/deploy" element={<DeployPage />} />
-          <Route path="/instance" element={<InstancePage />} />
-          <Route path="/*" element={<NotFoundPage />} />
-        </Routes>
-      </Flex>
-    </Router>
+              <ButtonGroup>
+                {dialogButtons === null ? (
+                  <Button onPress={hideDialog}>Close</Button>
+                ) : (
+                  { dialogButtons }
+                )}
+              </ButtonGroup>
+            </Dialog>
+          </DialogTrigger>
+
+          {connectionStatus ? (
+            <StatusLight variant="positive">Connected</StatusLight>
+          ) : (
+            <StatusLight variant="negative">Disconnected</StatusLight>
+          )}
+
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/configuration" element={<ConfigurationPage />} />
+            <Route path="/generation" element={<GenerationPage />} />
+            <Route path="/quality" element={<QualityPage />} />
+            <Route path="/deploy" element={<DeployPage />} />
+            <Route path="/instance" element={<InstancePage />} />
+            <Route path="/*" element={<NotFoundPage />} />
+          </Routes>
+        </Flex>
+      </Router>
+    </DialogContext.Provider>
   );
 };
 

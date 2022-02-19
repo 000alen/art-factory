@@ -16,10 +16,13 @@ function randomColor() {
 }
 
 function rarity(elementName) {
-  const fileNameWithoutExtension = path.parse(elementName).name;
-  let rarity = Number(fileNameWithoutExtension.split(RARITY_DELIMITER).pop());
+  let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
   if (isNaN(rarity)) rarity = 1;
   return rarity;
+}
+
+function removeRarity(elementName) {
+  return elementName.split(RARITY_DELIMITER).shift();
 }
 
 // Source: https://github.com/parmentf/random-weighted-choice
@@ -60,11 +63,12 @@ function rarityWeightedChoice(
 
   const choice = randomFunction() * urgencySum;
   const names = Object.keys(cumulatedUrgencies);
+  const rarities = layerElements.map((element) => element.rarity);
   for (let i = 0; i < names.length; i++) {
     const name = names[i];
     const urgency = cumulatedUrgencies[name];
     if (choice <= urgency) {
-      return name;
+      return { name, rarity: rarities[i] };
     }
   }
 }
@@ -113,6 +117,7 @@ module.exports = {
   RARITY_DELIMITER,
   randomColor,
   rarity,
+  removeRarity,
   rarityWeightedChoice,
   pinDirectoryToIPFS,
   getTraitValueByFilename,

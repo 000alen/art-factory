@@ -1,15 +1,20 @@
 const fs = require("fs");
 const path = require("path");
 const Jimp = require("jimp");
-const { randomColor, rarityWeightedChoice, rarity } = require("./utils");
-const dotenv = require("dotenv");
-const { pinDirectoryToIPFS, getTraitValueByFilename } = require("./utils");
-
-dotenv.config();
+const {
+  randomColor,
+  rarityWeightedChoice,
+  rarity,
+  pinDirectoryToIPFS,
+  getTraitValueByFilename,
+  removeRarity,
+} = require("./utils");
 
 class Factory {
+  secrets;
   layers;
-  buffers;
+  layerElementsBuffers;
+  layerElementsPaths;
 
   n;
   attributes;
@@ -23,8 +28,10 @@ class Factory {
     this.configuration = configuration;
     this.inputDir = inputDir;
     this.outputDir = outputDir;
+
     this.layers = new Map();
-    this.buffers = new Map();
+    this.layerElementsBuffers = new Map();
+    this.layerElementsPaths = new Map();
   }
 
   get maxCombinations() {
@@ -38,7 +45,6 @@ class Factory {
       inputDir: this.inputDir,
       outputDir: this.outputDir,
       configuration: this.configuration,
-
       n: this.n,
       attributes: this.attributes,
       generated: this.generated,
@@ -49,22 +55,39 @@ class Factory {
     };
   }
 
+  loadSecrets({ pinataApiKey, pinataSecretApiKey }) {
+    this.secrets = {
+      ...this.secrets,
+      pinataApiKey,
+      pinataSecretApiKey,
+    };
+  }
+
   async saveInstance() {
-    await this.bootstrapOutput();
-
-    const instance = this.instance;
+    await this.ensureOutputDir();
     const instancePath = path.join(this.outputDir, "instance.json");
-    await fs.promises.writeFile(instancePath, JSON.stringify(instance));
-
+    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance));
     return instancePath;
   }
 
-  async loadLayers() {
+  async ensureOutputDir() {
+    if (!fs.existsSync(this.outputDir)) fs.mkdirSync(this.outputDir);
+
+    if (!fs.existsSync(path.join(this.outputDir, "json")))
+      fs.mkdirSync(path.join(this.outputDir, "json"));
+
+    if (!fs.existsSync(path.join(this.outputDir, "images")))
+      fs.mkdirSync(path.join(this.outputDir, "images"));
+  }
+
+  async ensureLayers() {
+    if (this.layers.size > 0) return;
+
     const layersNames = (await fs.promises.readdir(this.inputDir)).filter(
       (file) => !file.startsWith(".")
     );
 
-    const layersElements = await Promise.all(
+    const layerElementsPaths = await Promise.all(
       layersNames.map(async (layerName) =>
         (
           await fs.promises.readdir(path.join(this.inputDir, layerName))
@@ -72,33 +95,35 @@ class Factory {
       )
     );
 
+    const layersElements = layerElementsPaths.map((layerElementsPath) =>
+      layerElementsPath.map((layerElementPath) => {
+        const _ = path.parse(layerElementPath).name;
+        return {
+          name: removeRarity(_),
+          rarity: rarity(_),
+        };
+      })
+    );
+
     layersNames.forEach((layerName, i) => {
-      this.layers.set(
-        layerName,
-        layersElements[i].map((layerElement) => ({
-          name: layerElement,
-          rarity: rarity(layerElement),
-        }))
-      );
+      this.layers.set(layerName, layersElements[i]);
+
+      layersElements[i].forEach((layerElements, j) => {
+        this.layerElementsPaths.set(
+          path.join(layerName, layerElements.name),
+          path.join(layerName, layerElementsPaths[i][j])
+        );
+      });
     });
   }
 
-  async bootstrapOutput() {
-    if (!fs.existsSync(this.outputDir))
-      //   fs.rmSync(this.outputDir, { recursive: true });
-      fs.mkdirSync(this.outputDir);
-
-    if (fs.existsSync(path.join(this.outputDir, "json")))
-      fs.rmSync(path.join(this.outputDir, "json"), { recursive: true });
-    fs.mkdirSync(path.join(this.outputDir, "json"));
-
-    if (fs.existsSync(path.join(this.outputDir, "images")))
-      fs.rmSync(path.join(this.outputDir, "images"), { recursive: true });
-    fs.mkdirSync(path.join(this.outputDir, "images"));
-
-    if (fs.existsSync(path.join(this.outputDir, "psd")))
-      fs.rmSync(path.join(this.outputDir, "psd"), { recursive: true });
-    fs.mkdirSync(path.join(this.outputDir, "psd"));
+  async ensureLayerElementsBuffer(layerElementPath) {
+    if (!this.layerElementsBuffers.has(layerElementPath)) {
+      this.layerElementsBuffers.set(
+        layerElementPath,
+        await fs.promises.readFile(path.join(this.inputDir, layerElementPath))
+      );
+    }
   }
 
   generateRandomAttributes(n) {
@@ -116,11 +141,12 @@ class Factory {
 
       for (const layerName of this.configuration.layers) {
         const layerElements = this.layers.get(layerName);
-        const name = rarityWeightedChoice(layerElements);
+        const { name, rarity } = rarityWeightedChoice(layerElements);
 
         attribute.push({
           name: layerName,
           value: name,
+          rarity,
         });
       }
 
@@ -132,7 +158,7 @@ class Factory {
     return attributes;
   }
 
-  generateAllAttributes() {
+  generateAttributes() {
     this.n = this.maxCombinations;
 
     const attributes = [];
@@ -148,7 +174,14 @@ class Factory {
 
       for (const layerElement of layerElements) {
         for (const _ of generator(configuration, layers, n - 1)) {
-          yield [{ name: layerName, value: layerElement.name }, ..._];
+          yield [
+            {
+              name: layerName,
+              value: layerElement.name,
+              rarity: layerElement.rarity,
+            },
+            ..._,
+          ];
         }
       }
     }
@@ -171,15 +204,6 @@ class Factory {
     return back;
   }
 
-  async ensureBuffer(elementKey) {
-    if (!this.buffers.has(elementKey)) {
-      const buffer = await fs.promises.readFile(
-        path.join(this.inputDir, elementKey)
-      );
-      this.buffers.set(elementKey, buffer);
-    }
-  }
-
   // ! TODO: Careful with memory usage
   // ! TODO: Change the algorithm complexity from O(n) to O(log n)
   async generateImages(attributes, callback) {
@@ -194,9 +218,13 @@ class Factory {
         );
 
         for (const trait of traits) {
-          const elementKey = path.join(trait.name, trait.value);
-          await this.ensureBuffer(elementKey);
-          const current = await Jimp.read(this.buffers.get(elementKey));
+          const layerElementPath = this.layerElementsPaths.get(
+            path.join(trait.name, trait.value)
+          );
+          await this.ensureLayerElementsBuffer(layerElementPath);
+          const current = await Jimp.read(
+            this.layerElementsBuffers.get(layerElementPath)
+          );
           this.composeImages(image, current);
         }
 
@@ -252,8 +280,8 @@ class Factory {
 
     const imagesDir = path.join(this.outputDir, "images");
     const { IpfsHash } = await pinDirectoryToIPFS(
-      process.env.PINATA_API_KEY,
-      process.env.PINATA_SECRET_API_KEY,
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretKey,
       imagesDir
     );
     this.imagesCID = IpfsHash;
@@ -275,8 +303,8 @@ class Factory {
     const jsonDir = path.join(this.outputDir, "json");
 
     const { IpfsHash } = await pinDirectoryToIPFS(
-      process.env.PINATA_API_KEY,
-      process.env.PINATA_SECRET_API_KEY,
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretKey,
       jsonDir
     );
     this.metadataCID = IpfsHash;
@@ -284,7 +312,7 @@ class Factory {
     return this.metadataCID;
   }
 
-  getRandomGeneratedImage(attributes) {
+  getRandomImage(attributes) {
     const index = Math.floor(Math.random() * attributes.length);
     return fs.readFileSync(
       path.join(this.outputDir, "images", `${index + 1}.png`)

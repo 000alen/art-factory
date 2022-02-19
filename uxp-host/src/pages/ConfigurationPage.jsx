@@ -15,7 +15,7 @@ import {
 
 import Add from "@spectrum-icons/workflow/Add";
 import Remove from "@spectrum-icons/workflow/Remove";
-import { createFactory, factorySaveInstance, mkDir } from "../ipcRenderer";
+import { createFactory, factorySaveInstance } from "../ipc";
 import { v4 as uuid } from "uuid";
 
 export function ConfigurationPage() {

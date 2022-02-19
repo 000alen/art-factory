@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { Button } from "@adobe/react-spectrum";
-import { getContract } from "../ipcRenderer";
+import { getContract } from "../ipc";
 import { providers, ContractFactory, ethers } from "ethers";
 
 function sleep(ms) {

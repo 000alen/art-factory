@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  factoryBootstrapOutput,
+  factoryEnsureOutputDir,
   factoryGenerateImages,
-  factoryLoadLayers,
+  factoryEnsureLayers,
   factoryGenerateRandomAttributes,
-  factoryGetRandomGeneratedImage,
+  factoryGetRandomImage,
   factorySaveInstance,
-} from "../ipcRenderer";
+} from "../ipc";
 import {
   Button,
   Flex,
@@ -33,16 +33,17 @@ export function GenerationPage() {
   const onClickGenerate = async () => {
     setIsGenerating(true);
 
-    await factoryLoadLayers(id);
-    await factoryBootstrapOutput(id);
+    await factoryEnsureLayers(id);
+    await factoryEnsureOutputDir(id);
     const _attributes = await factoryGenerateRandomAttributes(id, n);
     await factoryGenerateImages(id, _attributes, onProgress);
-    const buffer = await factoryGetRandomGeneratedImage(id, _attributes);
-    const blob = new Blob([buffer], { type: "image/png" });
-    const url = URL.createObjectURL(blob);
+    const imageBuffer = await factoryGetRandomImage(id, _attributes);
     await factorySaveInstance(id);
 
-    setImageUrl(url);
+    const imageBlob = new Blob([imageBuffer], { type: "image/png" });
+    const _imageUrl = URL.createObjectURL(imageBlob);
+
+    setImageUrl(_imageUrl);
     setAttributes(_attributes);
     setIsGenerating(false);
     setGenerationDone(true);

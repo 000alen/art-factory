@@ -1,26 +1,32 @@
 import React, { useContext, useEffect } from "react";
 import { Flex, Heading, Text, Button } from "@adobe/react-spectrum";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
+  showOpenDialog,
   factoryInstance,
   factoryLoadInstance,
   getOutputDir,
-} from "../ipcRenderer";
+  createFactory,
+} from "../ipc";
 import { SocketContext } from "../components/SocketContext";
-import { showOpenDialog } from "../ipcRenderer";
 import { v4 as uuid } from "uuid";
-import { writePsdBuffer } from "ag-psd";
+import { DialogContext } from "../App";
 
 export function HomePage() {
   const navigator = useNavigate();
   const socket = useContext(SocketContext);
+  const { showDialog, setDialog } = useContext(DialogContext);
 
   useEffect(() => {
     socket.on("uxp-generate", async ({ n, inputDir, configuration }) => {
       const outputDir = await getOutputDir(inputDir);
+      const id = uuid();
+
+      await createFactory(id, configuration, inputDir, outputDir, { n });
 
       navigator("/generation", {
         state: {
+          id,
           n: Number(n),
           inputDir,
           outputDir,
@@ -112,18 +118,20 @@ export function HomePage() {
   };
 
   const onClickTest = () => {
-    console.log("sending host-edit");
-    socket.emit("host-edit", {
-      name: "HOLI",
-      traits: [
-        { name: "1. Background", value: "Pink" },
-        { name: "2. Fur", value: "Green" },
-        { name: "3. Clothes", value: "Dress Shirt" },
-        { name: "4. Mouth Accessories", value: "Cigarette" },
-        { name: "5. Eyes", value: "Heart Glasses" },
-        { name: "6. Head Accessories", value: "Halo" },
-      ],
-    });
+    // console.log("sending host-edit");
+    // socket.emit("host-edit", {
+    //   name: "HOLI",
+    //   traits: [
+    //     { name: "1. Background", value: "Pink" },
+    //     { name: "2. Fur", value: "Green" },
+    //     { name: "3. Clothes", value: "Dress Shirt" },
+    //     { name: "4. Mouth Accessories", value: "Cigarette" },
+    //     { name: "5. Eyes", value: "Heart Glasses" },
+    //     { name: "6. Head Accessories", value: "Halo" },
+    //   ],
+    // });
+    setDialog("Test", "This is a test dialog", null);
+    showDialog();
   };
 
   return (

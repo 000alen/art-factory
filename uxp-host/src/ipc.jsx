@@ -91,23 +91,23 @@ export const factoryLoadInstance = (id, instancePath) => {
   });
 };
 
-export const factoryLoadLayers = (id) => {
+export const factoryEnsureLayers = (id) => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer.once("factoryLoadLayersResult", (result) =>
+    window.ipcRenderer.once("factoryEnsureLayersResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryLoadLayers", id);
+    window.ipcRenderer.send("factoryEnsureLayers", id);
   });
 };
 
-export const factoryBootstrapOutput = (id) => {
+export const factoryEnsureOutputDir = (id) => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer.once("factoryBootstrapOutputResult", (result) =>
+    window.ipcRenderer.once("factoryEnsureOutputDirResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryBootstrapOutput", id);
+    window.ipcRenderer.send("factoryEnsureOutputDir", id);
   });
 };
 
@@ -121,13 +121,13 @@ export const factoryGenerateRandomAttributes = (id, n) => {
   });
 };
 
-export const factoryGenerateAllAttributes = (id) => {
+export const factoryGenerateAttributes = (id) => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer.once("factoryGenerateAllAttributesResult", (result) =>
+    window.ipcRenderer.once("factoryGenerateAttributesResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryGenerateAllAttributes", id);
+    window.ipcRenderer.send("factoryGenerateAttributes", id);
   });
 };
 
@@ -180,13 +180,13 @@ export const factoryDeployMetadata = (id) => {
   });
 };
 
-export const factoryGetRandomGeneratedImage = (id, attributes) => {
+export const factoryGetRandomImage = (id, attributes) => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer.once("factoryGetRandomGeneratedImageResult", (result) =>
+    window.ipcRenderer.once("factoryGetRandomImageResult", (result) =>
       resolve(result)
     );
 
-    window.ipcRenderer.send("factoryGetRandomGeneratedImage", id, attributes);
+    window.ipcRenderer.send("factoryGetRandomImage", id, attributes);
   });
 };
 
