@@ -12,10 +12,10 @@ import {
   ButtonGroup,
   ProgressBar,
 } from "@adobe/react-spectrum";
-import { ColorSlider } from "@react-spectrum/color";
 
+import { LayerItem } from "../components/LayerItem";
+import { ColorPicker } from "../components/ColorPicker";
 import Add from "@spectrum-icons/workflow/Add";
-import Remove from "@spectrum-icons/workflow/Remove";
 import {
   createFactory,
   factorySaveInstance,
@@ -28,53 +28,7 @@ import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { DialogContext } from "../App";
 
-const Item = ({ value, index, onChange, onRemove }) => {
-  return (
-    <Flex gap="size-100">
-      <TextField
-        aria-label={`Layer ${index}: ${value}`}
-        value={value}
-        onChange={(_value) => onChange(index, _value)}
-      />
-      <ActionButton onPress={() => onRemove(index)}>
-        <Remove />
-      </ActionButton>
-    </Flex>
-  );
-};
-
-function ColorPicker({ color, setColor, isDisabled }) {
-  return (
-    <Flex direction="column">
-      <ColorSlider
-        isDisabled={isDisabled}
-        channel="red"
-        value={color}
-        onChange={setColor}
-      />
-      <ColorSlider
-        isDisabled={isDisabled}
-        channel="green"
-        value={color}
-        onChange={setColor}
-      />
-      <ColorSlider
-        isDisabled={isDisabled}
-        channel="blue"
-        value={color}
-        onChange={setColor}
-      />
-      <ColorSlider
-        isDisabled={isDisabled}
-        channel="alpha"
-        value={color}
-        onChange={setColor}
-      />
-    </Flex>
-  );
-}
-
-export function ConfigurationPage() {
+export function GenerationPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
@@ -253,7 +207,7 @@ export function ConfigurationPage() {
 
           <Flex direction="column" gap="size-100">
             {layers.map((layer, index) => (
-              <Item
+              <LayerItem
                 key={index}
                 value={layer}
                 index={index}

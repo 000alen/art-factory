@@ -126,7 +126,20 @@ export function DeployPage() {
     setIsDeploying(false);
   };
 
-  const onContinue = () => {};
+  const onContinue = () => {
+    navigator("/instance", {
+      state: {
+        id,
+        attributes,
+        inputDir,
+        outputDir,
+        configuration,
+        imagesCID,
+        metadataCID,
+        contractAddress,
+      },
+    });
+  };
 
   return (
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">

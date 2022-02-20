@@ -34,7 +34,7 @@ export function HomePage() {
         return;
       }
 
-      navigator("/configuration", {
+      navigator("/generation", {
         state: {
           n: Number(n),
           inputDir,
@@ -64,7 +64,7 @@ export function HomePage() {
       return;
     }
 
-    navigator("/configuration", {
+    navigator("/generation", {
       state: {
         inputDir,
         outputDir,
@@ -122,7 +122,7 @@ export function HomePage() {
     }
 
     if (!attributes || !generated) {
-      navigator("/configuration", {
+      navigator("/generation", {
         state: { inputDir, outputDir, partialConfiguration: configuration },
       });
     } else if (
@@ -154,6 +154,10 @@ export function HomePage() {
     }
   };
 
+  const onTest = () => {
+    navigator("/instance");
+  };
+
   return (
     <Flex
       direction="column"
@@ -177,6 +181,7 @@ export function HomePage() {
         </Button>
 
         <Button onPress={onOpenInstance}>Open Instance!</Button>
+        <Button onPress={onTest}>Test</Button>
       </ButtonGroup>
     </Flex>
   );

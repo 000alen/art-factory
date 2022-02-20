@@ -5,9 +5,10 @@ import {
   defaultTheme,
 } from "@adobe/react-spectrum";
 
-import "./index.css";
 import App from "./App";
 import { SocketContext, socket } from "./components/SocketContext";
+
+import "./index.css";
 
 ReactDOM.render(
   <SocketContext.Provider value={socket}>
