@@ -172,6 +172,7 @@ export function ConfigurationPage() {
           <div>
             <label className="spectrum-FieldLabel">Default Background</label>
 
+            {/* ! TODO: this breaks the code */}
             <ColorPicker
               color={defaultBackground}
               setColor={setDefaultBackground}

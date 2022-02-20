@@ -7,10 +7,12 @@ import {
   Flex,
   ButtonGroup,
   Heading,
+  ProgressBar,
 } from "@adobe/react-spectrum";
 import {
   factoryDeployImages,
   factoryDeployMetadata,
+  factoryGenerateMetadata,
   factoryLoadSecrets,
   getContract,
   getInfuraId,
@@ -26,43 +28,63 @@ export function DeployPage() {
   const { state } = useLocation();
   const { id, attributes, inputDir, outputDir, configuration } = state;
 
+  const [secrets, setSecrets] = useState(null);
   const [provider, setProvider] = useState(null);
   const [web3Provider, setWeb3Provider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [imagesCID, setImagesCID] = useState("");
   const [metadataCID, setMetadataCID] = useState("");
+  const [contractAddress, setContractAddress] = useState("");
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployedDone, setDeployedDone] = useState(false);
+
+  const loadSecrets = async () => ({
+    pinataApiKey: await getPinataApiKey(),
+    pinataSecretApiKey: await getPinataSecretApiKey(),
+    infuraId: await getInfuraId(),
+  });
 
   useEffect(() => {
-    // TODO
-    const _provider = new WalletConnectProvider({
-      infuraId: "50adf8db20234b2d80ea3f1e23acef34",
-      chainId: 3,
-    });
+    let _secrets;
+    let _provider;
 
-    setProvider(_provider);
+    loadSecrets()
+      .then((__secrets) => {
+        _secrets = __secrets;
+
+        _provider = new WalletConnectProvider({
+          infuraId: _secrets.infuraId,
+          chainId: 3, // ! TODO
+        });
+
+        setSecrets(_secrets);
+        setProvider(_provider);
+      })
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+        return;
+      });
   }, []);
 
   const onDeploy = async () => {
-    // TODO
-    // await provider.enable();
-    // const _web3Provider = new providers.Web3Provider(provider);
-    // const _signer = await _web3Provider.getSigner();
-    // setWeb3Provider(_web3Provider);
-    // setSigner(_signer);
+    setIsDeploying(true);
 
-    let secrets;
+    // TODO
+    await provider.enable();
+    const _web3Provider = new providers.Web3Provider(provider);
+    const _signer = await _web3Provider.getSigner();
+
     let _imagesCID;
     let _metadataCID;
 
+    setWeb3Provider(_web3Provider);
+    setSigner(_signer);
+
     // ! TODO
     try {
-      secrets = {
-        pinataApiKey: await getPinataApiKey(),
-        pinataSecretApiKey: await getPinataSecretApiKey(),
-        infuraId: await getInfuraId(),
-      };
       await factoryLoadSecrets(id, secrets);
       _imagesCID = await factoryDeployImages(id);
+      await factoryGenerateMetadata(id, _imagesCID, attributes);
       _metadataCID = await factoryDeployMetadata(id);
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
@@ -72,31 +94,39 @@ export function DeployPage() {
     setImagesCID(_imagesCID);
     setMetadataCID(_metadataCID);
 
-    // TODO
-    // const { contracts } = await getContract("NFT");
-    // const { NFT } = contracts.NFT;
-    // const { abi, evm } = NFT;
-    // const { bytecode } = evm;
-    // const { object } = bytecode;
-    // const factory = new ContractFactory(abi, object, signer);
-    // console.log("Starting");
-    // try {
-    //   const contract = await factory.deploy(
-    //     configuration.name,
-    //     configuration.symbol,
-    //     "x",
-    //     "y",
-    //     {
-    //       gasPrice: ethers.utils.parseUnits("10", "gwei"),
-    //     }
-    //   );
-    //   console.log("Waiting for transaction to be mined...");
-    //   await contract.deployTransaction.wait();
-    //   console.log("Transaction mined!");
-    // } catch (err) {
-    //   console.log(err);
-    // }
+    let _contractAddress;
+
+    // ! TODO
+    try {
+      const { contracts } = await getContract("NFT");
+      const { NFT } = contracts.NFT;
+      const { abi, evm } = NFT;
+      const { bytecode } = evm;
+      const contractFactory = new ContractFactory(abi, bytecode, _signer);
+
+      const contract = await contractFactory.deploy(
+        configuration.name,
+        configuration.symbol,
+        _metadataCID,
+        _metadataCID,
+        {
+          gasPrice: ethers.utils.parseUnits("10", "gwei"),
+        }
+      );
+
+      await contract.deployTransaction.wait();
+      _contractAddress = contract.address;
+    } catch (error) {
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
+
+    setContractAddress(_contractAddress);
+    setDeployedDone(true);
+    setIsDeploying(false);
   };
+
+  const onContinue = () => {};
 
   return (
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">
@@ -111,23 +141,42 @@ export function DeployPage() {
         alignItems="center"
       >
         <TextField
+          width="50%"
           isReadOnly={true}
           value={imagesCID}
           label="Images CID"
-        ></TextField>
+        />
         <TextField
+          width="50%"
           isReadOnly={true}
           value={metadataCID}
           label="Metadata CID"
-        ></TextField>
-        <TextField isReadOnly={true} label="Contract Address"></TextField>
+        />
+        <TextField
+          width="50%"
+          isReadOnly={true}
+          value={contractAddress}
+          label="Contract Address"
+        />
       </Flex>
 
-      <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-        <Button variant="cta" onPress={onDeploy}>
-          Deploy!
-        </Button>
-      </ButtonGroup>
+      {isDeploying ? (
+        <Flex marginBottom={8} marginX={8} justifyContent="end">
+          <ProgressBar width="100%" label="Deploying…" isIndeterminate />
+        </Flex>
+      ) : (
+        <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
+          {deployedDone ? (
+            <Button variant="cta" onPress={onContinue}>
+              Continue!
+            </Button>
+          ) : (
+            <Button variant="cta" onPress={onDeploy}>
+              Deploy!
+            </Button>
+          )}
+        </ButtonGroup>
+      )}
     </Flex>
   );
 }

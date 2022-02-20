@@ -6,7 +6,6 @@ const {
   rarityWeightedChoice,
   rarity,
   pinDirectoryToIPFS,
-  getTraitValueByFilename,
   removeRarity,
 } = require("./utils");
 
@@ -214,7 +213,8 @@ class Factory {
           this.configuration.height,
           this.configuration.generateBackground
             ? randomColor()
-            : this.configuration.defaultBackground || 0xffffff
+            : // ! TODO: This breaks compilation
+              this.configuration.defaultBackground || 0xffffff
         );
 
         for (const trait of traits) {
@@ -247,11 +247,11 @@ class Factory {
         name: this.configuration.name,
         description: this.configuration.description,
         image: `ipfs://${cid}/${i + 1}.png`,
-        edition: i,
+        edition: i + 1,
         date: Date.now(),
         attributes: traits.map((trait) => ({
           trait_type: trait.name,
-          value: getTraitValueByFilename(trait.value),
+          value: trait.value,
         })),
       };
       metadatas.push(metadata);
@@ -279,12 +279,15 @@ class Factory {
     }
 
     const imagesDir = path.join(this.outputDir, "images");
+
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
       imagesDir
     );
     this.imagesCID = IpfsHash;
+
+    console.log(`images CID: ${IpfsHash}`);
 
     return this.imagesCID;
   }

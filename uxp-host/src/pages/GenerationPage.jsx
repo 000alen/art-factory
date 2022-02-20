@@ -56,8 +56,8 @@ export function GenerationPage() {
 
     setImageUrl(_imageUrl);
     setAttributes(_attributes);
-    setIsGenerating(false);
     setGenerationDone(true);
+    setIsGenerating(false);
   };
 
   const onClickContinue = () => {
