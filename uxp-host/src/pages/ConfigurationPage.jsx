@@ -10,12 +10,20 @@ import {
   ActionButton,
   TextArea,
   ButtonGroup,
+  ProgressBar,
 } from "@adobe/react-spectrum";
 import { ColorSlider } from "@react-spectrum/color";
 
 import Add from "@spectrum-icons/workflow/Add";
 import Remove from "@spectrum-icons/workflow/Remove";
-import { createFactory, factorySaveInstance } from "../ipc";
+import {
+  createFactory,
+  factorySaveInstance,
+  factoryGenerateImages,
+  factoryGenerateRandomAttributes,
+  factoryEnsureLayers,
+  factoryEnsureOutputDir,
+} from "../ipc";
 import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { DialogContext } from "../App";
@@ -81,6 +89,13 @@ export function ConfigurationPage() {
   const [generateBackground, setGenerateBackground] = useState(true);
   const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
   const [layers, setLayers] = React.useState([""]);
+  const [id, setId] = useState(null);
+  const [configuration, setConfiguration] = useState(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationDone, setGenerationDone] = useState(false);
+  const [currentGeneration, setCurrentGeneration] = useState(0);
+  const [attributes, setAttributes] = useState([]);
 
   const isAbleContinue =
     name &&
@@ -103,8 +118,15 @@ export function ConfigurationPage() {
     setLayers(layers.filter((layer, index) => index !== i));
   };
 
-  const onClickContinue = async () => {
-    const configuration = {
+  const onProgress = (i) => {
+    setCurrentGeneration((prevGeneration) => prevGeneration + 1);
+  };
+
+  const onGenerate = async () => {
+    setIsGenerating(true);
+
+    const _id = uuid();
+    const _configuration = {
       name,
       description,
       symbol,
@@ -115,23 +137,36 @@ export function ConfigurationPage() {
       layers,
     };
 
-    const id = uuid();
+    let _attributes;
 
     // ! TODO
     try {
-      await createFactory(id, configuration, inputDir, outputDir, {
+      await createFactory(_id, _configuration, inputDir, outputDir, {
         n,
       });
-      await factorySaveInstance(id);
+      await factorySaveInstance(_id);
+      await factoryEnsureLayers(_id);
+      await factoryEnsureOutputDir(_id);
+      _attributes = await factoryGenerateRandomAttributes(_id, n);
+      await factoryGenerateImages(_id, _attributes, onProgress);
+      await factorySaveInstance(_id);
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
       return;
     }
 
-    navigator("/generation", {
+    setId(_id);
+    setConfiguration(_configuration);
+    setAttributes(_attributes);
+    setGenerationDone(true);
+    setIsGenerating(false);
+  };
+
+  const onContinue = () => {
+    navigator("/quality", {
       state: {
         id,
-        n,
+        attributes,
         inputDir,
         outputDir,
         configuration,
@@ -216,15 +251,32 @@ export function ConfigurationPage() {
         </Flex>
       </Flex>
 
-      <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-        <Button
-          variant="cta"
-          onPress={onClickContinue}
-          isDisabled={!isAbleContinue}
-        >
-          Continue!
-        </Button>
-      </ButtonGroup>
+      {isGenerating ? (
+        <Flex marginBottom={8} marginX={8} justifyContent="end">
+          <ProgressBar
+            label="Deploying…"
+            minValue={0}
+            maxValue={n}
+            value={currentGeneration}
+          />
+        </Flex>
+      ) : (
+        <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
+          {generationDone ? (
+            <Button variant="cta" onPress={onContinue}>
+              Continue!
+            </Button>
+          ) : (
+            <Button
+              variant="cta"
+              onPress={onGenerate}
+              isDisabled={!isAbleContinue}
+            >
+              Generate!
+            </Button>
+          )}
+        </ButtonGroup>
+      )}
     </Flex>
   );
 }

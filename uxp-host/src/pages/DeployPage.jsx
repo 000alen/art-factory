@@ -162,7 +162,7 @@ export function DeployPage() {
 
       {isDeploying ? (
         <Flex marginBottom={8} marginX={8} justifyContent="end">
-          <ProgressBar width="100%" label="Deploying…" isIndeterminate />
+          <ProgressBar label="Deploying…" isIndeterminate />
         </Flex>
       ) : (
         <ButtonGroup align="end" marginBottom={8} marginEnd={8}>

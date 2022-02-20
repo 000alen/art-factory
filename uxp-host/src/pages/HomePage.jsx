@@ -25,27 +25,30 @@ export function HomePage() {
 
   useEffect(() => {
     socket.on("uxp-generate", async ({ n, inputDir, configuration }) => {
-      const id = uuid();
-      let outputDir;
-
       // ! TODO
-      try {
-        outputDir = await getOutputDir(inputDir);
-        await createFactory(id, configuration, inputDir, outputDir, { n });
-      } catch (error) {
-        dialogContext.setDialog("Error", error.message, null, true);
-        return;
-      }
+      dialogContext.setDialog("Error", "FIXME", null, true);
 
-      navigator("/generation", {
-        state: {
-          id,
-          n: Number(n),
-          inputDir,
-          outputDir,
-          configuration,
-        },
-      });
+      // const id = uuid();
+      // let outputDir;
+
+      // // ! TODO
+      // try {
+      //   outputDir = await getOutputDir(inputDir);
+      //   await createFactory(id, configuration, inputDir, outputDir, { n });
+      // } catch (error) {
+      //   dialogContext.setDialog("Error", error.message, null, true);
+      //   return;
+      // }
+
+      // navigator("/generation", {
+      //   state: {
+      //     id,
+      //     n: Number(n),
+      //     inputDir,
+      //     outputDir,
+      //     configuration,
+      //   },
+      // });
     });
   }, []);
 
@@ -126,9 +129,11 @@ export function HomePage() {
     }
 
     if (!attributes || !generated) {
-      navigator("/generation", {
-        state: { id, n, inputDir, outputDir, configuration },
-      });
+      // ! TODO
+      dialogContext.setDialog("Error", "FIXME", null, true);
+      // navigator("/generation", {
+      //   state: { id, n, inputDir, outputDir, configuration },
+      // });
     } else if (
       !metadataGenerated ||
       !imagesCID ||
