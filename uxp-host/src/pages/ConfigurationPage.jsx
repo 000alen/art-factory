@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Button,
@@ -78,7 +78,7 @@ export function ConfigurationPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir } = state;
+  const { inputDir, outputDir, partialConfiguration } = state;
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -97,14 +97,34 @@ export function ConfigurationPage() {
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [attributes, setAttributes] = useState([]);
 
-  const isAbleContinue =
-    name &&
-    symbol &&
-    width &&
-    height &&
-    (generateBackground || defaultBackground) &&
-    layers.length > 0 &&
-    layers.every((layer) => layer.length > 0);
+  const isAbleContinue = useMemo(
+    () =>
+      name &&
+      symbol &&
+      width &&
+      height &&
+      (generateBackground || defaultBackground) &&
+      layers.length > 0 &&
+      layers.every((layer) => layer.length > 0),
+    [name, symbol, width, height, generateBackground, defaultBackground, layers]
+  );
+
+  useEffect(() => {
+    if (partialConfiguration) {
+      if (partialConfiguration.name) setName(partialConfiguration.name);
+      if (partialConfiguration.description)
+        setDescription(partialConfiguration.description);
+      if (partialConfiguration.symbol) setSymbol(partialConfiguration.symbol);
+      if (partialConfiguration.width) setWidth(partialConfiguration.width);
+      if (partialConfiguration.height) setHeight(partialConfiguration.height);
+      if (partialConfiguration.generateBackground)
+        setGenerateBackground(partialConfiguration.generateBackground);
+      // ! TODO
+      // if (partialConfiguration.defaultBackground)
+      //   setDefaultBackground(partialConfiguration.defaultBackground);
+      if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
+    }
+  }, []);
 
   const onClickAddLayer = () => {
     setLayers([...layers, ""]);

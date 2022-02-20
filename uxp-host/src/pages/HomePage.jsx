@@ -25,30 +25,23 @@ export function HomePage() {
 
   useEffect(() => {
     socket.on("uxp-generate", async ({ n, inputDir, configuration }) => {
-      // ! TODO
-      dialogContext.setDialog("Error", "FIXME", null, true);
+      let outputDir;
 
-      // const id = uuid();
-      // let outputDir;
+      try {
+        outputDir = await getOutputDir();
+      } catch (error) {
+        dialogContext.setDialog("Error", error.message, null, true);
+        return;
+      }
 
-      // // ! TODO
-      // try {
-      //   outputDir = await getOutputDir(inputDir);
-      //   await createFactory(id, configuration, inputDir, outputDir, { n });
-      // } catch (error) {
-      //   dialogContext.setDialog("Error", error.message, null, true);
-      //   return;
-      // }
-
-      // navigator("/generation", {
-      //   state: {
-      //     id,
-      //     n: Number(n),
-      //     inputDir,
-      //     outputDir,
-      //     configuration,
-      //   },
-      // });
+      navigator("/configuration", {
+        state: {
+          n: Number(n),
+          inputDir,
+          outputDir,
+          partialConfiguration: configuration,
+        },
+      });
     });
   }, []);
 
@@ -129,11 +122,9 @@ export function HomePage() {
     }
 
     if (!attributes || !generated) {
-      // ! TODO
-      dialogContext.setDialog("Error", "FIXME", null, true);
-      // navigator("/generation", {
-      //   state: { id, n, inputDir, outputDir, configuration },
-      // });
+      navigator("/configuration", {
+        state: { inputDir, outputDir, partialConfiguration: configuration },
+      });
     } else if (
       !metadataGenerated ||
       !imagesCID ||
