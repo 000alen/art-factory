@@ -9,16 +9,15 @@ require("./store");
 const createWindow = () => {
   const window = new BrowserWindow({
     autoHideMenuBar: true,
-    // minWidth: 1024,
-    // minHeight: 768,
+    minWidth: 1024,
+    minHeight: 850,
     width: 1024,
-    height: 768,
+    height: 850,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
   });
 
-  // Configure electron development environment
   window.loadURL(
     isDevelopment
       ? "http://localhost:3000"
