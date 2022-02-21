@@ -7,6 +7,7 @@ import {
   TextField,
   NumberField,
   Switch,
+  View,
   ActionButton,
   TextArea,
   ButtonGroup,
@@ -209,23 +210,34 @@ export function GenerationPage() {
         <Flex direction="column">
           <label className="spectrum-FieldLabel">Layers</label>
 
-          <Flex direction="column" gap="size-100">
-            {layers.map((layer, index) => (
-              <LayerItem
-                key={index}
-                value={layer}
-                index={index}
-                onChange={onEditLayer}
-                onRemove={onRemoveLayer}
-              />
-            ))}
-          </Flex>
+          <View
+            height="70vh"
+            padding="size-100"
+            overflow="auto"
+            borderWidth="thin"
+            borderColor="dark"
+            borderRadius="medium"
+          >
 
-          <ButtonGroup marginTop="size-100">
-            <ActionButton onPress={onAddLayer}>
-              <Add />
-            </ActionButton>
-          </ButtonGroup>
+            <Flex j direction="column" gap="size-100">
+              {layers.map((layer, index) => (
+                <LayerItem
+                  key={index}
+                  value={layer}
+                  index={index}
+                  onChange={onEditLayer}
+                  onRemove={onRemoveLayer}
+                />
+              ))}
+            </Flex>
+
+            <ButtonGroup marginTop="size-100">
+              <ActionButton onPress={onAddLayer}>
+                <Add />
+              </ActionButton>
+            </ButtonGroup>
+
+          </View>
         </Flex>
       </Flex>
 
