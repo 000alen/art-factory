@@ -6,46 +6,10 @@ import {
   NumberField,
   ProgressBar,
   View,
-  Text,
-  ActionButton,
 } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import Play from "@spectrum-icons/workflow/Play";
-import Copy from "@spectrum-icons/workflow/Copy";
-
-function OutputItem({ text, isCopiable }) {
-  return (
-    <Flex justifyContent="space-between">
-      <Text>{text}</Text>
-      {isCopiable && (
-        <ActionButton>
-          <Copy />
-        </ActionButton>
-      )}
-    </Flex>
-  );
-}
-
-function TaskItem({ task, onRun, children }) {
-  return (
-    <View
-      borderWidth="thin"
-      borderColor="dark"
-      borderRadius="medium"
-      padding="size-100"
-    >
-      <Flex direction="column" gap="size-100">
-        <Flex alignItems="center" justifyContent="space-between">
-          <Text>{task}</Text>
-          <ActionButton onPress={onRun}>
-            <Play />
-          </ActionButton>
-        </Flex>
-        {children}
-      </Flex>
-    </View>
-  );
-}
+import { TaskItem } from "../components/TaskItem";
+import { OutputItem } from "../components/OutputItem";
 
 export function InstancePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +93,7 @@ export function InstancePage() {
 
       {isLoading && (
         <Flex marginBottom={8} marginX={8} justifyContent="end">
-          <ProgressBar label="Loading…" isIndeterminate  />
+          <ProgressBar label="Loading…" isIndeterminate />
         </Flex>
       )}
     </Flex>
