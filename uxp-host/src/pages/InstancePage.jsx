@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Flex,
   Heading,
@@ -10,12 +10,29 @@ import {
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "../components/TaskItem";
 import { OutputItem } from "../components/OutputItem";
-
+import { useLocation, useNavigate } from "react-router-dom";
+import { DialogContext } from "../App";
 
 // ! TODO:
 // Implement, link to Etherscan
 export function InstancePage() {
+  const dialogContext = useContext(DialogContext);
+  const navigator = useNavigate();
+  const { state } = useLocation();
+  const {
+    id,
+    attributes,
+    inputDir,
+    outputDir,
+    configuration,
+    imagesCID,
+    metadataCID,
+    contractAddress,
+  } = state;
+
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {}, []);
 
   return (
     <Flex

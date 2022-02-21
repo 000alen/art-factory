@@ -1,4 +1,5 @@
 import { v4 as uuid } from "uuid";
+import { capitalize } from "./utils";
 
 const ipcTask =
   (task) =>
@@ -57,8 +58,6 @@ const ipcTaskWithRequestId =
       window.ipcRenderer.send(task, requestId, ...args);
     });
   };
-
-const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
 const ipcSetterAndGetter = (property) => [
   (value) => ipcTask(`set${capitalize(property)}`)(value),

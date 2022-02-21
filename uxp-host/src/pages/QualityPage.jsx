@@ -1,10 +1,4 @@
-import {
-  ActionButton,
-  Flex,
-  Text,
-  Button,
-  ButtonGroup,
-} from "@adobe/react-spectrum";
+import { ActionButton, Flex, Text, ButtonGroup } from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Back from "@spectrum-icons/workflow/Back";
@@ -13,18 +7,7 @@ import FastForward from "@spectrum-icons/workflow/FastForward";
 import { factoryGetImage } from "../ipc";
 import { SocketContext } from "../components/SocketContext";
 import { DialogContext } from "../App";
-
-const Item = ({ src, onEdit }) => {
-  return (
-    <div className="relative w-32 h-32 rounded-md">
-      <div className="absolute w-full h-full bg-gray-600 bg-opacity-75 flex justify-center items-center opacity-0 hover:opacity-100">
-        <Button onPress={onEdit}>Edit</Button>
-      </div>
-
-      <img className="w-full h-full" src={src} alt="" />
-    </div>
-  );
-};
+import { ImageItem } from "../components/ImageItem";
 
 export function QualityPage() {
   const dialogContext = useContext(DialogContext);
@@ -56,15 +39,15 @@ export function QualityPage() {
       });
   }, [index]);
 
-  const onClickBack = () => {
+  const onBack = () => {
     setIndex((prevIndex) => Math.max(prevIndex - 9, 0));
   };
 
-  const onClickForward = () => {
+  const onForward = () => {
     if (index < attributes.length - 9) setIndex((prevIndex) => prevIndex + 9);
   };
 
-  const onClickFastForward = () => {
+  const onFastForward = () => {
     navigator("/deploy", {
       state: {
         id,
@@ -76,7 +59,8 @@ export function QualityPage() {
     });
   };
 
-  const onClickEdit = (i) => {
+  const onEdit = (i) => {
+    // ! TODO: What if there's  no UXP connection?
     socket.emit("host-edit", {
       name: `EDIT-${i}`,
       traits: attributes[i],
@@ -97,17 +81,17 @@ export function QualityPage() {
       </Text>
       <div className="grid grid-cols-3 grid-rows-3 place-items-center gap-5">
         {imagesUrls.map((url, i) => {
-          return <Item key={i} src={url} onEdit={() => onClickEdit(i)} />;
+          return <ImageItem key={i} src={url} onEdit={() => onEdit(i)} />;
         })}
       </div>
       <ButtonGroup>
-        <ActionButton onPress={onClickBack}>
+        <ActionButton onPress={onBack}>
           <Back />
         </ActionButton>
-        <ActionButton onPress={onClickForward}>
+        <ActionButton onPress={onForward}>
           <Forward />
         </ActionButton>
-        <ActionButton onPress={onClickFastForward}>
+        <ActionButton onPress={onFastForward}>
           <FastForward />
         </ActionButton>
       </ButtonGroup>

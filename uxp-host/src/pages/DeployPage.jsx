@@ -8,6 +8,12 @@ import {
   ButtonGroup,
   Heading,
   ProgressBar,
+  MenuTrigger,
+  Menu,
+  Item,
+  Text,
+  ActionButton,
+  ProgressCircle,
 } from "@adobe/react-spectrum";
 import {
   factoryDeployImages,
@@ -21,6 +27,8 @@ import {
 } from "../ipc";
 import { providers, ContractFactory, ethers } from "ethers";
 import { DialogContext } from "../App";
+import More from "@spectrum-icons/workflow/More";
+import { capitalize } from "../utils";
 
 // ! TODO:
 // Choose the network to deploy and verify the contract
@@ -39,6 +47,7 @@ export function DeployPage() {
   const [contractAddress, setContractAddress] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployedDone, setDeployedDone] = useState(false);
+  const [network, setNetwork] = useState(new Set(["rinkeby"]));
 
   const loadSecrets = async () => ({
     pinataApiKey: await getPinataApiKey(),
@@ -145,9 +154,25 @@ export function DeployPage() {
 
   return (
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">
-      <Heading level={1} marginStart={16}>
-        Deploy
-      </Heading>
+      <Flex gap="size-100" alignItems="center">
+        <Heading level={1} marginStart={16}>
+          Deploy to {capitalize([...network].shift())}
+        </Heading>
+        <MenuTrigger>
+          <ActionButton>
+            <More />
+          </ActionButton>
+          <Menu
+            selectionMode="single"
+            selectedKeys={network}
+            onSelectionChange={setNetwork}
+          >
+            <Item key="mainnet">Mainnet</Item>
+            <Item key="ropsten">Ropsten</Item>
+            <Item key="rinkeby">Rinkeby</Item>
+          </Menu>
+        </MenuTrigger>
+      </Flex>
 
       <Flex
         direction="column"
@@ -155,24 +180,36 @@ export function DeployPage() {
         justifyContent="center"
         alignItems="center"
       >
-        <TextField
-          width="50%"
-          isReadOnly={true}
-          value={imagesCID}
-          label="Images CID"
-        />
-        <TextField
-          width="50%"
-          isReadOnly={true}
-          value={metadataCID}
-          label="Metadata CID"
-        />
-        <TextField
-          width="50%"
-          isReadOnly={true}
-          value={contractAddress}
-          label="Contract Address"
-        />
+        <Flex width="50%" gap="size-100" alignItems="center">
+          <ProgressCircle aria-label="Loading…" size="S" isIndeterminate />
+
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            value={imagesCID}
+            label="Images CID"
+          />
+        </Flex>
+
+        <Flex width="50%" gap="size-100" alignItems="center">
+          <ProgressCircle aria-label="Loading…" size="S" isIndeterminate />
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            value={metadataCID}
+            label="Metadata CID"
+          />
+        </Flex>
+
+        <Flex width="50%" gap="size-100" alignItems="center">
+          <ProgressCircle aria-label="Loading…" size="S" isIndeterminate />
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            value={contractAddress}
+            label="Contract Address"
+          />
+        </Flex>
       </Flex>
 
       {isDeploying ? (

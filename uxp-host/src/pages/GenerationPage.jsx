@@ -83,7 +83,7 @@ export function GenerationPage() {
     }
   }, []);
 
-  const onClickAddLayer = () => {
+  const onAddLayer = () => {
     setLayers([...layers, ""]);
   };
 
@@ -181,6 +181,7 @@ export function GenerationPage() {
             Generate Background
           </Switch>
 
+          {/* ! TODO: Switch to a View? */}
           <div>
             <label className="spectrum-FieldLabel">Default Background</label>
 
@@ -221,7 +222,7 @@ export function GenerationPage() {
           </Flex>
 
           <ButtonGroup marginTop="size-100">
-            <ActionButton onPress={onClickAddLayer}>
+            <ActionButton onPress={onAddLayer}>
               <Add />
             </ActionButton>
           </ButtonGroup>

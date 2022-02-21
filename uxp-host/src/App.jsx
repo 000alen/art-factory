@@ -4,13 +4,6 @@ import {
   Flex,
   StatusLight,
   DialogTrigger,
-  Dialog,
-  Heading,
-  Divider,
-  Content,
-  Text,
-  ButtonGroup,
-  Button,
   ActionButton,
 } from "@adobe/react-spectrum";
 import React, { useState, useEffect, useContext, createContext } from "react";
@@ -22,6 +15,7 @@ import { SocketContext } from "./components/SocketContext";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import Settings from "@spectrum-icons/workflow/Settings";
 import { SecretsDialog } from "./components/SecretsDialog";
+import { GenericDialog } from "./components/GenericDialog";
 
 export const DialogContext = createContext();
 
@@ -29,6 +23,7 @@ const App = () => {
   const socket = useContext(SocketContext);
 
   const [connectionStatus, setConnectionStatus] = useState(false);
+
   const [dialogShown, setDialogShown] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("Lorem ipsum");
   const [dialogContent, setDialogContent] = useState("Lorem ipsum");
@@ -61,28 +56,19 @@ const App = () => {
         <Flex direction="column" gap="size-100" height="100vh">
           <DialogTrigger isOpen={dialogShown}>
             {null}
-            <Dialog>
-              <Heading>{dialogTitle}</Heading>
-              <Divider />
-              <Content>
-                <Text>{dialogContent}</Text>
-              </Content>
-
-              <ButtonGroup>
-                {dialogButtons === null ? (
-                  <Button onPress={hideDialog}>Close</Button>
-                ) : (
-                  { dialogButtons }
-                )}
-              </ButtonGroup>
-            </Dialog>
+            <GenericDialog
+              title={dialogTitle}
+              text={dialogContent}
+              buttons={dialogButtons}
+              onHide={hideDialog}
+            />
           </DialogTrigger>
 
           <Flex justifyContent="space-between" margin="size-100">
             {connectionStatus ? (
-              <StatusLight variant="positive">Connected</StatusLight>
+              <StatusLight variant="positive">UXP Connected</StatusLight>
             ) : (
-              <StatusLight variant="negative">Disconnected</StatusLight>
+              <StatusLight variant="negative">UXP Disconnected</StatusLight>
             )}
 
             <DialogTrigger>

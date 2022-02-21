@@ -154,10 +154,6 @@ export function HomePage() {
     }
   };
 
-  const onTest = () => {
-    navigator("/instance");
-  };
-
   return (
     <Flex
       direction="column"
@@ -181,7 +177,6 @@ export function HomePage() {
         </Button>
 
         <Button onPress={onOpenInstance}>Open Instance!</Button>
-        <Button onPress={onTest}>Test</Button>
       </ButtonGroup>
     </Flex>
   );
