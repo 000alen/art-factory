@@ -1,21 +1,55 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Flex,
   Heading,
   TextField,
   NumberField,
-  Button,
   ProgressBar,
   View,
   Text,
-  Checkbox,
   ActionButton,
-  Well,
 } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import Play from "@spectrum-icons/workflow/Play";
+import Copy from "@spectrum-icons/workflow/Copy";
+
+function OutputItem({ text, isCopiable }) {
+  return (
+    <Flex justifyContent="space-between">
+      <Text>{text}</Text>
+      {isCopiable && (
+        <ActionButton>
+          <Copy />
+        </ActionButton>
+      )}
+    </Flex>
+  );
+}
+
+function TaskItem({ task, onRun, children }) {
+  return (
+    <View
+      borderWidth="thin"
+      borderColor="dark"
+      borderRadius="medium"
+      padding="size-100"
+    >
+      <Flex direction="column" gap="size-100">
+        <Flex alignItems="center" justifyContent="space-between">
+          <Text>{task}</Text>
+          <ActionButton onPress={onRun}>
+            <Play />
+          </ActionButton>
+        </Flex>
+        {children}
+      </Flex>
+    </View>
+  );
+}
 
 export function InstancePage() {
+  const [isLoading, setIsLoading] = useState(true);
+
   return (
     <Flex
       direction="column"
@@ -28,113 +62,76 @@ export function InstancePage() {
         Instance
       </Heading>
 
-      <Flex
-        direction="row"
-        height="100%"
-        gap="size-100"
-        justifyContent="space-between"
-      >
-        <Flex>
-          <Flex direction="column" gap="size-100">
-            <View
-              borderWidth="thin"
-              borderColor="dark"
-              borderRadius="medium"
-              padding="size-100"
-            >
-              <Flex direction="column" gap="size-100">
-                <Flex alignItems="center" justifyContent="space-between">
-                  <Text>Balance of</Text>
-                  <ActionButton>
-                    <Play />
-                  </ActionButton>
-                </Flex>
-                <TextField placeholder="Address" />
-              </Flex>
-            </View>
+      <Flex gap="size-100" justifyContent="space-evenly">
+        <Flex direction="column" gap="size-100" justifyContent="space-between">
+          <TaskItem task="Cost" />
 
-            <View
-              borderWidth="thin"
-              borderColor="dark"
-              borderRadius="medium"
-              padding="size-100"
-            >
-              <Flex direction="column" gap="size-100">
-                <Flex alignItems="center" justifyContent="space-between">
-                  <Text>Cost</Text>
-                  <ActionButton>
-                    <Play />
-                  </ActionButton>
-                </Flex>
-              </Flex>
-            </View>
+          <TaskItem task="Is revealed?" />
 
-            <View
-              borderWidth="thin"
-              borderColor="dark"
-              borderRadius="medium"
-              padding="size-100"
-            >
-              <Flex direction="column" gap="size-100">
-                <Flex alignItems="center" justifyContent="space-between">
-                  <Checkbox isSelected={true} isReadOnly={true}>
-                    Revealed
-                  </Checkbox>
-                  <ActionButton>
-                    <Play />
-                  </ActionButton>
-                </Flex>
-              </Flex>
-            </View>
+          <TaskItem task="Balance of">
+            <TextField label="Address" placeholder="0x" width="100%" />
+          </TaskItem>
 
-            <View
-              borderWidth="thin"
-              borderColor="dark"
-              borderRadius="medium"
-              padding="size-100"
-            >
-              <Flex direction="column">
-                <Text> Token of owner by index </Text>
-                <TextField label="Owner address" />
-                <NumberField label="Index" />
-              </Flex>
-            </View>
+          <TaskItem task="Token of owner by index">
+            <TextField label="Address" placeholder="0x" />
+            <NumberField label="Index" />
+          </TaskItem>
 
-            <NumberField label="Token URI" />
-          </Flex>
-
-          <Flex direction="column" gap="size-100">
-            <View
-              borderWidth="thin"
-              borderColor="dark"
-              borderRadius="medium"
-              padding="size-100"
-            >
-              <Flex direction="column" gap="size-100">
-                <Flex alignItems="center" justifyContent="space-between">
-                  <Text>Balance of</Text>
-                  <ActionButton>
-                    <Play />
-                  </ActionButton>
-                </Flex>
-                <TextField placeholder="Address" />
-              </Flex>
-            </View>
-          </Flex>
+          <TaskItem task="Token URI">
+            <NumberField label="Token Index" />
+          </TaskItem>
         </Flex>
 
-        <View overflow="auto">
-          <Text>
-            LOREM IPSUM <br />
-            LOREM IPSUM <br />
-            LOREM IPSUM <br />
-          </Text>
+        <Flex direction="column" gap="size-100" justifyContent="space-between">
+          <TaskItem task="Reveal" />
+
+          <TaskItem task="Mint">
+            <TextField label="Payable amount" />
+            <NumberField label="Mint amount" />
+          </TaskItem>
+
+          <TaskItem task="Set cost">
+            <NumberField label="Cost" />
+          </TaskItem>
+
+          <TaskItem task="Set max Mint amount">
+            <NumberField label="Max Mint amount" />
+          </TaskItem>
+
+          <TaskItem task="Withdrawal">
+            <NumberField label="Amount" />
+          </TaskItem>
+        </Flex>
+
+        <View>
+          <View
+            width="30vw"
+            height="100%"
+            padding="size-100"
+            overflow="auto"
+            borderWidth="thin"
+            borderColor="dark"
+            borderRadius="medium"
+          >
+            <Flex direction="column" gap="size-100">
+              <OutputItem
+                text="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+                isCopiable
+              />
+              <OutputItem
+                text="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+                isCopiable
+              />
+            </Flex>
+          </View>
         </View>
       </Flex>
 
-      <Flex marginBottom={8} marginX={8} justifyContent="end">
-        <ProgressBar label="Loading…" isIndeterminate />
-      </Flex>
+      {isLoading && (
+        <Flex marginBottom={8} marginX={8} justifyContent="end">
+          <ProgressBar label="Loading…" isIndeterminate  />
+        </Flex>
+      )}
     </Flex>
   );
 }
