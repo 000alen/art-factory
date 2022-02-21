@@ -19,7 +19,6 @@ export function InstancePage() {
   return (
     <Flex
       direction="column"
-      height="100%"
       margin="size-100"
       gap="size-100"
       justifyContent="space-between"
@@ -34,7 +33,7 @@ export function InstancePage() {
         gap="size-100"
         justifyContent="space-between"
       >
-        <Flex>
+        <Flex gap="size-500" justifyContent="center" width="100%">
           <Flex direction="column" gap="size-100">
             <View
               borderWidth="thin"
@@ -49,7 +48,7 @@ export function InstancePage() {
                     <Play />
                   </ActionButton>
                 </Flex>
-                <TextField placeholder="Address" />
+                <TextField placeholder="Address" width="100%"/>
               </Flex>
             </View>
 
@@ -95,15 +94,73 @@ export function InstancePage() {
             >
               <Flex direction="column">
                 <Text> Token of owner by index </Text>
-                <TextField label="Owner address" />
-                <NumberField label="Index" />
+
+                <TextField label="Owner address" width="100%"/>
+
+                <label className="spectrum-FieldLabel spectrum-FieldLabel--sizeS"> Index </label>
+
+                <Flex justifyContent="space-between">
+                  <NumberField value={0} marginX="size-10"/>
+                  <ActionButton>
+                    <Play />
+                  </ActionButton>
+                </Flex>
+                
               </Flex>
             </View>
 
-            <NumberField label="Token URI" />
+            <View
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+              padding="size-100"
+            >
+              <Flex direction="column">
+                <Text> Token URI </Text>
+
+                <label className="spectrum-FieldLabel spectrum-FieldLabel--sizeS"> Token index </label>
+                <Flex justifyContent="space-between">
+                  <NumberField />
+                    <ActionButton>
+                      <Play />
+                    </ActionButton>
+                </Flex>
+              </Flex>
+            </View>
           </Flex>
 
           <Flex direction="column" gap="size-100">
+            {/*
+              mint <
+              reveal < 
+              setCost
+              setmaxMintAmount
+              withdrawal
+            */}
+
+            <View
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+              padding="size-100"
+            >
+              <Flex direction="column">
+                <Text> Mint </Text>
+
+                <TextField label="Payable amount" width="100%"/>
+
+                <label className="spectrum-FieldLabel spectrum-FieldLabel--sizeS"> Mint amount </label>
+                <Flex justifyContent="space-between">
+                  <NumberField />
+                    <ActionButton>
+                      <Play />
+                    </ActionButton>
+                </Flex>
+              </Flex>
+            </View>
+
+
+
             <View
               borderWidth="thin"
               borderColor="dark"
@@ -112,24 +169,109 @@ export function InstancePage() {
             >
               <Flex direction="column" gap="size-100">
                 <Flex alignItems="center" justifyContent="space-between">
-                  <Text>Balance of</Text>
+                  <Text>Set cost</Text>
                   <ActionButton>
                     <Play />
                   </ActionButton>
                 </Flex>
-                <TextField placeholder="Address" />
+                <NumberField width="100%" value={0} placeholder="Address" />
               </Flex>
             </View>
+
+            <View
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+              padding="size-100"
+            >
+              <Flex direction="column" gap="size-100">
+                <Flex alignItems="center" justifyContent="space-between">
+                  <Text>Set max mint amount</Text>
+                  <ActionButton>
+                    <Play />
+                  </ActionButton>
+                </Flex>
+                <NumberField width="100%" value={0} placeholder="Address" />
+              </Flex>
+            </View>
+
+            <View
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+              padding="size-100"
+            >
+              <Flex direction="column" gap="size-100">
+                <Flex alignItems="center" justifyContent="space-between">
+                  <Text>Withdrawal</Text>
+                  <ActionButton>
+                    <Play />
+                  </ActionButton>
+                </Flex>
+                <NumberField width="100%" value={0} placeholder="Address" />
+              </Flex>
+            </View>
+            
+            <View
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+              padding="size-100"
+            >
+              <Flex direction="column" gap="size-100">
+                  <Text>Reveal</Text>
+                  <ActionButton>
+                    <Play />
+                  </ActionButton>
+                </Flex>
+            </View>
+
           </Flex>
+
+          <View>
+            <Text>Outputs</Text>
+            <View
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+              padding="size-100"
+              width="30vw" overflow="auto" height="65vh"
+            >
+              <Flex direction="column" gap="size-100">
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+                <Text> Hola </Text>
+
+              </Flex>
+            </View>
+          </View>
         </Flex>
 
-        <View overflow="auto">
-          <Text>
-            LOREM IPSUM <br />
-            LOREM IPSUM <br />
-            LOREM IPSUM <br />
-          </Text>
-        </View>
+
       </Flex>
 
       <Flex marginBottom={8} marginX={8} justifyContent="end">
