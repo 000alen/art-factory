@@ -22,6 +22,8 @@ import {
 import { providers, ContractFactory, ethers } from "ethers";
 import { DialogContext } from "../App";
 
+// ! TODO:
+// Choose the network to deploy and verify the contract
 export function DeployPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();

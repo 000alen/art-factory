@@ -10,6 +10,9 @@ import { SocketContext, socket } from "./components/SocketContext";
 
 import "./index.css";
 
+// ! TODO:
+// Clean the local storage
+
 ReactDOM.render(
   <SocketContext.Provider value={socket}>
     <SpectrumProvider theme={defaultTheme}>

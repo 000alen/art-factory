@@ -28,6 +28,9 @@ import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { DialogContext } from "../App";
 
+// ! TODO:
+// Try to automatically detect the layers
+
 export function GenerationPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();

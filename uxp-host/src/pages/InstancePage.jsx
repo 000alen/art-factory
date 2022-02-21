@@ -11,6 +11,9 @@ import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "../components/TaskItem";
 import { OutputItem } from "../components/OutputItem";
 
+
+// ! TODO:
+// Implement, link to Etherscan
 export function InstancePage() {
   const [isLoading, setIsLoading] = useState(true);
 
