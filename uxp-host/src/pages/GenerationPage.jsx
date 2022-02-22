@@ -46,7 +46,7 @@ export function GenerationPage() {
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
   const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
-  const [layers, setLayers] = React.useState([""]);
+  const [layers, setLayers] = useState([""]);
   const [id, setId] = useState(null);
   const [configuration, setConfiguration] = useState(null);
 
@@ -153,17 +153,18 @@ export function GenerationPage() {
   };
 
   return (
-    <Flex direction="column" height="100%" margin="size-100" gap="size-100">
+    <Flex
+      direction="column"
+      height="100%"
+      margin="size-100"
+      gap="size-100"
+      justifyContent="space-between"
+    >
       <Heading level={1} marginStart={16}>
         Configuration
       </Heading>
 
-      <Flex
-        direction="row"
-        height="100%"
-        gap="size-100"
-        justifyContent="space-evenly"
-      >
+      <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column">
           <TextField label="Name" value={name} onChange={setName} />
           <TextArea
@@ -207,19 +208,19 @@ export function GenerationPage() {
           <NumberField label="Height" value={height} onChange={setHeight} />
         </Flex>
 
-        <Flex direction="column">
+        <View>
           <label className="spectrum-FieldLabel">Layers</label>
 
           <View
-            height="70vh"
+            width="30vw"
+            height="100%"
             padding="size-100"
             overflow="auto"
             borderWidth="thin"
             borderColor="dark"
             borderRadius="medium"
           >
-
-            <Flex j direction="column" gap="size-100">
+            <Flex direction="column" gap="size-100">
               {layers.map((layer, index) => (
                 <LayerItem
                   key={index}
@@ -230,15 +231,11 @@ export function GenerationPage() {
                 />
               ))}
             </Flex>
-
-            <ButtonGroup marginTop="size-100">
-              <ActionButton onPress={onAddLayer}>
-                <Add />
-              </ActionButton>
-            </ButtonGroup>
-
           </View>
-        </Flex>
+          <ActionButton marginTop={8} onPress={onAddLayer}>
+            <Add />
+          </ActionButton>
+        </View>
       </Flex>
 
       {isGenerating ? (

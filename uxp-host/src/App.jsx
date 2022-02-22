@@ -53,7 +53,7 @@ const App = () => {
   return (
     <DialogContext.Provider value={{ showDialog, setDialog, hideDialog }}>
       <Router>
-        <Flex direction="column" gap="size-100" height="100vh">
+        <Flex direction="column" height="100vh" gap="size-100">
           <DialogTrigger isOpen={dialogShown}>
             {null}
             <GenericDialog

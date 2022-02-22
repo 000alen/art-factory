@@ -9,7 +9,7 @@ import Remove from "@spectrum-icons/workflow/Remove";
 
 export function LayerItem({ value, index, onChange, onRemove }) {
   return (
-    <Flex gap="size-100">
+    <Flex gap="size-100" justifyContent="space-between">
       <TextField
         aria-label={`Layer ${index}: ${value}`}
         value={value}

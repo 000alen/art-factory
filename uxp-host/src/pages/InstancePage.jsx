@@ -6,29 +6,32 @@ import {
   NumberField,
   ProgressBar,
   View,
+  Button,
+  ActionButton,
 } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "../components/TaskItem";
 import { OutputItem } from "../components/OutputItem";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DialogContext } from "../App";
+import "@spectrum-css/fieldlabel/dist/index-vars.css";
 
 // ! TODO:
 // Implement, link to Etherscan
 export function InstancePage() {
   const dialogContext = useContext(DialogContext);
-  const navigator = useNavigate();
-  const { state } = useLocation();
-  const {
-    id,
-    attributes,
-    inputDir,
-    outputDir,
-    configuration,
-    imagesCID,
-    metadataCID,
-    contractAddress,
-  } = state;
+  // const navigator = useNavigate();
+  // const { state } = useLocation();
+  // const {
+  //   id,
+  //   attributes,
+  //   inputDir,
+  //   outputDir,
+  //   configuration,
+  //   imagesCID,
+  //   metadataCID,
+  //   contractAddress,
+  // } = state;
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,8 +49,8 @@ export function InstancePage() {
         Instance
       </Heading>
 
-      <Flex gap="size-100" justifyContent="space-evenly">
-        <Flex direction="column" gap="size-100" justifyContent="space-between">
+      <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
+        <Flex direction="column" gap="size-100">
           <TaskItem task="Cost" />
 
           <TaskItem task="Is revealed?" />
@@ -66,7 +69,7 @@ export function InstancePage() {
           </TaskItem>
         </Flex>
 
-        <Flex direction="column" gap="size-100" justifyContent="space-between">
+        <Flex direction="column" gap="size-100">
           <TaskItem task="Reveal" />
 
           <TaskItem task="Mint">
@@ -88,6 +91,8 @@ export function InstancePage() {
         </Flex>
 
         <View>
+          <label className="spectrum-FieldLabel">Output</label>
+
           <View
             width="30vw"
             height="100%"
@@ -98,14 +103,13 @@ export function InstancePage() {
             borderRadius="medium"
           >
             <Flex direction="column" gap="size-100">
-              <OutputItem
-                text="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                isCopiable
-              />
-              <OutputItem
-                text="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                isCopiable
-              />
+              {[...Array(20).keys()].map((i) => (
+                <OutputItem
+                  key={i}
+                  text="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+                  isCopiable
+                />
+              ))}
             </Flex>
           </View>
         </View>
