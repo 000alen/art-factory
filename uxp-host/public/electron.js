@@ -10,9 +10,9 @@ const createWindow = () => {
   const window = new BrowserWindow({
     autoHideMenuBar: true,
     minWidth: 1024,
-    minHeight: 850,
+    minHeight: 1024,
     width: 1024,
-    height: 850,
+    height: 1024,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },

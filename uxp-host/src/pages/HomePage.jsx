@@ -177,6 +177,13 @@ export function HomePage() {
         </Button>
 
         <Button onPress={onOpenInstance}>Open Instance!</Button>
+        <Button
+          onPress={() => {
+            navigator("/instance");
+          }}
+        >
+          Test
+        </Button>
       </ButtonGroup>
     </Flex>
   );
