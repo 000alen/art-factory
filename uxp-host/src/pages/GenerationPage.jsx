@@ -24,6 +24,7 @@ import {
   factoryGenerateRandomAttributes,
   factoryEnsureLayers,
   factoryEnsureOutputDir,
+  layersNames,
 } from "../ipc";
 import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
@@ -82,6 +83,14 @@ export function GenerationPage() {
       //   setDefaultBackground(partialConfiguration.defaultBackground);
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
     }
+
+    layersNames(inputDir)
+      .then((names) => {
+        setLayers(names);
+      })
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+      });
   }, []);
 
   const onAddLayer = () => {
@@ -124,6 +133,7 @@ export function GenerationPage() {
       name,
       description,
       symbol,
+      n: Number(n),
       width: Number(width),
       height: Number(height),
       generateBackground,

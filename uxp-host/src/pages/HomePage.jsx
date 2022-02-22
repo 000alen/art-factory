@@ -12,7 +12,6 @@ import {
   factoryInstance,
   factoryLoadInstance,
   getOutputDir,
-  createFactory,
 } from "../ipc";
 import { SocketContext } from "../components/SocketContext";
 import { v4 as uuid } from "uuid";
@@ -24,7 +23,7 @@ export function HomePage() {
   const dialogContext = useContext(DialogContext);
 
   useEffect(() => {
-    socket.on("uxp-generate", async ({ n, inputDir, configuration }) => {
+    socket.on("uxp-generate", async ({ inputDir, configuration }) => {
       let outputDir;
 
       try {
@@ -36,7 +35,6 @@ export function HomePage() {
 
       navigator("/generation", {
         state: {
-          n: Number(n),
           inputDir,
           outputDir,
           partialConfiguration: configuration,
@@ -79,13 +77,14 @@ export function HomePage() {
     let inputDir;
     let outputDir;
     let configuration;
-    let n;
     let attributes;
     let generated;
     let metadataGenerated;
     let imagesCID;
     let metadataCID;
+    let network;
     let contractAddress;
+    let abi;
 
     // ! TODO
     try {
@@ -108,13 +107,14 @@ export function HomePage() {
         inputDir,
         outputDir,
         configuration,
-        n,
         attributes,
         generated,
         metadataGenerated,
         imagesCID,
         metadataCID,
+        network,
         contractAddress,
+        abi,
       } = await factoryInstance(id));
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
@@ -148,7 +148,11 @@ export function HomePage() {
           inputDir,
           outputDir,
           configuration,
+          imagesCID,
+          metadataCID,
+          network,
           contractAddress,
+          abi,
         },
       });
     }
@@ -177,13 +181,6 @@ export function HomePage() {
         </Button>
 
         <Button onPress={onOpenInstance}>Open Instance!</Button>
-        <Button
-          onPress={() => {
-            navigator("/instance");
-          }}
-        >
-          Test
-        </Button>
       </ButtonGroup>
     </Flex>
   );

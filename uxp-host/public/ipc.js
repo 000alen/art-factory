@@ -1,7 +1,7 @@
 const { ipcMain, dialog } = require("electron");
 const path = require("path");
 const solc = require("solc");
-const { Factory, loadInstance } = require("./art");
+const { Factory, loadInstance, layersNames } = require("./art");
 const fs = require("fs");
 const {
   setPinataApiKey,
@@ -118,30 +118,19 @@ ipcAsyncTask(
 
 ipcTask("createFactory", (id, configuration, inputDir, outputDir, props) => {
   const factory = new Factory(configuration, inputDir, outputDir);
-  if (props) {
-    const {
-      n,
-      attributes,
-      generated,
-      metadataGenerated,
-      imagesCID,
-      metadataCID,
-      contractAddress,
-    } = props;
-    factory.n = n;
-    factory.attributes = attributes;
-    factory.generated = generated;
-    factory.metadataGenerated = metadataGenerated;
-    factory.imagesCID = imagesCID;
-    factory.metadataCID = metadataCID;
-    factory.contractAddress = contractAddress;
-  }
-
+  if (props) factory.setProps(props);
   factories[id] = factory;
   return true;
 });
 
+ipcTask("factorySetProps", (id, props) => {
+  factories[id].setProps(props);
+  return true;
+});
+
 ipcTask("factoryMaxCombinations", (id) => factories[id].maxCombinations);
+
+ipcTask("layersNames", (inputDir) => layersNames(inputDir));
 
 ipcTask("factoryInstance", (id) => factories[id].instance);
 

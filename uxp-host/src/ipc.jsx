@@ -84,6 +84,9 @@ export const showSaveDialog = (options) => ipcTask("showSaveDialog")(options);
 export const createFactory = (id, config, inputDir, outputDir, props) =>
   ipcTask("createFactory")(id, config, inputDir, outputDir, props);
 
+export const factorySetProps = (id, props) =>
+  ipcTask("factorySetProps")(id, props);
+
 export const factoryGetImage = (id, index) =>
   ipcTaskWithRequestId("factoryGetImage")(id, index);
 
@@ -92,6 +95,8 @@ export const factoryGenerateImages = (id, attributes, onProgress) =>
 
 export const factoryMaxCombinations = (id) =>
   ipcTask("factoryMaxCombinations")(id);
+
+export const layersNames = (inputDir) => ipcTask("layersNames")(inputDir);
 
 export const factoryInstance = (id) => ipcTask("factoryInstance")(id);
 

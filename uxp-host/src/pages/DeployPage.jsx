@@ -11,15 +11,15 @@ import {
   MenuTrigger,
   Menu,
   Item,
-  Text,
   ActionButton,
-  ProgressCircle,
 } from "@adobe/react-spectrum";
 import {
   factoryDeployImages,
   factoryDeployMetadata,
   factoryGenerateMetadata,
   factoryLoadSecrets,
+  factorySaveInstance,
+  factorySetProps,
   getContract,
   getInfuraId,
   getPinataApiKey,
@@ -28,7 +28,7 @@ import {
 import { providers, ContractFactory, ethers } from "ethers";
 import { DialogContext } from "../App";
 import More from "@spectrum-icons/workflow/More";
-import { capitalize } from "../utils";
+import { Networks } from "../constants";
 
 // ! TODO:
 // Choose the network to deploy and verify the contract
@@ -45,9 +45,10 @@ export function DeployPage() {
   const [imagesCID, setImagesCID] = useState("");
   const [metadataCID, setMetadataCID] = useState("");
   const [contractAddress, setContractAddress] = useState("");
+  const [abi, setAbi] = useState(null);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployedDone, setDeployedDone] = useState(false);
-  const [network, setNetwork] = useState(new Set(["rinkeby"]));
+  const [networkKey, setNetworkKey] = useState("rinkeby");
 
   const loadSecrets = async () => ({
     pinataApiKey: await getPinataApiKey(),
@@ -65,7 +66,7 @@ export function DeployPage() {
 
         _provider = new WalletConnectProvider({
           infuraId: _secrets.infuraId,
-          chainId: 3, // ! TODO
+          chainId: Networks[networkKey].id,
         });
 
         setSecrets(_secrets);
@@ -75,7 +76,7 @@ export function DeployPage() {
         dialogContext.setDialog("Error", error.message, null, true);
         return;
       });
-  }, []);
+  }, [networkKey]);
 
   const onDeploy = async () => {
     setIsDeploying(true);
@@ -99,40 +100,54 @@ export function DeployPage() {
       _metadataCID = await factoryDeployMetadata(id);
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
+
       return;
     }
 
+    await factorySaveInstance(id);
     setImagesCID(_imagesCID);
     setMetadataCID(_metadataCID);
 
     let _contractAddress;
+    let _abi;
 
     // ! TODO
     try {
       const { contracts } = await getContract("NFT");
       const { NFT } = contracts.NFT;
-      const { abi, evm } = NFT;
+      ({ abi: _abi } = NFT);
+      const { evm } = NFT;
       const { bytecode } = evm;
-      const contractFactory = new ContractFactory(abi, bytecode, _signer);
+      const contractFactory = new ContractFactory(_abi, bytecode, _signer);
 
       const contract = await contractFactory.deploy(
         configuration.name,
         configuration.symbol,
-        _metadataCID,
-        _metadataCID,
+        `ipfs://${_metadataCID}/`,
+        `ipfs://${_metadataCID}/`,
         {
-          gasPrice: ethers.utils.parseUnits("10", "gwei"),
+          gasPrice: ethers.utils.parseUnits("10", "gwei"), // ! TODO
         }
       );
 
-      await contract.deployTransaction.wait();
+      // await contract.deployTransaction.wait();
+      await contract.deployed();
       _contractAddress = contract.address;
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
+
       return;
     }
 
+    await factorySetProps(id, {
+      network: networkKey,
+      contractAddress: _contractAddress,
+      abi: _abi,
+    });
+    await factorySaveInstance(id);
+
     setContractAddress(_contractAddress);
+    setAbi(_abi);
     setDeployedDone(true);
     setIsDeploying(false);
   };
@@ -147,7 +162,9 @@ export function DeployPage() {
         configuration,
         imagesCID,
         metadataCID,
+        network: networkKey,
         contractAddress,
+        abi,
       },
     });
   };
@@ -156,7 +173,7 @@ export function DeployPage() {
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">
       <Flex gap="size-100" alignItems="center">
         <Heading level={1} marginStart={16}>
-          Deploy to {capitalize([...network].shift())}
+          Deploy to {Networks[networkKey].name}
         </Heading>
         <MenuTrigger>
           <ActionButton>
@@ -164,12 +181,14 @@ export function DeployPage() {
           </ActionButton>
           <Menu
             selectionMode="single"
-            selectedKeys={network}
-            onSelectionChange={setNetwork}
+            selectedKeys={[networkKey]}
+            onSelectionChange={(selectedKeys) =>
+              setNetworkKey([...selectedKeys].shift())
+            }
           >
-            <Item key="mainnet">Mainnet</Item>
-            <Item key="ropsten">Ropsten</Item>
-            <Item key="rinkeby">Rinkeby</Item>
+            <Item key="mainnet">{Networks["mainnet"].name}</Item>
+            <Item key="ropsten">{Networks["ropsten"].name}</Item>
+            <Item key="rinkeby">{Networks["rinkeby"].name}</Item>
           </Menu>
         </MenuTrigger>
       </Flex>
@@ -180,36 +199,26 @@ export function DeployPage() {
         justifyContent="center"
         alignItems="center"
       >
-        <Flex width="50%" gap="size-100" alignItems="center">
-          <ProgressCircle aria-label="Loading…" size="S" isIndeterminate />
+        <TextField
+          width="50%"
+          isReadOnly={true}
+          value={imagesCID}
+          label="Images CID"
+        />
 
-          <TextField
-            width="100%"
-            isReadOnly={true}
-            value={imagesCID}
-            label="Images CID"
-          />
-        </Flex>
+        <TextField
+          width="50%"
+          isReadOnly={true}
+          value={metadataCID}
+          label="Metadata CID"
+        />
 
-        <Flex width="50%" gap="size-100" alignItems="center">
-          <ProgressCircle aria-label="Loading…" size="S" isIndeterminate />
-          <TextField
-            width="100%"
-            isReadOnly={true}
-            value={metadataCID}
-            label="Metadata CID"
-          />
-        </Flex>
-
-        <Flex width="50%" gap="size-100" alignItems="center">
-          <ProgressCircle aria-label="Loading…" size="S" isIndeterminate />
-          <TextField
-            width="100%"
-            isReadOnly={true}
-            value={contractAddress}
-            label="Contract Address"
-          />
-        </Flex>
+        <TextField
+          width="50%"
+          isReadOnly={true}
+          value={contractAddress}
+          label="Contract Address"
+        />
       </Flex>
 
       {isDeploying ? (

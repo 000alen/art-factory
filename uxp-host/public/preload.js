@@ -29,6 +29,7 @@ const sendWhitelist = [
   "setInfuraId",
   "getInfuraId",
   "factoryLoadSecrets",
+  "layersNames",
 ];
 
 const onWhitelist = [
@@ -61,6 +62,7 @@ const onWhitelist = [
   "setInfuraIdResult",
   "getInfuraIdResult",
   "factoryLoadSecretsResult",
+  "layersNamesResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

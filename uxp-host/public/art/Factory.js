@@ -15,13 +15,14 @@ class Factory {
   layerElementsBuffers;
   layerElementsPaths;
 
-  n;
   attributes;
   generated;
   metadataGenerated;
   imagesCID;
   metadataCID;
+  network;
   contractAddress;
+  abi;
 
   constructor(configuration, inputDir, outputDir) {
     this.configuration = configuration;
@@ -44,14 +45,36 @@ class Factory {
       inputDir: this.inputDir,
       outputDir: this.outputDir,
       configuration: this.configuration,
-      n: this.n,
       attributes: this.attributes,
       generated: this.generated,
       metadataGenerated: this.metadataGenerated,
       imagesCID: this.imagesCID,
       metadataCID: this.metadataCID,
+      network: this.network,
       contractAddress: this.contractAddress,
+      abi: this.abi,
     };
+  }
+
+  setProps(props) {
+    const {
+      attributes,
+      generated,
+      metadataGenerated,
+      imagesCID,
+      metadataCID,
+      network,
+      contractAddress,
+      abi,
+    } = props;
+    if (attributes) this.attributes = attributes;
+    if (generated) this.generated = generated;
+    if (metadataGenerated) this.metadataGenerated = metadataGenerated;
+    if (imagesCID) this.imagesCID = imagesCID;
+    if (metadataCID) this.metadataCID = metadataCID;
+    if (network) this.network = network;
+    if (contractAddress) this.contractAddress = contractAddress;
+    if (abi) this.abi = abi;
   }
 
   loadSecrets({ pinataApiKey, pinataSecretApiKey }) {
@@ -131,7 +154,7 @@ class Factory {
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
 
-    this.n = n;
+    this.configuration.n = n;
 
     const attributes = [];
 
@@ -158,7 +181,7 @@ class Factory {
   }
 
   generateAttributes() {
-    this.n = this.maxCombinations;
+    this.configuration.n = this.maxCombinations;
 
     const attributes = [];
 
@@ -199,12 +222,17 @@ class Factory {
   }
 
   composeImages(back, front) {
+    
+    const height = this.configuration.height;
+    const width  = this.configuration.width;
+
     back.composite(front, 0, 0);
     return back;
   }
 
   // ! TODO: Careful with memory usage
   // ! TODO: Change the algorithm complexity from O(n) to O(log n)
+  // ! TODO: Reescale images to a fixed size
   async generateImages(attributes, callback) {
     await Promise.all(
       attributes.map(async (traits, i) => {
@@ -330,27 +358,39 @@ class Factory {
 }
 
 async function loadInstance(instancePath) {
-  const {
-    inputDir,
-    outputDir,
-    configuration,
-    n,
-    attributes,
-    generated,
-    metadataGenerated,
-    imagesCID,
-    metadataCID,
-    contractAddress,
-  } = JSON.parse(await fs.promises.readFile(instancePath, "utf8"));
+  const { inputDir, outputDir, configuration, ...props } = JSON.parse(
+    await fs.promises.readFile(instancePath, "utf8")
+  );
   const factory = new Factory(configuration, inputDir, outputDir);
-  factory.n = n;
-  factory.attributes = attributes;
-  factory.generated = generated;
-  factory.metadataGenerated = metadataGenerated;
-  factory.imagesCID = imagesCID;
-  factory.metadataCID = metadataCID;
-  factory.contractAddress = contractAddress;
+  factory.setProps(props);
   return factory;
 }
 
-module.exports = { Factory, loadInstance };
+function layersNames(inputDir) {
+  let allLayers = fs
+    .readdirSync(inputDir)
+    .filter((file) => !file.startsWith("."));
+
+  const pattern = /(\d+)\..+/g;
+  let correctMatch = 0;
+
+  for (const layer of allLayers) {
+    if (layer.match(pattern)) correctMatch++;
+  }
+
+  if (correctMatch != allLayers.length) {
+    // Just return the folders
+    return allLayers;
+  }
+
+  allLayers.sort((a, b) => {
+    const numberA = Number(a.split(".")[0]);
+    const numberB = Number(b.split(".")[0]);
+
+    return numberA - numberB;
+  });
+
+  return allLayers;
+}
+
+module.exports = { Factory, loadInstance, layersNames };
