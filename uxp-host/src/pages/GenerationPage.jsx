@@ -92,6 +92,22 @@ export function GenerationPage() {
     setLayers(layers.map((layer, index) => (index === i ? value : layer)));
   };
 
+  const onMoveDownLayer = (i) => {
+    if (i < layers.length - 1) {
+      const newLayers = [...layers];
+      [newLayers[i], newLayers[i + 1]] = [newLayers[i + 1], newLayers[i]];
+      setLayers(newLayers);
+    }
+  };
+
+  const onMoveUpLayer = (i) => {
+    if (i > 0) {
+      const newLayers = [...layers];
+      [newLayers[i - 1], newLayers[i]] = [newLayers[i], newLayers[i - 1]];
+      setLayers(newLayers);
+    }
+  };
+
   const onRemoveLayer = (i) => {
     setLayers(layers.filter((layer, index) => index !== i));
   };
@@ -227,6 +243,8 @@ export function GenerationPage() {
                   value={layer}
                   index={index}
                   onChange={onEditLayer}
+                  onMoveDown={onMoveDownLayer}
+                  onMoveUp={onMoveUpLayer}
                   onRemove={onRemoveLayer}
                 />
               ))}

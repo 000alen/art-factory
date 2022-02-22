@@ -1,4 +1,10 @@
-import { ActionButton, Flex, Text, ButtonGroup } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Heading,
+  ActionGroup,
+  Item,
+} from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Back from "@spectrum-icons/workflow/Back";
@@ -21,7 +27,7 @@ export function QualityPage() {
 
   useEffect(() => {
     Promise.all(
-      [...Array(9).keys()].map(async (i) => {
+      [...Array(25).keys()].map(async (i) => {
         if (index + i >= attributes.length) return null;
         const buffer = await factoryGetImage(id, index + i);
         const url = URL.createObjectURL(
@@ -40,11 +46,11 @@ export function QualityPage() {
   }, [index]);
 
   const onBack = () => {
-    setIndex((prevIndex) => Math.max(prevIndex - 9, 0));
+    setIndex((prevIndex) => Math.max(prevIndex - 25, 0));
   };
 
   const onForward = () => {
-    if (index < attributes.length - 9) setIndex((prevIndex) => prevIndex + 9);
+    if (index < attributes.length - 25) setIndex((prevIndex) => prevIndex + 25);
   };
 
   const onFastForward = () => {
@@ -67,34 +73,53 @@ export function QualityPage() {
     });
   };
 
+  const onAction = (action) => {
+    switch (action) {
+      case "back":
+        onBack();
+        break;
+      case "forward":
+        onForward();
+        break;
+      case "fastForward":
+        onFastForward();
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Flex
       direction="column"
       height="100%"
       margin="size-100"
       gap="size-100"
-      alignItems="center"
-      justifyContent="center"
+      justifyContent="space-between"
     >
-      <Text marginBottom={8}>
-        {Math.floor(index / 9) + 1} of {Math.ceil(attributes.length / 9)}
-      </Text>
-      <div className="grid grid-cols-3 grid-rows-3 place-items-center gap-5">
+      <Heading level={1} marginStart={16}>
+        {Math.floor(index / 25) + 1} of {Math.ceil(attributes.length / 25)}
+      </Heading>
+
+      <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5">
         {imagesUrls.map((url, i) => {
           return <ImageItem key={i} src={url} onEdit={() => onEdit(i)} />;
         })}
       </div>
-      <ButtonGroup>
-        <ActionButton onPress={onBack}>
-          <Back />
-        </ActionButton>
-        <ActionButton onPress={onForward}>
-          <Forward />
-        </ActionButton>
-        <ActionButton onPress={onFastForward}>
-          <FastForward />
-        </ActionButton>
-      </ButtonGroup>
+
+      <Flex direction="row-reverse">
+        <ActionGroup onAction={onAction}>
+          <Item key="back">
+            <Back />
+          </Item>
+          <Item key="forward">
+            <Forward />
+          </Item>
+          <Item key="fastForward">
+            <FastForward />
+          </Item>
+        </ActionGroup>
+      </Flex>
     </Flex>
   );
 }
