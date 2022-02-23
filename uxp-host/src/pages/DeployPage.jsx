@@ -25,10 +25,10 @@ import {
   getPinataApiKey,
   getPinataSecretApiKey,
 } from "../ipc";
-import { providers, ContractFactory, ethers } from "ethers";
+import { providers, ContractFactory, utils } from "ethers";
 import { DialogContext } from "../App";
 import More from "@spectrum-icons/workflow/More";
-import { Networks } from "../constants";
+import { Networks, ContractTypes } from "../constants";
 
 // ! TODO:
 // Choose the network to deploy and verify the contract
@@ -113,19 +113,31 @@ export function DeployPage() {
 
     // ! TODO
     try {
-      const { contracts } = await getContract("NFT");
-      const { NFT } = contracts.NFT;
+      const { contracts } = await getContract(configuration.contractType);
+      const { NFT } = contracts[configuration.contractType];
+
       ({ abi: _abi } = NFT);
       const { evm } = NFT;
       const { bytecode } = evm;
       const contractFactory = new ContractFactory(_abi, bytecode, _signer);
 
-      const contract = await contractFactory.deploy(
-        configuration.name,
-        configuration.symbol,
-        `ipfs://${_metadataCID}/`,
-        `ipfs://${_metadataCID}/`
-      );
+      const contract =
+        configuration.contractType === "721"
+          ? await contractFactory.deploy(
+              configuration.name,
+              configuration.symbol,
+              `ipfs://${_metadataCID}/`,
+              `ipfs://${_metadataCID}/1.json`, // ! TODO
+              utils.parseEther(configuration.cost),
+              configuration.n,
+              configuration.maxMintAmount,
+              configuration.revealed
+            )
+          : await contractFactory.deploy(
+              configuration.name,
+              configuration.symbol,
+              `ipfs://${_metadataCID}/`
+            );
 
       _contractAddress = contract.address;
 
@@ -174,7 +186,8 @@ export function DeployPage() {
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">
       <Flex gap="size-100" alignItems="center">
         <Heading level={1} marginStart={16}>
-          Deploy to {Networks[networkKey].name}
+          Deploy {ContractTypes[configuration.contractType].name} to{" "}
+          {Networks[networkKey].name}
         </Heading>
         <MenuTrigger>
           <ActionButton>

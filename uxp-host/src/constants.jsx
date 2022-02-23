@@ -12,3 +12,12 @@ export const Networks = {
     id: 4,
   },
 };
+
+export const ContractTypes = {
+  721: {
+    name: "ERC721",
+  },
+  1155: {
+    name: "ERC1155",
+  },
+};

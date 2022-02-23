@@ -4,19 +4,10 @@ import {
   Button,
   Flex,
   Heading,
-  TextField,
-  NumberField,
-  Switch,
-  View,
-  ActionButton,
-  TextArea,
   ButtonGroup,
   ProgressBar,
 } from "@adobe/react-spectrum";
 
-import { LayerItem } from "../components/LayerItem";
-import { ColorPicker } from "../components/ColorPicker";
-import Add from "@spectrum-icons/workflow/Add";
 import {
   createFactory,
   factorySaveInstance,
@@ -29,6 +20,10 @@ import {
 import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { DialogContext } from "../App";
+import { Configuration721 } from "../components/Configuration721";
+import { Configuration1155 } from "../components/Configuration1155";
+import { ConfigurationBase } from "../components/ConfigurationBase";
+import { ConfigurationLayers } from "../components/ConfigurationLayers";
 
 // ! TODO:
 // Try to automatically detect the layers
@@ -39,6 +34,7 @@ export function GenerationPage() {
   const { state } = useLocation();
   const { inputDir, outputDir, partialConfiguration } = state;
 
+  // ConfigurationBase
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -47,25 +43,59 @@ export function GenerationPage() {
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
   const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
+  const [contractType, setContractType] = useState("721");
+
+  // Configuration721
+  const [cost, setCost] = useState("0.05");
+  const [maxMintAmount, setMaxMintAmount] = useState(20);
+  const [revealed, setRevealed] = useState(true);
+  const [notRevealedUri, setNotRevealedUri] = useState("");
+
+  // Configuration1155
+  // ! TODO
+
   const [layers, setLayers] = useState([""]);
   const [id, setId] = useState(null);
   const [configuration, setConfiguration] = useState(null);
-
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [attributes, setAttributes] = useState([]);
 
-  const isAbleContinue = useMemo(
+  const canContinue = useMemo(
     () =>
       name &&
+      description &&
       symbol &&
+      n &&
       width &&
       height &&
       (generateBackground || defaultBackground) &&
+      contractType &&
+      (contractType === "721"
+        ? cost && maxMintAmount && (revealed || notRevealedUri) && maxMintAmount
+        : contractType === "1155"
+        ? true
+        : false) &&
       layers.length > 0 &&
       layers.every((layer) => layer.length > 0),
-    [name, symbol, width, height, generateBackground, defaultBackground, layers]
+    [
+      name,
+      description,
+      symbol,
+      n,
+      width,
+      height,
+      generateBackground,
+      defaultBackground,
+      contractType,
+      cost,
+      maxMintAmount,
+      revealed,
+      notRevealedUri,
+      maxMintAmount,
+      layers,
+    ]
   );
 
   useEffect(() => {
@@ -74,6 +104,7 @@ export function GenerationPage() {
       if (partialConfiguration.description)
         setDescription(partialConfiguration.description);
       if (partialConfiguration.symbol) setSymbol(partialConfiguration.symbol);
+      if (partialConfiguration.n) setN(partialConfiguration.n);
       if (partialConfiguration.width) setWidth(partialConfiguration.width);
       if (partialConfiguration.height) setHeight(partialConfiguration.height);
       if (partialConfiguration.generateBackground)
@@ -81,6 +112,17 @@ export function GenerationPage() {
       // ! TODO
       // if (partialConfiguration.defaultBackground)
       //   setDefaultBackground(partialConfiguration.defaultBackground);
+      if (partialConfiguration.contractType)
+        setContractType(partialConfiguration.contractType);
+
+      if (partialConfiguration.cost) setCost(partialConfiguration.cost);
+      if (partialConfiguration.maxMintAmount)
+        setMaxMintAmount(partialConfiguration.maxMintAmount);
+      if (partialConfiguration.revealed)
+        setRevealed(partialConfiguration.revealed);
+      if (partialConfiguration.notRevealedUri)
+        setNotRevealedUri(partialConfiguration.notRevealedUri);
+
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
     }
 
@@ -133,11 +175,24 @@ export function GenerationPage() {
       name,
       description,
       symbol,
-      n: Number(n),
-      width: Number(width),
-      height: Number(height),
+      n: n,
+      width: width,
+      height: height,
       generateBackground,
       defaultBackground,
+      contractType,
+
+      ...(contractType === "721"
+        ? {
+            cost,
+            maxMintAmount,
+            revealed,
+            notRevealedUri,
+          }
+        : contractType === "1155"
+        ? {}
+        : {}),
+
       layers,
     };
 
@@ -187,83 +242,60 @@ export function GenerationPage() {
       justifyContent="space-between"
     >
       <Heading level={1} marginStart={16}>
-        Configuration
+        Configuration & Generation
       </Heading>
 
       <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
-        <Flex direction="column">
-          <TextField label="Name" value={name} onChange={setName} />
-          <TextArea
-            label="Description"
-            value={description}
-            onChange={setDescription}
+        <ConfigurationBase
+          {...{
+            name,
+            setName,
+            description,
+            setDescription,
+            symbol,
+            setSymbol,
+            n,
+            setN,
+            width,
+            setWidth,
+            height,
+            setHeight,
+            generateBackground,
+            setGenerateBackground,
+            defaultBackground,
+            setDefaultBackground,
+            contractType,
+            setContractType,
+          }}
+        />
+
+        {contractType === "721" ? (
+          <Configuration721
+            {...{
+              cost,
+              setCost,
+              maxMintAmount,
+              setMaxMintAmount,
+              revealed,
+              setRevealed,
+              notRevealedUri,
+              setNotRevealedUri,
+            }}
           />
+        ) : contractType === "1155" ? (
+          <Configuration1155 {...{}} />
+        ) : null}
 
-          <TextField label="Symbol" value={symbol} onChange={setSymbol} />
-
-          <Switch
-            margin="size-10"
-            isSelected={generateBackground}
-            onChange={setGenerateBackground}
-          >
-            Generate Background
-          </Switch>
-
-          {/* ! TODO: Switch to a View? */}
-          <div>
-            <label className="spectrum-FieldLabel">Default Background</label>
-
-            {/* ! TODO: this breaks the code */}
-            <ColorPicker
-              color={defaultBackground}
-              setColor={setDefaultBackground}
-              isDisabled={generateBackground}
-            />
-          </div>
-        </Flex>
-
-        <Flex direction="column">
-          <NumberField
-            label="N"
-            defaultValue={10}
-            minValue={1}
-            value={n}
-            onChange={setN}
-          />
-          <NumberField label="Width" value={width} onChange={setWidth} />
-          <NumberField label="Height" value={height} onChange={setHeight} />
-        </Flex>
-
-        <View>
-          <label className="spectrum-FieldLabel">Layers</label>
-
-          <View
-            width="30vw"
-            height="100%"
-            padding="size-100"
-            overflow="auto"
-            borderWidth="thin"
-            borderColor="dark"
-            borderRadius="medium"
-          >
-            <Flex direction="column" gap="size-100">
-              {layers.map((layer, index) => (
-                <LayerItem
-                  key={index}
-                  value={layer}
-                  index={index}
-                  onChange={onEditLayer}
-                  onMoveDown={onMoveDownLayer}
-                  onMoveUp={onMoveUpLayer}
-                  onRemove={onRemoveLayer}
-                />
-              ))}
-            </Flex>
-          </View>
-          <ActionButton marginTop={8} onPress={onAddLayer}>
-            <Add />
-          </ActionButton>
-        </View>
+        <ConfigurationLayers
+          {...{
+            layers,
+            onAddLayer,
+            onEditLayer,
+            onMoveDownLayer,
+            onMoveUpLayer,
+            onRemoveLayer,
+          }}
+        />
       </Flex>
 
       {isGenerating ? (
@@ -285,7 +317,7 @@ export function GenerationPage() {
             <Button
               variant="cta"
               onPress={onGenerate}
-              isDisabled={!isAbleContinue}
+              isDisabled={!canContinue}
             >
               Generate!
             </Button>

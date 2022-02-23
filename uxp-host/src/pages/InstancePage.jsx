@@ -2,32 +2,33 @@ import React, { useState, useContext, useEffect } from "react";
 import {
   Flex,
   Heading,
-  NumberField,
   ProgressBar,
   View,
   Text,
   ActionButton,
 } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { TaskItem } from "../components/TaskItem";
 import { OutputItem } from "../components/OutputItem";
 import { useLocation, useNavigate } from "react-router-dom";
-import { DialogContext } from "../App";
+import { DialogContext, ToolbarContext } from "../App";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Networks } from "../constants";
-import { Contract, providers, utils } from "ethers";
+import { Contract, providers } from "ethers";
 
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { getInfuraId, getPinataApiKey, getPinataSecretApiKey } from "../ipc";
 import Copy from "@spectrum-icons/workflow/Copy";
+import Close from "@spectrum-icons/workflow/Close";
 
-const chopAddress = (address) =>
-  address.substring(0, 5) + "(...)" + address.substring(address.length - 3);
+import { Panel721 } from "../components/Panel721";
+import { chopAddress } from "../utils";
+import { Panel1155 } from "../components/Panel1155";
 
 // ! TODO:
 // Implement, link to Etherscan
 export function InstancePage() {
   const dialogContext = useContext(DialogContext);
+  const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
@@ -56,6 +57,13 @@ export function InstancePage() {
   });
 
   useEffect(() => {
+    toolbarContext.addButton({
+      key: "close",
+      label: "Close",
+      icon: <Close />,
+      onClick: () => navigate("/"),
+    });
+
     let _secrets;
     let _provider;
     let _contract;
@@ -84,120 +92,14 @@ export function InstancePage() {
         dialogContext.setDialog("Error", error.message, null, true);
         return;
       });
+
+    return () => {
+      toolbarContext.removeButton("close");
+    };
   }, []);
 
   const addOutput = (output) => {
     setOutputs((prevOutputs) => [...prevOutputs, output]);
-  };
-
-  const onCost = async () => {
-    setIsLoading(true);
-    const cost = await contract.cost();
-    addOutput({
-      title: "Cost",
-      text: utils.formatUnits(cost.toString(), "ether"),
-      isCopiable: true,
-    });
-    setIsLoading(false);
-  };
-
-  const onIsRevealed = async () => {
-    setIsLoading(true);
-    const revealed = await contract.revealed();
-    addOutput({
-      title: "Is revealed?",
-      text: revealed.toString(),
-      isCopiable: true,
-    });
-    setIsLoading(false);
-  };
-
-  const onBalanceOf = async ({ address }) => {
-    if (!address) return;
-
-    setIsLoading(true);
-    const balance = await contract.balanceOf(address);
-    addOutput({
-      title: `Balance of ${chopAddress(address)}`,
-      text: balance.toString(),
-      isCopiable: true,
-    });
-    setIsLoading(false);
-  };
-
-  const onTokenOfOwnerByIndex = async ({ address, index }) => {
-    if (!address || !index) return;
-
-    setIsLoading(true);
-
-    const n = await contract.tokenOfOwnerByIndex(address, index);
-
-    addOutput({
-      title: "Token of owner by index",
-      text: n.toString(),
-      isCopiable: true,
-    });
-
-    setIsLoading(false);
-  };
-
-  const onTokenURI = async ({ index }) => {
-    if (!index) return;
-
-    setIsLoading(true);
-
-    const uri = await contract.tokenURI(index);
-
-    addOutput({
-      title: "Token URI",
-      text: uri,
-      isCopiable: true,
-    });
-
-    setIsLoading(false);
-  };
-
-  const onReveal = async () => {
-    setIsLoading(true);
-
-    const tx = await contract.reveal();
-    const receipt = await tx.wait();
-
-    addOutput({
-      title: "Revealed",
-      text: "true",
-      isCopiable: false,
-    });
-
-    setIsLoading(false);
-  };
-
-  const onMint = async ({ payable, mint }) => {
-    if (!payable || !mint) return;
-
-    setIsLoading(true);
-
-    let tx;
-    let receipt;
-
-    try {
-      tx = await contract.mint(mint, {
-        value: utils.parseEther(payable),
-      });
-      receipt = await tx.wait();
-    } catch (error) {
-      setIsLoading(false);
-      dialogContext.setDialog("Error", error.message, null, true);
-      return;
-    }
-
-    addOutput({
-      title: "Minted",
-      text: mint.toString(),
-      isCopiable: true,
-    });
-
-    setIsLoading(false);
   };
 
   const onCopy = () => {
@@ -223,83 +125,27 @@ export function InstancePage() {
       </Flex>
 
       <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
-        <Flex direction="column" gap="size-100">
-          <TaskItem task="Cost" onRun={onCost} />
-          <TaskItem task="Is revealed?" onRun={onIsRevealed} />
-          <TaskItem
-            task="Balance of"
-            onRun={onBalanceOf}
-            fields={[
-              {
-                key: "address",
-                type: "address",
-                label: "Address",
-              },
-            ]}
+        {configuration.contractType === "721" ? (
+          <Panel721
+            {...{
+              contract,
+              contractAddress,
+              setIsLoading,
+              addOutput,
+              dialogContext,
+            }}
           />
-
-          <TaskItem
-            task="Token of owner by index"
-            onRun={onTokenOfOwnerByIndex}
-            fields={[
-              {
-                key: "address",
-                type: "address",
-                label: "Address",
-              },
-              {
-                key: "index",
-                type: "int",
-                label: "Index",
-              },
-            ]}
+        ) : configuration.contractType === "1155" ? (
+          <Panel1155
+            {...{
+              contract,
+              contractAddress,
+              setIsLoading,
+              addOutput,
+              dialogContext,
+            }}
           />
-
-          <TaskItem
-            task="Token URI"
-            onRun={onTokenURI}
-            fields={[
-              {
-                key: "index",
-                type: "int",
-                label: "Token Index",
-              },
-            ]}
-          />
-        </Flex>
-
-        <Flex direction="column" gap="size-100">
-          <TaskItem task="Reveal" onRun={onReveal} />
-
-          <TaskItem
-            task="Mint"
-            onRun={onMint}
-            fields={[
-              {
-                key: "payable",
-                type: "string",
-                label: "Payable amount",
-              },
-              {
-                key: "mint",
-                type: "int",
-                label: "Mint amount",
-              },
-            ]}
-          />
-
-          <TaskItem task="Set cost">
-            <NumberField label="Cost" />
-          </TaskItem>
-
-          <TaskItem task="Set max Mint amount">
-            <NumberField label="Max Mint amount" />
-          </TaskItem>
-
-          <TaskItem task="Withdrawal">
-            <NumberField label="Amount" />
-          </TaskItem>
-        </Flex>
+        ) : null}
 
         <View>
           <label className="spectrum-FieldLabel">Output</label>
@@ -327,12 +173,14 @@ export function InstancePage() {
         </View>
       </Flex>
 
-      <Flex marginBottom={8} marginX={8} justifyContent="end">
-        {isLoading ? (
-          <ProgressBar label="Loading…" isIndeterminate />
-        ) : (
-          <Text>Made with love ❤️</Text>
-        )}
+      <Flex marginBottom={8} marginX={8} justifyContent="space-between">
+        <Text>Made with love by KODKOD ❤️</Text>
+
+        <ProgressBar
+          UNSAFE_className={isLoading ? "opacity-100" : "opacity-0"}
+          label="Loading…"
+          isIndeterminate
+        />
       </Flex>
     </Flex>
   );
