@@ -61,10 +61,10 @@ export const ConfigurationPanel = () => {
     asyncJob().then(({ userFolder, layers }) => {
       const inputDir = userFolder.nativePath;
       socket.emit("uxp-generate", {
-        n,
         inputDir,
         configuration: {
           name,
+          n,
           description,
           symbol,
           width: doc.width,

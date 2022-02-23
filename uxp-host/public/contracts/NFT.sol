@@ -1419,7 +1419,7 @@ contract NFT is ERC721Enumerable, Ownable {
     uint256 public maxSupply = 10000;
     uint256 public maxMintAmount = 20;
     bool public paused = false;
-    bool public revealed = false;
+    bool public revealed = true;
     string public notRevealedUri;
 
     constructor(

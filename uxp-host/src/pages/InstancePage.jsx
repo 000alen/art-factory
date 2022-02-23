@@ -1,12 +1,12 @@
-import React, { useState, useContext, useEffect, useMemo } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Flex,
   Heading,
-  TextField,
   NumberField,
   ProgressBar,
   View,
   Text,
+  ActionButton,
 } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "../components/TaskItem";
@@ -15,10 +15,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DialogContext } from "../App";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Networks } from "../constants";
-import { Contract, providers } from "ethers";
+import { Contract, providers, utils } from "ethers";
 
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { getInfuraId, getPinataApiKey, getPinataSecretApiKey } from "../ipc";
+import Copy from "@spectrum-icons/workflow/Copy";
 
 const chopAddress = (address) =>
   address.substring(0, 5) + "(...)" + address.substring(address.length - 3);
@@ -27,7 +28,7 @@ const chopAddress = (address) =>
 // Implement, link to Etherscan
 export function InstancePage() {
   const dialogContext = useContext(DialogContext);
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   const { state } = useLocation();
   const {
     id,
@@ -63,8 +64,6 @@ export function InstancePage() {
       .then((__secrets) => {
         _secrets = __secrets;
 
-        console.log(_secrets.infuraId, Networks[network].id);
-
         _provider = new WalletConnectProvider({
           infuraId: _secrets.infuraId,
           chainId: Networks[network].id,
@@ -96,7 +95,7 @@ export function InstancePage() {
     const cost = await contract.cost();
     addOutput({
       title: "Cost",
-      text: cost.toString(),
+      text: utils.formatUnits(cost.toString(), "ether"),
       isCopiable: true,
     });
     setIsLoading(false);
@@ -160,10 +159,15 @@ export function InstancePage() {
 
   const onReveal = async () => {
     setIsLoading(true);
+
     const tx = await contract.reveal();
     const receipt = await tx.wait();
 
-    // console.log(tx, receipt);
+    addOutput({
+      title: "Revealed",
+      text: "true",
+      isCopiable: false,
+    });
 
     setIsLoading(false);
   };
@@ -173,19 +177,32 @@ export function InstancePage() {
 
     setIsLoading(true);
 
-    const tx = await contract.mint(payable, mint);
-    const receipt = await tx.wait();
+    let tx;
+    let receipt;
 
-    // addOutput({
-    //   title: "Mint",
-    //   text: " ",
-    //   isCopiable: true,
-    // });
+    try {
+      tx = await contract.mint(mint, {
+        value: utils.parseEther(payable),
+      });
+      receipt = await tx.wait();
+    } catch (error) {
+      setIsLoading(false);
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
+
+    addOutput({
+      title: "Minted",
+      text: mint.toString(),
+      isCopiable: true,
+    });
 
     setIsLoading(false);
   };
 
-  // https://ropsten.etherscan.io/address/0x174111F85ca26f222f61CcDeFDcf181E2D9093F5#readContract
+  const onCopy = () => {
+    navigator.clipboard.writeText(contractAddress);
+  };
 
   return (
     <Flex
@@ -195,9 +212,15 @@ export function InstancePage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Heading level={1} marginStart={16}>
-        Instance
-      </Heading>
+      <Flex gap="size-100" alignItems="center">
+        <Heading level={1} marginStart={16}>
+          <pre className="inline">{chopAddress(contractAddress)}</pre> at{" "}
+          {Networks[network].name}
+        </Heading>
+        <ActionButton onPress={onCopy}>
+          <Copy />
+        </ActionButton>
+      </Flex>
 
       <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" gap="size-100">

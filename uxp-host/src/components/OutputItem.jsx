@@ -9,13 +9,15 @@ export function OutputItem({ title, text, isCopiable }) {
 
   return (
     <Flex
-      justifyContent="space-between"
-      gap="size-100"
-      alignItems="baseline"
       width="100%"
+      gap="size-100"
+      alignItems="end"
+      justifyContent="space-between"
     >
-      <Flex alignItems="baseline">
-        <Heading width="100%">{title}: &nbsp;</Heading>
+      <Flex direction="column">
+        <Heading width="100%" marginBottom={-2}>
+          {title}: &nbsp;
+        </Heading>
         <Text UNSAFE_className="break-all">{text}</Text>
       </Flex>
 

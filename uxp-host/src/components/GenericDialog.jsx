@@ -19,11 +19,7 @@ export function GenericDialog({ title, text, buttons, onHide }) {
       </Content>
 
       <ButtonGroup>
-        {buttons ? (
-          <Button onPress={onHide}>Close</Button>
-        ) : (
-          { dialogButtons: buttons }
-        )}
+        {buttons ? buttons : <Button onPress={onHide}>Close</Button>}
       </ButtonGroup>
     </Dialog>
   );

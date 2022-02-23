@@ -124,35 +124,36 @@ export function DeployPage() {
         configuration.name,
         configuration.symbol,
         `ipfs://${_metadataCID}/`,
-        `ipfs://${_metadataCID}/`,
-        {
-          gasPrice: ethers.utils.parseUnits("10", "gwei"), // ! TODO
-        }
+        `ipfs://${_metadataCID}/`
       );
 
-      // await contract.deployTransaction.wait();
-      await contract.deployed();
       _contractAddress = contract.address;
+
+      await factorySetProps(id, {
+        network: networkKey,
+        contractAddress: _contractAddress,
+        abi: _abi,
+      });
+      await factorySaveInstance(id);
+
+      await contract.deployTransaction.wait();
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
-
       return;
     }
 
+    setAbi(_abi);
+    setContractAddress(_contractAddress);
+    setIsDeploying(false);
+    setDeployedDone(true);
+  };
+
+  const onContinue = async () => {
     await factorySetProps(id, {
-      network: networkKey,
-      contractAddress: _contractAddress,
-      abi: _abi,
+      contractAddress,
     });
     await factorySaveInstance(id);
 
-    setContractAddress(_contractAddress);
-    setAbi(_abi);
-    setDeployedDone(true);
-    setIsDeploying(false);
-  };
-
-  const onContinue = () => {
     navigator("/instance", {
       state: {
         id,
@@ -228,7 +229,11 @@ export function DeployPage() {
       ) : (
         <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
           {deployedDone ? (
-            <Button variant="cta" onPress={onContinue}>
+            <Button
+              variant="cta"
+              onPress={onContinue}
+              isDisabled={!contractAddress}
+            >
               Continue!
             </Button>
           ) : (
