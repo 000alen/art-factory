@@ -37,6 +37,7 @@ export function HomePage() {
         state: {
           inputDir,
           outputDir,
+          photoshop: true,
           partialConfiguration: configuration,
         },
       });
@@ -66,6 +67,7 @@ export function HomePage() {
       state: {
         inputDir,
         outputDir,
+        photoshop: false,
       },
     });
   };
@@ -137,6 +139,7 @@ export function HomePage() {
           attributes,
           inputDir,
           outputDir,
+          photoshop: false,
           configuration,
         },
       });
@@ -147,6 +150,7 @@ export function HomePage() {
           attributes,
           inputDir,
           outputDir,
+          photoshop: false,
           configuration,
           imagesCID,
           metadataCID,

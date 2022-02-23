@@ -32,7 +32,7 @@ export function GenerationPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir, partialConfiguration } = state;
+  const { inputDir, outputDir, photoshop, partialConfiguration } = state;
 
   // ConfigurationBase
   const [name, setName] = useState("");
@@ -228,6 +228,7 @@ export function GenerationPage() {
         attributes,
         inputDir,
         outputDir,
+        photoshop,
         configuration,
       },
     });

@@ -36,7 +36,8 @@ export function DeployPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { id, attributes, inputDir, outputDir, configuration } = state;
+  const { id, attributes, inputDir, outputDir, photoshop, configuration } =
+    state;
 
   const [secrets, setSecrets] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -172,6 +173,7 @@ export function DeployPage() {
         attributes,
         inputDir,
         outputDir,
+        photoshop,
         configuration,
         imagesCID,
         metadataCID,

@@ -1,9 +1,4 @@
-import {
-  Flex,
-  Heading,
-  ActionGroup,
-  Item,
-} from "@adobe/react-spectrum";
+import { Flex, Heading, ActionGroup, Item } from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Back from "@spectrum-icons/workflow/Back";
@@ -19,7 +14,8 @@ export function QualityPage() {
   const socket = useContext(SocketContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { id, attributes, inputDir, outputDir, configuration } = state;
+  const { id, attributes, inputDir, outputDir, photoshop, configuration } =
+    state;
 
   const [index, setIndex] = useState(0);
   const [imagesUrls, setImagesUrls] = useState([]);
@@ -65,11 +61,15 @@ export function QualityPage() {
   };
 
   const onEdit = (i) => {
-    // ! TODO: What if there's  no UXP connection?
-    socket.emit("host-edit", {
-      name: `EDIT-${i}`,
-      traits: attributes[i],
-    });
+    if (photoshop) {
+      socket.emit("host-edit", {
+        name: `EDIT-${i}`,
+        traits: attributes[i],
+      });
+    } else {
+      // ! TODO
+      console.log("EDIT", i);
+    }
   };
 
   const onAction = (action) => {
