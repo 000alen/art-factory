@@ -222,9 +222,8 @@ class Factory {
   }
 
   composeImages(back, front) {
-    
     const height = this.configuration.height;
-    const width  = this.configuration.width;
+    const width = this.configuration.width;
 
     back.composite(front, 0, 0);
     return back;
@@ -353,6 +352,21 @@ class Factory {
   getImage(index) {
     return fs.readFileSync(
       path.join(this.outputDir, "images", `${index + 1}.png`)
+    );
+  }
+
+  async getTraitImage(trait) {
+    const layerElementPath = this.layerElementsPaths.get(
+      path.join(trait.name, trait.value)
+    );
+    await this.ensureLayerElementsBuffer(layerElementPath);
+    return this.layerElementsBuffers.get(layerElementPath);
+  }
+
+  async rewriteImage(i, dataUrl) {
+    await fs.promises.writeFile(
+      path.join(this.outputDir, "images", `${i + 1}.png`),
+      Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
     );
   }
 }

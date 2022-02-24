@@ -31,6 +31,8 @@ const sendWhitelist = [
   "factoryLoadSecrets",
   "layersNames",
   "factorySetProps",
+  "factoryGetTraitImage",
+  "factoryRewriteImage",
 ];
 
 const onWhitelist = [
@@ -65,6 +67,8 @@ const onWhitelist = [
   "factoryLoadSecretsResult",
   "layersNamesResult",
   "factorySetPropsResult",
+  "factoryGetTraitImageResult",
+  "factoryRewriteImageResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

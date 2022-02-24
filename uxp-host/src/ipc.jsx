@@ -133,3 +133,9 @@ export const factoryLoadSecrets = (id, secrets) =>
 export const getContract = (name) => ipcTask("getContract")(name);
 
 export const getOutputDir = (inputDir) => ipcTask("getOutputDir")(inputDir);
+
+export const factoryGetTraitImage = (id, trait) =>
+  ipcTaskWithRequestId("factoryGetTraitImage")(id, trait);
+
+export const factoryRewriteImage = (id, i, dataURL) =>
+  ipcTask("factoryRewriteImage")(id, i, dataURL);

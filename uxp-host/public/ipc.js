@@ -228,3 +228,13 @@ ipcSetterAndGetter(
 );
 
 ipcSetterAndGetter("infuraId", setInfuraId, getInfuraId);
+
+ipcTaskWithRequestId(
+  "factoryGetTraitImage",
+  async (id, trait) => await factories[id].getTraitImage(trait)
+);
+
+ipcAsyncTask("factoryRewriteImage", async (id, i, dataUrl) => {
+  await factories[id].rewriteImage(i, dataUrl);
+  return true;
+});
