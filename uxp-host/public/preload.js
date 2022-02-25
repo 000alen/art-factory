@@ -33,6 +33,7 @@ const sendWhitelist = [
   "factorySetProps",
   "factoryGetTraitImage",
   "factoryRewriteImage",
+  "factoryGetRandomTraitImage",
 ];
 
 const onWhitelist = [
@@ -69,27 +70,36 @@ const onWhitelist = [
   "factorySetPropsResult",
   "factoryGetTraitImageResult",
   "factoryRewriteImageResult",
+  "factoryGetRandomTraitImageResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
   send: (channel, ...args) => {
     if (sendWhitelist.includes(channel)) {
       return ipcRenderer.send(channel, ...args);
+    } else {
+      throw new Error(`${channel} is not on the whitelist`);
     }
   },
   on: (channel, listener) => {
     if (onWhitelist.includes(channel)) {
       return ipcRenderer.on(channel, (event, ...args) => listener(...args));
+    } else {
+      throw new Error(`${channel} is not on the whitelist`);
     }
   },
   once: (channel, listener) => {
     if (onWhitelist.includes(channel)) {
       return ipcRenderer.once(channel, (event, ...args) => listener(...args));
+    } else {
+      throw new Error(`${channel} is not on the whitelist`);
     }
   },
   removeListener: (channel, listener) => {
     if (onWhitelist.includes(channel)) {
       return ipcRenderer.removeListener(channel, listener);
+    } else {
+      throw new Error(`${channel} is not on the whitelist`);
     }
   },
 });
