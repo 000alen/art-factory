@@ -123,14 +123,14 @@ export function HomePage() {
       return;
     }
 
-    if (!attributes || !generated) {
+    if (!attributes && !generated) {
       navigator("/generation", {
         state: { inputDir, outputDir, partialConfiguration: configuration },
       });
     } else if (
-      !metadataGenerated ||
-      !imagesCID ||
-      !metadataCID ||
+      !metadataGenerated &&
+      !imagesCID &&
+      !metadataCID &&
       !contractAddress
     ) {
       navigator("/quality", {
@@ -141,6 +141,21 @@ export function HomePage() {
           outputDir,
           photoshop: false,
           configuration,
+        },
+      });
+    } else if (imagesCID && metadataCID && !contractAddress) {
+      navigator("/deploy", {
+        state: {
+          id,
+          attributes,
+          inputDir,
+          outputDir,
+          photoshop: false,
+          configuration,
+          partialDeploy: {
+            imagesCID,
+            metadataCID,
+          },
         },
       });
     } else if (contractAddress) {

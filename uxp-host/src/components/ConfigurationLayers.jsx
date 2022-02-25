@@ -1,47 +1,16 @@
 import React from "react";
-import { Flex, View, ActionButton } from "@adobe/react-spectrum";
-import { LayerItem } from "./LayerItem";
+import { TextField } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import Add from "@spectrum-icons/workflow/Add";
+import { ArrayOf } from "./ArrayOf";
 
-export function ConfigurationLayers({
-  layers,
-  onAddLayer,
-  onEditLayer,
-  onMoveDownLayer,
-  onMoveUpLayer,
-  onRemoveLayer,
-}) {
+export function ConfigurationLayers({ layers, setLayers }) {
   return (
-    <View>
-      <label className="spectrum-FieldLabel">Layers</label>
-
-      <View
-        width="30vw"
-        height="100%"
-        padding="size-100"
-        overflow="auto"
-        borderWidth="thin"
-        borderColor="dark"
-        borderRadius="medium"
-      >
-        <Flex direction="column" gap="size-100">
-          {layers.map((layer, index) => (
-            <LayerItem
-              key={index}
-              value={layer}
-              index={index}
-              onChange={onEditLayer}
-              onMoveDown={onMoveDownLayer}
-              onMoveUp={onMoveUpLayer}
-              onRemove={onRemoveLayer}
-            />
-          ))}
-        </Flex>
-      </View>
-      <ActionButton marginTop={8} onPress={onAddLayer}>
-        <Add />
-      </ActionButton>
-    </View>
+    <ArrayOf
+      Component={TextField}
+      label="Layers"
+      emptyValue=""
+      items={layers}
+      setItems={setLayers}
+    />
   );
 }

@@ -36,8 +36,15 @@ export function DeployPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { id, attributes, inputDir, outputDir, photoshop, configuration } =
-    state;
+  const {
+    id,
+    attributes,
+    inputDir,
+    outputDir,
+    photoshop,
+    configuration,
+    partialDeploy,
+  } = state;
 
   const [secrets, setSecrets] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -87,21 +94,30 @@ export function DeployPage() {
     const _web3Provider = new providers.Web3Provider(provider);
     const _signer = await _web3Provider.getSigner();
 
-    let _imagesCID;
-    let _metadataCID;
-
     setWeb3Provider(_web3Provider);
     setSigner(_signer);
 
+    let _imagesCID;
+    let _metadataCID;
+
     // ! TODO
     try {
-      await factoryLoadSecrets(id, secrets);
-      _imagesCID = await factoryDeployImages(id);
-      await factoryGenerateMetadata(id, _imagesCID, attributes);
-      _metadataCID = await factoryDeployMetadata(id);
+      if (partialDeploy) {
+        _imagesCID = partialDeploy.imagesCID;
+        _metadataCID = partialDeploy.metadataCID;
+
+        await factorySetProps(id, {
+          imagesCID: _imagesCID,
+          metadataCID: _metadataCID,
+        });
+      } else {
+        await factoryLoadSecrets(id, secrets);
+        _imagesCID = await factoryDeployImages(id);
+        await factoryGenerateMetadata(id, _imagesCID, attributes);
+        _metadataCID = await factoryDeployMetadata(id);
+      }
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
-
       return;
     }
 
@@ -113,6 +129,7 @@ export function DeployPage() {
     let _abi;
 
     // ! TODO
+    // Check for loading after contract has already been deployed to set the address manually
     try {
       const { contracts } = await getContract(configuration.contractType);
       const { NFT } = contracts[configuration.contractType];
