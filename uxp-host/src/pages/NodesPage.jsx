@@ -56,7 +56,7 @@ export function NodesPage() {
         // sourcePosition: "left",
         targetPosition: "left",
         data: { label: "Render" },
-        position: { x: 0, y: 0 },
+        position: { x: 0, y: 100 },
       },
     ]);
   }, []);
@@ -82,7 +82,7 @@ export function NodesPage() {
     event.preventDefault();
 
     const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-    const { type, layer } = JSON.parse(
+    const { type, label, layer } = JSON.parse(
       event.dataTransfer.getData("application/reactflow")
     );
 
@@ -97,10 +97,11 @@ export function NodesPage() {
       sourcePosition: "right",
       targetPosition: "left",
       position,
-      data: { id, layer },
+      data: { id, layer, label },
     };
 
     setElements((es) => es.concat(newNode));
+    setContextMenuShown(false);
   };
 
   const onPaneContextMenu = (event) => {
@@ -122,6 +123,10 @@ export function NodesPage() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onPaneContextMenu={onPaneContextMenu}
+            onPaneClick={() => setContextMenuShown(false)}
+            onMove={() => {
+              if (contextMenuShown) setContextMenuShown(false);
+            }}
             nodeTypes={nodeTypes}
             deleteKeyCode={46}
             snapToGrid={true}
@@ -133,6 +138,7 @@ export function NodesPage() {
           shown={contextMenuShown}
           x={contextMenuX}
           y={contextMenuY}
+          layers={configuration.layers}
         />
         {/* <Sidebar layers={configuration.layers} /> */}
       </ReactFlowProvider>
