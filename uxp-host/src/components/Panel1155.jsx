@@ -1,6 +1,15 @@
 import React from "react";
 import { TaskItem } from "./TaskItem";
-import { Flex, TextField, ActionGroup, Item, View, Text, ActionButton, NumberField } from "@adobe/react-spectrum";
+import {
+  Flex,
+  TextField,
+  ActionGroup,
+  Item,
+  View,
+  Text,
+  ActionButton,
+  NumberField,
+} from "@adobe/react-spectrum";
 
 import Remove from "@spectrum-icons/workflow/Remove";
 import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
@@ -28,9 +37,10 @@ export function Panel1155({
             {
               key: "id",
               type: "int",
-              label: "Id"
-            }
+              label: "Id",
+            },
           ]}
+          dialog={true}
         />
 
         <TaskItem
@@ -39,8 +49,8 @@ export function Panel1155({
             {
               key: "input",
               type: "int",
-              label: "Input"
-            }
+              label: "Input",
+            },
           ]}
         />
 
@@ -50,191 +60,101 @@ export function Panel1155({
             {
               key: "id",
               type: "int",
-              label: "Id"
-            }
+              label: "Id",
+            },
           ]}
         />
       </Flex>
 
       <Flex direction="column" gap="size-100">
         <TaskItem
-            task="Burn"
-            fields={[
-              {
-                key: "id",
-                type: "int",
-                label: "Id"
-              },
-              {
-                key: "amount",
-                type: "int",
-                label: "Amount"
-              }
-            ]}
-          />
+          task="Burn"
+          fields={[
+            {
+              key: "id",
+              type: "int",
+              label: "Id",
+            },
+            {
+              key: "amount",
+              type: "int",
+              label: "Amount",
+            },
+          ]}
+        />
 
-          <TaskItem
-            task="Mint"
-            fields={[
-              {
-                key: "to",
-                type: "address",
-                label: "To"
-              },
-              {
-                key: "id",
-                type: "int",
-                label: "Id"
-              },
-              {
-                key: "amount",
-                type: "int",
-                label: "Amount"
-              }
-            ]}
-          />
+        <TaskItem
+          task="Mint"
+          fields={[
+            {
+              key: "to",
+              type: "address",
+              label: "To",
+            },
+            {
+              key: "id",
+              type: "int",
+              label: "Id",
+            },
+            {
+              key: "amount",
+              type: "int",
+              label: "Amount",
+            },
+          ]}
+        />
 
-          <TaskItem
-            task="Set URI"
-            fields={[
-              {
-                key: "id",
-                type: "int",
-                label: "Id"
-              },
-              {
-                key: "uri",
-                type: "string",
-                label: "URI"
-              }
-            ]}
-          />
-
-
+        <TaskItem
+          task="Set URI"
+          fields={[
+            {
+              key: "id",
+              type: "int",
+              label: "Id",
+            },
+            {
+              key: "uri",
+              type: "string",
+              label: "URI",
+            },
+          ]}
+        />
       </Flex>
 
-      {/* ! TODO: Modularizar esto */}
       <Flex direction="column" gap="size-100">
+        <TaskItem
+          task="Balance of Batch"
+          dialog={true}
+          fields={[
+            {
+              key: "addresses",
+              type: "address[]",
+              label: "Addresses",
+            },
+            {
+              key: "ids",
+              type: "int[]",
+              label: "Ids",
+            },
+          ]}
+        />
 
-        <View
-        borderWidth="thin"
-        borderColor="dark"
-        borderRadius="medium"
-        padding="size-100"
-        >
-          <Flex alignItems="center" justifyContent="space-between">
-            <Text>Balance of Batch</Text>
-            <ActionButton>
-              <Play />
-            </ActionButton>
-          </Flex>
-
-          <label className="spectrum-FieldLabel">Accounts</label>
-          <View padding="size-100" height="6vh" overflow="auto">
-            <Flex gap="size-100" justifyContent="space-between" marginTop="size-50" marginBottom="size-50">
-                <TextField
-                placeholder="0x"
-                width="100%"
-              />
-
-              <ActionGroup overflowMode="collapse">
-                <Item key="moveDown">
-                  <ChevronDown />
-                </Item>
-                <Item key="moveUp">
-                  <ChevronUp />
-                </Item>
-                <Item key="remove">
-                  <Remove />
-                </Item>
-              </ActionGroup>
-            </Flex>
-            
-          </View>
-
-          <label className="spectrum-FieldLabel">Ids</label>
-          <View padding="size-100" height="6vh" overflow="auto">
-            <Flex gap="size-100" justifyContent="space-between" marginTop="size-50" marginBottom="size-50">
-              <NumberField
-                width="100%"
-              />
-
-              <ActionGroup overflowMode="collapse">
-                <Item key="moveDown">
-                  <ChevronDown />
-                </Item>
-                <Item key="moveUp">
-                  <ChevronUp />
-                </Item>
-                <Item key="remove">
-                  <Remove />
-                </Item>
-              </ActionGroup>
-            </Flex>
-          </View>
-
-
-        </View>
-
-        <View
-        borderWidth="thin"
-        borderColor="dark"
-        borderRadius="medium"
-        padding="size-100"
-        >
-          <Flex alignItems="center" justifyContent="space-between">
-            <Text>Mint batch</Text>
-            <ActionButton>
-              <Play />
-            </ActionButton>
-          </Flex>
-
-          <label className="spectrum-FieldLabel">Ids</label>
-          <View padding="size-100" height="6vh" overflow="auto">
-            <Flex gap="size-100" justifyContent="space-between" marginTop="size-50" marginBottom="size-50">
-              <TextField
-                width="100%"
-              />
-
-              <ActionGroup overflowMode="collapse">
-                <Item key="moveDown">
-                  <ChevronDown />
-                </Item>
-                <Item key="moveUp">
-                  <ChevronUp />
-                </Item>
-                <Item key="remove">
-                  <Remove />
-                </Item>
-              </ActionGroup>
-            </Flex>
-            
-          </View>
-
-          <label className="spectrum-FieldLabel">Amounts</label>
-          <View padding="size-100" height="6vh" overflow="auto">
-            <Flex gap="size-100" justifyContent="space-between" marginTop="size-50" marginBottom="size-50">
-              <TextField
-                width="100%"
-              />
-
-              <ActionGroup overflowMode="collapse">
-                <Item key="moveDown">
-                  <ChevronDown />
-                </Item>
-                <Item key="moveUp">
-                  <ChevronUp />
-                </Item>
-                <Item key="remove">
-                  <Remove />
-                </Item>
-              </ActionGroup>
-            </Flex>
-          </View>
-
-
-        </View>
-
+        <TaskItem
+          task="Mint batch"
+          dialog={true}
+          fields={[
+            {
+              key: "ids",
+              type: "int[]",
+              label: "Ids",
+            },
+            {
+              key: "amounts",
+              type: "int[]",
+              label: "Amounts",
+            },
+          ]}
+        />
       </Flex>
     </>
   );
