@@ -230,6 +230,11 @@ ipcSetterAndGetter(
 ipcSetterAndGetter("infuraId", setInfuraId, getInfuraId);
 
 ipcTaskWithRequestId(
+  "factoryGetRandomTraitImage",
+  async (id, layerName) => await factories[id].getRandomTraitImage(layerName)
+);
+
+ipcTaskWithRequestId(
   "factoryGetTraitImage",
   async (id, trait) => await factories[id].getTraitImage(trait)
 );

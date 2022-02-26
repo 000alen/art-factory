@@ -17,6 +17,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import Settings from "@spectrum-icons/workflow/Settings";
 import { SecretsDialog } from "./components/SecretsDialog";
 import { GenericDialog } from "./components/GenericDialog";
+import { NodesPage } from "./pages/NodesPage";
 
 export const DialogContext = createContext();
 
@@ -118,6 +119,7 @@ const App = () => {
               <Route path="/quality" element={<QualityPage />} />
               <Route path="/deploy" element={<DeployPage />} />
               <Route path="/instance" element={<InstancePage />} />
+              <Route path="/nodes" element={<NodesPage />} />
               <Route path="/*" element={<NotFoundPage />} />
             </Routes>
           </Flex>

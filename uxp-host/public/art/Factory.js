@@ -355,6 +355,16 @@ class Factory {
     );
   }
 
+  async getRandomTraitImage(layerName) {
+    const layerElements = this.layers.get(layerName);
+    const { name } = rarityWeightedChoice(layerElements);
+    const layerElementPath = this.layerElementsPaths.get(
+      path.join(layerName, name)
+    );
+    await this.ensureLayerElementsBuffer(layerElementPath);
+    return this.layerElementsBuffers.get(layerElementPath);
+  }
+
   async getTraitImage(trait) {
     const layerElementPath = this.layerElementsPaths.get(
       path.join(trait.name, trait.value)

@@ -194,7 +194,7 @@ export function GenerationPage() {
   };
 
   const onContinue = () => {
-    navigator("/quality", {
+    navigator("/nodes", {
       state: {
         id,
         attributes,
@@ -204,6 +204,17 @@ export function GenerationPage() {
         configuration,
       },
     });
+
+    // navigator("/quality", {
+    //   state: {
+    //     id,
+    //     attributes,
+    //     inputDir,
+    //     outputDir,
+    //     photoshop,
+    //     configuration,
+    //   },
+    // });
   };
 
   return (
