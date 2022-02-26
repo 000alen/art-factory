@@ -248,3 +248,7 @@ ipcTaskWithRequestId(
   "compose",
   async (...buffers) => await compose(...buffers)
 );
+
+ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) =>
+  factories[id].generateRandomAttributesFromNodes(nodes)
+);

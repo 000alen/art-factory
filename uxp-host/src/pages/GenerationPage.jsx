@@ -38,7 +38,7 @@ export function GenerationPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
-  const [n, setN] = useState(1);
+  // const [n, setN] = useState(1);
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
@@ -55,19 +55,15 @@ export function GenerationPage() {
   // ! TODO
 
   const [layers, setLayers] = useState([""]);
-  const [id, setId] = useState(null);
-  const [configuration, setConfiguration] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationDone, setGenerationDone] = useState(false);
-  const [currentGeneration, setCurrentGeneration] = useState(0);
-  const [attributes, setAttributes] = useState([]);
+  // const [id, setId] = useState(null);
+  // const [configuration, setConfiguration] = useState(null);
 
   const canContinue = useMemo(
     () =>
       name &&
       description &&
       symbol &&
-      n &&
+      // n &&
       width &&
       height &&
       (generateBackground || defaultBackground) &&
@@ -83,7 +79,7 @@ export function GenerationPage() {
       name,
       description,
       symbol,
-      n,
+      // n,
       width,
       height,
       generateBackground,
@@ -104,7 +100,7 @@ export function GenerationPage() {
       if (partialConfiguration.description)
         setDescription(partialConfiguration.description);
       if (partialConfiguration.symbol) setSymbol(partialConfiguration.symbol);
-      if (partialConfiguration.n) setN(partialConfiguration.n);
+      // if (partialConfiguration.n) setN(partialConfiguration.n);
       if (partialConfiguration.width) setWidth(partialConfiguration.width);
       if (partialConfiguration.height) setHeight(partialConfiguration.height);
       if (partialConfiguration.generateBackground)
@@ -135,19 +131,12 @@ export function GenerationPage() {
       });
   }, []);
 
-  const onProgress = (i) => {
-    setCurrentGeneration((prevGeneration) => prevGeneration + 1);
-  };
-
-  const onGenerate = async () => {
-    setIsGenerating(true);
-
+  const onContinue = async () => {
     const _id = uuid();
     const _configuration = {
       name,
       description,
       symbol,
-      n: n,
       width: width,
       height: height,
       generateBackground,
@@ -168,53 +157,26 @@ export function GenerationPage() {
       layers,
     };
 
-    let _attributes;
-
     // ! TODO
     try {
-      await createFactory(_id, _configuration, inputDir, outputDir, {
-        n,
-      });
+      await createFactory(_id, _configuration, inputDir, outputDir);
       await factorySaveInstance(_id);
       await factoryEnsureLayers(_id);
       await factoryEnsureOutputDir(_id);
-      _attributes = await factoryGenerateRandomAttributes(_id, n);
-      await factoryGenerateImages(_id, _attributes, onProgress);
-      await factorySaveInstance(_id);
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
       return;
     }
 
-    setId(_id);
-    setConfiguration(_configuration);
-    setAttributes(_attributes);
-    setGenerationDone(true);
-    setIsGenerating(false);
-  };
-
-  const onContinue = () => {
     navigator("/nodes", {
       state: {
-        id,
-        attributes,
+        id: _id,
         inputDir,
         outputDir,
         photoshop,
-        configuration,
+        configuration: _configuration,
       },
     });
-
-    // navigator("/quality", {
-    //   state: {
-    //     id,
-    //     attributes,
-    //     inputDir,
-    //     outputDir,
-    //     photoshop,
-    //     configuration,
-    //   },
-    // });
   };
 
   return (
@@ -238,8 +200,8 @@ export function GenerationPage() {
             setDescription,
             symbol,
             setSymbol,
-            n,
-            setN,
+            // n,
+            // setN,
             width,
             setWidth,
             height,
@@ -278,32 +240,11 @@ export function GenerationPage() {
         />
       </Flex>
 
-      {isGenerating ? (
-        <Flex marginBottom={8} marginX={8} justifyContent="end">
-          <ProgressBar
-            label="Deploying…"
-            minValue={0}
-            maxValue={n}
-            value={currentGeneration}
-          />
-        </Flex>
-      ) : (
-        <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-          {generationDone ? (
-            <Button variant="cta" onPress={onContinue}>
-              Continue!
-            </Button>
-          ) : (
-            <Button
-              variant="cta"
-              onPress={onGenerate}
-              isDisabled={!canContinue}
-            >
-              Generate!
-            </Button>
-          )}
-        </ButtonGroup>
-      )}
+      <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
+        <Button variant="cta" onPress={onContinue}>
+          Continue!
+        </Button>
+      </ButtonGroup>
     </Flex>
   );
 }

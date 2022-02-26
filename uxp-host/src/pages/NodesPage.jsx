@@ -13,7 +13,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LayerNode } from "../components/LayerNode";
 import { Button } from "@adobe/react-spectrum";
 import { RenderNode } from "../components/RenderNode";
-import { factoryGetRandomTraitImage } from "../ipc";
+import {
+  factoryGenerateRandomAttributesFromNodes,
+  factoryGetRandomTraitImage,
+  factorySaveInstance,
+  factorySetProps,
+} from "../ipc";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -64,6 +69,7 @@ export function NodesPage() {
   const [elements, setElements] = useState([]);
   const [buffers, setBuffers] = useState([]);
   const [urls, setUrls] = useState([]);
+  const [currentGeneration, setCurrentGeneration] = useState(0);
 
   useEffect(() => {
     Promise.all(
@@ -99,7 +105,7 @@ export function NodesPage() {
             id: "-1",
             type: "renderNode",
             targetPosition: "left",
-            data: { label: "Render" },
+            data: { n: 1, onChange: (n) => onChangeN("-1", n) },
             position: { x: 0, y: 100 },
           },
         ]);
@@ -109,7 +115,20 @@ export function NodesPage() {
       });
   }, []);
 
-  const generatePreview = () => {
+  const onChangeN = (id, n) => {
+    setElements((els) =>
+      els.map((el) =>
+        el.id === id
+          ? {
+              ...el,
+              data: { ...el.data, n },
+            }
+          : el
+      )
+    );
+  };
+
+  const updatePreview = () => {
     setElements((els) => {
       const toUpdate = {};
 
@@ -139,12 +158,12 @@ export function NodesPage() {
 
   const onConnect = (params) => {
     setElements((els) => addEdge(params, els));
-    generatePreview();
+    updatePreview();
   };
 
   const onElementsRemove = (elementsToRemove) => {
     setElements((els) => removeElements(elementsToRemove, els));
-    generatePreview();
+    updatePreview();
   };
 
   const onLoad = (_reactFlowInstance) => {
@@ -160,7 +179,7 @@ export function NodesPage() {
     event.preventDefault();
 
     const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-    const { type, label, layer } = JSON.parse(
+    const { type, layer } = JSON.parse(
       event.dataTransfer.getData("application/reactflow")
     );
 
@@ -169,10 +188,12 @@ export function NodesPage() {
       y: event.clientY - reactFlowBounds.top,
     });
 
+    const id = getId();
+
     const newNode =
       type === "layerNode"
         ? {
-            id: getId(),
+            id,
             type,
             sourcePosition: "right",
             targetPosition: "left",
@@ -184,17 +205,84 @@ export function NodesPage() {
               url: urls[configuration.layers.findIndex((e) => e === layer)],
             },
           }
-        : {
-            id: getId(),
+        : type === "renderNode"
+        ? {
+            id,
             type,
             sourcePosition: "right",
             targetPosition: "left",
             position,
-            data: {},
+            data: {
+              n: 1,
+              onChange: (n) => onChangeN(id, n),
+            },
+          }
+        : {
+            id,
+            type,
+            sourcePosition: "right",
+            targetPosition: "left",
+            position,
           };
 
     setElements((es) => es.concat(newNode));
-    generatePreview();
+    updatePreview();
+  };
+
+  const onProgress = (i) => {
+    setCurrentGeneration((prevGeneration) => prevGeneration + 1);
+  };
+
+  const onContinue = async () => {
+    const filteredElements = elements.map((element) =>
+      element.type === "renderNode"
+        ? {
+            id: element.id,
+            type: element.type,
+            targetPosition: element.targetPosition,
+            data: { n: element.data.n },
+            position: element.position,
+          }
+        : element.type === "layerNode"
+        ? {
+            id: element.id,
+            type: element.type,
+            sourcePosition: element.sourcePosition,
+            targetPosition: element.targetPosition,
+            data: {
+              layer: element.data.layer,
+            },
+            position: element.position,
+          }
+        : element
+    );
+
+    const _configuration = {
+      ...configuration,
+      layersNodes: filteredElements,
+    };
+
+    let _attributes;
+
+    try {
+      await factorySetProps(id, {
+        configuration: _configuration,
+      });
+      await factorySaveInstance(id);
+
+      _attributes = await factoryGenerateRandomAttributesFromNodes(
+        id,
+        filteredElements
+      );
+
+      console.log(_attributes);
+
+      // await factoryGenerateImages(_id, _attributes, onProgress);
+      // await factorySaveInstance(_id);
+    } catch (error) {
+      dialogContext.setDialog("Error", error.message, null, true);
+      return;
+    }
   };
 
   return (
@@ -212,14 +300,12 @@ export function NodesPage() {
             onDragOver={onDragOver}
             nodeTypes={nodeTypes}
             deleteKeyCode={46}
-            snapToGrid={true}
-            snapGrid={[100, 100]}
           >
             <Controls />
             <Background variant="dots" gap={50} />
             <div className="absolute z-10 bottom-4 right-4">
-              <Button variant="cta" onPress={() => console.log("NOOP")}>
-                TEST!
+              <Button variant="cta" onPress={onContinue}>
+                Continue!
               </Button>
             </div>
           </ReactFlow>

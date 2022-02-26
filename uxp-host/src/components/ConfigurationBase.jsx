@@ -17,8 +17,8 @@ export function ConfigurationBase({
   setDescription,
   symbol,
   setSymbol,
-  n,
-  setN,
+  // n,
+  // setN,
   width,
   setWidth,
   height,
@@ -41,13 +41,13 @@ export function ConfigurationBase({
 
       <TextField label="Symbol" value={symbol} onChange={setSymbol} />
 
-      <NumberField
+      {/* <NumberField
         label="N"
         defaultValue={10}
         minValue={1}
         value={n}
         onChange={setN}
-      />
+      /> */}
       <NumberField label="Width" value={width} onChange={setWidth} />
       <NumberField label="Height" value={height} onChange={setHeight} />
 

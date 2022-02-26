@@ -145,3 +145,6 @@ export const factoryGetRandomTraitImage = (id, layersName) =>
 
 export const compose = (...buffers) =>
   ipcTaskWithRequestId("compose")(...buffers);
+
+export const factoryGenerateRandomAttributesFromNodes = (id, nodes) =>
+  ipcTask("factoryGenerateRandomAttributesFromNodes")(id, nodes);

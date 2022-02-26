@@ -24,7 +24,7 @@ export function RenderNode({ data }) {
       <Handle id="a" type="target" position={Position.Left} />
       <div>
         <ImageItem src={url} />
-        <NumberField label="n" />
+        <NumberField label="n" value={data.n} onChange={data.onChange} />
       </div>
     </div>
   );

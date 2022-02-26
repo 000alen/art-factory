@@ -8,6 +8,36 @@ const {
   pinDirectoryToIPFS,
   removeRarity,
 } = require("./utils");
+const { getOutgoers } = require("react-flow-renderer");
+
+const allPaths = (elements) => {
+  const root = elements.filter((element) => element.type === "input").shift(); // ! TODO: Change to custom node type
+
+  const stack = [];
+  stack.push({
+    node: root,
+    path: [root],
+  });
+
+  const savedPaths = [];
+  while (stack.length > 0) {
+    const actualNode = stack.pop();
+    const neighbors = getOutgoers(actualNode.node, elements);
+
+    // Leaf node
+    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
+      savedPaths.push(actualNode.path);
+
+    for (const v of neighbors) {
+      stack.push({
+        node: v,
+        path: [...actualNode.path, v],
+      });
+    }
+  }
+
+  return savedPaths;
+};
 
 class Factory {
   secrets;
@@ -221,6 +251,48 @@ class Factory {
     return attributes;
   }
 
+  generateRandomAttributesFromLayers(layers, n) {
+    if (n > this.maxCombinations)
+      console.warn(
+        `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
+      );
+
+    const attributes = [];
+
+    for (let i = 0; i < n; i++) {
+      const attribute = [];
+
+      for (const layerName of layers) {
+        const layerElements = this.layers.get(layerName);
+        const { name, rarity } = rarityWeightedChoice(layerElements);
+
+        attribute.push({
+          name: layerName,
+          value: name,
+          rarity,
+        });
+      }
+
+      attributes.push(attribute);
+    }
+
+    return attributes;
+  }
+
+  generateRandomAttributesFromNodes(layersNodes) {
+    const attributes = [];
+    allPaths(layersNodes)
+      .map((path) => path.slice(1))
+      .sort((a, b) => a.length - b.length)
+      .forEach((path) => {
+        const { n } = path.pop().data;
+        const layers = path.map((node) => node.data.layer);
+        const _attributes = this.generateRandomAttributesFromLayers(layers, n);
+        attributes.push(..._attributes);
+      });
+    return attributes;
+  }
+
   composeImages(back, front) {
     back.composite(front, 0, 0);
     return back;
@@ -422,7 +494,7 @@ async function compose(...buffers) {
   for (let i = 1; i < buffers.length; i++) {
     const current = await Jimp.read(buffers[i]);
     image.composite(current, 0, 0);
-    console.log("image composed");  
+    console.log("image composed");
   }
 
   console.log("about to get final image buffer");
