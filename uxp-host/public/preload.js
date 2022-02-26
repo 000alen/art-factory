@@ -34,6 +34,7 @@ const sendWhitelist = [
   "factoryGetTraitImage",
   "factoryRewriteImage",
   "factoryGetRandomTraitImage",
+  "compose",
 ];
 
 const onWhitelist = [
@@ -71,6 +72,7 @@ const onWhitelist = [
   "factoryGetTraitImageResult",
   "factoryRewriteImageResult",
   "factoryGetRandomTraitImageResult",
+  "composeResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

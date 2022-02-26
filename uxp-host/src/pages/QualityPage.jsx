@@ -36,7 +36,7 @@ export function QualityPage() {
         if (index + i >= attributes.length) return null;
         const buffer = await factoryGetImage(id, index + i);
         const url = URL.createObjectURL(
-          new Blob([buffer], { type: "image/jpeg" })
+          new Blob([buffer], { type: "image/png" })
         );
         return url;
       })

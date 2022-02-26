@@ -1,7 +1,7 @@
 const { ipcMain, dialog } = require("electron");
 const path = require("path");
 const solc = require("solc");
-const { Factory, loadInstance, layersNames } = require("./art");
+const { Factory, loadInstance, layersNames, compose } = require("./art");
 const fs = require("fs");
 const {
   setPinataApiKey,
@@ -243,3 +243,8 @@ ipcAsyncTask("factoryRewriteImage", async (id, i, dataUrl) => {
   await factories[id].rewriteImage(i, dataUrl);
   return true;
 });
+
+ipcTaskWithRequestId(
+  "compose",
+  async (...buffers) => await compose(...buffers)
+);

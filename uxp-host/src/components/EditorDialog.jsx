@@ -25,8 +25,6 @@ export function EditorDialog({
   i,
   attributes,
 }) {
-  console.log(configuration);
-
   const { editor, onReady } = useFabricJSEditor();
 
   const onLoad = (canvas) => {
@@ -58,6 +56,7 @@ export function EditorDialog({
     onHide();
   };
 
+  // ! TODO: UN-hardcode width and height
   return (
     <Dialog>
       <Content>

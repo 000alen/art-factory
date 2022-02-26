@@ -1,3 +1,3 @@
-const { Factory, loadInstance, layersNames } = require("./Factory");
+const { Factory, loadInstance, layersNames, compose } = require("./Factory");
 
-module.exports = { Factory, loadInstance, layersNames };
+module.exports = { Factory, loadInstance, layersNames, compose };

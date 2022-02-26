@@ -222,9 +222,6 @@ class Factory {
   }
 
   composeImages(back, front) {
-    const height = this.configuration.height;
-    const width = this.configuration.width;
-
     back.composite(front, 0, 0);
     return back;
   }
@@ -417,4 +414,24 @@ function layersNames(inputDir) {
   return allLayers;
 }
 
-module.exports = { Factory, loadInstance, layersNames };
+async function compose(...buffers) {
+  const image = await Jimp.read(buffers[0]);
+
+  console.log("baseImage created");
+
+  for (let i = 1; i < buffers.length; i++) {
+    const current = await Jimp.read(buffers[i]);
+    image.composite(current, 0, 0);
+    console.log("image composed");  
+  }
+
+  console.log("about to get final image buffer");
+  return new Promise((resolve, reject) => {
+    image.getBuffer(Jimp.MIME_PNG, (error, buffer) => {
+      if (error) reject(error);
+      resolve(buffer);
+    });
+  });
+}
+
+module.exports = { Factory, loadInstance, layersNames, compose };

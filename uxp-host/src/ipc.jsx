@@ -142,3 +142,6 @@ export const factoryRewriteImage = (id, i, dataURL) =>
 
 export const factoryGetRandomTraitImage = (id, layersName) =>
   ipcTaskWithRequestId("factoryGetRandomTraitImage")(id, layersName);
+
+export const compose = (...buffers) =>
+  ipcTaskWithRequestId("compose")(...buffers);

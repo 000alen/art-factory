@@ -4,18 +4,52 @@ import ReactFlow, {
   addEdge,
   removeElements,
   Controls,
+  Background,
+  getOutgoers,
 } from "react-flow-renderer";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { DialogContext } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LayerNode } from "../components/LayerNode";
-import { NodesPageContextMenu } from "../components/NodesPageContextMenu";
+import { Button } from "@adobe/react-spectrum";
+import { RenderNode } from "../components/RenderNode";
+import { factoryGetRandomTraitImage } from "../ipc";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 const nodeTypes = {
   layerNode: LayerNode,
+  renderNode: RenderNode,
+};
+
+const allPaths = (elements) => {
+  const root = elements.filter((element) => element.type === "input").shift(); // ! TODO: Change to custom node type
+
+  const stack = [];
+  stack.push({
+    node: root,
+    path: [root],
+  });
+
+  const savedPaths = [];
+  while (stack.length > 0) {
+    const actualNode = stack.pop();
+    const neighbors = getOutgoers(actualNode.node, elements);
+
+    // Leaf node
+    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
+      savedPaths.push(actualNode.path);
+
+    for (const v of neighbors) {
+      stack.push({
+        node: v,
+        path: [...actualNode.path, v],
+      });
+    }
+  }
+
+  return savedPaths;
 };
 
 export function NodesPage() {
@@ -28,45 +62,89 @@ export function NodesPage() {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [elements, setElements] = useState([]);
-  const [contextMenuShown, setContextMenuShown] = useState(false);
-  const [contextMenuX, setContextMenuX] = useState(0);
-  const [contextMenuY, setContextMenuY] = useState(0);
+  const [buffers, setBuffers] = useState([]);
+  const [urls, setUrls] = useState([]);
 
   useEffect(() => {
-    setElements([
-      {
-        id: "1",
-        type: "input",
-        sourcePosition: "right",
-        // targetPosition: "left",
-        data: { label: "Root" },
-        position: { x: 0, y: 0 },
-      },
-      ...configuration.layers.map((layer, i) => ({
-        id: (i + 2).toString(),
-        type: "layerNode",
-        sourcePosition: "right",
-        targetPosition: "left",
-        data: { id, layer },
-        position: { x: 250 * (i + 1), y: 100 * i },
-      })),
-      {
-        id: "-1",
-        type: "output",
-        // sourcePosition: "left",
-        targetPosition: "left",
-        data: { label: "Render" },
-        position: { x: 0, y: 100 },
-      },
-    ]);
+    Promise.all(
+      configuration.layers.map(
+        async (layer) => await factoryGetRandomTraitImage(id, layer)
+      )
+    )
+      .then((buffers) => [
+        buffers,
+        buffers.map((buffer) =>
+          URL.createObjectURL(new Blob([buffer], { type: "image/png" }))
+        ),
+      ])
+      .then(([buffers, urls]) => {
+        setElements([
+          {
+            // ! TODO: Use custom node
+            id: "1",
+            type: "input",
+            sourcePosition: "right",
+            data: { label: "Root" },
+            position: { x: 0, y: 0 },
+          },
+          ...configuration.layers.map((layer, i) => ({
+            id: (i + 2).toString(),
+            type: "layerNode",
+            sourcePosition: "right",
+            targetPosition: "left",
+            data: { layer, buffer: buffers[i], url: urls[i] },
+            position: { x: 250 * (i + 1), y: 100 * i },
+          })),
+          {
+            id: "-1",
+            type: "renderNode",
+            targetPosition: "left",
+            data: { label: "Render" },
+            position: { x: 0, y: 100 },
+          },
+        ]);
+
+        setBuffers(buffers);
+        setUrls(urls);
+      });
   }, []);
+
+  const generatePreview = () => {
+    setElements((els) => {
+      const toUpdate = {};
+
+      allPaths(els)
+        .map((path) => path.slice(1))
+        .forEach((path) => {
+          const render = path.pop();
+          const buffers = path.map((node) => node.data.buffer);
+          const urls = path.map((node) => node.data.url);
+          toUpdate[render.id] = [buffers, urls];
+        });
+
+      return els.map((el) =>
+        el.id in toUpdate
+          ? {
+              ...el,
+              data: {
+                ...el.data,
+                buffers: toUpdate[el.id][0],
+                urls: toUpdate[el.id][1],
+              },
+            }
+          : el
+      );
+    });
+  };
 
   const onConnect = (params) => {
     setElements((els) => addEdge(params, els));
+    generatePreview();
   };
 
   const onElementsRemove = (elementsToRemove) => {
     setElements((els) => removeElements(elementsToRemove, els));
+    generatePreview();
   };
 
   const onLoad = (_reactFlowInstance) => {
@@ -91,29 +169,39 @@ export function NodesPage() {
       y: event.clientY - reactFlowBounds.top,
     });
 
-    const newNode = {
-      id: getId(),
-      type,
-      sourcePosition: "right",
-      targetPosition: "left",
-      position,
-      data: { id, layer, label },
-    };
+    const newNode =
+      type === "layerNode"
+        ? {
+            id: getId(),
+            type,
+            sourcePosition: "right",
+            targetPosition: "left",
+            position,
+            data: {
+              layer,
+              buffer:
+                buffers[configuration.layers.findIndex((e) => e === layer)],
+              url: urls[configuration.layers.findIndex((e) => e === layer)],
+            },
+          }
+        : {
+            id: getId(),
+            type,
+            sourcePosition: "right",
+            targetPosition: "left",
+            position,
+            data: {},
+          };
 
     setElements((es) => es.concat(newNode));
-    setContextMenuShown(false);
-  };
-
-  const onPaneContextMenu = (event) => {
-    event.preventDefault();
-    setContextMenuX(event.clientX);
-    setContextMenuY(event.clientY);
-    setContextMenuShown(true);
+    generatePreview();
   };
 
   return (
-    <div className="w-full h-full flex">
+    <div className="w-full h-full flex overflow-hidden">
       <ReactFlowProvider>
+        <Sidebar layers={configuration.layers} urls={urls} />
+
         <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow
             elements={elements}
@@ -122,25 +210,20 @@ export function NodesPage() {
             onLoad={onLoad}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            onPaneContextMenu={onPaneContextMenu}
-            onPaneClick={() => setContextMenuShown(false)}
-            onMove={() => {
-              if (contextMenuShown) setContextMenuShown(false);
-            }}
             nodeTypes={nodeTypes}
             deleteKeyCode={46}
             snapToGrid={true}
+            snapGrid={[100, 100]}
           >
             <Controls />
+            <Background variant="dots" gap={50} />
+            <div className="absolute z-10 bottom-4 right-4">
+              <Button variant="cta" onPress={() => console.log("NOOP")}>
+                TEST!
+              </Button>
+            </div>
           </ReactFlow>
         </div>
-        <NodesPageContextMenu
-          shown={contextMenuShown}
-          x={contextMenuX}
-          y={contextMenuY}
-          layers={configuration.layers}
-        />
-        {/* <Sidebar layers={configuration.layers} /> */}
       </ReactFlowProvider>
     </div>
   );
