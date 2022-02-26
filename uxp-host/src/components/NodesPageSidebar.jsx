@@ -8,29 +8,41 @@ export function Sidebar({ layers, urls }) {
   };
 
   return (
-    <div className="p-2 space-y-2 rounded flex flex-col overflow-auto">
-      <div className="font-bold">You can drag these nodes.</div>
+    <div
+      className="overflow-auto"
+      style={{
+        direction: "rtl",
+      }}
+    >
       <div
-        onDragStart={(event) =>
-          onDragStart(event, { type: "renderNode", label: "Render" })
-        }
-        draggable
+        className="p-2 space-y-2 rounded flex flex-col"
+        style={{
+          direction: "ltr",
+        }}
       >
-        Render
-      </div>
-      {layers.map((layer, i) => (
+        <div className="font-bold">You can drag these nodes.</div>
         <div
-          key={i}
-          className="p-2 border-2 border-solid border-white rounded flex flex-col justify-center"
           onDragStart={(event) =>
-            onDragStart(event, { type: "layerNode", layer })
+            onDragStart(event, { type: "renderNode", label: "Render" })
           }
           draggable
         >
-          <ImageItem src={urls[i]} />
-          <div>{layer}</div>
+          Render
         </div>
-      ))}
+        {layers.map((layer, i) => (
+          <div
+            key={i}
+            className="p-2 border-2 border-dashed border-white rounded flex flex-col justify-center"
+            onDragStart={(event) =>
+              onDragStart(event, { type: "layerNode", layer })
+            }
+            draggable
+          >
+            <ImageItem src={urls[i]} />
+            <div>{layer}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
