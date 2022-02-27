@@ -255,6 +255,51 @@ class Factory {
 
   key = (layers) => path.join(...layers);
 
+  probSolution(layersNodes) {
+    const root = layersNodes
+      .filter((element) => element.type === "input")
+      .shift(); // ! TODO: Change to custom node type
+
+    const stack = [];
+    stack.push({
+      node: root,
+      attributes: [],
+    });
+
+    const generatedByNode = new Map();
+
+    const attributes = [];
+    while (stack.length > 0) {
+      const actualNode = stack.pop();
+      const neighbors = getOutgoers(actualNode.node, layersNodes);
+
+      // Leaf node
+      if (neighbors.length === 0 && actualNode.node.type === "renderNode") {
+        if (!generatedByNode.has(actualNode.id))
+          generatedByNode.set(actualNode.id, 0);
+
+        const actualGenerated = generatedByNode.get(actualNode.id);
+        if (actualGenerated < actualNode.data.n) {
+          attributes.push(actualNode.attributes);
+          generatedByNode.set(actualNode.id, actualGenerated + 1);
+        }
+      }
+
+      for (const v of neighbors) {
+        const allLayers = this.layers.get(v.data.layer);
+        console.log("kmierda -> ", allLayers);
+        if (allLayers != undefined)
+          for (const t of allLayers)
+            stack.push({
+              node: v,
+              attributes: [...actualNode.attributes, t],
+            });
+      }
+    }
+
+    return attributes;
+  }
+
   // XXX HERE
   generateRandomAttributesFromLayers(layers, n) {
     if (n > this.maxCombinations)

@@ -275,6 +275,9 @@ export function NodesPage() {
         id,
         filteredElements
       );
+
+      console.log(_attributes);
+
       await factoryGenerateImages(id, _attributes, onProgress);
       await factorySaveInstance(id);
     } catch (error) {
