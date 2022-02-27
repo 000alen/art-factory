@@ -45,7 +45,6 @@ export function QualityPage() {
         setImagesUrls(urls.filter((url) => url !== null));
       })
       .catch((error) => {
-        console.log(error);
         dialogContext.setDialog("Error", error.message, null, true);
       });
   }, [index]);

@@ -258,33 +258,35 @@ export function NodesPage() {
         : element
     );
 
-    const _configuration = {
-      ...configuration,
-      layersNodes: filteredElements,
-    };
+    console.log(JSON.stringify(filteredElements));
 
-    let _attributes;
+    // const _configuration = {
+    //   ...configuration,
+    //   layersNodes: filteredElements,
+    // };
 
-    try {
-      await factorySetProps(id, {
-        configuration: _configuration,
-      });
-      await factorySaveInstance(id);
+    // let _attributes;
 
-      _attributes = await factoryGenerateRandomAttributesFromNodes(
-        id,
-        filteredElements
-      );
+    // try {
+    //   await factorySetProps(id, {
+    //     configuration: _configuration,
+    //   });
+    //   await factorySaveInstance(id);
 
-      console.log(_attributes);
+    //   _attributes = await factoryGenerateRandomAttributesFromNodes(
+    //     id,
+    //     filteredElements
+    //   );
 
-      await factoryGenerateImages(id, _attributes, onProgress);
-      await factorySaveInstance(id);
-    } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
-      return;
-    }
-    console.log("done");
+    //   console.log(_attributes);
+
+    //   await factoryGenerateImages(id, _attributes, onProgress);
+    //   await factorySaveInstance(id);
+    // } catch (error) {
+    //   dialogContext.setDialog("Error", error.message, null, true);
+    //   return;
+    // }
+    // console.log("done");
   };
 
   return (

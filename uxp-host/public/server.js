@@ -14,9 +14,7 @@ const startServer = async () => {
     },
   });
 
-  server.listen(port, () => {
-    console.log(`[server] Server listening on port ${port}`);
-  });
+  server.listen(port, () => {});
 
   io.on("connection", (socket) => {
     io.emit("server-connection", true);
@@ -57,6 +55,4 @@ const startServer = async () => {
   });
 };
 
-startServer().catch((err) => {
-  console.log(`[server] Error: ${err}`);
-});
+startServer().catch((err) => {});

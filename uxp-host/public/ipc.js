@@ -250,6 +250,6 @@ ipcTaskWithRequestId(
 );
 
 ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) => {
-  // return factories[id].generateRandomAttributesFromNodes(nodes);
-  return factories[id].probSolution(nodes);
+  return factories[id].generateRandomAttributesFromNodes(nodes);
+  // return factories[id].probSolution(nodes);
 });
