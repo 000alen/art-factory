@@ -18,6 +18,7 @@ import {
   factoryGetRandomTraitImage,
   factorySaveInstance,
   factorySetProps,
+  factoryGenerateImages,
 } from "../ipc";
 
 let id = 0;
@@ -274,15 +275,13 @@ export function NodesPage() {
         id,
         filteredElements
       );
-
-      console.log(_attributes);
-
-      // await factoryGenerateImages(_id, _attributes, onProgress);
-      // await factorySaveInstance(_id);
+      await factoryGenerateImages(id, _attributes, onProgress);
+      await factorySaveInstance(id);
     } catch (error) {
       dialogContext.setDialog("Error", error.message, null, true);
       return;
     }
+    console.log("done");
   };
 
   return (

@@ -251,12 +251,16 @@ class Factory {
     return attributes;
   }
 
+  cache = new Map();
+
+  key = (layers) => path.join(...layers);
+
+  // XXX HERE
   generateRandomAttributesFromLayers(layers, n) {
     if (n > this.maxCombinations)
       console.warn(
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
-
     const attributes = [];
 
     for (let i = 0; i < n; i++) {
@@ -264,7 +268,8 @@ class Factory {
 
       for (const layerName of layers) {
         const layerElements = this.layers.get(layerName);
-        const { name, rarity } = rarityWeightedChoice(layerElements);
+
+        const { name, rarity } = rarityWeightedChoice(layerElements); // RANDOM
 
         attribute.push({
           name: layerName,
@@ -279,6 +284,46 @@ class Factory {
     return attributes;
   }
 
+  append(a, b) {
+    return a.map((a_i, i) => [...a_i, ...b[i]]);
+  }
+
+  generateAttributesFromLayers(layers, n) {
+    if (this.cache.has(this.key(layers))) {
+      const cached = this.cache.get(this.key(layers));
+      if (cached.length >= n) {
+        return cached.slice(0, n);
+      } else {
+        const generated = [
+          ...cached,
+          ...this.generateRandomAttributesFromLayers(layers, n - cached.length),
+        ];
+        this.cache.set(this.key(layers), generated);
+        return generated;
+      }
+    } else {
+      const leftLayers = [...layers];
+      const rightLayers = [];
+
+      for (let i = 0; i < layers.length; i++) {
+        rightLayers.push(leftLayers.pop());
+
+        if (this.cache.has(this.key(leftLayers))) {
+          const generated = this.append(
+            this.generateAttributesFromLayers(leftLayers, n),
+            this.generateRandomAttributesFromLayers(rightLayers, n)
+          );
+          this.cache.set(this.key([...leftLayers, ...rightLayers]), generated);
+          return generated;
+        }
+      }
+      const generated = this.generateRandomAttributesFromLayers(layers, n);
+      this.cache.set(this.key(layers), generated);
+      return generated;
+    }
+  }
+
+  // Podriamos dejarla tal cual
   generateRandomAttributesFromNodes(layersNodes) {
     const attributes = [];
     allPaths(layersNodes)
@@ -287,7 +332,7 @@ class Factory {
       .forEach((path) => {
         const { n } = path.pop().data;
         const layers = path.map((node) => node.data.layer);
-        const _attributes = this.generateRandomAttributesFromLayers(layers, n);
+        const _attributes = this.generateAttributesFromLayers(layers, n);
         attributes.push(..._attributes);
       });
     return attributes;

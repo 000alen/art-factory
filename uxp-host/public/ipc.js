@@ -249,6 +249,7 @@ ipcTaskWithRequestId(
   async (...buffers) => await compose(...buffers)
 );
 
-ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) =>
-  factories[id].generateRandomAttributesFromNodes(nodes)
-);
+ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) => {
+  return factories[id].generateRandomAttributesFromNodes(nodes);
+  // return factories[id].probSolution(nodes);
+});
