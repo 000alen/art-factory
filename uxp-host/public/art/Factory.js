@@ -445,6 +445,7 @@ class Factory {
     return attributes;
   }
   composeImages(back, front) {
+    front.resize(this.configuration.width, this.configuration.height);
     back.composite(front, 0, 0);
     return back;
   }
