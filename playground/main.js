@@ -147,7 +147,6 @@ async function main() {
       attributes[5][0].value === attributes[10][0].value,
     attributes[5][0].value === attributes[10][0].value
   );
-  // console.log(JSON.stringify(attributes));
 }
 
 main();

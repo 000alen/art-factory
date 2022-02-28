@@ -102,12 +102,12 @@ function computeNs(cache, paths) {
   return ns;
 }
 
-function expandPath(cache, path) {
+function expandPathIfNeeded(cache, layers, path) {
   const _path = [];
 
   for (const id of path) {
-    if (cache.has(id)) {
-      _path.push(...expandPath(cache, cache.get(id)));
+    if (!layers.includes(id) && !cache.has(id)) {
+      _path.push(...expandPathIfNeeded(cache, layers, cache.get(id)));
     } else {
       _path.push(id);
     }
@@ -312,7 +312,6 @@ class Factory {
 
     for (const layerName of layers) {
       if (attributesCache && attributesCache.has(layerName)) {
-        console.log("using cache", layerName);
         attributes = this.append(
           attributes,
           attributesCache.get(layerName).slice(0, n)
@@ -348,7 +347,11 @@ class Factory {
     for (const [id, value] of cache)
       attributesCache.set(
         id,
-        this.generateAttributesFromLayers(expandPath(cache, value), ns.get(id))
+        this.generateAttributesFromLayers(
+          expandPathIfNeeded(cache, this.configuration.layers, value),
+          ns.get(id),
+          attributesCache
+        )
       );
 
     const attributes = [];
