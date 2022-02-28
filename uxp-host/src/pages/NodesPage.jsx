@@ -11,7 +11,7 @@ import { Sidebar } from "../components/NodesPageSidebar";
 import { DialogContext } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LayerNode } from "../components/LayerNode";
-import { Button } from "@adobe/react-spectrum";
+import { Button, Flex, ButtonGroup, ProgressBar } from "@adobe/react-spectrum";
 import { RenderNode } from "../components/RenderNode";
 import {
   factoryGenerateRandomAttributesFromNodes,
@@ -62,19 +62,23 @@ export function NodesPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { id, attributes, inputDir, outputDir, photoshop, configuration } =
-    state;
+  const { id, inputDir, outputDir, photoshop, partialConfiguration } = state;
 
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [elements, setElements] = useState([]);
   const [buffers, setBuffers] = useState([]);
   const [urls, setUrls] = useState([]);
+  const [n, setN] = useState(0);
   const [currentGeneration, setCurrentGeneration] = useState(0);
+  const [isGenrating, setIsGenerating] = useState(false);
+  const [generationDone, setGenerationDone] = useState(false);
+  const [attributes, setAttributes] = useState([]);
+  const [configuration, setConfiguration] = useState(null);
 
   useEffect(() => {
     Promise.all(
-      configuration.layers.map(
+      partialConfiguration.layers.map(
         async (layer) => await factoryGetRandomTraitImage(id, layer)
       )
     )
@@ -94,7 +98,7 @@ export function NodesPage() {
             data: { label: "Root" },
             position: { x: 0, y: 0 },
           },
-          ...configuration.layers.map((layer, i) => ({
+          ...partialConfiguration.layers.map((layer, i) => ({
             id: (i + 2).toString(),
             type: "layerNode",
             sourcePosition: "right",
@@ -202,8 +206,12 @@ export function NodesPage() {
             data: {
               layer,
               buffer:
-                buffers[configuration.layers.findIndex((e) => e === layer)],
-              url: urls[configuration.layers.findIndex((e) => e === layer)],
+                buffers[
+                  partialConfiguration.layers.findIndex((e) => e === layer)
+                ],
+              url: urls[
+                partialConfiguration.layers.findIndex((e) => e === layer)
+              ],
             },
           }
         : type === "renderNode"
@@ -234,7 +242,9 @@ export function NodesPage() {
     setCurrentGeneration((prevGeneration) => prevGeneration + 1);
   };
 
-  const onContinue = async () => {
+  const onGenerate = async () => {
+    setIsGenerating(true);
+
     const filteredElements = elements.map((element) =>
       element.type === "renderNode"
         ? {
@@ -258,10 +268,19 @@ export function NodesPage() {
         : element
     );
 
+    const _n = filteredElements.reduce(
+      (e, a) => (e.type === "renderNode" ? a + e.data.n : a),
+      0
+    );
+
+    setN(_n);
+
     const _configuration = {
-      ...configuration,
+      ...partialConfiguration,
       layersNodes: filteredElements,
     };
+
+    setConfiguration(_configuration);
 
     let _attributes;
 
@@ -282,13 +301,29 @@ export function NodesPage() {
       dialogContext.setDialog("Error", error.message, null, true);
       return;
     }
-    console.log("done");
+
+    setAttributes(_attributes);
+    setIsGenerating(false);
+    setGenerationDone(true);
+  };
+
+  const onContinue = () => {
+    navigator("/quality", {
+      state: {
+        id,
+        attributes,
+        inputDir,
+        outputDir,
+        photoshop,
+        configuration,
+      },
+    });
   };
 
   return (
     <div className="w-full h-full flex overflow-hidden">
       <ReactFlowProvider>
-        <Sidebar layers={configuration.layers} urls={urls} />
+        <Sidebar layers={partialConfiguration.layers} urls={urls} />
 
         <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow
@@ -303,10 +338,29 @@ export function NodesPage() {
           >
             <Controls />
             <Background variant="dots" gap={50} />
+
             <div className="absolute z-10 bottom-4 right-4">
-              <Button variant="cta" onPress={onContinue}>
-                Continue!
-              </Button>
+              {isGenrating ? (
+                <Flex marginBottom={8} marginX={8} justifyContent="end">
+                  <ProgressBar
+                    label="Generating…"
+                    maxValue={n}
+                    value={currentGeneration}
+                  />
+                </Flex>
+              ) : (
+                <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
+                  {generationDone ? (
+                    <Button variant="cta" onPress={onContinue}>
+                      Continue!
+                    </Button>
+                  ) : (
+                    <Button variant="cta" onPress={onGenerate}>
+                      Generate!
+                    </Button>
+                  )}
+                </ButtonGroup>
+              )}
             </div>
           </ReactFlow>
         </div>

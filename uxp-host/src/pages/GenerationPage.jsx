@@ -11,8 +11,6 @@ import {
 import {
   createFactory,
   factorySaveInstance,
-  factoryGenerateImages,
-  factoryGenerateRandomAttributes,
   factoryEnsureLayers,
   factoryEnsureOutputDir,
   layersNames,
@@ -55,15 +53,12 @@ export function GenerationPage() {
   // ! TODO
 
   const [layers, setLayers] = useState([""]);
-  // const [id, setId] = useState(null);
-  // const [configuration, setConfiguration] = useState(null);
 
   const canContinue = useMemo(
     () =>
       name &&
       description &&
       symbol &&
-      // n &&
       width &&
       height &&
       (generateBackground || defaultBackground) &&
@@ -79,7 +74,6 @@ export function GenerationPage() {
       name,
       description,
       symbol,
-      // n,
       width,
       height,
       generateBackground,
@@ -100,7 +94,6 @@ export function GenerationPage() {
       if (partialConfiguration.description)
         setDescription(partialConfiguration.description);
       if (partialConfiguration.symbol) setSymbol(partialConfiguration.symbol);
-      // if (partialConfiguration.n) setN(partialConfiguration.n);
       if (partialConfiguration.width) setWidth(partialConfiguration.width);
       if (partialConfiguration.height) setHeight(partialConfiguration.height);
       if (partialConfiguration.generateBackground)
@@ -174,7 +167,7 @@ export function GenerationPage() {
         inputDir,
         outputDir,
         photoshop,
-        configuration: _configuration,
+        partialConfiguration: _configuration,
       },
     });
   };
@@ -200,8 +193,6 @@ export function GenerationPage() {
             setDescription,
             symbol,
             setSymbol,
-            // n,
-            // setN,
             width,
             setWidth,
             height,
