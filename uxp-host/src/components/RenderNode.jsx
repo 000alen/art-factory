@@ -21,7 +21,9 @@ export function RenderNode({ sidebar, data }) {
 
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">
-      {!sidebar && <Handle id="a" type="target" position={Position.Left} />}
+      {!sidebar && (
+        <Handle id="renderIn" type="target" position={Position.Left} />
+      )}
       <div>
         <ImageItem src={url} />
         <NumberField

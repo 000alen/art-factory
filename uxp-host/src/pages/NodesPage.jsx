@@ -21,6 +21,7 @@ import {
   factoryGenerateImages,
 } from "../ipc";
 import { RootNode } from "../components/RootNode";
+import { CustomEdge } from "../components/CustomEdge";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -29,6 +30,10 @@ const nodeTypes = {
   rootNode: RootNode,
   layerNode: LayerNode,
   renderNode: RenderNode,
+};
+
+const edgeTypes = {
+  customEdge: CustomEdge,
 };
 
 const allPaths = (elements) => {
@@ -165,13 +170,19 @@ export function NodesPage() {
   };
 
   const onConnect = (params) => {
-    setElements((els) => addEdge(params, els));
+    setElements((els) =>
+      addEdge({ ...params, type: "customEdge", data: { onEdgeRemove } }, els)
+    );
     updatePreview();
   };
 
   const onElementsRemove = (elementsToRemove) => {
     setElements((els) => removeElements(elementsToRemove, els));
     updatePreview();
+  };
+
+  const onEdgeRemove = (id) => {
+    onElementsRemove([{ id }]);
   };
 
   const onLoad = (_reactFlowInstance) => {
@@ -341,7 +352,7 @@ export function NodesPage() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             nodeTypes={nodeTypes}
-            deleteKeyCode={46}
+            edgeTypes={edgeTypes}
           >
             <Controls />
             <Background variant="dots" gap={50} />
