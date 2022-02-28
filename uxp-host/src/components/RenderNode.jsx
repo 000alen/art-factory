@@ -4,7 +4,7 @@ import { Handle, Position } from "react-flow-renderer";
 import { compose } from "../ipc";
 import { ImageItem } from "./ImageItem";
 
-export function RenderNode({ data }) {
+export function RenderNode({ sidebar, data }) {
   const [url, setUrl] = useState(null);
 
   useEffect(() => {
@@ -17,14 +17,21 @@ export function RenderNode({ data }) {
         setUrl(url);
       });
     }
-  }, [data.buffers]);
+  }, [data]);
 
   return (
-    <div className="p-2 border-2 border-solid border-white rounded">
-      <Handle id="a" type="target" position={Position.Left} />
+    <div className="p-2 border-2 border-dashed border-white rounded">
+      {!sidebar && <Handle id="a" type="target" position={Position.Left} />}
       <div>
         <ImageItem src={url} />
-        <NumberField label="n" value={data.n} onChange={data.onChange} />
+        <NumberField
+          label="n"
+          {...{
+            value: sidebar ? null : data.n,
+            onChange: sidebar ? null : data.onChange,
+            isDisabled: sidebar ? true : false,
+          }}
+        />
       </div>
     </div>
   );

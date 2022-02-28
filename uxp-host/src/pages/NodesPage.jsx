@@ -20,17 +20,21 @@ import {
   factorySetProps,
   factoryGenerateImages,
 } from "../ipc";
+import { RootNode } from "../components/RootNode";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 const nodeTypes = {
+  rootNode: RootNode,
   layerNode: LayerNode,
   renderNode: RenderNode,
 };
 
 const allPaths = (elements) => {
-  const root = elements.filter((element) => element.type === "input").shift(); // ! TODO: Change to custom node type
+  const root = elements
+    .filter((element) => element.type === "rootNode")
+    .shift();
 
   const stack = [];
   stack.push({
@@ -91,9 +95,8 @@ export function NodesPage() {
       .then(([buffers, urls]) => {
         setElements([
           {
-            // ! TODO: Use custom node
-            id: "1",
-            type: "input",
+            id: "root",
+            type: "rootNode",
             sourcePosition: "right",
             data: { label: "Root" },
             position: { x: 0, y: 0 },
@@ -323,7 +326,11 @@ export function NodesPage() {
   return (
     <div className="w-full h-full flex overflow-hidden">
       <ReactFlowProvider>
-        <Sidebar layers={partialConfiguration.layers} urls={urls} />
+        <Sidebar
+          layers={partialConfiguration.layers}
+          buffers={buffers}
+          urls={urls}
+        />
 
         <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow

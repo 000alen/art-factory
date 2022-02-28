@@ -13,7 +13,9 @@ const { tuple } = require("immutable-tuple");
 const { v4: uuid } = require("uuid");
 
 function getPaths(elements) {
-  const root = elements.filter((element) => element.type === "input").shift(); // ! TODO: Change to custom node type
+  const root = elements
+    .filter((element) => element.type === "rootNode")
+    .shift();
 
   const stack = [];
   stack.push({
