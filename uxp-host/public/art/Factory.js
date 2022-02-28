@@ -651,13 +651,20 @@ function sizeOf(inputDir) {
   return { width, height };
 }
 
-async function compose(...buffers) {
+async function compose(buffers, configuration) {
+
+  const height = configuration.height;
+  const width = configuration.width;
+
   const image = await Jimp.read(buffers[0]);
+
+  image.resize(width, height);
 
   for (let i = 1; i < buffers.length; i++) {
     const current = await Jimp.read(buffers[i]);
+    current.resize(width, height);
     image.composite(current, 0, 0);
-  }
+  } 
 
   return new Promise((resolve, reject) => {
     image.getBuffer(Jimp.MIME_PNG, (error, buffer) => {

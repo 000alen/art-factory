@@ -9,11 +9,10 @@ export function RenderNode({ sidebar, data }) {
 
   useEffect(() => {
     if (data.buffers) {
-      compose(...data.buffers.map((buffer) => buffer.buffer)).then((buffer) => {
-        const url = URL.createObjectURL(
-          new Blob([buffer], { type: "image/png" })
-        );
-
+      // ! TODO: Pass configuration state
+      compose([...data.buffers.map((buffer) => buffer.buffer)], {width: 200, height: 200})
+        .then((buffer) => {
+        const url = URL.createObjectURL(new Blob([buffer], { type: "image/png" }));
         setUrl(url);
       });
     }
