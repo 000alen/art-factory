@@ -1,7 +1,14 @@
 const { ipcMain, dialog } = require("electron");
 const path = require("path");
 const solc = require("solc");
-const { Factory, loadInstance, layersNames, compose } = require("./art");
+const {
+  Factory,
+  loadInstance,
+  layersNames,
+  name,
+  sizeOf,
+  compose,
+} = require("./art");
 const fs = require("fs");
 const {
   setPinataApiKey,
@@ -249,7 +256,10 @@ ipcTaskWithRequestId(
   async (...buffers) => await compose(...buffers)
 );
 
-ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) => {
-  return factories[id].generateRandomAttributesFromNodes(nodes);
-  // return factories[id].probSolution(nodes);
-});
+ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) =>
+  factories[id].generateRandomAttributesFromNodes(nodes)
+);
+
+ipcTask("name", (inputDir) => name(inputDir));
+
+ipcTask("sizeOf", (inputDir) => sizeOf(inputDir));

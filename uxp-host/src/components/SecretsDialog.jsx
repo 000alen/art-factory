@@ -29,14 +29,14 @@ export function SecretsDialog({ close }) {
   const [infuraId, _setInfuraId] = useState("");
 
   useEffect(() => {
-    // ! TODO
+    // ! TODO: Proper error handling
     getPinataApiKey()
       .then((_pinataApiKey) => _setPinataApiKey(_pinataApiKey || ""))
       .catch((error) => {
         dialogContext.setDialog("Error", error.message, null, true);
       });
 
-    // ! TODO
+    // ! TODO: Proper error handling
     getPinataSecretApiKey()
       .then((_pinataSecretApiKey) =>
         _setPinataSecretApiKey(_pinataSecretApiKey || "")
@@ -45,7 +45,7 @@ export function SecretsDialog({ close }) {
         dialogContext.setDialog("Error", error.message, null, true);
       });
 
-    // ! TODO
+    // ! TODO: Proper error handling
     getInfuraId()
       .then((_infuraId) => _setInfuraId(_infuraId || ""))
       .catch((error) => {
@@ -54,12 +54,15 @@ export function SecretsDialog({ close }) {
   }, []);
 
   const onSave = () => {
+    // ! TODO: Proper error handling
     setPinataApiKey(pinataApiKey).catch((error) => {
       dialogContext.setDialog("Error", error.message, null, true);
     });
+    // ! TODO: Proper error handling
     setPinataSecretApiKey(pinataSecretApiKey).catch((error) => {
       dialogContext.setDialog("Error", error.message, null, true);
     });
+    // ! TODO: Proper error handling
     setInfuraId(infuraId).catch((error) => {
       dialogContext.setDialog("Error", error.message, null, true);
     });

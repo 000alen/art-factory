@@ -148,3 +148,7 @@ export const compose = (...buffers) =>
 
 export const factoryGenerateRandomAttributesFromNodes = (id, nodes) =>
   ipcTask("factoryGenerateRandomAttributesFromNodes")(id, nodes);
+
+export const name = (inputDir) => ipcTask("name")(inputDir);
+
+export const sizeOf = (inputDir) => ipcTask("sizeOf")(inputDir);

@@ -1,12 +1,6 @@
 import React, { useState, useContext, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Button,
-  Flex,
-  Heading,
-  ButtonGroup,
-  ProgressBar,
-} from "@adobe/react-spectrum";
+import { Button, Flex, Heading, ButtonGroup } from "@adobe/react-spectrum";
 
 import {
   createFactory,
@@ -14,6 +8,8 @@ import {
   factoryEnsureLayers,
   factoryEnsureOutputDir,
   layersNames,
+  name as _name,
+  sizeOf,
 } from "../ipc";
 import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
@@ -24,7 +20,7 @@ import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
 
 // ! TODO:
-// Try to automatically detect the layers
+// Try to automatically get the Name
 
 export function GenerationPage() {
   const dialogContext = useContext(DialogContext);
@@ -36,11 +32,10 @@ export function GenerationPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
-  // const [n, setN] = useState(1);
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
-  const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
+  const [defaultBackground, _setDefaultBackground] = useState("#1e1e1e");
   const [contractType, setContractType] = useState("721");
 
   // Configuration721
@@ -53,6 +48,10 @@ export function GenerationPage() {
   // ! TODO
 
   const [layers, setLayers] = useState([""]);
+
+  const setDefaultBackground = (color) => {
+    _setDefaultBackground(color.toString("hex"));
+  };
 
   const canContinue = useMemo(
     () =>
@@ -98,9 +97,8 @@ export function GenerationPage() {
       if (partialConfiguration.height) setHeight(partialConfiguration.height);
       if (partialConfiguration.generateBackground)
         setGenerateBackground(partialConfiguration.generateBackground);
-      // ! TODO
-      // if (partialConfiguration.defaultBackground)
-      //   setDefaultBackground(partialConfiguration.defaultBackground);
+      if (partialConfiguration.defaultBackground)
+        setDefaultBackground(partialConfiguration.defaultBackground);
       if (partialConfiguration.contractType)
         setContractType(partialConfiguration.contractType);
 
@@ -115,9 +113,29 @@ export function GenerationPage() {
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
     }
 
+    // ! TODO: Proper error handling
     layersNames(inputDir)
       .then((names) => {
         setLayers(names);
+      })
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+      });
+
+    // ! TODO: Proper error handling
+    _name(inputDir)
+      .then((name) => {
+        setName(name);
+      })
+      .catch((error) => {
+        dialogContext.setDialog("Error", error.message, null, true);
+      });
+
+    // ! TODO: Proper error handling
+    sizeOf(inputDir)
+      .then(({ width, height }) => {
+        setWidth(width);
+        setHeight(height);
       })
       .catch((error) => {
         dialogContext.setDialog("Error", error.message, null, true);
@@ -150,7 +168,7 @@ export function GenerationPage() {
       layers,
     };
 
-    // ! TODO
+    // ! TODO: Proper error handling
     try {
       await createFactory(_id, _configuration, inputDir, outputDir);
       await factorySaveInstance(_id);
@@ -232,7 +250,7 @@ export function GenerationPage() {
       </Flex>
 
       <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-        <Button variant="cta" onPress={onContinue}>
+        <Button variant="cta" onPress={onContinue} isDisabled={!canContinue}>
           Continue!
         </Button>
       </ButtonGroup>

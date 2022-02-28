@@ -23,9 +23,9 @@ import Close from "@spectrum-icons/workflow/Close";
 import { Panel721 } from "../components/Panel721";
 import { chopAddress } from "../utils";
 import { Panel1155 } from "../components/Panel1155";
+import LogOut from "@spectrum-icons/workflow/LogOut";
 
-// ! TODO:
-// Implement, link to Etherscan
+// ! TODO: Implement, link to Etherscan
 export function InstancePage() {
   const dialogContext = useContext(DialogContext);
   const toolbarContext = useContext(ToolbarContext);
@@ -64,6 +64,13 @@ export function InstancePage() {
       onClick: () => navigate("/"),
     });
 
+    toolbarContext.addButton({
+      key: "logOut",
+      label: "Log Out",
+      icon: <LogOut />,
+      onClick: () => localStorage.clear(),
+    });
+
     let _secrets;
     let _provider;
     let _contract;
@@ -95,6 +102,7 @@ export function InstancePage() {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("logOut");
     };
   }, []);
 

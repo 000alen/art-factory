@@ -56,12 +56,14 @@ export function EditorDialog({
     onHide();
   };
 
-  // ! TODO: UN-hardcode width and height
+  // ! TODO: Fixed size
   return (
     <Dialog>
       <Content>
         <Flex justifyContent="center">
-          <div style={{ width: 500, height: 500 }}>
+          <div
+            style={{ width: configuration.width, height: configuration.height }}
+          >
             <FabricJSCanvas
               className={`w-full h-full border-2 border-solid border-white rounded`}
               onReady={_onReady}

@@ -17,6 +17,7 @@ export function ArrayItem({
   Component,
   props,
   value,
+  moveable,
   onChange,
   onMoveDown,
   onMoveUp,
@@ -45,12 +46,16 @@ export function ArrayItem({
         onChange={onChange}
       />
       <ActionGroup overflowMode="collapse" onAction={onAction}>
-        <Item key="moveDown">
-          <ChevronDown />
-        </Item>
-        <Item key="moveUp">
-          <ChevronUp />
-        </Item>
+        {moveable && (
+          <>
+            <Item key="moveDown">
+              <ChevronDown />
+            </Item>
+            <Item key="moveUp">
+              <ChevronUp />
+            </Item>
+          </>
+        )}
         <Item key="remove">
           <Remove />
         </Item>
@@ -66,6 +71,7 @@ export function ArrayOf({
   emptyValue,
   items,
   setItems,
+  moveable,
 }) {
   const onAdd = () => {
     setItems([...items, emptyValue]);
@@ -115,6 +121,7 @@ export function ArrayOf({
               Component={Component}
               props={props}
               value={item}
+              moveable={moveable}
               onChange={(value) => onEdit(i, value)}
               onMoveDown={() => onMoveDown(i)}
               onMoveUp={() => onMoveUp(i)}

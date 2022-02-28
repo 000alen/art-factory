@@ -26,14 +26,15 @@ import {
   getPinataSecretApiKey,
 } from "../ipc";
 import { providers, ContractFactory, utils } from "ethers";
-import { DialogContext } from "../App";
+import { DialogContext, ToolbarContext } from "../App";
 import More from "@spectrum-icons/workflow/More";
+import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
 
-// ! TODO:
-// Choose the network to deploy and verify the contract
+// ! TODO: Choose the network to deploy and verify the contract
 export function DeployPage() {
   const dialogContext = useContext(DialogContext);
+  const toolbarContext = useContext(ToolbarContext);
   const navigator = useNavigate();
   const { state } = useLocation();
   const {
@@ -65,6 +66,13 @@ export function DeployPage() {
   });
 
   useEffect(() => {
+    toolbarContext.addButton({
+      key: "logOut",
+      label: "Log Out",
+      icon: <LogOut />,
+      onClick: () => localStorage.clear(),
+    });
+
     let _secrets;
     let _provider;
 
@@ -84,6 +92,10 @@ export function DeployPage() {
         dialogContext.setDialog("Error", error.message, null, true);
         return;
       });
+
+    return () => {
+      toolbarContext.removeButton("logOut");
+    };
   }, [networkKey]);
 
   const onDeploy = async () => {
@@ -128,8 +140,7 @@ export function DeployPage() {
     let _contractAddress;
     let _abi;
 
-    // ! TODO
-    // Check for loading after contract has already been deployed to set the address manually
+    // ! TODO: Check for loading after contract has already been deployed to set the address manually
     try {
       const { contracts } = await getContract(configuration.contractType);
       const { NFT } = contracts[configuration.contractType];

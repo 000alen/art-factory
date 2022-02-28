@@ -11,6 +11,7 @@ const {
 const { getOutgoers } = require("react-flow-renderer");
 const { tuple } = require("immutable-tuple");
 const { v4: uuid } = require("uuid");
+const imageSize = require("image-size");
 
 function getPaths(elements) {
   const root = elements
@@ -459,8 +460,7 @@ class Factory {
           this.configuration.height,
           this.configuration.generateBackground
             ? randomColor()
-            : // ! TODO: This breaks compilation
-              this.configuration.defaultBackground || 0xffffff
+            : this.configuration.defaultBackground || "#ffffff"
         );
 
         for (const trait of traits) {
@@ -634,6 +634,22 @@ function layersNames(inputDir) {
   return allLayers;
 }
 
+function name(inputDir) {
+  return path.basename(inputDir);
+}
+
+function sizeOf(inputDir) {
+  const layer = fs
+    .readdirSync(inputDir)
+    .filter((file) => !file.startsWith("."))[0];
+  const layerElement = fs
+    .readdirSync(path.join(inputDir, layer))
+    .filter((file) => !file.startsWith("."))[0];
+
+  const { width, height } = imageSize(path.join(inputDir, layer, layerElement));
+  return { width, height };
+}
+
 async function compose(...buffers) {
   const image = await Jimp.read(buffers[0]);
 
@@ -650,4 +666,4 @@ async function compose(...buffers) {
   });
 }
 
-module.exports = { Factory, loadInstance, layersNames, compose };
+module.exports = { Factory, loadInstance, layersNames, name, sizeOf, compose };
