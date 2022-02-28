@@ -69,7 +69,7 @@ const allPaths = (elements) => {
 
 export function NodesPage() {
   const dialogContext = useContext(DialogContext);
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   const { state } = useLocation();
   const { id, inputDir, outputDir, photoshop, partialConfiguration } = state;
 
@@ -259,27 +259,31 @@ export function NodesPage() {
   const onGenerate = async () => {
     setIsGenerating(true);
 
-    const filteredElements = elements.map((element) =>
-      element.type === "renderNode"
-        ? {
-            id: element.id,
-            type: element.type,
-            targetPosition: element.targetPosition,
-            data: { n: element.data.n },
-            position: element.position,
-          }
-        : element.type === "layerNode"
-        ? {
-            id: element.id,
-            type: element.type,
-            sourcePosition: element.sourcePosition,
-            targetPosition: element.targetPosition,
-            data: {
-              layer: element.data.layer,
-            },
-            position: element.position,
-          }
-        : element
+    const filteredElements = JSON.parse( // ! TODO: LOL: Self-explanatory, isn't it?
+      JSON.stringify(
+        elements.map((element) =>
+          element.type === "renderNode"
+            ? {
+                id: element.id,
+                type: element.type,
+                targetPosition: element.targetPosition,
+                data: { n: element.data.n },
+                position: element.position,
+              }
+            : element.type === "layerNode"
+            ? {
+                id: element.id,
+                type: element.type,
+                sourcePosition: element.sourcePosition,
+                targetPosition: element.targetPosition,
+                data: {
+                  layer: element.data.layer,
+                },
+                position: element.position,
+              }
+            : element
+        )
+      )
     );
 
     const _n = filteredElements.reduce(
@@ -300,12 +304,16 @@ export function NodesPage() {
 
     try {
       await factorySetProps(id, {
+        // ! TODO: For some reason this cannot be serialized as is,
+        // !       must be stringify-ed first
         configuration: _configuration,
       });
       await factorySaveInstance(id);
 
       _attributes = await factoryGenerateRandomAttributesFromNodes(
         id,
+        // ! TODO: For some reason this cannot be serialized as is,
+        // !       must be stringify-ed first
         filteredElements
       );
 
@@ -322,7 +330,16 @@ export function NodesPage() {
   };
 
   const onContinue = () => {
-    navigator("/quality", {
+    console.log({
+      id,
+      attributes,
+      inputDir,
+      outputDir,
+      photoshop,
+      configuration,
+    });
+
+    navigate("/quality", {
       state: {
         id,
         attributes,

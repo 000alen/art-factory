@@ -85,7 +85,7 @@ export const createFactory = (id, config, inputDir, outputDir, props) =>
   ipcTask("createFactory")(id, config, inputDir, outputDir, props);
 
 export const factorySetProps = (id, props) =>
-  ipcTask("factorySetProps")(id, props);
+  ipcTask("factorySetProps")(id, JSON.stringify(props));
 
 export const factoryGetImage = (id, index) =>
   ipcTaskWithRequestId("factoryGetImage")(id, index);

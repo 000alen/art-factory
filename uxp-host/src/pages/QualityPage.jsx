@@ -19,8 +19,9 @@ import { EditorDialog } from "../components/EditorDialog";
 export function QualityPage() {
   const dialogContext = useContext(DialogContext);
   const socket = useContext(SocketContext);
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   const { state } = useLocation();
+
   const { id, attributes, inputDir, outputDir, photoshop, configuration } =
     state;
 
@@ -58,7 +59,7 @@ export function QualityPage() {
   };
 
   const onFastForward = () => {
-    navigator("/deploy", {
+    navigate("/deploy", {
       state: {
         id,
         attributes,

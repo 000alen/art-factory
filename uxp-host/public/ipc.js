@@ -131,7 +131,7 @@ ipcTask("createFactory", (id, configuration, inputDir, outputDir, props) => {
 });
 
 ipcTask("factorySetProps", (id, props) => {
-  factories[id].setProps(props);
+  factories[id].setProps(JSON.parse(props));
   return true;
 });
 
