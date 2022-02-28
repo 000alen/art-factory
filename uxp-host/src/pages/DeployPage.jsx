@@ -31,7 +31,8 @@ import More from "@spectrum-icons/workflow/More";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
 
-// ! TODO: Choose the network to deploy and verify the contract
+// ! TODO: Verify the contract
+// ! TODO: Metadata for grouping in OpenSea
 export function DeployPage() {
   const dialogContext = useContext(DialogContext);
   const toolbarContext = useContext(ToolbarContext);
@@ -49,8 +50,8 @@ export function DeployPage() {
 
   const [secrets, setSecrets] = useState(null);
   const [provider, setProvider] = useState(null);
-  const [web3Provider, setWeb3Provider] = useState(null);
-  const [signer, setSigner] = useState(null);
+  // const [web3Provider, setWeb3Provider] = useState(null);
+  // const [signer, setSigner] = useState(null);
   const [imagesCID, setImagesCID] = useState("");
   const [metadataCID, setMetadataCID] = useState("");
   const [contractAddress, setContractAddress] = useState("");
@@ -96,23 +97,23 @@ export function DeployPage() {
     return () => {
       toolbarContext.removeButton("logOut");
     };
-  }, [networkKey]);
+  }, [networkKey, dialogContext, toolbarContext]);
 
   const onDeploy = async () => {
     setIsDeploying(true);
 
-    // TODO
     await provider.enable();
     const _web3Provider = new providers.Web3Provider(provider);
     const _signer = await _web3Provider.getSigner();
 
-    setWeb3Provider(_web3Provider);
-    setSigner(_signer);
+    // setWeb3Provider(_web3Provider);
+    // setSigner(_signer);
 
     let _imagesCID;
     let _metadataCID;
 
-    // ! TODO
+    // ! TODO: Proper error handling
+    // ! TODO: For ERC721, deploy notRevealedFile and its metadata if needed
     try {
       if (partialDeploy) {
         _imagesCID = partialDeploy.imagesCID;
@@ -156,7 +157,7 @@ export function DeployPage() {
               configuration.name,
               configuration.symbol,
               `ipfs://${_metadataCID}/`,
-              `ipfs://${_metadataCID}/1.json`, // ! TODO
+              `ipfs://${_metadataCID}/1.json`, // ! TODO: For ERC721, deploy notRevealedFile and its metadata if needed
               utils.parseEther(configuration.cost),
               configuration.n,
               configuration.maxMintAmount,
@@ -226,6 +227,7 @@ export function DeployPage() {
           <Menu
             selectionMode="single"
             selectedKeys={[networkKey]}
+            disallowEmptySelection={true}
             onSelectionChange={(selectedKeys) =>
               setNetworkKey([...selectedKeys].shift())
             }

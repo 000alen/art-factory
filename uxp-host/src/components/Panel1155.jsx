@@ -1,20 +1,6 @@
 import React from "react";
 import { TaskItem } from "./TaskItem";
-import {
-  Flex,
-  TextField,
-  ActionGroup,
-  Item,
-  View,
-  Text,
-  ActionButton,
-  NumberField,
-} from "@adobe/react-spectrum";
-
-import Remove from "@spectrum-icons/workflow/Remove";
-import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
-import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
-import Play from "@spectrum-icons/workflow/Play";
+import { Flex } from "@adobe/react-spectrum";
 
 export function Panel1155({
   contract,

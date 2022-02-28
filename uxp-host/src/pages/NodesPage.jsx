@@ -121,7 +121,7 @@ export function NodesPage() {
         setBuffers(buffers);
         setUrls(urls);
       });
-  }, []);
+  }, [id, partialConfiguration.layers]);
 
   const onChangeN = (id, n) => {
     setElements((els) =>

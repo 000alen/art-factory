@@ -1,5 +1,4 @@
 import React from "react";
-import { ImageItem } from "./ImageItem";
 import { LayerNode } from "./LayerNode";
 import { RenderNode } from "./RenderNode";
 import { RootNode } from "./RootNode";

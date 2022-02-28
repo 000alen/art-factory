@@ -47,7 +47,7 @@ const App = () => {
     socket.on("uxp-connected", (isUXPConnected) => {
       setConnectionStatus(isUXPConnected);
     });
-  }, []);
+  }, [socket]);
 
   const showDialog = () => {
     setDialogShown(true);

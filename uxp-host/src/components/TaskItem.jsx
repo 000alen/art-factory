@@ -18,11 +18,6 @@ import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import Play from "@spectrum-icons/workflow/Play";
 import ShowMenu from "@spectrum-icons/workflow/ShowMenu";
 
-import { ActionGroup, Item } from "@adobe/react-spectrum";
-
-import Remove from "@spectrum-icons/workflow/Remove";
-import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
-import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 import { ArrayOf } from "./ArrayOf";
 
 const TaskDialog = ({ task, onHideDialog, onRun, fields, resolveField }) => {

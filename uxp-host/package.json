@@ -7,7 +7,7 @@
   "homepage": "./",
   "scripts": {
     "start": "concurrently -k \"npm:start:react\" \"npm:start:electron\"",
-    "start:react": "cross-env BROWSER=none node scripts/start.js",
+    "start:react": "cross-env BROWSER=none GENERATE_SOURCEMAP=false node scripts/start.js",
     "start:electron": "electron public/electron.js",
     "build": "npm run build:react && npm run build:electron",
     "build:react": "node scripts/build.js",
@@ -103,7 +103,8 @@
     "webpack": "^5.64.4",
     "webpack-dev-server": "^4.6.0",
     "webpack-manifest-plugin": "^4.0.2",
-    "workbox-webpack-plugin": "^6.4.1"
+    "workbox-webpack-plugin": "^6.4.1",
+    "xhr2-cookies": "^1.1.0"
   },
   "build": {
     "appId": "com.electron.adobe.example.desktop-helper-sample",

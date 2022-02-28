@@ -19,9 +19,6 @@ import { Configuration1155 } from "../components/Configuration1155";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
 
-// ! TODO:
-// Try to automatically get the Name
-
 export function GenerationPage() {
   const dialogContext = useContext(DialogContext);
   const navigator = useNavigate();
@@ -42,50 +39,12 @@ export function GenerationPage() {
   const [cost, setCost] = useState("0.05");
   const [maxMintAmount, setMaxMintAmount] = useState(20);
   const [revealed, setRevealed] = useState(true);
-  const [notRevealedUri, setNotRevealedUri] = useState("");
+  const [notRevealedFilePath, setNotRevealedFilePath] = useState("");
 
   // Configuration1155
-  // ! TODO
+  // ! TODO: Add 1155 configuration
 
   const [layers, setLayers] = useState([""]);
-
-  const setDefaultBackground = (color) => {
-    _setDefaultBackground(color.toString("hex"));
-  };
-
-  const canContinue = useMemo(
-    () =>
-      name &&
-      description &&
-      symbol &&
-      width &&
-      height &&
-      (generateBackground || defaultBackground) &&
-      contractType &&
-      (contractType === "721"
-        ? cost && maxMintAmount && (revealed || notRevealedUri) && maxMintAmount
-        : contractType === "1155"
-        ? true
-        : false) &&
-      layers.length > 0 &&
-      layers.every((layer) => layer.length > 0),
-    [
-      name,
-      description,
-      symbol,
-      width,
-      height,
-      generateBackground,
-      defaultBackground,
-      contractType,
-      cost,
-      maxMintAmount,
-      revealed,
-      notRevealedUri,
-      maxMintAmount,
-      layers,
-    ]
-  );
 
   useEffect(() => {
     if (partialConfiguration) {
@@ -108,7 +67,7 @@ export function GenerationPage() {
       if (partialConfiguration.revealed)
         setRevealed(partialConfiguration.revealed);
       if (partialConfiguration.notRevealedUri)
-        setNotRevealedUri(partialConfiguration.notRevealedUri);
+        setNotRevealedFilePath(partialConfiguration.notRevealedUri);
 
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
     }
@@ -140,7 +99,44 @@ export function GenerationPage() {
       .catch((error) => {
         dialogContext.setDialog("Error", error.message, null, true);
       });
-  }, []);
+  }, [dialogContext, inputDir, partialConfiguration]);
+
+  const canContinue = useMemo(
+    () =>
+      name &&
+      description &&
+      symbol &&
+      width &&
+      height &&
+      (generateBackground || defaultBackground) &&
+      contractType &&
+      (contractType === "721"
+        ? cost && maxMintAmount && (revealed || notRevealedFilePath)
+        : contractType === "1155"
+        ? true
+        : false) &&
+      layers.length > 0 &&
+      layers.every((layer) => layer.length > 0),
+    [
+      name,
+      description,
+      symbol,
+      width,
+      height,
+      generateBackground,
+      defaultBackground,
+      contractType,
+      cost,
+      maxMintAmount,
+      revealed,
+      notRevealedFilePath,
+      layers,
+    ]
+  );
+
+  const setDefaultBackground = (color) => {
+    _setDefaultBackground(color.toString("hex"));
+  };
 
   const onContinue = async () => {
     const _id = uuid();
@@ -159,7 +155,7 @@ export function GenerationPage() {
             cost,
             maxMintAmount,
             revealed,
-            notRevealedUri,
+            notRevealedFilePath,
           }
         : contractType === "1155"
         ? {}
@@ -233,8 +229,8 @@ export function GenerationPage() {
               setMaxMintAmount,
               revealed,
               setRevealed,
-              notRevealedUri,
-              setNotRevealedUri,
+              notRevealedFilePath,
+              setNotRevealedFilePath,
             }}
           />
         ) : contractType === "1155" ? (

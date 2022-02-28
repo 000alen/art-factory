@@ -18,7 +18,7 @@ import { v4 as uuid } from "uuid";
 import { DialogContext } from "../App";
 
 export function HomePage() {
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   const socket = useContext(SocketContext);
   const dialogContext = useContext(DialogContext);
 
@@ -33,7 +33,7 @@ export function HomePage() {
         return;
       }
 
-      navigator("/generation", {
+      navigate("/generation", {
         state: {
           inputDir,
           outputDir,
@@ -42,13 +42,13 @@ export function HomePage() {
         },
       });
     });
-  }, []);
+  }, [navigate, socket, dialogContext]);
 
   const onOpenDirectory = async () => {
     let inputDir;
     let outputDir;
 
-    // ! TODO
+    // ! TODO: Proper error handling
     try {
       const { canceled, filePaths } = await showOpenDialog({
         properties: ["openFile", "openDirectory"],
@@ -63,7 +63,7 @@ export function HomePage() {
       return;
     }
 
-    navigator("/generation", {
+    navigate("/generation", {
       state: {
         inputDir,
         outputDir,
@@ -88,7 +88,7 @@ export function HomePage() {
     let contractAddress;
     let abi;
 
-    // ! TODO
+    // ! TODO: Proper error handling
     try {
       const { canceled, filePaths } = await showOpenDialog({
         properties: ["openFile"],
@@ -124,7 +124,7 @@ export function HomePage() {
     }
 
     if (!attributes && !generated) {
-      navigator("/generation", {
+      navigate("/generation", {
         state: { inputDir, outputDir, partialConfiguration: configuration },
       });
     } else if (
@@ -133,7 +133,7 @@ export function HomePage() {
       !metadataCID &&
       !contractAddress
     ) {
-      navigator("/quality", {
+      navigate("/quality", {
         state: {
           id,
           attributes,
@@ -144,7 +144,7 @@ export function HomePage() {
         },
       });
     } else if (imagesCID && metadataCID && !contractAddress) {
-      navigator("/deploy", {
+      navigate("/deploy", {
         state: {
           id,
           attributes,
@@ -159,7 +159,7 @@ export function HomePage() {
         },
       });
     } else if (contractAddress) {
-      navigator("/instance", {
+      navigate("/instance", {
         state: {
           id,
           attributes,

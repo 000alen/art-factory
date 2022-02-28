@@ -51,7 +51,7 @@ export function SecretsDialog({ close }) {
       .catch((error) => {
         dialogContext.setDialog("Error", error.message, null, true);
       });
-  }, []);
+  }, [dialogContext]);
 
   const onSave = () => {
     // ! TODO: Proper error handling

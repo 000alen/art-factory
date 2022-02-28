@@ -87,11 +87,12 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
     setIsLoading(true);
 
     let tx;
-    let receipt;
+    // let receipt;
 
     try {
       tx = await contract.reveal();
-      receipt = await tx.wait();
+      // receipt =
+      await tx.wait();
     } catch (error) {
       setIsLoading(false);
       dialogContext.setDialog("Error", error.message, null, true);
@@ -113,13 +114,14 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
     setIsLoading(true);
 
     let tx;
-    let receipt;
+    // let receipt;
 
     try {
       tx = await contract.mint(mint, {
         value: utils.parseEther(payable),
       });
-      receipt = await tx.wait();
+      // receipt =
+      await tx.wait();
     } catch (error) {
       setIsLoading(false);
       dialogContext.setDialog("Error", error.message, null, true);
@@ -141,11 +143,12 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
     setIsLoading(true);
 
     let tx;
-    let receipt;
+    // let receipt;
 
     try {
       tx = await contract.setCost(utils.parseEther(cost));
-      receipt = await tx.wait();
+      // receipt =
+      await tx.wait();
     } catch (error) {
       setIsLoading(false);
       dialogContext.setDialog("Error", error.message, null, true);
@@ -167,11 +170,12 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
     setIsLoading(true);
 
     let tx;
-    let receipt;
+    // let receipt;
 
     try {
       tx = await contract.setMaxMintAmount(utils.parseEther(amount));
-      receipt = await tx.wait();
+      // receipt =
+      await tx.wait();
     } catch (error) {
       setIsLoading(false);
       dialogContext.setDialog("Error", error.message, null, true);
@@ -191,11 +195,12 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
     setIsLoading(true);
 
     let tx;
-    let receipt;
+    // let receipt;
 
     try {
       tx = await contract.withdraw();
-      receipt = await tx.wait();
+      // receipt =
+      await tx.wait();
     } catch (error) {
       setIsLoading(false);
       dialogContext.setDialog("Error", error.message, null, true);

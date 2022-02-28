@@ -32,20 +32,20 @@ export function InstancePage() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
-    id,
-    attributes,
-    inputDir,
-    outputDir,
+    // id,
+    // attributes,
+    // inputDir,
+    // outputDir,
     configuration,
-    imagesCID,
-    metadataCID,
+    // imagesCID,
+    // metadataCID,
     network,
     contractAddress,
     abi,
   } = state;
 
-  const [secrets, setSecrets] = useState(null);
-  const [provider, setProvider] = useState(null);
+  // const [secrets, setSecrets] = useState(null);
+  // const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [outputs, setOutputs] = useState([]);
@@ -90,8 +90,8 @@ export function InstancePage() {
 
           _contract = new Contract(contractAddress, abi, _signer);
 
-          setSecrets(_secrets);
-          setProvider(_provider);
+          // setSecrets(_secrets);
+          // setProvider(_provider);
           setContract(_contract);
         });
       })
@@ -104,7 +104,7 @@ export function InstancePage() {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
-  }, []);
+  }, [abi, contractAddress, network, navigate, toolbarContext, dialogContext]);
 
   const addOutput = (output) => {
     setOutputs((prevOutputs) => [...prevOutputs, output]);

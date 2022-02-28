@@ -47,7 +47,7 @@ export function QualityPage() {
       .catch((error) => {
         dialogContext.setDialog("Error", error.message, null, true);
       });
-  }, [index]);
+  }, [index, attributes.length, dialogContext, id]);
 
   const onBack = () => {
     setIndex((prevIndex) => Math.max(prevIndex - 25, 0));
