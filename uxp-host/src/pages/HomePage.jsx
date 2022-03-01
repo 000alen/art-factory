@@ -7,15 +7,14 @@ import {
   ButtonGroup,
 } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
-import {
-  showOpenDialog,
-  factoryInstance,
-  factoryLoadInstance,
-  getOutputDir,
-} from "../ipc";
+import { getOutputDir } from "../ipc";
 import { SocketContext } from "../components/SocketContext";
-import { v4 as uuid } from "uuid";
 import { GenericDialogContext } from "../components/GenericDialog";
+import {
+  openDirectory,
+  openInstance,
+  resolvePathFromInstance,
+} from "../actions";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -26,6 +25,7 @@ export function HomePage() {
     socket.on("uxp-generate", async ({ inputDir, configuration }) => {
       let outputDir;
 
+      // ! TODO: proper error handling
       try {
         outputDir = await getOutputDir();
       } catch (error) {
@@ -45,19 +45,10 @@ export function HomePage() {
   }, [navigate, socket, genericDialogContext]);
 
   const onOpenDirectory = async () => {
-    let inputDir;
-    let outputDir;
+    let inputDir, outputDir, photoshop;
 
-    // ! TODO: Proper error handling
     try {
-      const { canceled, filePaths } = await showOpenDialog({
-        properties: ["openFile", "openDirectory"],
-      });
-
-      if (canceled) return;
-
-      inputDir = filePaths[0];
-      outputDir = await getOutputDir(inputDir);
+      ({ inputDir, outputDir, photoshop } = await openDirectory());
     } catch (error) {
       genericDialogContext.show("Error", error.message, null);
       return;
@@ -67,113 +58,28 @@ export function HomePage() {
       state: {
         inputDir,
         outputDir,
-        photoshop: false,
+        photoshop,
       },
     });
   };
 
   const onOpenInstance = async () => {
-    const id = uuid();
+    let id, instance;
 
-    let instancePath;
-    let inputDir;
-    let outputDir;
-    let configuration;
-    let attributes;
-    let generated;
-    let metadataGenerated;
-    let imagesCID;
-    let metadataCID;
-    let network;
-    let contractAddress;
-    let abi;
-
-    // ! TODO: Proper error handling
     try {
-      const { canceled, filePaths } = await showOpenDialog({
-        properties: ["openFile"],
-        filters: [
-          {
-            name: "Instance",
-            extensions: ["json"],
-          },
-        ],
-      });
-
-      if (canceled) return;
-
-      instancePath = filePaths[0];
-
-      await factoryLoadInstance(id, instancePath);
-      ({
-        inputDir,
-        outputDir,
-        configuration,
-        attributes,
-        generated,
-        metadataGenerated,
-        imagesCID,
-        metadataCID,
-        network,
-        contractAddress,
-        abi,
-      } = await factoryInstance(id));
+      ({ id, instance } = await openInstance());
     } catch (error) {
       genericDialogContext.show("Error", error.message, null);
       return;
     }
 
-    if (!attributes && !generated) {
-      navigate("/generation", {
-        state: { inputDir, outputDir, partialConfiguration: configuration },
-      });
-    } else if (
-      !metadataGenerated &&
-      !imagesCID &&
-      !metadataCID &&
-      !contractAddress
-    ) {
-      navigate("/quality", {
-        state: {
-          id,
-          attributes,
-          inputDir,
-          outputDir,
-          photoshop: false,
-          configuration,
-        },
-      });
-    } else if (imagesCID && metadataCID && !contractAddress) {
-      navigate("/deploy", {
-        state: {
-          id,
-          attributes,
-          inputDir,
-          outputDir,
-          photoshop: false,
-          configuration,
-          partialDeploy: {
-            imagesCID,
-            metadataCID,
-          },
-        },
-      });
-    } else if (contractAddress) {
-      navigate("/instance", {
-        state: {
-          id,
-          attributes,
-          inputDir,
-          outputDir,
-          photoshop: false,
-          configuration,
-          imagesCID,
-          metadataCID,
-          network,
-          contractAddress,
-          abi,
-        },
-      });
+    const resolution = resolvePathFromInstance(id, instance);
+    if (resolution) {
+      const [path, state] = resolution;
+      navigate(path, { state });
+    } else {
+      genericDialogContext.show("Error", "! TODO", null);
+      return;
     }
   };
 

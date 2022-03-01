@@ -91,12 +91,6 @@ function reducePaths(paths) {
   return [cache, paths];
 }
 
-/**
- *
- * @param {Map<string,(string|number)[]>} cache
- * @param {string[][]} paths
- * @returns
- */
 function computeNs(cache, paths) {
   const ns = new Map();
 
@@ -349,6 +343,7 @@ class Factory {
       console.warn(
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
+
     const attributes = [];
 
     for (let i = 0; i < n; i++) {
@@ -414,6 +409,11 @@ class Factory {
       )
       .sort((a, b) => a.length - b.length);
 
+    this.configuration.n = layersNodes.reduce(
+      (p, c) => p + (c.type === "renderNode" ? c.data.n : 0),
+      0
+    );
+
     const [cache, reducedPaths] = reducePaths(paths);
     const ns = computeNs(cache, reducedPaths);
     const attributesCache = new Map();
@@ -442,8 +442,11 @@ class Factory {
       attributes.push(..._attributes);
     }
 
+    this.attributes = attributes;
+
     return attributes;
   }
+
   composeImages(back, front) {
     front.resize(this.configuration.width, this.configuration.height);
     back.composite(front, 0, 0);
@@ -652,7 +655,6 @@ function sizeOf(inputDir) {
 }
 
 async function compose(buffers, configuration) {
-
   const height = configuration.height;
   const width = configuration.width;
 
@@ -664,7 +666,7 @@ async function compose(buffers, configuration) {
     const current = await Jimp.read(buffers[i]);
     current.resize(width, height);
     image.composite(current, 0, 0);
-  } 
+  }
 
   return new Promise((resolve, reject) => {
     image.getBuffer(Jimp.MIME_PNG, (error, buffer) => {

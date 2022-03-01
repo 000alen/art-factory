@@ -290,7 +290,7 @@ export function NodesPage() {
     );
 
     const _n = filteredElements.reduce(
-      (e, a) => (e.type === "renderNode" ? a + e.data.n : a),
+      (p, c) => p + (c.type === "renderNode" ? c.data.n : 0),
       0
     );
 
