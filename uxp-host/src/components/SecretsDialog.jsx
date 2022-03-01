@@ -2,6 +2,9 @@ import React, { useState, useEffect, useContext } from "react";
 
 import {
   Flex,
+  ContextualHelp,
+  Footer,
+  Link,
   Dialog,
   Heading,
   Divider,
@@ -20,10 +23,10 @@ import {
   setPinataSecretApiKey,
   setInfuraId,
 } from "../ipc";
-import { DialogContext } from "../App";
+import { GenericDialogContext } from "./GenericDialog";
 
 export function SecretsDialog({ close }) {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
   const [infuraId, _setInfuraId] = useState("");
@@ -33,7 +36,7 @@ export function SecretsDialog({ close }) {
     getPinataApiKey()
       .then((_pinataApiKey) => _setPinataApiKey(_pinataApiKey || ""))
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
 
     // ! TODO: Proper error handling
@@ -42,29 +45,29 @@ export function SecretsDialog({ close }) {
         _setPinataSecretApiKey(_pinataSecretApiKey || "")
       )
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
 
     // ! TODO: Proper error handling
     getInfuraId()
       .then((_infuraId) => _setInfuraId(_infuraId || ""))
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
-  }, [dialogContext]);
+  }, [genericDialogContext]);
 
   const onSave = () => {
     // ! TODO: Proper error handling
     setPinataApiKey(pinataApiKey).catch((error) => {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
     });
     // ! TODO: Proper error handling
     setPinataSecretApiKey(pinataSecretApiKey).catch((error) => {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
     });
     // ! TODO: Proper error handling
     setInfuraId(infuraId).catch((error) => {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
     });
     close();
   };
@@ -74,6 +77,20 @@ export function SecretsDialog({ close }) {
       <Heading>
         <Flex alignItems="center" gap="size-100">
           <Text>Secrets</Text>
+          <ContextualHelp variant="help">
+            <Heading>What are secrets?</Heading>
+            <Content>
+              <Text>
+                {/* ! TODO: Text and links */}
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              </Text>
+            </Content>
+            <Footer>
+              <Flex gap="size-100">
+                <Link>Pinata</Link>|<Link>Infura</Link>
+              </Flex>
+            </Footer>
+          </ContextualHelp>
         </Flex>
       </Heading>
       <Divider />

@@ -10,7 +10,6 @@ import {
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { OutputItem } from "../components/OutputItem";
 import { useLocation, useNavigate } from "react-router-dom";
-import { DialogContext, ToolbarContext } from "../App";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Networks } from "../constants";
 import { Contract, providers } from "ethers";
@@ -24,10 +23,12 @@ import { Panel721 } from "../components/Panel721";
 import { chopAddress } from "../utils";
 import { Panel1155 } from "../components/Panel1155";
 import LogOut from "@spectrum-icons/workflow/LogOut";
+import { GenericDialogContext } from "../components/GenericDialog";
+import { ToolbarContext } from "../components/Toolbar";
 
 // ! TODO: Implement, link to Etherscan
 export function InstancePage() {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -57,19 +58,11 @@ export function InstancePage() {
   });
 
   useEffect(() => {
-    toolbarContext.addButton({
-      key: "close",
-      label: "Close",
-      icon: <Close />,
-      onClick: () => navigate("/"),
-    });
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
-    toolbarContext.addButton({
-      key: "logOut",
-      label: "Log Out",
-      icon: <LogOut />,
-      onClick: () => localStorage.clear(),
-    });
+    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
+      localStorage.clear()
+    );
 
     let _secrets;
     let _provider;
@@ -96,7 +89,7 @@ export function InstancePage() {
         });
       })
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
         return;
       });
 
@@ -104,7 +97,12 @@ export function InstancePage() {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
-  }, [abi, contractAddress, network, navigate, toolbarContext, dialogContext]);
+  }, [
+    abi,
+    contractAddress,
+    network,
+    navigate,
+  ]);
 
   const addOutput = (output) => {
     setOutputs((prevOutputs) => [...prevOutputs, output]);
@@ -140,7 +138,6 @@ export function InstancePage() {
               contractAddress,
               setIsLoading,
               addOutput,
-              dialogContext,
             }}
           />
         ) : configuration.contractType === "1155" ? (
@@ -150,7 +147,6 @@ export function InstancePage() {
               contractAddress,
               setIsLoading,
               addOutput,
-              dialogContext,
             }}
           />
         ) : null}

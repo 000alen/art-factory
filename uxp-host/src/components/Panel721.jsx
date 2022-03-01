@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Flex } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "./TaskItem";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { utils } from "ethers";
 import { chopAddress } from "../utils";
+import { GenericDialogContext } from "./GenericDialog";
 
-export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
+export function Panel721({ contract, setIsLoading, addOutput }) {
+  const genericDialogContext = useContext(GenericDialogContext);
+
   const onCost = async () => {
     setIsLoading(true);
 
@@ -95,7 +98,7 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
       await tx.wait();
     } catch (error) {
       setIsLoading(false);
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
@@ -124,7 +127,7 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
       await tx.wait();
     } catch (error) {
       setIsLoading(false);
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
@@ -151,7 +154,7 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
       await tx.wait();
     } catch (error) {
       setIsLoading(false);
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
@@ -178,7 +181,7 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
       await tx.wait();
     } catch (error) {
       setIsLoading(false);
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
@@ -203,7 +206,7 @@ export function Panel721({ contract, setIsLoading, addOutput, dialogContext }) {
       await tx.wait();
     } catch (error) {
       setIsLoading(false);
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 

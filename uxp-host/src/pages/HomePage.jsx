@@ -15,12 +15,12 @@ import {
 } from "../ipc";
 import { SocketContext } from "../components/SocketContext";
 import { v4 as uuid } from "uuid";
-import { DialogContext } from "../App";
+import { GenericDialogContext } from "../components/GenericDialog";
 
 export function HomePage() {
   const navigate = useNavigate();
   const socket = useContext(SocketContext);
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
 
   useEffect(() => {
     socket.on("uxp-generate", async ({ inputDir, configuration }) => {
@@ -29,7 +29,7 @@ export function HomePage() {
       try {
         outputDir = await getOutputDir();
       } catch (error) {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
         return;
       }
 
@@ -42,7 +42,7 @@ export function HomePage() {
         },
       });
     });
-  }, [navigate, socket, dialogContext]);
+  }, [navigate, socket, genericDialogContext]);
 
   const onOpenDirectory = async () => {
     let inputDir;
@@ -59,7 +59,7 @@ export function HomePage() {
       inputDir = filePaths[0];
       outputDir = await getOutputDir(inputDir);
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
@@ -119,7 +119,7 @@ export function HomePage() {
         abi,
       } = await factoryInstance(id));
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 

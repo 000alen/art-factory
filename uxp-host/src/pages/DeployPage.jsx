@@ -26,15 +26,16 @@ import {
   getPinataSecretApiKey,
 } from "../ipc";
 import { providers, ContractFactory, utils } from "ethers";
-import { DialogContext, ToolbarContext } from "../App";
 import More from "@spectrum-icons/workflow/More";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
+import { GenericDialogContext } from "../components/GenericDialog";
+import { ToolbarContext } from "../components/Toolbar";
 
 // ! TODO: Verify the contract
 // ! TODO: Metadata for grouping in OpenSea
 export function DeployPage() {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
   const navigator = useNavigate();
   const { state } = useLocation();
@@ -50,8 +51,6 @@ export function DeployPage() {
 
   const [secrets, setSecrets] = useState(null);
   const [provider, setProvider] = useState(null);
-  // const [web3Provider, setWeb3Provider] = useState(null);
-  // const [signer, setSigner] = useState(null);
   const [imagesCID, setImagesCID] = useState("");
   const [metadataCID, setMetadataCID] = useState("");
   const [contractAddress, setContractAddress] = useState("");
@@ -60,19 +59,40 @@ export function DeployPage() {
   const [deployedDone, setDeployedDone] = useState(false);
   const [networkKey, setNetworkKey] = useState("rinkeby");
 
-  const loadSecrets = async () => ({
-    pinataApiKey: await getPinataApiKey(),
-    pinataSecretApiKey: await getPinataSecretApiKey(),
-    infuraId: await getInfuraId(),
-  });
-
   useEffect(() => {
-    toolbarContext.addButton({
-      key: "logOut",
-      label: "Log Out",
-      icon: <LogOut />,
-      onClick: () => localStorage.clear(),
-    });
+    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
+      localStorage.clear()
+    );
+
+    const loadSecrets = async () => {
+      const _pinataApiKey = await getPinataApiKey();
+      if (!_pinataApiKey) {
+        genericDialogContext.show("Missing Pinata API Key", "! TODO", null);
+        return;
+      }
+
+      const pinataSecretApiKey = await getPinataSecretApiKey();
+      if (!pinataSecretApiKey) {
+        genericDialogContext.show(
+          "Missing Pinata Secret API Key",
+          "! TODO",
+          null
+        );
+        return;
+      }
+
+      const infuraId = await getInfuraId();
+      if (!infuraId) {
+        genericDialogContext.show("Missing Infura ID", "! TODO", null);
+        return;
+      }
+
+      return {
+        pinataApiKey: _pinataApiKey,
+        pinataSecretApiKey: pinataSecretApiKey,
+        infuraId: infuraId,
+      };
+    };
 
     let _secrets;
     let _provider;
@@ -90,14 +110,14 @@ export function DeployPage() {
         setProvider(_provider);
       })
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
         return;
       });
 
     return () => {
       toolbarContext.removeButton("logOut");
     };
-  }, [networkKey, dialogContext, toolbarContext]);
+  }, [networkKey]);
 
   const onDeploy = async () => {
     setIsDeploying(true);
@@ -130,7 +150,7 @@ export function DeployPage() {
         _metadataCID = await factoryDeployMetadata(id);
       }
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
@@ -180,7 +200,7 @@ export function DeployPage() {
 
       await contract.deployTransaction.wait();
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 

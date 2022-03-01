@@ -12,12 +12,12 @@ import Forward from "@spectrum-icons/workflow/Forward";
 import FastForward from "@spectrum-icons/workflow/FastForward";
 import { factoryGetImage, factoryRewriteImage } from "../ipc";
 import { SocketContext } from "../components/SocketContext";
-import { DialogContext } from "../App";
 import { ImageItem } from "../components/ImageItem";
 import { EditorDialog } from "../components/EditorDialog";
+import { GenericDialogContext } from "../components/GenericDialog";
 
 export function QualityPage() {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
   const socket = useContext(SocketContext);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -46,9 +46,9 @@ export function QualityPage() {
         setImagesUrls(urls.filter((url) => url !== null));
       })
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
-  }, [index, attributes.length, dialogContext, id]);
+  }, [index, attributes.length, genericDialogContext, id]);
 
   const onBack = () => {
     setIndex((prevIndex) => Math.max(prevIndex - 25, 0));

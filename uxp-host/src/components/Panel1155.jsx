@@ -7,7 +7,6 @@ export function Panel1155({
   contractAddress,
   setIsLoading,
   addOutput,
-  dialogContext,
 }) {
   return (
     <>

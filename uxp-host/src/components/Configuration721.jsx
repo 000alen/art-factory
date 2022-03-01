@@ -8,7 +8,7 @@ import {
 } from "@adobe/react-spectrum";
 import FolderOpen from "@spectrum-icons/workflow/FolderOpen";
 import { showOpenDialog } from "../ipc";
-import { DialogContext } from "../App";
+import { GenericDialogContext } from "./GenericDialog";
 
 export function Configuration721({
   cost,
@@ -20,7 +20,7 @@ export function Configuration721({
   notRevealedFilePath,
   setNotRevealedFilePath,
 }) {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
 
   const onOpenNotRevealedFile = async () => {
     let setNotRevealedFilePath;
@@ -41,7 +41,7 @@ export function Configuration721({
 
       setNotRevealedFilePath = filePaths[0];
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
     setNotRevealedFilePath(setNotRevealedFilePath);

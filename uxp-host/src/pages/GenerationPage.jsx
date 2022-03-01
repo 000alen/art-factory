@@ -13,14 +13,14 @@ import {
 } from "../ipc";
 import { v4 as uuid } from "uuid";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { DialogContext } from "../App";
 import { Configuration721 } from "../components/Configuration721";
 import { Configuration1155 } from "../components/Configuration1155";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
+import { GenericDialogContext } from "../components/GenericDialog";
 
 export function GenerationPage() {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
   const { inputDir, outputDir, photoshop, partialConfiguration } = state;
@@ -78,7 +78,7 @@ export function GenerationPage() {
         setLayers(names);
       })
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
 
     // ! TODO: Proper error handling
@@ -87,7 +87,7 @@ export function GenerationPage() {
         setName(name);
       })
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
 
     // ! TODO: Proper error handling
@@ -97,9 +97,9 @@ export function GenerationPage() {
         setHeight(height);
       })
       .catch((error) => {
-        dialogContext.setDialog("Error", error.message, null, true);
+        genericDialogContext.show("Error", error.message, null);
       });
-  }, [dialogContext, inputDir, partialConfiguration]);
+  }, [genericDialogContext, inputDir, partialConfiguration]);
 
   const canContinue = useMemo(
     () =>
@@ -171,7 +171,7 @@ export function GenerationPage() {
       await factoryEnsureLayers(_id);
       await factoryEnsureOutputDir(_id);
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 

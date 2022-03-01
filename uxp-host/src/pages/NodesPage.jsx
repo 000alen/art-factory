@@ -8,7 +8,6 @@ import ReactFlow, {
   getOutgoers,
 } from "react-flow-renderer";
 import { Sidebar } from "../components/NodesPageSidebar";
-import { DialogContext } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LayerNode } from "../components/LayerNode";
 import { Button, Flex, ButtonGroup, ProgressBar } from "@adobe/react-spectrum";
@@ -22,6 +21,7 @@ import {
 } from "../ipc";
 import { RootNode } from "../components/RootNode";
 import { CustomEdge } from "../components/CustomEdge";
+import { GenericDialogContext } from "../components/GenericDialog";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -68,7 +68,7 @@ const allPaths = (elements) => {
 };
 
 export function NodesPage() {
-  const dialogContext = useContext(DialogContext);
+  const genericDialogContext = useContext(GenericDialogContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const { id, inputDir, outputDir, photoshop, partialConfiguration } = state;
@@ -259,7 +259,10 @@ export function NodesPage() {
   const onGenerate = async () => {
     setIsGenerating(true);
 
-    const filteredElements = JSON.parse( // ! TODO: LOL: Self-explanatory, isn't it?
+    const filteredElements = JSON.parse(
+      // ! TODO: LOL: Self-explanatory, isn't it?
+      // !       For some reason this cannot be serialized as is,
+      // !       must be stringify-ed first
       JSON.stringify(
         elements.map((element) =>
           element.type === "renderNode"
@@ -304,23 +307,19 @@ export function NodesPage() {
 
     try {
       await factorySetProps(id, {
-        // ! TODO: For some reason this cannot be serialized as is,
-        // !       must be stringify-ed first
         configuration: _configuration,
       });
       await factorySaveInstance(id);
 
       _attributes = await factoryGenerateRandomAttributesFromNodes(
         id,
-        // ! TODO: For some reason this cannot be serialized as is,
-        // !       must be stringify-ed first
         filteredElements
       );
 
       await factoryGenerateImages(id, _attributes, onProgress);
       await factorySaveInstance(id);
     } catch (error) {
-      dialogContext.setDialog("Error", error.message, null, true);
+      genericDialogContext.show("Error", error.message, null);
       return;
     }
 
