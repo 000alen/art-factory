@@ -7,7 +7,6 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
 import { Nodes, NodesContextProvider } from "../components/NodesContext";
 
-// ! TODO: Create NodesBoilerplate hook?
 export function NodesPage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const navigate = useNavigate();
@@ -68,11 +67,12 @@ export function NodesPage() {
   const onGenerate = async () => {
     setIsGenerating(true);
     const layersNodes = filterNodes(elements);
+    const n = computeN(layersNodes);
     const configuration = {
       ...partialConfiguration,
+      n,
       layersNodes,
     };
-    const n = computeN(layersNodes);
     setN(n);
     setConfiguration(configuration);
     let attributes;

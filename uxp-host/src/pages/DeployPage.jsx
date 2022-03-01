@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import useStateRef from "react-usestateref";
 import { useNavigate, useLocation } from "react-router-dom";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import {
@@ -12,6 +13,10 @@ import {
   Menu,
   Item,
   ActionButton,
+  Link,
+  ContextualHelp,
+  Content,
+  Text,
 } from "@adobe/react-spectrum";
 import {
   factoryDeployImages,
@@ -31,6 +36,16 @@ import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
+
+function resolveEtherscanUrl(network, transactionHash) {
+  return network === Networks.mainnet
+    ? `https://etherscan.io/tx/${transactionHash}`
+    : network === Networks.ropsten
+    ? `https://ropsten.etherscan.io/tx/${transactionHash}`
+    : network === Networks.rinkeby
+    ? `https://rinkeby.etherscan.io/tx/${transactionHash}`
+    : null;
+}
 
 // ! TODO: Verify the contract
 // ! TODO: Metadata for grouping in OpenSea
@@ -53,11 +68,22 @@ export function DeployPage() {
   const [provider, setProvider] = useState(null);
   const [imagesCID, setImagesCID] = useState("");
   const [metadataCID, setMetadataCID] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
   const [contractAddress, setContractAddress] = useState("");
   const [abi, setAbi] = useState(null);
   const [isDeploying, setIsDeploying] = useState(false);
-  const [deployedDone, setDeployedDone] = useState(false);
+  const [deployedDone, setDeployedDone, deployedDoneRef] = useStateRef(false);
   const [networkKey, setNetworkKey] = useState("rinkeby");
+
+  const [timerId, setTimerId] = useState(null);
+  const [contractAddressTooltipShown, setContractAddressTooltipShown] =
+    useState(false);
+  const [
+    contractAddressTooltipLinkPressed,
+    setContractAddressTooltipLinkPressed,
+  ] = useState(false);
+
+  useEffect(() => () => clearTimeout(timerId), [timerId]);
 
   useEffect(() => {
     toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
@@ -126,9 +152,6 @@ export function DeployPage() {
     const _web3Provider = new providers.Web3Provider(provider);
     const _signer = await _web3Provider.getSigner();
 
-    // setWeb3Provider(_web3Provider);
-    // setSigner(_signer);
-
     let _imagesCID;
     let _metadataCID;
 
@@ -161,7 +184,6 @@ export function DeployPage() {
     let _contractAddress;
     let _abi;
 
-    // ! TODO: Check for loading after contract has already been deployed to set the address manually
     try {
       const { contracts } = await getContract(configuration.contractType);
       const { NFT } = contracts[configuration.contractType];
@@ -198,14 +220,21 @@ export function DeployPage() {
       });
       await factorySaveInstance(id);
 
+      setContractAddress(_contractAddress);
+      setAbi(_abi);
+
+      setTransactionHash(contract.deployTransaction.hash);
+      const timerId = setTimeout(() => {
+        if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
+      }, 30 * 1000);
+      setTimerId(timerId);
+
       await contract.deployTransaction.wait();
     } catch (error) {
       genericDialogContext.show("Error", error.message, null);
       return;
     }
 
-    setAbi(_abi);
-    setContractAddress(_contractAddress);
     setIsDeploying(false);
     setDeployedDone(true);
   };
@@ -279,12 +308,49 @@ export function DeployPage() {
           label="Metadata CID"
         />
 
-        <TextField
-          width="50%"
-          isReadOnly={true}
-          value={contractAddress}
-          label="Contract Address"
-        />
+        <Flex width="50%" gap="size-100" alignItems="end">
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            value={contractAddress}
+            label="Contract Address"
+          />
+          {contractAddressTooltipShown && (
+            <ContextualHelp variant="help" defaultOpen>
+              <Heading>Transaction isn't loading?</Heading>
+              <Content>
+                <Flex direction="column" gap="size-100">
+                  <Text>
+                    You can check the transaction status in Etherscan, and if it
+                    is already processed, you can choose to continue.
+                  </Text>
+                  <Link
+                    onPress={() => setContractAddressTooltipLinkPressed(true)}
+                  >
+                    <a
+                      href={resolveEtherscanUrl(
+                        Networks[networkKey],
+                        transactionHash
+                      )}
+                      target="_blank"
+                    >
+                      Transaction at Etherscan.
+                    </a>
+                  </Link>
+                  <Button
+                    isDisabled={!contractAddressTooltipLinkPressed}
+                    onPress={() => {
+                      setIsDeploying(false);
+                      setDeployedDone(true);
+                    }}
+                  >
+                    The transaction is already deployed
+                  </Button>
+                </Flex>
+              </Content>
+            </ContextualHelp>
+          )}
+        </Flex>
       </Flex>
 
       {isDeploying ? (
@@ -294,11 +360,7 @@ export function DeployPage() {
       ) : (
         <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
           {deployedDone ? (
-            <Button
-              variant="cta"
-              onPress={onContinue}
-              isDisabled={!contractAddress}
-            >
+            <Button variant="cta" onPress={onContinue}>
               Continue!
             </Button>
           ) : (

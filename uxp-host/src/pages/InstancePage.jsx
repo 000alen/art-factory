@@ -32,21 +32,8 @@ export function InstancePage() {
   const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
-  const {
-    // id,
-    // attributes,
-    // inputDir,
-    // outputDir,
-    configuration,
-    // imagesCID,
-    // metadataCID,
-    network,
-    contractAddress,
-    abi,
-  } = state;
+  const { configuration, network, contractAddress, abi } = state;
 
-  // const [secrets, setSecrets] = useState(null);
-  // const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [outputs, setOutputs] = useState([]);
@@ -83,8 +70,6 @@ export function InstancePage() {
 
           _contract = new Contract(contractAddress, abi, _signer);
 
-          // setSecrets(_secrets);
-          // setProvider(_provider);
           setContract(_contract);
         });
       })
@@ -97,12 +82,7 @@ export function InstancePage() {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
-  }, [
-    abi,
-    contractAddress,
-    network,
-    navigate,
-  ]);
+  }, [abi, contractAddress, network, navigate]);
 
   const addOutput = (output) => {
     setOutputs((prevOutputs) => [...prevOutputs, output]);

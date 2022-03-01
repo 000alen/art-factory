@@ -25,7 +25,7 @@ export function Configuration721({
   const onOpenNotRevealedFile = async () => {
     let setNotRevealedFilePath;
 
-    // ! TODO
+    // ! TODO: proper error handling
     try {
       const { canceled, filePaths } = await showOpenDialog({
         properties: ["openFile"],

@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require("electron");
+const { app, shell, BrowserWindow } = require("electron");
 const isDevelopment = require("electron-is-dev");
 const path = require("path");
 
@@ -16,6 +16,11 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
+  });
+
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
   });
 
   window.loadURL(
