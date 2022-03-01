@@ -101,8 +101,27 @@ async function pinDirectoryToIPFS(pinataApiKey, pinataSecretApiKey, src) {
         pinata_secret_api_key: pinataSecretApiKey,
       },
     })
-    .then((response) => response.data)
-    .catch((error) => console.error(error));
+    .then((response) => response.data);
+  // .catch((error) => console.error(error));
+}
+
+function pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src) {
+  const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+
+  const data = new FormData();
+  data.append("file", fs.createReadStream(src));
+
+  return axios
+    .post(url, data, {
+      maxBodyLength: "Infinity",
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
+        pinata_api_key: pinataApiKey,
+        pinata_secret_api_key: pinataSecretApiKey,
+      },
+    })
+    .then((response) => response.data);
+  // .catch((error) => console.error(error));
 }
 
 module.exports = {
@@ -112,4 +131,5 @@ module.exports = {
   removeRarity,
   rarityWeightedChoice,
   pinDirectoryToIPFS,
+  pinFileToIPFS,
 };
