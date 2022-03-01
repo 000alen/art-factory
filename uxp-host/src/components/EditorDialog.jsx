@@ -1,3 +1,6 @@
+/* global fabric */
+/* eslint no-undef: "error" */
+
 import React from "react";
 import {
   Dialog,
@@ -7,7 +10,6 @@ import {
   Flex,
 } from "@adobe/react-spectrum";
 import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
-import { fabric } from "fabric";
 import { factoryGetTraitImage } from "../ipc";
 
 export const loadImage = (url) =>
