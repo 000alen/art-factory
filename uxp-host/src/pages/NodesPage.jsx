@@ -82,8 +82,6 @@ export function NodesPage() {
   const [configuration, setConfiguration] = useState(null);
 
   useEffect(() => {
-    console.log(state);
-
     Promise.all(
       partialConfiguration.layers.map(
         async (layer) => await factoryGetRandomTraitImage(id, layer)
