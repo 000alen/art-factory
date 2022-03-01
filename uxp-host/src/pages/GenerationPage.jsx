@@ -18,6 +18,7 @@ import { Configuration1155 } from "../components/Configuration1155";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
 import { GenericDialogContext } from "../components/GenericDialog";
+import { initializeFactory } from "../actions";
 
 export function GenerationPage() {
   const genericDialogContext = useContext(GenericDialogContext);
@@ -139,8 +140,7 @@ export function GenerationPage() {
   };
 
   const onContinue = async () => {
-    const _id = uuid();
-    const _configuration = {
+    const partialConfiguration = {
       name,
       description,
       symbol,
@@ -164,12 +164,15 @@ export function GenerationPage() {
       layers,
     };
 
+    let id;
+
     // ! TODO: Proper error handling
     try {
-      await createFactory(_id, _configuration, inputDir, outputDir);
-      await factorySaveInstance(_id);
-      await factoryEnsureLayers(_id);
-      await factoryEnsureOutputDir(_id);
+      ({ id } = await initializeFactory(
+        partialConfiguration,
+        inputDir,
+        outputDir
+      ));
     } catch (error) {
       genericDialogContext.show("Error", error.message, null);
       return;
@@ -177,11 +180,11 @@ export function GenerationPage() {
 
     navigator("/nodes", {
       state: {
-        id: _id,
+        id,
         inputDir,
         outputDir,
         photoshop,
-        partialConfiguration: _configuration,
+        partialConfiguration,
       },
     });
   };

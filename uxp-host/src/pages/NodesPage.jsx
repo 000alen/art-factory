@@ -12,16 +12,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LayerNode } from "../components/LayerNode";
 import { Button, Flex, ButtonGroup, ProgressBar } from "@adobe/react-spectrum";
 import { RenderNode } from "../components/RenderNode";
-import {
-  factoryGenerateRandomAttributesFromNodes,
-  factoryGetRandomTraitImage,
-  factorySaveInstance,
-  factorySetProps,
-  factoryGenerateImages,
-} from "../ipc";
+import { factoryGetRandomTraitImage } from "../ipc";
 import { RootNode } from "../components/RootNode";
 import { CustomEdge } from "../components/CustomEdge";
 import { GenericDialogContext } from "../components/GenericDialog";
+import { computeN, factoryGenerate, filterNodes } from "../actions";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -67,6 +62,7 @@ const allPaths = (elements) => {
   return savedPaths;
 };
 
+// ! TODO: Create NodesBoilerplate hook?
 export function NodesPage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const navigate = useNavigate();
@@ -86,6 +82,8 @@ export function NodesPage() {
   const [configuration, setConfiguration] = useState(null);
 
   useEffect(() => {
+    console.log(state);
+
     Promise.all(
       partialConfiguration.layers.map(
         async (layer) => await factoryGetRandomTraitImage(id, layer)
@@ -259,85 +257,38 @@ export function NodesPage() {
   const onGenerate = async () => {
     setIsGenerating(true);
 
-    const filteredElements = JSON.parse(
-      // ! TODO: LOL: Self-explanatory, isn't it?
-      // !       For some reason this cannot be serialized as is,
-      // !       must be stringify-ed first
-      JSON.stringify(
-        elements.map((element) =>
-          element.type === "renderNode"
-            ? {
-                id: element.id,
-                type: element.type,
-                targetPosition: element.targetPosition,
-                data: { n: element.data.n },
-                position: element.position,
-              }
-            : element.type === "layerNode"
-            ? {
-                id: element.id,
-                type: element.type,
-                sourcePosition: element.sourcePosition,
-                targetPosition: element.targetPosition,
-                data: {
-                  layer: element.data.layer,
-                },
-                position: element.position,
-              }
-            : element
-        )
-      )
-    );
+    const layersNodes = filterNodes(elements);
 
-    const _n = filteredElements.reduce(
-      (p, c) => p + (c.type === "renderNode" ? c.data.n : 0),
-      0
-    );
-
-    setN(_n);
-
-    const _configuration = {
+    const configuration = {
       ...partialConfiguration,
-      layersNodes: filteredElements,
+      layersNodes,
     };
 
-    setConfiguration(_configuration);
+    const n = computeN(layersNodes);
 
-    let _attributes;
+    setN(n);
+    setConfiguration(configuration);
+
+    let attributes;
 
     try {
-      await factorySetProps(id, {
-        configuration: _configuration,
-      });
-      await factorySaveInstance(id);
-
-      _attributes = await factoryGenerateRandomAttributesFromNodes(
+      ({ attributes } = await factoryGenerate(
         id,
-        filteredElements
-      );
-
-      await factoryGenerateImages(id, _attributes, onProgress);
-      await factorySaveInstance(id);
+        configuration,
+        layersNodes,
+        onProgress
+      ));
     } catch (error) {
       genericDialogContext.show("Error", error.message, null);
       return;
     }
 
-    setAttributes(_attributes);
+    setAttributes(attributes);
     setIsGenerating(false);
     setGenerationDone(true);
   };
 
   const onContinue = () => {
-    console.log({
-      id,
-      attributes,
-      inputDir,
-      outputDir,
-      photoshop,
-      configuration,
-    });
-
     navigate("/quality", {
       state: {
         id,
