@@ -6,6 +6,7 @@ import {
   View,
   Text,
   ActionButton,
+  Link,
 } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { OutputItem } from "../components/OutputItem";
@@ -26,7 +27,16 @@ import LogOut from "@spectrum-icons/workflow/LogOut";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
 
-// ! TODO: Implement, link to Etherscan
+function resolveEtherscanUrl(network, contractAddress) {
+  return network === "mainnet"
+    ? `https://etherscan.io/address/${contractAddress}`
+    : network === "ropsten"
+    ? `https://ropsten.etherscan.io/address/${contractAddress}`
+    : network === "rinkeby"
+    ? `https://rinkeby.etherscan.io/address/${contractAddress}`
+    : null;
+}
+
 export function InstancePage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
@@ -100,14 +110,24 @@ export function InstancePage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Flex gap="size-100" alignItems="center">
-        <Heading level={1} marginStart={16}>
-          <pre className="inline">{chopAddress(contractAddress)}</pre> at{" "}
-          {Networks[network].name}
-        </Heading>
-        <ActionButton onPress={onCopy}>
-          <Copy />
-        </ActionButton>
+      <Flex justifyContent="space-between" alignItems="center">
+        <Flex gap="size-100" alignItems="center">
+          <Heading level={1} marginStart={16}>
+            <pre className="inline">{chopAddress(contractAddress)}</pre> at{" "}
+            {Networks[network].name}
+          </Heading>
+          <ActionButton onPress={onCopy}>
+            <Copy />
+          </ActionButton>
+        </Flex>
+        <Link>
+          <a
+            href={resolveEtherscanUrl(network, contractAddress)}
+            target="_blank"
+          >
+            Contract at Etherscan.
+          </a>
+        </Link>
       </Flex>
 
       <Flex height="70vh" gap="size-100" justifyContent="space-evenly">

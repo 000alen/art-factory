@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { TaskItem } from "./TaskItem";
 import { Flex } from "@adobe/react-spectrum";
 import { chopAddress } from "../utils";
+import { GenericDialogContext } from "../components/GenericDialog";
 
-// ! TODO: Implement
+// ! TODO: Test
 export function Panel1155({
   contract,
   contractAddress,
@@ -12,7 +13,7 @@ export function Panel1155({
 }) {
   const genericDialogContext = useContext(GenericDialogContext);
 
-  const onBalanceOf = ({ address, id }) => {
+  const onBalanceOf = async ({ address, id }) => {
     setIsLoading(true);
 
     const balance = await contract.balanceOf(address, id);
@@ -26,7 +27,7 @@ export function Panel1155({
     setIsLoading(false);
   };
 
-  const onUri = ({ id }) => {
+  const onUri = async ({ id }) => {
     setIsLoading(true);
 
     const uri = await contract.tokenUri(id);
@@ -40,7 +41,7 @@ export function Panel1155({
     setIsLoading(false);
   };
 
-  const onBurn = ({ id, amount }) => {
+  const onBurn = async ({ id, amount }) => {
     setIsLoading(true);
 
     await contract.burn(id, amount);
@@ -54,7 +55,7 @@ export function Panel1155({
     setIsLoading(false);
   };
 
-  const onMint = ({ to, id, amount }) => {
+  const onMint = async ({ to, id, amount }) => {
     setIsLoading(true);
 
     await contract.mint(to, id, amount);
@@ -68,7 +69,7 @@ export function Panel1155({
     setIsLoading(false);
   };
 
-  const onSetUri = ({ id, uri }) => {
+  const onSetUri = async ({ id, uri }) => {
     setIsLoading(true);
 
     await contract.setURI(id, uri);
@@ -82,7 +83,7 @@ export function Panel1155({
     setIsLoading(false);
   };
 
-  const onBalanceOfBatch = ({ addresses, ids }) => {
+  const onBalanceOfBatch = async ({ addresses, ids }) => {
     setIsLoading(true);
 
     const balances = await contract.balanceOfBatch(addresses, ids);
@@ -96,7 +97,7 @@ export function Panel1155({
     setIsLoading(false);
   };
 
-  const onMintBatch = ({ ids, amounts }) => {
+  const onMintBatch = async ({ ids, amounts }) => {
     setIsLoading(true);
 
     await contract.mintBatch(ids, amounts);
