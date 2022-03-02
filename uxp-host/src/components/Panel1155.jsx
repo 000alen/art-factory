@@ -1,17 +1,121 @@
 import React from "react";
 import { TaskItem } from "./TaskItem";
 import { Flex } from "@adobe/react-spectrum";
+import { chopAddress } from "../utils";
 
+// ! TODO: Implement
 export function Panel1155({
   contract,
   contractAddress,
   setIsLoading,
   addOutput,
 }) {
+  const genericDialogContext = useContext(GenericDialogContext);
+
+  const onBalanceOf = ({ address, id }) => {
+    setIsLoading(true);
+
+    const balance = await contract.balanceOf(address, id);
+
+    addOutput({
+      title: `Balance of ${chopAddress(address)} (id: ${id})`,
+      text: balance.toString(),
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
+  const onUri = ({ id }) => {
+    setIsLoading(true);
+
+    const uri = await contract.tokenUri(id);
+
+    addOutput({
+      title: `Token URI (id: ${id})`,
+      text: uri,
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
+  const onBurn = ({ id, amount }) => {
+    setIsLoading(true);
+
+    await contract.burn(id, amount);
+
+    addOutput({
+      title: `Burnt (id: ${id})`,
+      text: amount.toString(),
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
+  const onMint = ({ to, id, amount }) => {
+    setIsLoading(true);
+
+    await contract.mint(to, id, amount);
+
+    addOutput({
+      title: `Minted to ${chopAddress(to)} (id: ${id})`,
+      text: amount.toString(),
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
+  const onSetUri = ({ id, uri }) => {
+    setIsLoading(true);
+
+    await contract.setURI(id, uri);
+
+    addOutput({
+      title: `Set URI of ${id}`,
+      text: uri,
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
+  const onBalanceOfBatch = ({ addresses, ids }) => {
+    setIsLoading(true);
+
+    const balances = await contract.balanceOfBatch(addresses, ids);
+
+    addOutput({
+      title: `Balance of Batch`,
+      text: balances.toString(),
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
+  const onMintBatch = ({ ids, amounts }) => {
+    setIsLoading(true);
+
+    await contract.mintBatch(ids, amounts);
+
+    const n = amounts.reduce((a, b) => a + b, 0);
+    addOutput({
+      title: `Minted`,
+      text: n.toString(),
+      isCopiable: true,
+    });
+
+    setIsLoading(false);
+  };
+
   return (
     <>
       <Flex direction="column" gap="size-100">
         <TaskItem
+          onRun={onBalanceOf}
           task="Balance of"
           fields={[
             {
@@ -29,17 +133,7 @@ export function Panel1155({
         />
 
         <TaskItem
-          task="Token URI"
-          fields={[
-            {
-              key: "input",
-              type: "int",
-              label: "Input",
-            },
-          ]}
-        />
-
-        <TaskItem
+          onRun={onUri}
           task="URI"
           fields={[
             {
@@ -53,6 +147,7 @@ export function Panel1155({
 
       <Flex direction="column" gap="size-100">
         <TaskItem
+          onRun={onBurn}
           task="Burn"
           fields={[
             {
@@ -69,6 +164,7 @@ export function Panel1155({
         />
 
         <TaskItem
+          onRun={onMint}
           task="Mint"
           fields={[
             {
@@ -90,6 +186,7 @@ export function Panel1155({
         />
 
         <TaskItem
+          onRun={onSetUri}
           task="Set URI"
           fields={[
             {
@@ -108,6 +205,7 @@ export function Panel1155({
 
       <Flex direction="column" gap="size-100">
         <TaskItem
+          onRun={onBalanceOfBatch}
           task="Balance of Batch"
           dialog={true}
           fields={[
@@ -125,6 +223,7 @@ export function Panel1155({
         />
 
         <TaskItem
+          onRun={onMintBatch}
           task="Mint batch"
           dialog={true}
           fields={[
@@ -144,18 +243,3 @@ export function Panel1155({
     </>
   );
 }
-
-/*
-balanceOf       <
-balanceOfBatch  < 50%
-tokenURI        <
-uri             <
-
-burn            <
-burnBatch       50%
-burnForMInt    Missing (Array) (?)
-Mint            <
-MintBatch       Missing (Array)
-safeBatchTransferFrom Missing (Array)
-setURI
-*/
