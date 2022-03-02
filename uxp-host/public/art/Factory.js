@@ -21,8 +21,9 @@ const {
 } = require("./utils");
 
 class Factory {
+  // ! TODO: extract
   secrets;
-  layers;
+  layers; // ! TODO: change to { name: string, type: string }[]
   layerElementsBuffers;
   layerElementsPaths;
 
@@ -91,6 +92,7 @@ class Factory {
     if (compilerVersion) this.compilerVersion = compilerVersion;
   }
 
+  // ! TODO
   loadSecrets({ pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey }) {
     this.secrets = {
       ...this.secrets,
@@ -340,6 +342,7 @@ class Factory {
     this.metadataGenerated = true;
   }
 
+  // ! TODO: Extract
   async deployImages(force = false) {
     if (this.imagesCID !== undefined && !force) {
       console.warn(
@@ -360,6 +363,7 @@ class Factory {
     return this.imagesCID;
   }
 
+  // ! TODO: Extract
   async deployMetadata(force = false) {
     if (this.metadataCID !== undefined && !force) {
       console.warn(
