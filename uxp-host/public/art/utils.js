@@ -124,6 +124,40 @@ function pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src) {
   // .catch((error) => console.error(error));
 }
 
+// ! TODO
+// Source: https://docs.etherscan.io/tutorials/verifying-contracts-programmatically
+function verifyContract(
+  apiKey,
+  sourceCode,
+  network,
+  contractaddress,
+  codeformat,
+  contractname,
+  compilerversion,
+  optimizationUsed
+) {
+  const urls = {
+    mainnet: "https://api.etherscan.io/api",
+    ropsten: "https://api-ropsten.etherscan.io/api",
+    rinkeby: "https://api-rinkeby.etherscan.io/api",
+  };
+  const url = urls[network];
+
+  return axios
+    .post(url, {
+      module: "contract",
+      action: "verify",
+      contractaddress,
+      sourceCode,
+      codeformat,
+      contractname,
+      compilerversion,
+      optimizationUsed,
+      apikey: apiKey,
+    })
+    .then((response) => response.data);
+}
+
 module.exports = {
   RARITY_DELIMITER,
   randomColor,
@@ -132,4 +166,5 @@ module.exports = {
   rarityWeightedChoice,
   pinDirectoryToIPFS,
   pinFileToIPFS,
+  verifyContract,
 };

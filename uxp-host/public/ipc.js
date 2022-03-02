@@ -8,6 +8,8 @@ const {
   name,
   sizeOf,
   compose,
+  pinFileToIPFS,
+  verifyContract,
 } = require("./art");
 const fs = require("fs");
 const {
@@ -17,6 +19,8 @@ const {
   getPinataSecretApiKey,
   setInfuraId,
   getInfuraId,
+  setEtherscanApiKey,
+  getEtherscanApiKey,
 } = require("./store");
 
 const ipcTask = (task, callback) => {
@@ -222,6 +226,17 @@ ipcAsyncTask("getContract", async (name) => {
   return JSON.parse(solc.compile(JSON.stringify(input)));
 });
 
+ipcAsyncTask(
+  "getContractSource",
+  async (name) =>
+    await fs.promises.readFile(
+      path.join(__dirname, "contracts", `${name}.sol`),
+      {
+        encoding: "utf8",
+      }
+    )
+);
+
 ipcTask("getOutputDir", (inputDir) =>
   path.join(path.dirname(inputDir), `${path.basename(inputDir)}_build`)
 );
@@ -235,6 +250,8 @@ ipcSetterAndGetter(
 );
 
 ipcSetterAndGetter("infuraId", setInfuraId, getInfuraId);
+
+ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
 ipcTaskWithRequestId(
   "factoryGetRandomTraitImage",
@@ -263,3 +280,32 @@ ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) =>
 ipcTask("name", (inputDir) => name(inputDir));
 
 ipcTask("sizeOf", (inputDir) => sizeOf(inputDir));
+
+ipcAsyncTask("pinFileToIPFS", async (pinataApiKey, pinataSecretApiKey, src) =>
+  pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src)
+);
+
+ipcAsyncTask(
+  "verifyContract",
+  async function (
+    apiKey,
+    sourceCode,
+    network,
+    contractaddress,
+    codeformat,
+    contractname,
+    compilerversion,
+    optimizationUsed
+  ) {
+    return verifyContract(
+      apiKey,
+      sourceCode,
+      network,
+      contractaddress,
+      codeformat,
+      contractname,
+      compilerversion,
+      optimizationUsed
+    );
+  }
+);

@@ -170,6 +170,7 @@ class Factory {
       network: this.network,
       contractAddress: this.contractAddress,
       abi: this.abi,
+      compilerVersion: this.compilerVersion,
     };
   }
 
@@ -183,6 +184,7 @@ class Factory {
       network,
       contractAddress,
       abi,
+      compilerVersion,
     } = props;
     if (attributes) this.attributes = attributes;
     if (generated) this.generated = generated;
@@ -192,13 +194,16 @@ class Factory {
     if (network) this.network = network;
     if (contractAddress) this.contractAddress = contractAddress;
     if (abi) this.abi = abi;
+    if (compilerVersion) this.compilerVersion = compilerVersion;
   }
 
-  loadSecrets({ pinataApiKey, pinataSecretApiKey }) {
+  loadSecrets({ pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey }) {
     this.secrets = {
       ...this.secrets,
       pinataApiKey,
       pinataSecretApiKey,
+      infuraId,
+      etherscanApiKey,
     };
   }
 

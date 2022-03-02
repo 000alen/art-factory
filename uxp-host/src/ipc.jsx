@@ -72,6 +72,9 @@ export const [setPinataSecretApiKey, getPinataSecretApiKey] =
 
 export const [setInfuraId, getInfuraId] = ipcSetterAndGetter("infuraId");
 
+export const [setEtherscanApiKey, getEtherscanApiKey] =
+  ipcSetterAndGetter("etherscanApiKey");
+
 export const mkDir = (dir, options) => ipcTask("mkDir")(dir, options);
 
 export const writeFile = (file, data, options) =>
@@ -132,6 +135,8 @@ export const factoryLoadSecrets = (id, secrets) =>
 
 export const getContract = (name) => ipcTask("getContract")(name);
 
+export const getContractSource = (name) => ipcTask("getContractSource")(name);
+
 export const getOutputDir = (inputDir) => ipcTask("getOutputDir")(inputDir);
 
 export const factoryGetTraitImage = (id, trait) =>
@@ -152,3 +157,27 @@ export const factoryGenerateRandomAttributesFromNodes = (id, nodes) =>
 export const name = (inputDir) => ipcTask("name")(inputDir);
 
 export const sizeOf = (inputDir) => ipcTask("sizeOf")(inputDir);
+
+export const pinFileToIPFS = (pinataApiKey, pinataSecretApiKey, src) =>
+  ipcTask("pinFileToIPFS")(pinataApiKey, pinataSecretApiKey, src);
+
+export const verifyContract = (
+  apiKey,
+  sourceCode,
+  network,
+  contractaddress,
+  codeformat,
+  contractname,
+  compilerversion,
+  optimizationUsed
+) =>
+  ipcTask("verifyContract")(
+    apiKey,
+    sourceCode,
+    network,
+    contractaddress,
+    codeformat,
+    contractname,
+    compilerversion,
+    optimizationUsed
+  );

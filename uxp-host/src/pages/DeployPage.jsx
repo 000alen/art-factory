@@ -26,9 +26,12 @@ import {
   factorySaveInstance,
   factorySetProps,
   getContract,
+  getContractSource,
+  getEtherscanApiKey,
   getInfuraId,
   getPinataApiKey,
   getPinataSecretApiKey,
+  verifyContract,
 } from "../ipc";
 import { providers, ContractFactory, utils } from "ethers";
 import More from "@spectrum-icons/workflow/More";
@@ -91,32 +94,45 @@ export function DeployPage() {
     );
 
     const loadSecrets = async () => {
-      const _pinataApiKey = await getPinataApiKey();
-      if (!_pinataApiKey) {
-        genericDialogContext.show("Missing Pinata API Key", "! TODO", null);
-        return;
-      }
+      const secrets = await Promise.all([
+        await getPinataApiKey(),
+        await getPinataSecretApiKey(),
+        await getInfuraId(),
+        await getEtherscanApiKey(),
+      ]);
 
-      const pinataSecretApiKey = await getPinataSecretApiKey();
-      if (!pinataSecretApiKey) {
-        genericDialogContext.show(
-          "Missing Pinata Secret API Key",
-          "! TODO",
-          null
-        );
-        return;
-      }
+      const [pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey] =
+        secrets;
 
-      const infuraId = await getInfuraId();
-      if (!infuraId) {
-        genericDialogContext.show("Missing Infura ID", "! TODO", null);
-        return;
-      }
+      // if (!pinataApiKey) {
+      //   genericDialogContext.show("Missing Pinata API Key", "! TODO", null);
+      //   return;
+      // }
+
+      // if (!pinataSecretApiKey) {
+      //   genericDialogContext.show(
+      //     "Missing Pinata Secret API Key",
+      //     "! TODO",
+      //     null
+      //   );
+      //   return;
+      // }
+
+      // if (!infuraId) {
+      //   genericDialogContext.show("Missing Infura ID", "! TODO", null);
+      //   return;
+      // }
+
+      // if (!etherscanApiKey) {
+      //   genericDialogContext.show("Missing Infura ID", "! TODO", null);
+      //   return;
+      // }
 
       return {
-        pinataApiKey: _pinataApiKey,
-        pinataSecretApiKey: pinataSecretApiKey,
-        infuraId: infuraId,
+        pinataApiKey,
+        pinataSecretApiKey,
+        infuraId,
+        etherscanApiKey,
       };
     };
 
@@ -186,7 +202,13 @@ export function DeployPage() {
 
     try {
       const { contracts } = await getContract(configuration.contractType);
+      const source = await getContractSource(configuration.contractType);
+
       const { NFT } = contracts[configuration.contractType];
+      const metadata = JSON.parse(NFT.metadata);
+      const { version } = metadata.compiler;
+
+      console.log(version);
 
       ({ abi: _abi } = NFT);
       const { evm } = NFT;
@@ -217,6 +239,7 @@ export function DeployPage() {
         network: networkKey,
         contractAddress: _contractAddress,
         abi: _abi,
+        compilerVersion: version,
       });
       await factorySaveInstance(id);
 
@@ -229,8 +252,33 @@ export function DeployPage() {
       }, 30 * 1000);
       setTimerId(timerId);
 
+      console.log("pre-wait");
+
       await contract.deployTransaction.wait();
+
+      console.log("post-wait");
+
+      console.log("pre-verify");
+
+      const x = await verifyContract(
+        secrets.etherscanApiKey,
+        source,
+        networkKey,
+        _contractAddress,
+        "solidity-single-file",
+        "NFT",
+        version,
+        0
+      );
+
+      console.log(x);
+      console.log("pre-verify");
     } catch (error) {
+      setIsDeploying(false);
+      setDeployedDone(true);
+
+      console.log("error", error);
+
       genericDialogContext.show("Error", error.message, null);
       return;
     }

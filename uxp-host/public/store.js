@@ -28,6 +28,14 @@ function getInfuraId() {
   return store.has("infuraId") ? store.get("infuraId") : undefined;
 }
 
+function setEtherscanApiKey(etherscanApiKey) {
+  store.set("etherscanApiKey", etherscanApiKey);
+}
+
+function getEtherscanApiKey() {
+  return store.has("etherscanApiKey") ? store.get("etherscanApiKey") : undefined;
+}
+
 module.exports = {
   setPinataApiKey,
   getPinataApiKey,
@@ -35,4 +43,6 @@ module.exports = {
   getPinataSecretApiKey,
   setInfuraId,
   getInfuraId,
+  setEtherscanApiKey,
+  getEtherscanApiKey,
 };

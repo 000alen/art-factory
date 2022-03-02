@@ -21,11 +21,14 @@ const sendWhitelist = [
   "factoryGetRandomImage",
   "factoryGetImage",
   "getContract",
+  "getContractSource",
   "getOutputDir",
   "setPinataApiKey",
   "getPinataApiKey",
   "setPinataSecretApiKey",
   "getPinataSecretApiKey",
+  "setEtherscanApiKey",
+  "getEtherscanApiKey",
   "setInfuraId",
   "getInfuraId",
   "factoryLoadSecrets",
@@ -38,6 +41,8 @@ const sendWhitelist = [
   "factoryGenerateRandomAttributesFromNodes",
   "name",
   "sizeOf",
+  "pinFileToIPFS",
+  "verifyContract",
 ];
 
 const onWhitelist = [
@@ -62,6 +67,7 @@ const onWhitelist = [
   "factoryGetRandomImageResult",
   "factoryGetImageResult",
   "getContractResult",
+  "getContractSourceResult",
   "getOutputDirResult",
   "setPinataApiKeyResult",
   "getPinataApiKeyResult",
@@ -69,6 +75,8 @@ const onWhitelist = [
   "getPinataSecretApiKeyResult",
   "setInfuraIdResult",
   "getInfuraIdResult",
+  "setEtherscanApiKeyResult",
+  "getEtherscanApiKeyResult",
   "factoryLoadSecretsResult",
   "layersNamesResult",
   "factorySetPropsResult",
@@ -79,6 +87,8 @@ const onWhitelist = [
   "factoryGenerateRandomAttributesFromNodesResult",
   "nameResult",
   "sizeOfResult",
+  "pinFileToIPFSResult",
+  "verifyContractResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

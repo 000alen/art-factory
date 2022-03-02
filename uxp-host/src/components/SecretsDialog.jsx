@@ -22,6 +22,8 @@ import {
   setPinataApiKey,
   setPinataSecretApiKey,
   setInfuraId,
+  getEtherscanApiKey,
+  setEtherscanApiKey,
 } from "../ipc";
 import { GenericDialogContext } from "./GenericDialog";
 
@@ -30,6 +32,7 @@ export function SecretsDialog({ close }) {
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
   const [infuraId, _setInfuraId] = useState("");
+  const [etherscanApiKey, _setEtherscanApiKey] = useState("");
 
   useEffect(() => {
     // ! TODO: Proper error handling
@@ -54,6 +57,13 @@ export function SecretsDialog({ close }) {
       .catch((error) => {
         genericDialogContext.show("Error", error.message, null);
       });
+
+    // ! TODO: Proper error handling
+    getEtherscanApiKey()
+      .then((_etherscanApiKey) => _setEtherscanApiKey(_etherscanApiKey || ""))
+      .catch((error) => {
+        genericDialogContext.show("Error", error.message, null);
+      });
   }, [genericDialogContext]);
 
   const onSave = () => {
@@ -67,6 +77,10 @@ export function SecretsDialog({ close }) {
     });
     // ! TODO: Proper error handling
     setInfuraId(infuraId).catch((error) => {
+      genericDialogContext.show("Error", error.message, null);
+    });
+    // ! TODO: Proper error handling
+    setEtherscanApiKey(etherscanApiKey).catch((error) => {
       genericDialogContext.show("Error", error.message, null);
     });
     close();
@@ -113,6 +127,12 @@ export function SecretsDialog({ close }) {
             onChange={_setInfuraId}
             type="password"
             label="Infura ID"
+          />
+          <TextField
+            value={etherscanApiKey}
+            onChange={_setEtherscanApiKey}
+            type="password"
+            label="Etherscan API Key"
           />
         </Form>
       </Content>
