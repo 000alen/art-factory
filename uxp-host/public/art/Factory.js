@@ -3,128 +3,22 @@ const path = require("path");
 const Jimp = require("jimp");
 const {
   randomColor,
-  rarityWeightedChoice,
   rarity,
-  pinDirectoryToIPFS,
   removeRarity,
+  rarityWeightedChoice,
+  pinDirectoryToIPFS,
+  getPaths,
+  reducePaths,
+  computeNs,
+  expandPathIfNeeded,
+  append,
+  composeImages,
+  loadInstance,
+  layersNames,
+  name,
+  sizeOf,
+  compose,
 } = require("./utils");
-const { getOutgoers } = require("react-flow-renderer");
-const { tuple } = require("immutable-tuple");
-const { v4: uuid } = require("uuid");
-const imageSize = require("image-size");
-
-function getPaths(elements) {
-  const root = elements
-    .filter((element) => element.type === "rootNode")
-    .shift();
-
-  const stack = [];
-  stack.push({
-    node: root,
-    path: [root],
-  });
-
-  const savedPaths = [];
-  while (stack.length > 0) {
-    const actualNode = stack.pop();
-    const neighbors = getOutgoers(actualNode.node, elements);
-
-    // Leaf node
-    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
-      savedPaths.push(actualNode.path);
-
-    for (const v of neighbors) {
-      stack.push({
-        node: v,
-        path: [...actualNode.path, v],
-      });
-    }
-  }
-
-  return savedPaths;
-}
-
-function getPrefixes(paths) {
-  const prefixes = new Set();
-
-  for (const path of paths) {
-    const filteredPaths = paths.filter((_path) => _path[0] === path[0]);
-    const subPaths = filteredPaths.map((_path) => _path.slice(1));
-
-    if (subPaths.length > 1) {
-      prefixes.add(tuple(path[0]));
-
-      const subPrefixes = getPrefixes(subPaths);
-      for (const subPrefix of subPrefixes) {
-        prefixes.add(tuple(path[0], ...subPrefix));
-      }
-    }
-  }
-
-  return prefixes;
-}
-
-function reducePaths(paths) {
-  const cache = new Map();
-
-  while (true) {
-    const id = uuid();
-    const prefix = [...getPrefixes(paths)]
-      .map((prefix) => [...prefix])
-      .map((prefix) =>
-        prefix.length === 1 ? (cache.has(prefix[0]) ? null : prefix) : prefix
-      )
-      .filter((prefix) => prefix !== null)
-      .sort((a, b) => a.length - b.length)[0];
-
-    if (prefix === undefined) break;
-
-    cache.set(id, prefix);
-
-    paths = paths.map((path) =>
-      tuple(...path.slice(0, prefix.length)) === tuple(...prefix)
-        ? [id, ...path.slice(prefix.length)]
-        : path
-    );
-  }
-
-  return [cache, paths];
-}
-
-function computeNs(cache, paths) {
-  const ns = new Map();
-
-  for (const [id, cachedPath] of cache) {
-    let n = paths
-      .filter((path) => path.find((p) => p === id))
-      .map((path) => path[path.length - 1])
-      .reduce((a, b) => Math.max(a, b), 0);
-
-    n = Math.max(ns.has(id) ? ns.get(id) : 0, n);
-    const stack = [id];
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!ns.has(current) || ns.get(current) < n) ns.set(current, n);
-      for (const v of cache.get(current)) if (ns.has(v)) stack.push(v);
-    }
-  }
-
-  return ns;
-}
-
-function expandPathIfNeeded(cache, layers, path) {
-  const _path = [];
-
-  for (const id of path) {
-    if (!layers.includes(id) && !cache.has(id)) {
-      _path.push(...expandPathIfNeeded(cache, layers, cache.get(id)));
-    } else {
-      _path.push(id);
-    }
-  }
-
-  return _path;
-}
 
 class Factory {
   secrets;
@@ -261,86 +155,13 @@ class Factory {
     });
   }
 
-  async ensureLayerElementsBuffer(layerElementPath) {
+  async ensureLayerElementBuffer(layerElementPath) {
     if (!this.layerElementsBuffers.has(layerElementPath)) {
       this.layerElementsBuffers.set(
         layerElementPath,
         await fs.promises.readFile(path.join(this.inputDir, layerElementPath))
       );
     }
-  }
-
-  generateRandomAttributes(n) {
-    if (n > this.maxCombinations)
-      console.warn(
-        `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
-      );
-
-    this.configuration.n = n;
-
-    const attributes = [];
-
-    for (let i = 0; i < n; i++) {
-      const attribute = [];
-
-      for (const layerName of this.configuration.layers) {
-        const layerElements = this.layers.get(layerName);
-        const { name, rarity } = rarityWeightedChoice(layerElements);
-
-        attribute.push({
-          name: layerName,
-          value: name,
-          rarity,
-        });
-      }
-
-      attributes.push(attribute);
-    }
-
-    this.attributes = attributes;
-
-    return attributes;
-  }
-
-  generateAttributes() {
-    this.configuration.n = this.maxCombinations;
-
-    const attributes = [];
-
-    function* generator(configuration, layers, n) {
-      if (n === 0) {
-        yield [];
-        return;
-      }
-
-      const layerName = configuration.layers[configuration.layers.length - n];
-      const layerElements = layers.get(layerName);
-
-      for (const layerElement of layerElements) {
-        for (const _ of generator(configuration, layers, n - 1)) {
-          yield [
-            {
-              name: layerName,
-              value: layerElement.name,
-              rarity: layerElement.rarity,
-            },
-            ..._,
-          ];
-        }
-      }
-    }
-
-    for (const attribute of generator(
-      this.configuration,
-      this.layers,
-      this.configuration.layers.length
-    )) {
-      attributes.push(attribute);
-    }
-
-    this.attributes = attributes;
-
-    return attributes;
   }
 
   generateRandomAttributesFromLayers(layers, n) {
@@ -372,10 +193,6 @@ class Factory {
     return attributes;
   }
 
-  append(a, b) {
-    return a.map((a_i, i) => [...a_i, ...b[i]]);
-  }
-
   generateAttributesFromLayers(layers, n, attributesCache) {
     if (n > this.maxCombinations)
       console.warn(
@@ -386,7 +203,7 @@ class Factory {
 
     for (const layerName of layers) {
       if (attributesCache && attributesCache.has(layerName)) {
-        attributes = this.append(
+        attributes = append(
           attributes,
           attributesCache.get(layerName).slice(0, n)
         );
@@ -452,15 +269,7 @@ class Factory {
     return attributes;
   }
 
-  composeImages(back, front) {
-    front.resize(this.configuration.width, this.configuration.height);
-    back.composite(front, 0, 0);
-    return back;
-  }
-
-  // ! TODO: Careful with memory usage
-  // ! TODO: Change the algorithm complexity from O(n) to O(log n)
-  // ! TODO: Reescale images to a fixed size
+  // ! TODO: Careful with memory usage (algorithm complexity: O(n) to O(log n))
   async generateImages(attributes, callback) {
     await Promise.all(
       attributes.map(async (traits, i) => {
@@ -476,11 +285,16 @@ class Factory {
           const layerElementPath = this.layerElementsPaths.get(
             path.join(trait.name, trait.value)
           );
-          await this.ensureLayerElementsBuffer(layerElementPath);
+          await this.ensureLayerElementBuffer(layerElementPath);
           const current = await Jimp.read(
             this.layerElementsBuffers.get(layerElementPath)
           );
-          this.composeImages(image, current);
+          composeImages(
+            image,
+            current,
+            this.configuration.width,
+            this.configuration.height
+          );
         }
 
         await image.writeAsync(
@@ -493,6 +307,7 @@ class Factory {
     this.generated = true;
   }
 
+  // ! TODO: https://docs.opensea.io/docs/metadata-standards
   async generateMetadata(cid, attributes) {
     const metadatas = [];
     for (let i = 0; i < attributes.length; i++) {
@@ -587,7 +402,7 @@ class Factory {
     const layerElementPath = this.layerElementsPaths.get(
       path.join(layerName, name)
     );
-    await this.ensureLayerElementsBuffer(layerElementPath);
+    await this.ensureLayerElementBuffer(layerElementPath);
     return this.layerElementsBuffers.get(layerElementPath);
   }
 
@@ -595,7 +410,7 @@ class Factory {
     const layerElementPath = this.layerElementsPaths.get(
       path.join(trait.name, trait.value)
     );
-    await this.ensureLayerElementsBuffer(layerElementPath);
+    await this.ensureLayerElementBuffer(layerElementPath);
     return this.layerElementsBuffers.get(layerElementPath);
   }
 
@@ -605,80 +420,6 @@ class Factory {
       Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
     );
   }
-}
-
-async function loadInstance(instancePath) {
-  const { inputDir, outputDir, configuration, ...props } = JSON.parse(
-    await fs.promises.readFile(instancePath, "utf8")
-  );
-  const factory = new Factory(configuration, inputDir, outputDir);
-  factory.setProps(props);
-  return factory;
-}
-
-function layersNames(inputDir) {
-  let allLayers = fs
-    .readdirSync(inputDir)
-    .filter((file) => !file.startsWith("."));
-
-  const pattern = /(\d+)\..+/g;
-  let correctMatch = 0;
-
-  for (const layer of allLayers) {
-    if (layer.match(pattern)) correctMatch++;
-  }
-
-  if (correctMatch != allLayers.length) {
-    // Just return the folders
-    return allLayers;
-  }
-
-  allLayers.sort((a, b) => {
-    const numberA = Number(a.split(".")[0]);
-    const numberB = Number(b.split(".")[0]);
-
-    return numberA - numberB;
-  });
-
-  return allLayers;
-}
-
-function name(inputDir) {
-  return path.basename(inputDir);
-}
-
-function sizeOf(inputDir) {
-  const layer = fs
-    .readdirSync(inputDir)
-    .filter((file) => !file.startsWith("."))[0];
-  const layerElement = fs
-    .readdirSync(path.join(inputDir, layer))
-    .filter((file) => !file.startsWith("."))[0];
-
-  const { width, height } = imageSize(path.join(inputDir, layer, layerElement));
-  return { width, height };
-}
-
-async function compose(buffers, configuration) {
-  const height = configuration.height;
-  const width = configuration.width;
-
-  const image = await Jimp.read(buffers[0]);
-
-  image.resize(width, height);
-
-  for (let i = 1; i < buffers.length; i++) {
-    const current = await Jimp.read(buffers[i]);
-    current.resize(width, height);
-    image.composite(current, 0, 0);
-  }
-
-  return new Promise((resolve, reject) => {
-    image.getBuffer(Jimp.MIME_PNG, (error, buffer) => {
-      if (error) reject(error);
-      resolve(buffer);
-    });
-  });
 }
 
 module.exports = { Factory, loadInstance, layersNames, name, sizeOf, compose };

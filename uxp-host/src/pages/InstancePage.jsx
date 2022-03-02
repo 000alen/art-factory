@@ -37,6 +37,11 @@ function resolveEtherscanUrl(network, contractAddress) {
     : null;
 }
 
+
+// ! TODO
+// https://testnets.opensea.io/assets/<asset_contract_address>/<token_id>
+
+
 export function InstancePage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);

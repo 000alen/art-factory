@@ -113,12 +113,6 @@ export const factoryEnsureLayers = (id) => ipcTask("factoryEnsureLayers")(id);
 export const factoryEnsureOutputDir = (id) =>
   ipcTask("factoryEnsureOutputDir")(id);
 
-export const factoryGenerateRandomAttributes = (id, n) =>
-  ipcTask("factoryGenerateRandomAttributes")(id, n);
-
-export const factoryGenerateAttributes = (id) =>
-  ipcTask("factoryGenerateAttributes")(id);
-
 export const factoryGenerateMetadata = (id, cid, attributes) =>
   ipcTask("factoryGenerateMetadata")(id, cid, attributes);
 

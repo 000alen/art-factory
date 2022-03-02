@@ -172,14 +172,6 @@ ipcAsyncTask("factoryEnsureOutputDir", async (id) => {
   return true;
 });
 
-ipcTask("factoryGenerateRandomAttributes", (id, n) =>
-  factories[id].generateRandomAttributes(n)
-);
-
-ipcTask("factoryGenerateAttributes", (id) =>
-  factories[id].generateAttributes()
-);
-
 ipcAsyncTask("factoryGenerateMetadata", async (id, cid, attributes) => {
   await factories[id].generateMetadata(cid, attributes);
   return true;

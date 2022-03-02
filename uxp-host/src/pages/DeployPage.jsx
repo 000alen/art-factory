@@ -52,6 +52,7 @@ function resolveEtherscanUrl(network, transactionHash) {
 
 // ! TODO: Verify the contract
 // ! TODO: Metadata for grouping in OpenSea
+// https://docs.opensea.io/docs/metadata-standards
 export function DeployPage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
