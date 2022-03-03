@@ -39,6 +39,16 @@ export function GenerationPage() {
   const [layers, setLayers] = useState([""]);
 
   useEffect(() => {
+    task("information retrieval", async () => {
+      const layers = await layersNames(inputDir);
+      const name = await _name(inputDir);
+      const { width, height } = await sizeOf(inputDir);
+      setLayers(layers);
+      setName(name);
+      setWidth(width);
+      setHeight(height);
+    })();
+
     if (partialConfiguration) {
       if (partialConfiguration.name) setName(partialConfiguration.name);
       if (partialConfiguration.description)
@@ -59,34 +69,6 @@ export function GenerationPage() {
 
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
     }
-
-    // ! TODO: Proper error handling
-    layersNames(inputDir)
-      .then((names) => {
-        setLayers(names);
-      })
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
-
-    // ! TODO: Proper error handling
-    _name(inputDir)
-      .then((name) => {
-        setName(name);
-      })
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
-
-    // ! TODO: Proper error handling
-    sizeOf(inputDir)
-      .then(({ width, height }) => {
-        setWidth(width);
-        setHeight(height);
-      })
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
   }, [genericDialogContext, inputDir, partialConfiguration]);
 
   const canContinue = useMemo(

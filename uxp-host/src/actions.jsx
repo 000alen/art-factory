@@ -19,6 +19,7 @@ import {
 } from "./ipc";
 import { v4 as uuid } from "uuid";
 import { ContractFactory, utils } from "ethers";
+import { FormattedError } from "./components/ErrorHandler";
 
 export const openDirectory = async () => {
   const { canceled, filePaths } = await showOpenDialog({
@@ -50,7 +51,15 @@ export const openInstance = async () => {
   if (canceled) return;
   const [instancePath] = filePaths;
 
-  await factoryLoadInstance(id, instancePath);
+  try {
+    await factoryLoadInstance(id, instancePath);
+  } catch (error) {
+    throw FormattedError(1, "Could not load instance", {
+      instancePath,
+      message: error.message,
+    });
+  }
+
   const instance = await factoryInstance(id);
 
   return {
@@ -130,10 +139,19 @@ export const resolvePathFromInstance = (id, instance) => {
 export const initializeFactory = async (configuration, inputDir, outputDir) => {
   const id = uuid();
 
-  await createFactory(id, configuration, inputDir, outputDir);
-  await factorySaveInstance(id);
-  await factoryEnsureLayers(id);
-  await factoryEnsureOutputDir(id);
+  try {
+    await createFactory(id, configuration, inputDir, outputDir);
+    await factorySaveInstance(id);
+    await factoryEnsureLayers(id);
+    await factoryEnsureOutputDir(id);
+  } catch (error) {
+    throw FormattedError(2, "Could not initialize factory", {
+      configuration,
+      inputDir,
+      outputDir,
+      message: error.message,
+    });
+  }
 
   return {
     id,
@@ -185,7 +203,14 @@ export const factoryGenerate = async (
     layersNodes
   );
 
-  await factoryGenerateImages(id, attributes, onProgress);
+  try {
+    await factoryGenerateImages(id, attributes, onProgress);
+  } catch (error) {
+    throw FormattedError(3, "Could not generate images", {
+      attributes,
+      message: error.message,
+    });
+  }
   await factorySaveInstance(id);
 
   return {
@@ -199,17 +224,29 @@ export const factoryDeployAssets = async (
   attributes,
   partialDeploy
 ) => {
+  let imagesCID, metadataCID;
+
   await factoryLoadSecrets(id, secrets);
 
-  const imagesCID = partialDeploy
-    ? partialDeploy.imagesCID
-    : await factoryDeployImages(id);
+  try {
+    imagesCID = partialDeploy
+      ? partialDeploy.imagesCID
+      : await factoryDeployImages(id);
 
-  if (!partialDeploy) await factoryGenerateMetadata(id, imagesCID, attributes);
+    if (!partialDeploy)
+      await factoryGenerateMetadata(id, imagesCID, attributes);
 
-  const metadataCID = partialDeploy
-    ? partialDeploy.metadataCID
-    : await factoryDeployMetadata(id);
+    metadataCID = partialDeploy
+      ? partialDeploy.metadataCID
+      : await factoryDeployMetadata(id);
+  } catch (error) {
+    throw FormattedError(4, "Could not deploy assets", {
+      attributes,
+      imagesCID,
+      metadataCID,
+      message: error.message,
+    });
+  }
 
   await factorySetProps(id, {
     imagesCID,
@@ -246,8 +283,17 @@ export const factoryDeployContract = async (
   signer,
   metadataCID
 ) => {
-  const { contracts } = await getContract(configuration.contractType);
-  // const source = await getContractSource(configuration.contractType);
+  let contracts;
+  // let source;
+  try {
+    ({ contracts } = await getContract(configuration.contractType));
+    // source = await getContractSource(configuration.contractType);
+  } catch (error) {
+    throw FormattedError(5, "Could not get contract", {
+      configuration,
+      message: error.message,
+    });
+  }
 
   const { NFT } = contracts[configuration.contractType];
   const metadata = JSON.parse(NFT.metadata);
@@ -258,10 +304,18 @@ export const factoryDeployContract = async (
   const { bytecode } = evm;
   const contractFactory = new ContractFactory(abi, bytecode, signer);
 
-  const contract =
-    configuration.contractType === "721"
-      ? await deploy721(contractFactory, configuration, metadataCID)
-      : await deploy1155(contractFactory, configuration, metadataCID);
+  let contract;
+  try {
+    contract =
+      configuration.contractType === "721"
+        ? await deploy721(contractFactory, configuration, metadataCID)
+        : await deploy1155(contractFactory, configuration, metadataCID);
+  } catch (error) {
+    throw FormattedError(6, "Could not deploy contract", {
+      configuration,
+      message: error.message,
+    });
+  }
 
   const contractAddress = contract.address;
   const transactionHash = contract.deployTransaction.hash;

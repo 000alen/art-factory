@@ -47,25 +47,32 @@ export function HomePage() {
   }, [navigate, socket, genericDialogContext]);
 
   const onOpenDirectory = task("open directory", async () => {
-    const { inputDir, outputDir, photoshop } = await openDirectory();
-    navigate("/generation", {
-      state: {
-        inputDir,
-        outputDir,
-        photoshop,
-      },
-    });
+    const result = await openDirectory();
+    if (result) {
+      const { inputDir, outputDir, photoshop } = result;
+      navigate("/generation", {
+        state: {
+          inputDir,
+          outputDir,
+          photoshop,
+        },
+      });
+    }
   });
 
   const onOpenInstance = task("open instance", async () => {
-    const { id, instance } = await openInstance();
+    const result = await openInstance();
 
-    const resolution = resolvePathFromInstance(id, instance);
-    if (resolution) {
-      const [path, state] = resolution;
-      navigate(path, { state });
-    } else {
-      throw new Error("Could not resolve path for given instance");
+    if (result) {
+      const { id, instance } = result;
+
+      const resolution = resolvePathFromInstance(id, instance);
+      if (resolution) {
+        const [path, state] = resolution;
+        navigate(path, { state });
+      } else {
+        throw new Error("Could not resolve path for given instance");
+      }
     }
   });
 
