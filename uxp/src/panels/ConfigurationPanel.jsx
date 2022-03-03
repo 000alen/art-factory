@@ -209,6 +209,16 @@ export const ConfigurationPanel = () => {
         Generate Background
       </sp-checkbox>
 
+      {generateBackground && 
+        <sp-textfield
+          ref={defaultBackgroundRef}
+          data-part="defaultBackground"
+          placeholder="#1E1E1E"
+        >
+          <sp-label slot="label">Default Background</sp-label>
+        </sp-textfield>
+      }
+
       <sp-label slot="label" isrequired="true">
           Contract standard
       </sp-label>
@@ -250,15 +260,6 @@ export const ConfigurationPanel = () => {
         </sp-textfield>
       }
   
-      {generateBackground && 
-        <sp-textfield
-          ref={defaultBackgroundRef}
-          data-part="defaultBackground"
-          placeholder="#1E1E1E"
-        >
-          <sp-label slot="label">Default Background</sp-label>
-        </sp-textfield>
-      }
 
       <sp-textfield ref={nRef} data-part="n" value={n} type="number">
         <sp-label slot="label" isrequired="true">
