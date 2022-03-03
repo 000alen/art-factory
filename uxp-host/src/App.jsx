@@ -1,27 +1,19 @@
 import { HomePage } from "./pages/HomePage";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { Flex, StatusLight } from "@adobe/react-spectrum";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import { QualityPage } from "./pages/QualityPage";
 import { DeployPage } from "./pages/DeployPage";
 import { GenerationPage } from "./pages/GenerationPage";
 import { InstancePage } from "./pages/InstancePage";
-import { SocketContext } from "./components/SocketContext";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { GenericDialogProvider } from "./components/GenericDialog";
 import { NodesPage } from "./pages/NodesPage";
 import { ToolbarProvider, Toolbar } from "./components/Toolbar";
+import { UXPContext } from "./components/UXPContext";
 
 const App = () => {
-  const socket = useContext(SocketContext);
-  const [connectionStatus, setConnectionStatus] = useState(false);
-
-  // ! TODO: Extract to a context
-  useEffect(() => {
-    socket.on("uxp-connected", (isUXPConnected) => {
-      setConnectionStatus(isUXPConnected);
-    });
-  }, [socket]);
+  const { connectionStatus } = useContext(UXPContext);
 
   return (
     <GenericDialogProvider>

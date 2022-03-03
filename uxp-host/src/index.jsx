@@ -9,12 +9,15 @@ import App from "./App";
 import { SocketContext, socket } from "./components/SocketContext";
 
 import "./index.css";
+import { UXPContextProvider } from "./components/UXPContext";
 
 ReactDOM.render(
   <SocketContext.Provider value={socket}>
-    <SpectrumProvider theme={defaultTheme}>
-      <App />
-    </SpectrumProvider>
+    <UXPContextProvider>
+      <SpectrumProvider theme={defaultTheme}>
+        <App />
+      </SpectrumProvider>
+    </UXPContextProvider>
   </SocketContext.Provider>,
   document.getElementById("root")
 );

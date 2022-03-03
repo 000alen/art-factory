@@ -11,14 +11,14 @@ import Back from "@spectrum-icons/workflow/Back";
 import Forward from "@spectrum-icons/workflow/Forward";
 import FastForward from "@spectrum-icons/workflow/FastForward";
 import { factoryGetImage, factoryRewriteImage } from "../ipc";
-import { SocketContext } from "../components/SocketContext";
 import { ImageItem } from "../components/ImageItem";
 import { EditorDialog } from "../components/EditorDialog";
 import { GenericDialogContext } from "../components/GenericDialog";
+import { UXPContext } from "../components/UXPContext";
 
 export function QualityPage() {
   const genericDialogContext = useContext(GenericDialogContext);
-  const socket = useContext(SocketContext);
+  const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
 
@@ -72,10 +72,7 @@ export function QualityPage() {
 
   const onEdit = (i) => {
     if (photoshop) {
-      socket.emit("host-edit", {
-        name: `EDIT-${i}`,
-        traits: attributes[i],
-      });
+      uxpContext.hostEdit({ name: `EDIT-${i}`, traits: attributes[i] });
     } else {
       onSetEditor(i, attributes[i], true);
     }

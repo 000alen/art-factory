@@ -8,7 +8,6 @@ import {
 } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
 import { getOutputDir } from "../ipc";
-import { SocketContext } from "../components/SocketContext";
 import { GenericDialogContext } from "../components/GenericDialog";
 import {
   openDirectory,
@@ -16,20 +15,17 @@ import {
   resolvePathFromInstance,
 } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
+import { UXPContext } from "../components/UXPContext";
 
 export function HomePage() {
   const navigate = useNavigate();
-  const socket = useContext(SocketContext);
+  const uxpContext = useContext(UXPContext);
   const genericDialogContext = useContext(GenericDialogContext);
-  const { task, error } = useErrorHandler(genericDialogContext);
-
-  // useEffect(() => {
-  //   if (error) console.log(error);
-  // }, [error]);
+  const { task } = useErrorHandler(genericDialogContext);
 
   // ! TODO
   useEffect(() => {
-    socket.on("uxp-generate", async ({ inputDir, configuration }) => {
+    uxpContext.on("uxp-generate", async ({ inputDir, configuration }) => {
       let outputDir;
 
       // ! TODO: proper error handling
@@ -49,7 +45,7 @@ export function HomePage() {
         },
       });
     });
-  }, [navigate, socket, genericDialogContext]);
+  }, [navigate, genericDialogContext]);
 
   const onOpenDirectory = task("open directory", async () => {
     const result = await openDirectory();
