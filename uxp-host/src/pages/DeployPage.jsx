@@ -32,6 +32,7 @@ import { Networks, ContractTypes } from "../constants";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
 import { factoryDeployAssets, factoryDeployContract } from "../actions";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 function resolveEtherscanUrl(network, transactionHash) {
   return network === Networks.mainnet
@@ -48,6 +49,8 @@ function resolveEtherscanUrl(network, transactionHash) {
 // https://docs.opensea.io/docs/metadata-standards
 export function DeployPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const { task, isWorking } = useErrorHandler(genericDialogContext);
+
   const toolbarContext = useContext(ToolbarContext);
   const navigator = useNavigate();
   const { state } = useLocation();
@@ -68,7 +71,6 @@ export function DeployPage() {
   const [transactionHash, setTransactionHash] = useState("");
   const [contractAddress, setContractAddress] = useState("");
   const [abi, setAbi] = useState(null);
-  const [isDeploying, setIsDeploying] = useState(false);
   const [deployedDone, setDeployedDone, deployedDoneRef] = useStateRef(false);
   const [networkKey, setNetworkKey] = useState("rinkeby");
 
@@ -131,62 +133,43 @@ export function DeployPage() {
     };
   }, [networkKey]);
 
-  const onDeploy = async () => {
-    setIsDeploying(true);
-
+  const onDeploy = task("deployment", async () => {
     await provider.enable();
     const web3Provider = new providers.Web3Provider(provider);
     const signer = await web3Provider.getSigner();
 
-    let imagesCID;
-    let metadataCID;
-
-    // ! TODO: Proper error handling
-    try {
-      ({ imagesCID, metadataCID } = await factoryDeployAssets(
-        id,
-        secrets,
-        attributes,
-        partialDeploy
-      ));
-    } catch (error) {
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    const { imagesCID, metadataCID } = await factoryDeployAssets(
+      id,
+      secrets,
+      attributes,
+      partialDeploy
+    );
 
     await factorySaveInstance(id);
     setImagesCID(imagesCID);
     setMetadataCID(metadataCID);
 
-    try {
-      const { contractAddress, abi, transactionHash, wait } =
-        await factoryDeployContract(
-          id,
-          configuration,
-          networkKey,
-          signer,
-          metadataCID
-        );
-      setContractAddress(contractAddress);
-      setAbi(abi);
-      setTransactionHash(transactionHash);
+    const { contractAddress, abi, transactionHash, wait } =
+      await factoryDeployContract(
+        id,
+        configuration,
+        networkKey,
+        signer,
+        metadataCID
+      );
+    setContractAddress(contractAddress);
+    setAbi(abi);
+    setTransactionHash(transactionHash);
 
-      const timerId = setTimeout(() => {
-        if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
-      }, 30 * 1000);
-      setTimerId(timerId);
+    const timerId = setTimeout(() => {
+      if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
+    }, 30 * 1000);
+    setTimerId(timerId);
 
-      await wait;
-    } catch (error) {
-      setIsDeploying(false);
-      setDeployedDone(true);
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    await wait;
 
-    setIsDeploying(false);
     setDeployedDone(true);
-  };
+  });
 
   const onContinue = () => {
     navigator("/instance", {
@@ -281,7 +264,7 @@ export function DeployPage() {
                       Transaction at Etherscan.
                     </a>
                   </Link>
-                  <Button
+                  {/* <Button
                     isDisabled={!contractAddressTooltipLinkPressed}
                     onPress={() => {
                       setIsDeploying(false);
@@ -289,7 +272,7 @@ export function DeployPage() {
                     }}
                   >
                     The transaction is already deployed
-                  </Button>
+                  </Button> */}
                 </Flex>
               </Content>
             </ContextualHelp>
@@ -297,7 +280,7 @@ export function DeployPage() {
         </Flex>
       </Flex>
 
-      {isDeploying ? (
+      {isWorking ? (
         <Flex marginBottom={8} marginX={8} justifyContent="end">
           <ProgressBar label="Deploying…" isIndeterminate />
         </Flex>

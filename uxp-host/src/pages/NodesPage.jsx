@@ -6,9 +6,11 @@ import { factoryGetRandomTraitImage } from "../ipc";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
 import { Nodes, NodesContextProvider } from "../components/NodesContext";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 export function NodesPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const { task, isWorking } = useErrorHandler(genericDialogContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const { id, inputDir, outputDir, photoshop, partialConfiguration } = state;
@@ -19,7 +21,6 @@ export function NodesPage() {
   const [urls, setUrls] = useState([]);
   const [n, setN] = useState(0);
   const [currentGeneration, setCurrentGeneration] = useState(0);
-  const [isGenrating, setIsGenerating] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
   const [attributes, setAttributes] = useState([]);
   const [configuration, setConfiguration] = useState(null);
@@ -64,8 +65,7 @@ export function NodesPage() {
     setCurrentGeneration((prevGeneration) => prevGeneration + 1);
   };
 
-  const onGenerate = async () => {
-    setIsGenerating(true);
+  const onGenerate = task("generation", async () => {
     const layersNodes = filterNodes(elements);
     const n = computeN(layersNodes);
     const configuration = {
@@ -73,24 +73,20 @@ export function NodesPage() {
       n,
       layersNodes,
     };
+
     setN(n);
     setConfiguration(configuration);
-    let attributes;
-    try {
-      ({ attributes } = await factoryGenerate(
-        id,
-        configuration,
-        layersNodes,
-        onProgress
-      ));
-    } catch (error) {
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+
+    const { attributes } = await factoryGenerate(
+      id,
+      configuration,
+      layersNodes,
+      onProgress
+    );
+
     setAttributes(attributes);
-    setIsGenerating(false);
     setGenerationDone(true);
-  };
+  });
 
   const onContinue = () => {
     navigate("/quality", {
@@ -121,7 +117,7 @@ export function NodesPage() {
         />
         <Nodes>
           <div className="absolute z-10 bottom-4 right-4">
-            {isGenrating ? (
+            {isWorking ? (
               <Flex marginBottom={8} marginX={8} justifyContent="end">
                 <ProgressBar
                   label="Generating…"

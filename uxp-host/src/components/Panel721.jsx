@@ -1,18 +1,13 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Flex } from "@adobe/react-spectrum";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "./TaskItem";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { utils } from "ethers";
 import { chopAddress } from "../utils";
-import { GenericDialogContext } from "./GenericDialog";
 
-export function Panel721({ contract, setIsLoading, addOutput }) {
-  const genericDialogContext = useContext(GenericDialogContext);
-
-  const onCost = async () => {
-    setIsLoading(true);
-
+export function Panel721({ task, contract, addOutput }) {
+  const onCost = task("cost", async () => {
     const cost = await contract.cost();
 
     addOutput({
@@ -20,14 +15,10 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
       text: utils.formatUnits(cost.toString(), "ether"),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onBalanceOf = async ({ address }) => {
+  const onBalanceOf = task("balance of", async ({ address }) => {
     if (!address) return;
-
-    setIsLoading(true);
 
     const balance = await contract.balanceOf(address);
 
@@ -36,30 +27,25 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
       text: balance.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
+  const onTokenOfOwnerByIndex = task(
+    "token of owner by index",
+    async ({ address, index }) => {
+      if (!address || !index) return;
 
-  const onTokenOfOwnerByIndex = async ({ address, index }) => {
-    if (!address || !index) return;
+      const n = await contract.tokenOfOwnerByIndex(address, index);
 
-    setIsLoading(true);
+      addOutput({
+        title: "Token of owner by index",
+        text: n.toString(),
+        isCopiable: true,
+      });
+    }
+  );
 
-    const n = await contract.tokenOfOwnerByIndex(address, index);
-
-    addOutput({
-      title: "Token of owner by index",
-      text: n.toString(),
-      isCopiable: true,
-    });
-
-    setIsLoading(false);
-  };
-
-  const onTokenURI = async ({ index }) => {
+  const onTokenURI = task("token URI", async ({ index }) => {
     if (!index) return;
-
-    setIsLoading(true);
 
     const uri = await contract.tokenURI(index);
 
@@ -68,117 +54,75 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
       text: uri,
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onMint = async ({ payable, mint }) => {
+  const onMint = task("mint", async ({ payable, mint }) => {
     if (!payable || !mint) return;
-
-    setIsLoading(true);
 
     let tx;
     // let receipt;
 
-    try {
-      tx = await contract.mint(mint, {
-        value: utils.parseEther(payable),
-      });
-      // receipt =
-      await tx.wait();
-    } catch (error) {
-      setIsLoading(false);
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    tx = await contract.mint(mint, {
+      value: utils.parseEther(payable),
+    });
+    // receipt =
+    await tx.wait();
 
     addOutput({
       title: "Minted",
       text: mint.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onSetCost = async ({ cost }) => {
+  const onSetCost = task("set cost", async ({ cost }) => {
     if (!cost) return;
-
-    setIsLoading(true);
 
     let tx;
     // let receipt;
 
-    try {
-      tx = await contract.setCost(utils.parseEther(cost));
-      // receipt =
-      await tx.wait();
-    } catch (error) {
-      setIsLoading(false);
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    tx = await contract.setCost(utils.parseEther(cost));
+    // receipt =
+    await tx.wait();
 
     addOutput({
       title: "Cost set",
       text: cost.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onSetMaxMintAmount = async ({ amount }) => {
+  const onSetMaxMintAmount = task("set max mint amount", async ({ amount }) => {
     if (!amount) return;
-
-    setIsLoading(true);
 
     let tx;
     // let receipt;
 
-    try {
-      tx = await contract.setMaxMintAmount(utils.parseEther(amount));
-      // receipt =
-      await tx.wait();
-    } catch (error) {
-      setIsLoading(false);
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    tx = await contract.setMaxMintAmount(utils.parseEther(amount));
+    // receipt =
+    await tx.wait();
 
     addOutput({
       title: "Max mint amount set",
       text: amount.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onWithdraw = async () => {
-    setIsLoading(true);
-
+  const onWithdraw = task("withdraw", async () => {
     let tx;
     // let receipt;
 
-    try {
-      tx = await contract.withdraw();
-      // receipt =
-      await tx.wait();
-    } catch (error) {
-      setIsLoading(false);
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    tx = await contract.withdraw();
+    // receipt =
+    await tx.wait();
 
     addOutput({
       title: "Withdrawn",
       text: "true",
       isCopiable: true,
     });
-
-    setIsLoading(false);
-  };
+  });
 
   return (
     <>

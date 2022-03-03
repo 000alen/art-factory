@@ -26,6 +26,7 @@ import { Panel1155 } from "../components/Panel1155";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 function resolveEtherscanUrl(network, contractAddress) {
   return network === "mainnet"
@@ -37,20 +38,18 @@ function resolveEtherscanUrl(network, contractAddress) {
     : null;
 }
 
-
 // ! TODO
 // https://testnets.opensea.io/assets/<asset_contract_address>/<token_id>
 
-
 export function InstancePage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const { task, isWorking } = useErrorHandler(genericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const { configuration, network, contractAddress, abi } = state;
 
   const [contract, setContract] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [outputs, setOutputs] = useState([]);
 
   const loadSecrets = async () => ({
@@ -139,18 +138,18 @@ export function InstancePage() {
         {configuration.contractType === "721" ? (
           <Panel721
             {...{
+              task,
               contract,
               contractAddress,
-              setIsLoading,
               addOutput,
             }}
           />
         ) : configuration.contractType === "1155" ? (
           <Panel1155
             {...{
+              task,
               contract,
               contractAddress,
-              setIsLoading,
               addOutput,
             }}
           />
@@ -186,7 +185,7 @@ export function InstancePage() {
         <Text>Made with love by KODKOD ❤️</Text>
 
         <ProgressBar
-          UNSAFE_className={isLoading ? "opacity-100" : "opacity-0"}
+          UNSAFE_className={isWorking ? "opacity-100" : "opacity-0"}
           label="Loading…"
           isIndeterminate
         />

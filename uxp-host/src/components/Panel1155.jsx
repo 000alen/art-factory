@@ -1,21 +1,11 @@
-import React, { useContext } from "react";
+import React from "react";
 import { TaskItem } from "./TaskItem";
 import { Flex } from "@adobe/react-spectrum";
 import { chopAddress } from "../utils";
-import { GenericDialogContext } from "../components/GenericDialog";
 
 // ! TODO: Test
-export function Panel1155({
-  contract,
-  contractAddress,
-  setIsLoading,
-  addOutput,
-}) {
-  const genericDialogContext = useContext(GenericDialogContext);
-
-  const onBalanceOf = async ({ address, id }) => {
-    setIsLoading(true);
-
+export function Panel1155({ task, contract, contractAddress, addOutput }) {
+  const onBalanceOf = task("balance of", async ({ address, id }) => {
     const balance = await contract.balanceOf(address, id);
 
     addOutput({
@@ -23,13 +13,9 @@ export function Panel1155({
       text: balance.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onUri = async ({ id }) => {
-    setIsLoading(true);
-
+  const onUri = task("URI", async ({ id }) => {
     const uri = await contract.tokenUri(id);
 
     addOutput({
@@ -37,13 +23,9 @@ export function Panel1155({
       text: uri,
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onBurn = async ({ id, amount }) => {
-    setIsLoading(true);
-
+  const onBurn = task("burn", async ({ id, amount }) => {
     await contract.burn(id, amount);
 
     addOutput({
@@ -51,13 +33,9 @@ export function Panel1155({
       text: amount.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onMint = async ({ to, id, amount }) => {
-    setIsLoading(true);
-
+  const onMint = task("mint", async ({ to, id, amount }) => {
     await contract.mint(to, id, amount);
 
     addOutput({
@@ -65,13 +43,9 @@ export function Panel1155({
       text: amount.toString(),
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
-
-  const onSetUri = async ({ id, uri }) => {
-    setIsLoading(true);
-
+  const onSetUri = task("set URI", async ({ id, uri }) => {
     await contract.setURI(id, uri);
 
     addOutput({
@@ -79,27 +53,22 @@ export function Panel1155({
       text: uri,
       isCopiable: true,
     });
+  });
 
-    setIsLoading(false);
-  };
+  const onBalanceOfBatch = task(
+    "balance of batch",
+    async ({ addresses, ids }) => {
+      const balances = await contract.balanceOfBatch(addresses, ids);
 
-  const onBalanceOfBatch = async ({ addresses, ids }) => {
-    setIsLoading(true);
+      addOutput({
+        title: `Balance of Batch`,
+        text: balances.toString(),
+        isCopiable: true,
+      });
+    }
+  );
 
-    const balances = await contract.balanceOfBatch(addresses, ids);
-
-    addOutput({
-      title: `Balance of Batch`,
-      text: balances.toString(),
-      isCopiable: true,
-    });
-
-    setIsLoading(false);
-  };
-
-  const onMintBatch = async ({ ids, amounts }) => {
-    setIsLoading(true);
-
+  const onMintBatch = task("on mint batch", async ({ ids, amounts }) => {
     await contract.mintBatch(ids, amounts);
 
     const n = amounts.reduce((a, b) => a + b, 0);
@@ -108,9 +77,7 @@ export function Panel1155({
       text: n.toString(),
       isCopiable: true,
     });
-
-    setIsLoading(false);
-  };
+  });
 
   return (
     <>

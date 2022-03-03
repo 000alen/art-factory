@@ -15,11 +15,13 @@ import {
   openInstance,
   resolvePathFromInstance,
 } from "../actions";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 export function HomePage() {
   const navigate = useNavigate();
   const socket = useContext(SocketContext);
   const genericDialogContext = useContext(GenericDialogContext);
+  const { task } = useErrorHandler(genericDialogContext);
 
   useEffect(() => {
     socket.on("uxp-generate", async ({ inputDir, configuration }) => {
@@ -44,16 +46,8 @@ export function HomePage() {
     });
   }, [navigate, socket, genericDialogContext]);
 
-  const onOpenDirectory = async () => {
-    let inputDir, outputDir, photoshop;
-
-    try {
-      ({ inputDir, outputDir, photoshop } = await openDirectory());
-    } catch (error) {
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
-
+  const onOpenDirectory = task("open directory", async () => {
+    const { inputDir, outputDir, photoshop } = await openDirectory();
     navigate("/generation", {
       state: {
         inputDir,
@@ -61,27 +55,19 @@ export function HomePage() {
         photoshop,
       },
     });
-  };
+  });
 
-  const onOpenInstance = async () => {
-    let id, instance;
-
-    try {
-      ({ id, instance } = await openInstance());
-    } catch (error) {
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+  const onOpenInstance = task("open instance", async () => {
+    const { id, instance } = await openInstance();
 
     const resolution = resolvePathFromInstance(id, instance);
     if (resolution) {
       const [path, state] = resolution;
       navigate(path, { state });
     } else {
-      genericDialogContext.show("Error", "! TODO", null);
-      return;
+      throw new Error("Could not resolve path for given instance");
     }
-  };
+  });
 
   return (
     <Flex

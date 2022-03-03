@@ -10,9 +10,11 @@ import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { initializeFactory } from "../actions";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 export function GenerationPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const { task } = useErrorHandler(genericDialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
   const { inputDir, outputDir, photoshop, partialConfiguration } = state;
@@ -122,7 +124,7 @@ export function GenerationPage() {
     _setDefaultBackground(color.toString("hex"));
   };
 
-  const onContinue = async () => {
+  const onContinue = task("initializing factory", async () => {
     const partialConfiguration = {
       name,
       description,
@@ -145,19 +147,12 @@ export function GenerationPage() {
       layers,
     };
 
-    let id;
-
     // ! TODO: Proper error handling
-    try {
-      ({ id } = await initializeFactory(
-        partialConfiguration,
-        inputDir,
-        outputDir
-      ));
-    } catch (error) {
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
+    const { id } = await initializeFactory(
+      partialConfiguration,
+      inputDir,
+      outputDir
+    );
 
     navigator("/nodes", {
       state: {
@@ -168,7 +163,7 @@ export function GenerationPage() {
         partialConfiguration,
       },
     });
-  };
+  });
 
   return (
     <Flex
