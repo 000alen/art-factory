@@ -69,11 +69,12 @@ function rarityWeightedChoice(
   const choice = randomFunction() * urgencySum;
   const names = Object.keys(cumulatedUrgencies);
   const rarities = layerElements.map((element) => element.rarity);
+  const types = layerElements.map((element) => element.type);
   for (let i = 0; i < names.length; i++) {
     const name = names[i];
     const urgency = cumulatedUrgencies[name];
     if (choice <= urgency) {
-      return { name, rarity: rarities[i] };
+      return { name, rarity: rarities[i], type: types[i] };
     }
   }
 }

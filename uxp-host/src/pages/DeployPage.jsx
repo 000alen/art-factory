@@ -19,26 +19,19 @@ import {
   Text,
 } from "@adobe/react-spectrum";
 import {
-  factoryDeployImages,
-  factoryDeployMetadata,
-  factoryGenerateMetadata,
-  factoryLoadSecrets,
   factorySaveInstance,
-  factorySetProps,
-  getContract,
-  getContractSource,
   getEtherscanApiKey,
   getInfuraId,
   getPinataApiKey,
   getPinataSecretApiKey,
-  verifyContract,
 } from "../ipc";
-import { providers, ContractFactory, utils } from "ethers";
+import { providers } from "ethers";
 import More from "@spectrum-icons/workflow/More";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
+import { factoryDeployAssets, factoryDeployContract } from "../actions";
 
 function resolveEtherscanUrl(network, transactionHash) {
   return network === Networks.mainnet
@@ -142,117 +135,51 @@ export function DeployPage() {
     setIsDeploying(true);
 
     await provider.enable();
-    const _web3Provider = new providers.Web3Provider(provider);
-    const _signer = await _web3Provider.getSigner();
+    const web3Provider = new providers.Web3Provider(provider);
+    const signer = await web3Provider.getSigner();
 
-    let _imagesCID;
-    let _metadataCID;
+    let imagesCID;
+    let metadataCID;
 
     // ! TODO: Proper error handling
     try {
-      if (partialDeploy) {
-        _imagesCID = partialDeploy.imagesCID;
-        _metadataCID = partialDeploy.metadataCID;
-
-        await factorySetProps(id, {
-          imagesCID: _imagesCID,
-          metadataCID: _metadataCID,
-        });
-      } else {
-        await factoryLoadSecrets(id, secrets);
-        _imagesCID = await factoryDeployImages(id);
-        await factoryGenerateMetadata(id, _imagesCID, attributes);
-        _metadataCID = await factoryDeployMetadata(id);
-      }
+      ({ imagesCID, metadataCID } = await factoryDeployAssets(
+        id,
+        secrets,
+        attributes,
+        partialDeploy
+      ));
     } catch (error) {
       genericDialogContext.show("Error", error.message, null);
       return;
     }
 
     await factorySaveInstance(id);
-    setImagesCID(_imagesCID);
-    setMetadataCID(_metadataCID);
-
-    let _contractAddress;
-    let _abi;
+    setImagesCID(imagesCID);
+    setMetadataCID(metadataCID);
 
     try {
-      const { contracts } = await getContract(configuration.contractType);
-      const source = await getContractSource(configuration.contractType);
+      const { contractAddress, abi, transactionHash, wait } =
+        await factoryDeployContract(
+          id,
+          configuration,
+          networkKey,
+          signer,
+          metadataCID
+        );
+      setContractAddress(contractAddress);
+      setAbi(abi);
+      setTransactionHash(transactionHash);
 
-      const { NFT } = contracts[configuration.contractType];
-      const metadata = JSON.parse(NFT.metadata);
-      const { version } = metadata.compiler;
-
-      console.log(version);
-
-      ({ abi: _abi } = NFT);
-      const { evm } = NFT;
-      const { bytecode } = evm;
-      const contractFactory = new ContractFactory(_abi, bytecode, _signer);
-
-      const contract =
-        configuration.contractType === "721"
-          ? await contractFactory.deploy(
-              configuration.name,
-              configuration.symbol,
-              `ipfs://${_metadataCID}/`,
-              utils.parseEther(configuration.cost),
-              configuration.n,
-              configuration.maxMintAmount
-            )
-          : await contractFactory.deploy(
-              configuration.name,
-              configuration.symbol,
-              `ipfs://${_metadataCID}/`
-            );
-
-      _contractAddress = contract.address;
-
-      await factorySetProps(id, {
-        network: networkKey,
-        contractAddress: _contractAddress,
-        abi: _abi,
-        compilerVersion: version,
-      });
-      await factorySaveInstance(id);
-
-      setContractAddress(_contractAddress);
-      setAbi(_abi);
-
-      setTransactionHash(contract.deployTransaction.hash);
       const timerId = setTimeout(() => {
         if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
       }, 30 * 1000);
       setTimerId(timerId);
 
-      console.log("pre-wait");
-
-      await contract.deployTransaction.wait();
-
-      console.log("post-wait");
-
-      console.log("pre-verify");
-
-      const x = await verifyContract(
-        secrets.etherscanApiKey,
-        source,
-        networkKey,
-        _contractAddress,
-        "solidity-single-file",
-        "NFT",
-        version,
-        0
-      );
-
-      console.log(x);
-      console.log("pre-verify");
+      await wait;
     } catch (error) {
       setIsDeploying(false);
       setDeployedDone(true);
-
-      console.log("error", error);
-
       genericDialogContext.show("Error", error.message, null);
       return;
     }
@@ -261,12 +188,7 @@ export function DeployPage() {
     setDeployedDone(true);
   };
 
-  const onContinue = async () => {
-    await factorySetProps(id, {
-      contractAddress,
-    });
-    await factorySaveInstance(id);
-
+  const onContinue = () => {
     navigator("/instance", {
       state: {
         id,

@@ -10,8 +10,15 @@ import {
   factorySetProps,
   factoryGenerateRandomAttributesFromNodes,
   factoryGenerateImages,
+  factoryDeployImages,
+  getContract,
+  factoryLoadSecrets,
+  factoryDeployMetadata,
+  factoryGenerateMetadata,
+  // getContractSource,
 } from "./ipc";
 import { v4 as uuid } from "uuid";
+import { ContractFactory, utils } from "ethers";
 
 export const openDirectory = async () => {
   const { canceled, filePaths } = await showOpenDialog({
@@ -183,5 +190,107 @@ export const factoryGenerate = async (
 
   return {
     attributes,
+  };
+};
+
+export const factoryDeployAssets = async (
+  id,
+  secrets,
+  attributes,
+  partialDeploy
+) => {
+  await factoryLoadSecrets(id, secrets);
+
+  const imagesCID = partialDeploy
+    ? partialDeploy.imagesCID
+    : await factoryDeployImages(id);
+
+  if (!partialDeploy) await factoryGenerateMetadata(id, imagesCID, attributes);
+
+  const metadataCID = partialDeploy
+    ? partialDeploy.metadataCID
+    : await factoryDeployMetadata(id);
+
+  await factorySetProps(id, {
+    imagesCID,
+    metadataCID,
+  });
+
+  return {
+    imagesCID,
+    metadataCID,
+  };
+};
+
+export const deploy721 = async (contractFactory, configuration, metadataCID) =>
+  await contractFactory.deploy(
+    configuration.name,
+    configuration.symbol,
+    `ipfs://${metadataCID}/`,
+    utils.parseEther(configuration.cost),
+    configuration.n,
+    configuration.maxMintAmount
+  );
+
+export const deploy1155 = async (contractFactory, configuration, metadataCID) =>
+  await contractFactory.deploy(
+    configuration.name,
+    configuration.symbol,
+    `ipfs://${metadataCID}/`
+  );
+
+export const factoryDeployContract = async (
+  id,
+  configuration,
+  network,
+  signer,
+  metadataCID
+) => {
+  const { contracts } = await getContract(configuration.contractType);
+  // const source = await getContractSource(configuration.contractType);
+
+  const { NFT } = contracts[configuration.contractType];
+  const metadata = JSON.parse(NFT.metadata);
+  const { version: compilerVersion } = metadata.compiler;
+
+  const { abi } = NFT;
+  const { evm } = NFT;
+  const { bytecode } = evm;
+  const contractFactory = new ContractFactory(abi, bytecode, signer);
+
+  const contract =
+    configuration.contractType === "721"
+      ? await deploy721(contractFactory, configuration, metadataCID)
+      : await deploy1155(contractFactory, configuration, metadataCID);
+
+  const contractAddress = contract.address;
+  const transactionHash = contract.deployTransaction.hash;
+
+  await factorySetProps(id, {
+    network,
+    contractAddress,
+    abi,
+    compilerVersion,
+  });
+  await factorySaveInstance(id);
+
+  // ! TODO
+  // await verifyContract(
+  //   secrets.etherscanApiKey,
+  //   source,
+  //   network,
+  //   contractAddress,
+  //   "solidity-single-file",
+  //   "NFT",
+  //   version,
+  //   0
+  // );
+
+  return {
+    contractAddress,
+    abi,
+    compilerVersion,
+    transactionHash,
+    wait: contract.deployTransaction.wait(),
   };
 };

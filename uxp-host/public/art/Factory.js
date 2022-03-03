@@ -20,22 +20,51 @@ const {
   compose,
 } = require("./utils");
 
+/** @typedef {{ name: string, value: string, rarity: number }} Trait */
+
 class Factory {
-  // ! TODO: extract
+  // ! TODO: extract?
+  /** @type {{pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string}} */
   secrets;
-  layers; // ! TODO: change to { name: string, type: string }[]
+
+  /** @type {Map<string, { name: string, rarity: number, type: string }[]>} */
+  layers;
+
+  /** @type {Map<string, Buffer>} */
   layerElementsBuffers;
+
+  /** @type {Map<string, string>} */
   layerElementsPaths;
 
+  /** @type {Trait[][]} */
   attributes;
+
+  /** @type {boolean} */
   generated;
+
+  /** @type {boolean} */
   metadataGenerated;
+
+  /** @type {string} */
   imagesCID;
+
+  /** @type {string} */
   metadataCID;
+
+  /** @type {string} */
   network;
+
+  /** @type {string} */
   contractAddress;
+
   abi;
 
+  // ! TODO
+  /**
+   * @param {any} configuration
+   * @param {string} inputDir
+   * @param {string} outputDir
+   */
   constructor(configuration, inputDir, outputDir) {
     this.configuration = configuration;
     this.inputDir = inputDir;
@@ -137,10 +166,11 @@ class Factory {
 
     const layersElements = layerElementsPaths.map((layerElementsPath) =>
       layerElementsPath.map((layerElementPath) => {
-        const _ = path.parse(layerElementPath).name;
+        const { name, ext } = path.parse(layerElementPath);
         return {
-          name: removeRarity(_),
-          rarity: rarity(_),
+          name: removeRarity(name),
+          rarity: rarity(name),
+          type: ext.slice(1),
         };
       })
     );
@@ -166,35 +196,6 @@ class Factory {
     }
   }
 
-  generateRandomAttributesFromLayers(layers, n) {
-    if (n > this.maxCombinations)
-      console.warn(
-        `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
-      );
-
-    const attributes = [];
-
-    for (let i = 0; i < n; i++) {
-      const attribute = [];
-
-      for (const layerName of layers) {
-        const layerElements = this.layers.get(layerName);
-
-        const { name, rarity } = rarityWeightedChoice(layerElements); // RANDOM
-
-        attribute.push({
-          name: layerName,
-          value: name,
-          rarity,
-        });
-      }
-
-      attributes.push(attribute);
-    }
-
-    return attributes;
-  }
-
   generateAttributesFromLayers(layers, n, attributesCache) {
     if (n > this.maxCombinations)
       console.warn(
@@ -212,11 +213,12 @@ class Factory {
       } else {
         for (let i = 0; i < n; i++) {
           const layerElements = this.layers.get(layerName);
-          const { name, rarity } = rarityWeightedChoice(layerElements);
+          const { name, rarity, type } = rarityWeightedChoice(layerElements);
           attributes[i].push({
             name: layerName,
             value: name,
             rarity,
+            type,
           });
         }
       }
@@ -284,6 +286,8 @@ class Factory {
         );
 
         for (const trait of traits) {
+          // if (trait.)
+
           const layerElementPath = this.layerElementsPaths.get(
             path.join(trait.name, trait.value)
           );
