@@ -57,7 +57,22 @@ export function GenericDialog() {
         <Divider />
         <Content>{content}</Content>
         <ButtonGroup>
-          {buttons ? buttons : <Button onPress={hide}>Close</Button>}
+          {buttons ? (
+            buttons.map((button) => (
+              <Button
+                key={button.label}
+                variant={button.variant}
+                onPress={async () => {
+                  await button.onPress();
+                  hide();
+                }}
+              >
+                {button.label}
+              </Button>
+            ))
+          ) : (
+            <Button onPress={hide}>Close</Button>
+          )}
         </ButtonGroup>
       </Dialog>
     </DialogTrigger>

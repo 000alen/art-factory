@@ -1,4 +1,4 @@
-const { Factory } = require("./Factory");
+const { Factory, loadInstance } = require("./Factory");
 const {
   RARITY_DELIMITER,
   randomColor,
@@ -15,7 +15,6 @@ const {
   expandPathIfNeeded,
   append,
   composeImages,
-  loadInstance,
   layersNames,
   name,
   sizeOf,

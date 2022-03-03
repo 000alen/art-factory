@@ -41,6 +41,7 @@ const sendWhitelist = [
   "sizeOf",
   "pinFileToIPFS",
   "verifyContract",
+  "isValidInputDir",
 ];
 
 const onWhitelist = [
@@ -85,6 +86,7 @@ const onWhitelist = [
   "sizeOfResult",
   "pinFileToIPFSResult",
   "verifyContractResult",
+  "isValidInputDirResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

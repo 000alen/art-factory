@@ -301,3 +301,28 @@ ipcAsyncTask(
     );
   }
 );
+
+ipcAsyncTask("isValidInputDir", async (inputDir) => {
+  const layersNames = (await fs.promises.readdir(inputDir)).filter(
+    (file) => !file.startsWith(".")
+  );
+
+  if (layersNames.length === 0) return false;
+
+  for (const layerName of layersNames) {
+    const layerPath = path.join(inputDir, layerName);
+    const isDir = await (await fs.promises.lstat(layerPath)).isDirectory();
+    if (!isDir) return false;
+    const layerElements = (await fs.promises.readdir(layerPath)).filter(
+      (file) => !file.startsWith(".")
+    );
+    for (const layerElement of layerElements) {
+      const elementPath = path.join(layerPath, layerElement);
+      const isFile = await (await fs.promises.lstat(elementPath)).isFile();
+      if (!isFile) return false;
+      const ext = path.parse(elementPath).ext;
+      if (ext !== ".png" && ext !== ".gif") return false;
+    }
+  }
+  return true;
+});

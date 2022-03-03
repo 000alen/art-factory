@@ -287,14 +287,6 @@ function composeImages(back, front, width, height) {
   return back;
 }
 
-async function loadInstance(instancePath) {
-  const { inputDir, outputDir, configuration, ...props } = JSON.parse(
-    await fs.promises.readFile(instancePath, "utf8")
-  );
-  const factory = new Factory(configuration, inputDir, outputDir);
-  factory.setProps(props);
-  return factory;
-}
 
 function layersNames(inputDir) {
   let allLayers = fs
@@ -377,7 +369,6 @@ module.exports = {
   expandPathIfNeeded,
   append,
   composeImages,
-  loadInstance,
   layersNames,
   name,
   sizeOf,

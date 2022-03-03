@@ -13,7 +13,6 @@ const {
   expandPathIfNeeded,
   append,
   composeImages,
-  loadInstance,
   layersNames,
   name,
   sizeOf,
@@ -430,4 +429,15 @@ class Factory {
   }
 }
 
-module.exports = { Factory, loadInstance, layersNames, name, sizeOf, compose };
+async function loadInstance(instancePath) {
+  const { inputDir, outputDir, configuration, ...props } = JSON.parse(
+    await fs.promises.readFile(instancePath, "utf8")
+  );
+  console.log("pre", configuration, inputDir, outputDir);
+  const factory = new Factory(configuration, inputDir, outputDir);
+  console.log("post");
+  factory.setProps(props);
+  return factory;
+}
+
+module.exports = { Factory, loadInstance };

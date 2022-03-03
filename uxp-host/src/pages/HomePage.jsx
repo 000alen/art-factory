@@ -21,8 +21,13 @@ export function HomePage() {
   const navigate = useNavigate();
   const socket = useContext(SocketContext);
   const genericDialogContext = useContext(GenericDialogContext);
-  const { task } = useErrorHandler(genericDialogContext);
+  const { task, error } = useErrorHandler(genericDialogContext);
 
+  // useEffect(() => {
+  //   if (error) console.log(error);
+  // }, [error]);
+
+  // ! TODO
   useEffect(() => {
     socket.on("uxp-generate", async ({ inputDir, configuration }) => {
       let outputDir;

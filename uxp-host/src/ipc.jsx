@@ -175,3 +175,6 @@ export const verifyContract = (
     compilerversion,
     optimizationUsed
   );
+
+export const isValidInputDir = (inputDir) =>
+  ipcTask("isValidInputDir")(inputDir);

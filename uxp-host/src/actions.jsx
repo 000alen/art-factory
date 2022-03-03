@@ -15,6 +15,7 @@ import {
   factoryLoadSecrets,
   factoryDeployMetadata,
   factoryGenerateMetadata,
+  isValidInputDir,
   // getContractSource,
 } from "./ipc";
 import { v4 as uuid } from "uuid";
@@ -27,6 +28,10 @@ export const openDirectory = async () => {
   });
   if (canceled) return;
   const [inputDir] = filePaths;
+
+  if (!(await isValidInputDir(inputDir)))
+    throw FormattedError(7, "Invalid input directory", { inputDir });
+
   const outputDir = await getOutputDir(inputDir);
 
   return {
@@ -37,8 +42,6 @@ export const openDirectory = async () => {
 };
 
 export const openInstance = async () => {
-  const id = uuid();
-
   const { canceled, filePaths } = await showOpenDialog({
     properties: ["openFile"],
     filters: [
@@ -51,6 +54,7 @@ export const openInstance = async () => {
   if (canceled) return;
   const [instancePath] = filePaths;
 
+  const id = uuid();
   try {
     await factoryLoadInstance(id, instancePath);
   } catch (error) {

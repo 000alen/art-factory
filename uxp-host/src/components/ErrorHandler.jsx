@@ -1,4 +1,3 @@
-import { Button } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,12 +7,9 @@ export const FormattedError = (code, message, props) =>
   new Error(`[E${code}]: ${message}: ${JSON.stringify(props)}`);
 
 export function useErrorHandler(genericDialogContext) {
-  const [isWorking, setIsWorking] = useState(false);
   const navigate = useNavigate();
-
-  const onClose = () => {
-    navigate("/");
-  };
+  const [isWorking, setIsWorking] = useState(false);
+  const [error, setError] = useState(null);
 
   const task =
     (name, callback) =>
@@ -26,13 +22,12 @@ export function useErrorHandler(genericDialogContext) {
           ? error.message
           : FormattedError(999, "Unexpected error", { message: error.message })
               .message;
-        genericDialogContext.show(`Error during ${name}`, message, [
-          <Button onPress={onClose}>Close</Button>,
-        ]);
+        setError(message);
+        genericDialogContext.show(`Error during ${name}`, message);
       } finally {
         setIsWorking(false);
       }
     };
 
-  return { task, isWorking };
+  return { task, isWorking, error };
 }
