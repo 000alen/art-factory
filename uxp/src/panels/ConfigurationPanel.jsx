@@ -19,13 +19,25 @@ export const ConfigurationPanel = () => {
   const nRef = useRef(null);
   const continueRef = useRef(null);
 
+  const contractTypeERC721 = useRef(null);
+  const contractTypeERC1155 = useRef(null);
+
   const [connectionStatus, setConnectionStatus] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
   const [generateBackground, setGenerateBackground] = useState(true);
-  const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
+  const [defaultBackground, setDefaultBackground] = useState("#");
   const [n, setN] = useState(10);
+  
+  const [width, setWidth] = useState(500);
+  const [height, setHeight] = useState(500);
+
+  const [contractType, setContractType] = useState(true);
+
+  const [maxMint, setMaxMint] = useState(20);
+  const [cost, setCost] = useState(0.05);
+
 
   useEffect(() => {
     socket.on("connect_error", () => {
@@ -72,6 +84,13 @@ export const ConfigurationPanel = () => {
           generateBackground,
           defaultBackground,
           layers,
+          contractType: contractType ? "ERC721" : "ERC1155",
+
+          ERC721: {
+            maxMint,
+            cost
+          }
+
         },
       });
     });
@@ -93,9 +112,7 @@ export const ConfigurationPanel = () => {
       case "symbol":
         setSymbol(target.value);
         break;
-      case "generateBackground":
-        setGenerateBackground(target.checked);
-        break;
+
       case "defaultBackground":
         setDefaultBackground(target.value);
         break;
@@ -112,11 +129,27 @@ export const ConfigurationPanel = () => {
 
     const target = event.target;
     const part = target.getAttribute("data-part");
-
+    
     switch (part) {
       case "continue":
         onClickContinue();
         break;
+      case "generateBackground":
+        setGenerateBackground(!generateBackground);
+        break;
+
+      case "contractTypeERC1155":
+        setContractType(false);
+        contractTypeERC721.current.checked = false;
+        contractTypeERC1155.current.checked = true;
+        break;
+      
+      case "contractTypeERC721":
+        setContractType(true);
+        contractTypeERC721.current.checked = true;
+        contractTypeERC1155.current.checked = false;
+        break;
+
       default:
         break;
     }
@@ -157,27 +190,82 @@ export const ConfigurationPanel = () => {
         </sp-label>
       </sp-textfield>
 
+      <sp-textfield /*ref={nRef}*/ data-part="width" value={width} type="number">
+        <sp-label slot="label" isrequired="true">
+          Width
+        </sp-label>
+      </sp-textfield>
+
+      <sp-textfield /*ref={nRef}*/ data-part="height" value={height} type="number">
+        <sp-label slot="label" isrequired="true">
+          Height
+        </sp-label>
+      </sp-textfield>
+
       <sp-checkbox
         ref={generateBackgroundRef}
         data-part="generateBackground"
-        checked={generateBackground}
       >
         Generate Background
       </sp-checkbox>
 
-      <sp-textfield
-        ref={defaultBackgroundRef}
-        data-part="defaultBackground"
-        value={defaultBackground}
+      <sp-label slot="label" isrequired="true">
+          Contract standard
+      </sp-label>
+
+
+      <sp-checkbox
+        ref={contractTypeERC721}
+        data-part="contractTypeERC721"
+        checked
       >
-        <sp-label slot="label">Default Background</sp-label>
-      </sp-textfield>
+        ERC721
+      </sp-checkbox>
+      <sp-checkbox
+        ref={contractTypeERC1155}
+        data-part="contractTypeERC1155"
+      >
+        ERC1155
+      </sp-checkbox>
+      
+      {contractType && 
+        <sp-textfield
+          required
+          data-part="cost"
+          placeholder="0.05"
+          value={cost}
+        >
+          <sp-label slot="label">Cost</sp-label>
+        </sp-textfield>
+      }
+
+      {contractType && 
+        <sp-textfield
+          required
+          data-part="maxmint"
+          placeholder="10"
+          value={maxMint}
+        >
+          <sp-label slot="label">Max mint amount</sp-label>
+        </sp-textfield>
+      }
+  
+      {generateBackground && 
+        <sp-textfield
+          ref={defaultBackgroundRef}
+          data-part="defaultBackground"
+          placeholder="#1E1E1E"
+        >
+          <sp-label slot="label">Default Background</sp-label>
+        </sp-textfield>
+      }
 
       <sp-textfield ref={nRef} data-part="n" value={n} type="number">
         <sp-label slot="label" isrequired="true">
           N
         </sp-label>
       </sp-textfield>
+
 
       <sp-button ref={continueRef} data-part="continue" variant="cta">
         Continue!

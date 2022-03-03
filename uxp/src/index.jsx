@@ -8,7 +8,6 @@ import { ConfigurationPanel } from "./panels/ConfigurationPanel";
 import { socket, SocketContext } from "./components/SocketContext";
 
 import { entrypoints } from "uxp";
-import { TestPanel } from "./panels/TestPanel";
 
 socket.on("host-edit", ({ name, traits }) => {
   const uxp = require("uxp");
@@ -71,40 +70,11 @@ const configurationController = new PanelController(
     ],
   }
 );
-
-const testController = new PanelController(
-  () => (
-    <SocketContext.Provider value={socket}>
-      <TestPanel />
-    </SocketContext.Provider>
-  ),
-  {
-    id: "test",
-    menuItems: [
-      {
-        id: "reload2",
-        label: "Reload Plugin",
-        enabled: true,
-        checked: false,
-        oninvoke: () => location.reload(),
-      },
-      {
-        id: "dialog2",
-        label: "About this Plugin",
-        enabled: true,
-        checked: false,
-        oninvoke: () => aboutController.run(),
-      },
-    ],
-  }
-);
-
 entrypoints.setup({
   commands: {
     showAbout: aboutController,
   },
   panels: {
     configuration: configurationController,
-    test: testController,
   },
 });
