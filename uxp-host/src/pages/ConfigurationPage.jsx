@@ -12,7 +12,7 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { initializeFactory } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 
-export function GenerationPage() {
+export function ConfigurationPage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const { task } = useErrorHandler(genericDialogContext);
   const navigator = useNavigate();
@@ -156,7 +156,7 @@ export function GenerationPage() {
       justifyContent="space-between"
     >
       <Heading level={1} marginStart={16}>
-        Configuration & Generation
+        Configuration
       </Heading>
 
       <Flex height="70vh" gap="size-100" justifyContent="space-evenly">

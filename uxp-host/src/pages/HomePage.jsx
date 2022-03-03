@@ -36,7 +36,7 @@ export function HomePage() {
         return;
       }
 
-      navigate("/generation", {
+      navigate("/configuration", {
         state: {
           inputDir,
           outputDir,
@@ -51,7 +51,7 @@ export function HomePage() {
     const result = await openDirectory();
     if (result) {
       const { inputDir, outputDir, photoshop } = result;
-      navigate("/generation", {
+      navigate("/configuration", {
         state: {
           inputDir,
           outputDir,

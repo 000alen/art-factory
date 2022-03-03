@@ -89,7 +89,7 @@ export const resolvePathFromInstance = (id, instance) => {
 
   return !attributes && !generated
     ? [
-        "/generation",
+        "/configuration",
         { inputDir, outputDir, partialConfiguration: configuration },
       ]
     : !metadataGenerated && !imagesCID && !metadataCID && !contractAddress

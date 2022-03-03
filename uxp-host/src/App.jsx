@@ -4,7 +4,7 @@ import { Flex, StatusLight } from "@adobe/react-spectrum";
 import React, { useContext } from "react";
 import { QualityPage } from "./pages/QualityPage";
 import { DeployPage } from "./pages/DeployPage";
-import { GenerationPage } from "./pages/GenerationPage";
+import { ConfigurationPage } from "./pages/ConfigurationPage";
 import { InstancePage } from "./pages/InstancePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { GenericDialogProvider } from "./components/GenericDialog";
@@ -30,11 +30,11 @@ const App = () => {
 
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/generation" element={<GenerationPage />} />
+              <Route path="/configuration" element={<ConfigurationPage />} />
+              <Route path="/nodes" element={<NodesPage />} />
               <Route path="/quality" element={<QualityPage />} />
               <Route path="/deploy" element={<DeployPage />} />
               <Route path="/instance" element={<InstancePage />} />
-              <Route path="/nodes" element={<NodesPage />} />
               <Route path="/*" element={<NotFoundPage />} />
             </Routes>
           </Flex>
