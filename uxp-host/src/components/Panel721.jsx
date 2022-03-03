@@ -24,20 +24,6 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
     setIsLoading(false);
   };
 
-  const onIsRevealed = async () => {
-    setIsLoading(true);
-
-    const revealed = await contract.revealed();
-
-    addOutput({
-      title: "Is revealed?",
-      text: revealed.toString(),
-      isCopiable: true,
-    });
-
-    setIsLoading(false);
-  };
-
   const onBalanceOf = async ({ address }) => {
     if (!address) return;
 
@@ -81,31 +67,6 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
       title: "Token URI",
       text: uri,
       isCopiable: true,
-    });
-
-    setIsLoading(false);
-  };
-
-  const onReveal = async () => {
-    setIsLoading(true);
-
-    let tx;
-    // let receipt;
-
-    try {
-      tx = await contract.reveal();
-      // receipt =
-      await tx.wait();
-    } catch (error) {
-      setIsLoading(false);
-      genericDialogContext.show("Error", error.message, null);
-      return;
-    }
-
-    addOutput({
-      title: "Revealed",
-      text: "true",
-      isCopiable: false,
     });
 
     setIsLoading(false);
@@ -223,7 +184,6 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
     <>
       <Flex direction="column" gap="size-100">
         <TaskItem task="Cost" onRun={onCost} />
-        <TaskItem task="Is revealed?" onRun={onIsRevealed} />
         <TaskItem
           task="Balance of"
           onRun={onBalanceOf}
@@ -267,8 +227,6 @@ export function Panel721({ contract, setIsLoading, addOutput }) {
       </Flex>
 
       <Flex direction="column" gap="size-100">
-        <TaskItem task="Reveal" onRun={onReveal} />
-
         <TaskItem
           task="Mint"
           onRun={onMint}

@@ -2,16 +2,7 @@ import React, { useState, useContext, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Flex, Heading, ButtonGroup } from "@adobe/react-spectrum";
 
-import {
-  createFactory,
-  factorySaveInstance,
-  factoryEnsureLayers,
-  factoryEnsureOutputDir,
-  layersNames,
-  name as _name,
-  sizeOf,
-} from "../ipc";
-import { v4 as uuid } from "uuid";
+import { layersNames, name as _name, sizeOf } from "../ipc";
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Configuration721 } from "../components/Configuration721";
 import { Configuration1155 } from "../components/Configuration1155";
@@ -39,8 +30,6 @@ export function GenerationPage() {
   // Configuration721
   const [cost, setCost] = useState("0.05");
   const [maxMintAmount, setMaxMintAmount] = useState(20);
-  const [revealed, setRevealed] = useState(true);
-  const [notRevealedFilePath, setNotRevealedFilePath] = useState("");
 
   // Configuration1155
   // ! TODO: Add 1155 configuration
@@ -65,10 +54,6 @@ export function GenerationPage() {
       if (partialConfiguration.cost) setCost(partialConfiguration.cost);
       if (partialConfiguration.maxMintAmount)
         setMaxMintAmount(partialConfiguration.maxMintAmount);
-      if (partialConfiguration.revealed)
-        setRevealed(partialConfiguration.revealed);
-      if (partialConfiguration.notRevealedUri)
-        setNotRevealedFilePath(partialConfiguration.notRevealedUri);
 
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
     }
@@ -112,7 +97,7 @@ export function GenerationPage() {
       (generateBackground || defaultBackground) &&
       contractType &&
       (contractType === "721"
-        ? cost && maxMintAmount && (revealed || notRevealedFilePath)
+        ? cost && maxMintAmount
         : contractType === "1155"
         ? true
         : false) &&
@@ -129,8 +114,6 @@ export function GenerationPage() {
       contractType,
       cost,
       maxMintAmount,
-      revealed,
-      notRevealedFilePath,
       layers,
     ]
   );
@@ -154,8 +137,6 @@ export function GenerationPage() {
         ? {
             cost,
             maxMintAmount,
-            revealed,
-            notRevealedFilePath,
           }
         : contractType === "1155"
         ? {}
@@ -230,10 +211,6 @@ export function GenerationPage() {
               setCost,
               maxMintAmount,
               setMaxMintAmount,
-              revealed,
-              setRevealed,
-              notRevealedFilePath,
-              setNotRevealedFilePath,
             }}
           />
         ) : contractType === "1155" ? (

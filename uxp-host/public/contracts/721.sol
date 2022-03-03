@@ -1419,26 +1419,19 @@ contract NFT is ERC721Enumerable, Ownable {
     uint256 public maxSupply = 10000;
     uint256 public maxMintAmount = 20;
     bool public paused = false;
-    bool public revealed = true;
-    string public notRevealedUri;
 
     constructor(
         string memory _name,
         string memory _symbol,
         string memory _initBaseURI,
-        string memory _initNotRevealedUri,
         uint256 _initCost,
         uint256 _initMaxSupply,
-        uint256 _initMaxMintAmount,
-        bool _initRevealed
+        uint256 _initMaxMintAmount
     ) ERC721(_name, _symbol) {
         setBaseURI(_initBaseURI);
-        setNotRevealedURI(_initNotRevealedUri);
-
         setCost(_initCost);
         maxSupply = _initMaxSupply;
         maxMintAmount = _initMaxMintAmount;
-        revealed = _initRevealed;
     }
 
     // internal
@@ -1488,10 +1481,6 @@ contract NFT is ERC721Enumerable, Ownable {
             "ERC721Metadata: URI query for nonexistent token"
         );
 
-        if (revealed == false) {
-            return notRevealedUri;
-        }
-
         string memory currentBaseURI = _baseURI();
         return
             bytes(currentBaseURI).length > 0
@@ -1505,21 +1494,12 @@ contract NFT is ERC721Enumerable, Ownable {
                 : "";
     }
 
-    //only owner
-    function reveal() public onlyOwner {
-        revealed = true;
-    }
-
     function setCost(uint256 _newCost) public onlyOwner {
         cost = _newCost;
     }
 
     function setmaxMintAmount(uint256 _newmaxMintAmount) public onlyOwner {
         maxMintAmount = _newmaxMintAmount;
-    }
-
-    function setNotRevealedURI(string memory _notRevealedURI) public onlyOwner {
-        notRevealedUri = _notRevealedURI;
     }
 
     function setBaseURI(string memory _newBaseURI) public onlyOwner {
@@ -1538,11 +1518,7 @@ contract NFT is ERC721Enumerable, Ownable {
     }
 
     function withdraw() public payable onlyOwner {
-        // This will payout the owner 95% of the contract balance.
-        // Do not remove this otherwise you will not be able to withdraw the funds.
-        // =============================================================================
         (bool os, ) = payable(owner()).call{value: address(this).balance}("");
         require(os);
-        // =============================================================================
     }
 }

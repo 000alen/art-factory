@@ -105,30 +105,6 @@ export function DeployPage() {
       const [pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey] =
         secrets;
 
-      // if (!pinataApiKey) {
-      //   genericDialogContext.show("Missing Pinata API Key", "! TODO", null);
-      //   return;
-      // }
-
-      // if (!pinataSecretApiKey) {
-      //   genericDialogContext.show(
-      //     "Missing Pinata Secret API Key",
-      //     "! TODO",
-      //     null
-      //   );
-      //   return;
-      // }
-
-      // if (!infuraId) {
-      //   genericDialogContext.show("Missing Infura ID", "! TODO", null);
-      //   return;
-      // }
-
-      // if (!etherscanApiKey) {
-      //   genericDialogContext.show("Missing Infura ID", "! TODO", null);
-      //   return;
-      // }
-
       return {
         pinataApiKey,
         pinataSecretApiKey,
@@ -173,7 +149,6 @@ export function DeployPage() {
     let _metadataCID;
 
     // ! TODO: Proper error handling
-    // ! TODO: For ERC721, deploy notRevealedFile and its metadata if needed
     try {
       if (partialDeploy) {
         _imagesCID = partialDeploy.imagesCID;
@@ -222,11 +197,9 @@ export function DeployPage() {
               configuration.name,
               configuration.symbol,
               `ipfs://${_metadataCID}/`,
-              `ipfs://${_metadataCID}/1.json`, // ! TODO: For ERC721, deploy notRevealedFile and its metadata if needed
               utils.parseEther(configuration.cost),
               configuration.n,
-              configuration.maxMintAmount,
-              configuration.revealed
+              configuration.maxMintAmount
             )
           : await contractFactory.deploy(
               configuration.name,
