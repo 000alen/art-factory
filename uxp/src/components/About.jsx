@@ -3,8 +3,6 @@ import React from "react";
 import { versions } from "uxp";
 import os from "os";
 
-import "../css/About.css";
-
 export const About = (props) => {
   return (
     <form method="dialog" className="aboutDialog">

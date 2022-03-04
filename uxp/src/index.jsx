@@ -1,45 +1,21 @@
 import React from "react";
 
-import "./css/index.css";
 import { PanelController } from "./controllers/PanelController";
 import { CommandController } from "./controllers/CommandController";
 import { About } from "./components/About";
 import { ConfigurationPanel } from "./panels/ConfigurationPanel";
 import { socket, SocketContext } from "./components/SocketContext";
-
 import { entrypoints } from "uxp";
+import "./uxpContext";
 
-socket.on("host-edit", ({ name, traits }) => {
-  const uxp = require("uxp");
-  const photoshop = require("photoshop");
-  const app = photoshop.app;
-  const doc = app.activeDocument;
-
-  photoshop.core.executeAsModal(async () => {
-    const newDoc = await app.createDocument({
-      name,
-      width: doc.width,
-      height: doc.height,
-    });
-
-    for (let i = doc.layers.length - 1; i >= 0; i--) {
-      const layer = doc.layers[i];
-      for (const layerElement of layer.layers) {
-        const target = traits[doc.layers.length - i - 1].value;
-        if (target === layerElement.name) {
-          const newLayerElement = await layerElement.duplicate(newDoc);
-          newLayerElement.visible = true;
-        }
-      }
-    }
-  });
-});
+import "./css/index.css";
+import { UXPContextProvider } from "./components/UXPContext";
 
 const aboutController = new CommandController(
   ({ dialog }) => <About dialog={dialog} />,
   {
     id: "showAbout",
-    title: "React Starter Plugin Demo",
+    title: "POSTON Art Factory",
     size: { width: 480, height: 480 },
   }
 );
@@ -47,7 +23,9 @@ const aboutController = new CommandController(
 const configurationController = new PanelController(
   () => (
     <SocketContext.Provider value={socket}>
-      <ConfigurationPanel />
+      <UXPContextProvider>
+        <ConfigurationPanel />
+      </UXPContextProvider>
     </SocketContext.Provider>
   ),
   {
@@ -70,6 +48,7 @@ const configurationController = new PanelController(
     ],
   }
 );
+
 entrypoints.setup({
   commands: {
     showAbout: aboutController,

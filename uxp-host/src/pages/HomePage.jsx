@@ -25,26 +25,23 @@ export function HomePage() {
 
   // ! TODO
   useEffect(() => {
-    uxpContext.on("uxp-generate", async ({ inputDir, configuration }) => {
-      let outputDir;
-
-      // ! TODO: proper error handling
-      try {
-        outputDir = await getOutputDir();
-      } catch (error) {
-        genericDialogContext.show("Error", error.message, null);
-        return;
-      }
+    const uxpGenerate = async ({ inputDir, partialConfiguration }) => {
+      const outputDir = await getOutputDir(inputDir);
 
       navigate("/configuration", {
         state: {
           inputDir,
           outputDir,
+          partialConfiguration,
           photoshop: true,
-          partialConfiguration: configuration,
         },
       });
-    });
+    };
+
+    uxpContext.on("uxp-generate", uxpGenerate);
+    return () => {
+      uxpContext.off("uxp-generate", uxpGenerate);
+    };
   }, [navigate, genericDialogContext]);
 
   const onOpenDirectory = task("open directory", async () => {
