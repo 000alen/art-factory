@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { getFolder, getItem } from "../store";
+import { UXPContext } from "../components/UXPContext";
 
 const uxp = require("uxp");
 const photoshop = require("photoshop");
@@ -7,43 +8,26 @@ const app = photoshop.app;
 const fs = uxp.storage.localFileSystem;
 
 export function EditionPanel() {
+  const uxpContext = useContext(UXPContext);
+
   const [id, setId] = useState(null);
   const [photoshopId, setPhotoshopId] = useState(null);
   const [name, setName] = useState(null);
   const [traits, setTraits] = useState(null);
 
   const onLoad = () => {
-    // const re = /(EDIT-)\d+/;
-    // const doc = app.activeDocument;
+    const re = /(EDIT-)\d+/;
+    const doc = app.activeDocument;
 
-    // if (!re.test(doc.name)) return;
+    if (!re.test(doc.name)) return;
 
-    // const id = doc.name.slice(5);
-    // const { photoshopId, name, traits } = getItem(id);
+    const id = doc.name.slice(5);
+    const { photoshopId, name, traits } = getItem(id);
 
-    // setId(id);
-    // setPhotoshopId(photoshopId);
-    // setName(name);
-    // setTraits(traits);
-
-    setId("1");
-    setPhotoshopId("1");
-    setName("1");
-    setTraits([
-      {
-        name: "1. Background",
-        value: "Orange",
-        rarity: 1,
-        type: "png",
-      },
-      { name: "2. Fur", value: "Red Cheetah", rarity: 1, type: "png" },
-      {
-        name: "3. Clothes",
-        value: "Black Shirt",
-        rarity: 1,
-        type: "png",
-      },
-    ]);
+    setId(id);
+    setPhotoshopId(photoshopId);
+    setName(name);
+    setTraits(traits);
   };
 
   // ! TODO
@@ -53,8 +37,11 @@ export function EditionPanel() {
         const doc = app.activeDocument;
         const token = getFolder(photoshopId);
         const folder = await fs.getEntryForPersistentToken(token);
-        const buildFolder = await folder.createFolder(".build");
-        const buildFile = await buildFolder.createFile(`${name}.png`);
+        // const buildFolder = await folder.createFolder(".build");
+        const buildFolder = await folder.getEntry(".build");
+        const imagesFolder = await buildFolder.getEntry("images");
+        // const buildFile = await buildFolder.createFile(`${name}.png`);
+        const buildFile = await imagesFolder.getEntry(`${name}.png`);
         await doc.saveAs.png(buildFile);
         resolve();
       })
@@ -62,6 +49,7 @@ export function EditionPanel() {
 
   const onSave = async () => {
     await asyncJob();
+    uxpContext.uxpReload(photoshopId, name);
   };
 
   return (
@@ -74,7 +62,12 @@ export function EditionPanel() {
 
       {traits &&
         traits.map((trait) => (
-          <sp-textfield style={{ width: "100%" }} value={trait.value} readonly>
+          <sp-textfield
+            key={trait.name}
+            style={{ width: "100%" }}
+            value={trait.value}
+            readonly
+          >
             <sp-label slot="label">{trait.name}</sp-label>
           </sp-textfield>
         ))}

@@ -55,6 +55,22 @@ export function QualityPage() {
       .catch((error) => {
         genericDialogContext.show("Error", error.message, null);
       });
+
+    const uxpReload = async ({ photoshopId, name }) => {
+      const i = Number(name) - index - 1;
+      const buffer = await factoryGetImage(id, index + i);
+      const url = URL.createObjectURL(
+        new Blob([buffer], { type: "image/png" })
+      );
+
+      setImagesUrls((prevUrls) => prevUrls.map((u, j) => (j === i ? url : u)));
+    };
+
+    uxpContext.on("uxp-reload", uxpReload);
+
+    return () => {
+      uxpContext.off("uxp-reload", uxpReload);
+    };
   }, [index, attributes.length, genericDialogContext, id]);
 
   const onBack = () => {
@@ -81,7 +97,7 @@ export function QualityPage() {
     if (photoshop) {
       uxpContext.hostEdit({
         photoshopId,
-        name: (i + 1).toString(),
+        name: (i + index + 1).toString(),
         traits: attributes[i],
       });
     } else {

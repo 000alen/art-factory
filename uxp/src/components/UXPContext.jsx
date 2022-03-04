@@ -6,6 +6,7 @@ export const UXPContext = createContext({
   on: (channel, callback) => {},
   off: (channel, callback) => {},
   uxpGenerate: (photoshopId, inputDir, partialConfiguration) => {},
+  uxpReload: (photoshopId, name) => {},
 });
 
 export function UXPContextProvider({ children }) {
@@ -40,6 +41,13 @@ export function UXPContextProvider({ children }) {
     });
   };
 
+  const uxpReload = (photoshopId, name) => {
+    socket.emit("uxp-reload", {
+      photoshopId,
+      name,
+    });
+  };
+
   return (
     <UXPContext.Provider
       value={{
@@ -47,6 +55,7 @@ export function UXPContextProvider({ children }) {
         on,
         off,
         uxpGenerate,
+        uxpReload,
       }}
     >
       {children}

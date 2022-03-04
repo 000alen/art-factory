@@ -38,20 +38,19 @@ export async function exportAll(executionContext, doc, userFolder) {
 }
 
 export async function edit(executionContext, doc, name, traits) {
+  const re = /(\d+)\. /;
+
   const newDoc = await app.createDocument({
     name,
     width: doc.width,
     height: doc.height,
   });
 
-  for (let i = doc.layers.length - 1; i >= 0; i--) {
-    const layer = doc.layers[i];
-    for (const layerElement of layer.layers) {
-      const target = traits[doc.layers.length - i - 1].value;
-      if (target === layerElement.name) {
-        const newLayerElement = await layerElement.duplicate(newDoc);
-        newLayerElement.visible = true;
-      }
-    }
+  for (const { name, value } of traits) {
+    const displayName = name.replace(re, "");
+    const layer = doc.layers.getByName(displayName);
+    const layerElement = layer.layers.getByName(value);
+    const newLayerElement = await layerElement.duplicate(newDoc);
+    newLayerElement.visible = true;
   }
 }

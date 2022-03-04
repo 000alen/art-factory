@@ -31,17 +31,13 @@ const startServer = async () => {
       io.emit("uxp-generate", { photoshopId, inputDir, configuration });
     });
 
+    socket.on("uxp-reload", ({ photoshopId, name }) => {
+      io.emit("uxp-reload", { photoshopId, name });
+    });
+
     socket.on("host-edit", ({ photoshopId, name, traits }) => {
       io.emit("host-edit", { photoshopId, name, traits });
     });
-
-    // socket.on("message", (message) => {
-    //   io.emit("uxp-message", message);
-    // });
-
-    // socket.on("helper-message", (message) => {
-    //   io.emit("message", message);
-    // });
   });
 
   // Emit connect when uxp attempts to reconnect
