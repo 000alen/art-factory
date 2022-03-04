@@ -81,7 +81,7 @@ export function QualityPage() {
     if (photoshop) {
       uxpContext.hostEdit({
         photoshopId,
-        name: `EDIT-${i}`,
+        name: (i + 1).toString(),
         traits: attributes[i],
       });
     } else {

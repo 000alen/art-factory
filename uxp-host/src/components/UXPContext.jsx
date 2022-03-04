@@ -5,7 +5,7 @@ export const UXPContext = createContext({
   connectionStatus: false,
   on: (channel, callback) => {},
   off: (channel, callback) => {},
-  hostEdit: ({ name, traits }) => {},
+  hostEdit: ({ photoshopId, name, traits }) => {},
 });
 
 export function UXPContextProvider({ children }) {

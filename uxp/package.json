@@ -31,6 +31,7 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@spectrum-web-components/icons-workflow": "^0.8.3",
     "path-browserify": "^1.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

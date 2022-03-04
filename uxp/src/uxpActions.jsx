@@ -1,6 +1,6 @@
 import { socket } from "./components/SocketContext";
 import { edit } from "./jobs";
-import { getDocument, getFolder } from "./store";
+import { getDocument, getId, setItem } from "./store";
 import { editionController } from "./index";
 
 const uxp = require("uxp");
@@ -10,15 +10,17 @@ const fs = uxp.storage.localFileSystem;
 
 socket.on("host-edit", async ({ photoshopId, name, traits }) => {
   const doc = app.documents.getByName(getDocument(photoshopId));
-  const token = getFolder(photoshopId);
-  const folder = await fs.getEntryForPersistentToken(token);
 
-  editionController.create();
-  console.log("done")
+  const id = getId();
 
-  // // ! TODO
-  // await photoshop.core.executeAsModal(async (executionControl) => {
-  //   await edit(executionControl, doc, name, traits);
-  //   editionController.show();
-  // });
+  setItem(id, {
+    photoshopId,
+    name,
+    traits,
+  });
+
+  await photoshop.core.executeAsModal(async (executionControl) => {
+    await edit(executionControl, doc, `EDIT-${id}`, traits);
+    editionController.show();
+  });
 });

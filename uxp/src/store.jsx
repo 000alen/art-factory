@@ -14,3 +14,8 @@ export const setFolder = (id, token) =>
   localStorage.setItem(`folder(${id})`, token);
 
 export const getFolder = (id) => localStorage.getItem(`folder(${id})`);
+
+export const setItem = (id, item) =>
+  localStorage.setItem(`item(${id})`, JSON.stringify(item));
+
+export const getItem = (id) => JSON.parse(localStorage.getItem(`item(${id})`));
