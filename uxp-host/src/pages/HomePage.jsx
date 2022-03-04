@@ -25,7 +25,11 @@ export function HomePage() {
 
   // ! TODO
   useEffect(() => {
-    const uxpGenerate = async ({ inputDir, partialConfiguration }) => {
+    const uxpGenerate = async ({
+      photoshopId,
+      inputDir,
+      partialConfiguration,
+    }) => {
       const outputDir = await getOutputDir(inputDir);
 
       navigate("/configuration", {
@@ -33,6 +37,7 @@ export function HomePage() {
           inputDir,
           outputDir,
           partialConfiguration,
+          photoshopId,
           photoshop: true,
         },
       });
@@ -47,11 +52,12 @@ export function HomePage() {
   const onOpenDirectory = task("open directory", async () => {
     const result = await openDirectory();
     if (result) {
-      const { inputDir, outputDir, photoshop } = result;
+      const { inputDir, outputDir, photoshopId, photoshop } = result;
       navigate("/configuration", {
         state: {
           inputDir,
           outputDir,
+          photoshopId,
           photoshop,
         },
       });

@@ -13,7 +13,14 @@ export function NodesPage() {
   const { task, isWorking } = useErrorHandler(genericDialogContext);
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { id, inputDir, outputDir, photoshop, partialConfiguration } = state;
+  const {
+    id,
+    inputDir,
+    outputDir,
+    photoshopId,
+    photoshop,
+    partialConfiguration,
+  } = state;
 
   const [elements, setElements] = useState([]);
 
@@ -95,6 +102,7 @@ export function NodesPage() {
         attributes,
         inputDir,
         outputDir,
+        photoshopId,
         photoshop,
         configuration,
       },

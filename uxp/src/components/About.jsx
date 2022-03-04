@@ -26,7 +26,7 @@ export const About = (props) => {
           <sp-body> {versions.plugin}</sp-body>
         </div>
         <div>
-          <sp-detail>OPERATING SYTEM:</sp-detail>
+          <sp-detail>OPERATING SYSTEM:</sp-detail>
           <sp-body>
             {" "}
             {os.platform()} {os.release()}

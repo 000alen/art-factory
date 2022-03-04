@@ -5,7 +5,7 @@ export const UXPContext = createContext({
   connectionStatus: false,
   on: (channel, callback) => {},
   off: (channel, callback) => {},
-  uxpGenerate: (inputDir, partialConfiguration) => {},
+  uxpGenerate: (photoshopId, inputDir, partialConfiguration) => {},
 });
 
 export function UXPContextProvider({ children }) {
@@ -32,8 +32,9 @@ export function UXPContextProvider({ children }) {
     socket.off(channel, callback);
   };
 
-  const uxpGenerate = (inputDir, partialConfiguration) => {
+  const uxpGenerate = (photoshopId, inputDir, partialConfiguration) => {
     socket.emit("uxp-generate", {
+      photoshopId,
       inputDir,
       partialConfiguration,
     });

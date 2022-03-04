@@ -26,8 +26,9 @@ export function UXPContextProvider({ children }) {
     socket.off(channel, callback);
   };
 
-  const hostEdit = ({ name, traits }) => {
+  const hostEdit = ({ photoshopId, name, traits }) => {
     socket.emit("host-edit", {
+      photoshopId,
       name,
       traits,
     });

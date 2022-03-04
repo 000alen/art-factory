@@ -4,49 +4,63 @@ import { ConfigurationBase } from "../components/ConfigurationBase";
 import { Configuration721 } from "../components/Configuration721";
 import { Configuration1155 } from "../components/Configuration1155";
 import { UXPContext } from "../components/UXPContext";
+import { getDocument, getId, setDocument, setFolder } from "../store";
 
 const uxp = require("uxp");
 const photoshop = require("photoshop");
 const app = photoshop.app;
-const doc = app.activeDocument;
+const fs = uxp.storage.localFileSystem;
 
 export const ConfigurationPanel = () => {
   const { connectionStatus, uxpGenerate } = useContext(UXPContext);
 
+  // Base configuration
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
   const [generateBackground, setGenerateBackground] = useState(false);
   const [defaultBackground, setDefaultBackground] = useState("#1e1e1e");
-
   const [contractType, setContractType] = useState("721");
 
+  // 721 configuration
   const [maxMintAmount, setMaxMintAmount] = useState(20);
   const [cost, setCost] = useState(0.05);
 
-  const asyncJob = () => {
-    return new Promise(async (resolve, reject) => {
-      await photoshop.core.executeAsModal(hideAll);
+  // 1155 configuration
+  // ! TODO
 
-      const layers = doc.layers
-        .map((layer, i) => `${doc.layers.length - i}. ${layer.name}`)
-        .reverse();
+  const asyncJob = async () =>
+    new Promise((resolve, reject) =>
+      photoshop.core.executeAsModal(async (executionContext) => {
+        const id = getId();
+        const doc = app.activeDocument;
+        setDocument(id, doc.name);
 
-      await photoshop.core.executeAsModal(async (executionControl) => {
-        const userFolder = await uxp.storage.localFileSystem.getFolder();
-        await exportAll(executionControl, userFolder);
-        resolve({ userFolder, layers });
-      });
-    });
-  };
+        const folder = await fs.getFolder();
+        const token = await fs.createPersistentToken(folder);
+        setFolder(id, token);
 
+        await hideAll(executionContext, doc);
+        await exportAll(executionContext, doc, folder);
+
+        const layers = doc.layers
+          .map((layer, i) => `${doc.layers.length - i}. ${layer.name}`)
+          .reverse();
+
+        const inputDir = folder.nativePath;
+
+        resolve({ id, layers, inputDir });
+      })
+    );
   const onContinue = async () => {
     if (!connectionStatus) return;
 
-    const { userFolder, layers } = await asyncJob();
-    const inputDir = userFolder.nativePath;
+    const { id, layers, inputDir } = await asyncJob();
+    const doc = getDocument(id);
 
     const partialConfiguration = {
+      photoshopId: id,
+
       name,
       description,
       symbol,
@@ -68,7 +82,9 @@ export const ConfigurationPanel = () => {
       layers,
     };
 
-    uxpGenerate(inputDir, partialConfiguration);
+    console.log("HERE");
+
+    uxpGenerate(id, inputDir, partialConfiguration);
   };
 
   return (

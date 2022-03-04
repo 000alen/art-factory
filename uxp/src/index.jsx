@@ -6,12 +6,13 @@ import { About } from "./components/About";
 import { ConfigurationPanel } from "./panels/ConfigurationPanel";
 import { socket, SocketContext } from "./components/SocketContext";
 import { entrypoints } from "uxp";
-import "./uxpContext";
+import "./uxpActions";
 
 import "./css/index.css";
 import { UXPContextProvider } from "./components/UXPContext";
+import { EditionPanel } from "./panels/EditionPanel";
 
-const aboutController = new CommandController(
+export const aboutController = new CommandController(
   ({ dialog }) => <About dialog={dialog} />,
   {
     id: "showAbout",
@@ -20,7 +21,7 @@ const aboutController = new CommandController(
   }
 );
 
-const configurationController = new PanelController(
+export const configurationController = new PanelController(
   () => (
     <SocketContext.Provider value={socket}>
       <UXPContextProvider>
@@ -49,11 +50,41 @@ const configurationController = new PanelController(
   }
 );
 
+export const editionController = new PanelController(
+  () => (
+    <SocketContext.Provider value={socket}>
+      <UXPContextProvider>
+        <EditionPanel />
+      </UXPContextProvider>
+    </SocketContext.Provider>
+  ),
+  {
+    id: "edition",
+    menuItems: [
+      {
+        id: "reload2",
+        label: "Reload Plugin",
+        enabled: true,
+        checked: false,
+        oninvoke: () => location.reload(),
+      },
+      {
+        id: "dialog2",
+        label: "About this Plugin",
+        enabled: true,
+        checked: false,
+        oninvoke: () => aboutController.run(),
+      },
+    ],
+  }
+);
+
 entrypoints.setup({
   commands: {
     showAbout: aboutController,
   },
   panels: {
     configuration: configurationController,
+    edition: editionController,
   },
 });

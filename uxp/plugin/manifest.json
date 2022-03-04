@@ -44,6 +44,35 @@
           "species": ["chrome"]
         }
       ]
+    },
+    {
+      "type": "panel",
+      "id": "edition",
+      "label": {
+        "default": "Edition"
+      },
+      "minimumSize": { "width": 230, "height": 200 },
+      "maximumSize": { "width": 2000, "height": 2000 },
+      "preferredDockedSize": { "width": 230, "height": 300 },
+      "preferredFloatingSize": { "width": 230, "height": 300 },
+      "icons": [
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/dark-panel.png",
+          "scale": [1, 2],
+          "theme": ["darkest", "dark", "medium"],
+          "species": ["chrome"]
+        },
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/light-panel.png",
+          "scale": [1, 2],
+          "theme": ["lightest", "light"],
+          "species": ["chrome"]
+        }
+      ]
     }
   ],
   "icons": [

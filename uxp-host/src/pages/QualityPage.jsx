@@ -22,8 +22,15 @@ export function QualityPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const { id, attributes, inputDir, outputDir, photoshop, configuration } =
-    state;
+  const {
+    id,
+    attributes,
+    inputDir,
+    outputDir,
+    photoshopId,
+    photoshop,
+    configuration,
+  } = state;
 
   const [index, setIndex] = useState(0);
   const [imagesUrls, setImagesUrls] = useState([]);
@@ -72,7 +79,11 @@ export function QualityPage() {
 
   const onEdit = (i) => {
     if (photoshop) {
-      uxpContext.hostEdit({ name: `EDIT-${i}`, traits: attributes[i] });
+      uxpContext.hostEdit({
+        photoshopId,
+        name: `EDIT-${i}`,
+        traits: attributes[i],
+      });
     } else {
       onSetEditor(i, attributes[i], true);
     }

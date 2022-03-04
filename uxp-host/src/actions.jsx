@@ -37,6 +37,7 @@ export const openDirectory = async () => {
   return {
     inputDir,
     outputDir,
+    photoshopId: undefined,
     photoshop: false,
   };
 };
@@ -100,6 +101,7 @@ export const resolvePathFromInstance = (id, instance) => {
           attributes,
           inputDir,
           outputDir,
+          photoshopId: undefined,
           photoshop: false,
           configuration,
         },
@@ -112,6 +114,7 @@ export const resolvePathFromInstance = (id, instance) => {
           attributes,
           inputDir,
           outputDir,
+          photoshopId: undefined,
           photoshop: false,
           configuration,
           partialDeploy: {
@@ -128,6 +131,7 @@ export const resolvePathFromInstance = (id, instance) => {
           attributes,
           inputDir,
           outputDir,
+          photoshopId: undefined,
           photoshop: false,
           configuration,
           imagesCID,

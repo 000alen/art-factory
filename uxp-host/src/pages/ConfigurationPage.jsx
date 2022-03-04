@@ -17,7 +17,8 @@ export function ConfigurationPage() {
   const { task } = useErrorHandler(genericDialogContext);
   const navigator = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir, photoshop, partialConfiguration } = state;
+  const { inputDir, outputDir, photoshopId, photoshop, partialConfiguration } =
+    state;
 
   // ConfigurationBase
   const [name, setName] = useState("");
@@ -142,6 +143,7 @@ export function ConfigurationPage() {
         id,
         inputDir,
         outputDir,
+        photoshopId,
         photoshop,
         partialConfiguration,
       },

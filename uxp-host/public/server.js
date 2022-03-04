@@ -27,12 +27,12 @@ const startServer = async () => {
       io.emit("uxp-connected", false);
     });
 
-    socket.on("uxp-generate", ({ n, inputDir, configuration }) => {
-      io.emit("uxp-generate", { n, inputDir, configuration });
+    socket.on("uxp-generate", ({ photoshopId, inputDir, configuration }) => {
+      io.emit("uxp-generate", { photoshopId, inputDir, configuration });
     });
 
-    socket.on("host-edit", ({ name, traits }) => {
-      io.emit("host-edit", { name, traits });
+    socket.on("host-edit", ({ photoshopId, name, traits }) => {
+      io.emit("host-edit", { photoshopId, name, traits });
     });
 
     // socket.on("message", (message) => {
