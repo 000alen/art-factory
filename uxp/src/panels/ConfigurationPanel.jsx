@@ -82,8 +82,6 @@ export const ConfigurationPanel = () => {
       layers,
     };
 
-    console.log("HERE");
-
     uxpGenerate(id, inputDir, partialConfiguration);
   };
 

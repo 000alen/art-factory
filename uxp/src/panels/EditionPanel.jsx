@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getItem } from "../store";
+import { getFolder, getItem } from "../store";
 
 const uxp = require("uxp");
 const photoshop = require("photoshop");
@@ -13,49 +13,77 @@ export function EditionPanel() {
   const [traits, setTraits] = useState(null);
 
   const onLoad = () => {
-    const re = /(EDIT-)\d+/;
-    const doc = app.activeDocument;
+    // const re = /(EDIT-)\d+/;
+    // const doc = app.activeDocument;
 
-    if (!re.test(doc.name)) return;
+    // if (!re.test(doc.name)) return;
 
-    const id = doc.name.slice(5);
-    const { photoshopId, name, traits } = getItem(id);
+    // const id = doc.name.slice(5);
+    // const { photoshopId, name, traits } = getItem(id);
 
-    setId(id);
-    setPhotoshopId(photoshopId);
-    setName(name);
-    setTraits(traits);
+    // setId(id);
+    // setPhotoshopId(photoshopId);
+    // setName(name);
+    // setTraits(traits);
+
+    setId("1");
+    setPhotoshopId("1");
+    setName("1");
+    setTraits([
+      {
+        name: "1. Background",
+        value: "Orange",
+        rarity: 1,
+        type: "png",
+      },
+      { name: "2. Fur", value: "Red Cheetah", rarity: 1, type: "png" },
+      {
+        name: "3. Clothes",
+        value: "Black Shirt",
+        rarity: 1,
+        type: "png",
+      },
+    ]);
   };
 
-  const onSave = () => {};
+  // ! TODO
+  const asyncJob = async () =>
+    new Promise((resolve, reject) =>
+      photoshop.core.executeAsModal(async (executionContext) => {
+        const doc = app.activeDocument;
+        const token = getFolder(photoshopId);
+        const folder = await fs.getEntryForPersistentToken(token);
+        const buildFolder = await folder.createFolder(".build");
+        const buildFile = await buildFolder.createFile(`${name}.png`);
+        await doc.saveAs.png(buildFile);
+        resolve();
+      })
+    );
+
+  const onSave = async () => {
+    await asyncJob();
+  };
 
   return (
     <div className="flex flex-col space-y-2">
       <div>
-        <sp-action-button size="m">
-          <sp-icon name="ui:Arrow100"></sp-icon>
-          {/* EDIT */}
-        </sp-action-button>
+        <sp-action-button onClick={onLoad}>Load</sp-action-button>
       </div>
 
-      {/* <sp-button onClick={onLoad}>Load</sp-button> */}
-      {name && (
-        <sp-body>
-          {name} with id {id}
-        </sp-body>
-      )}
+      {name && <sp-body>{name}</sp-body>}
+
       {traits &&
         traits.map((trait) => (
-          <div
-            key={trait.name}
-            className="p-2 border-2 border-solid border-white rounded"
-          >
-            <sp-body>
-              {trait.name}: {trait.value}
-            </sp-body>
-          </div>
+          <sp-textfield style={{ width: "100%" }} value={trait.value} readonly>
+            <sp-label slot="label">{trait.name}</sp-label>
+          </sp-textfield>
         ))}
-      {photoshopId && <sp-button onClick={onSave}>Save</sp-button>}
+
+      {photoshopId && (
+        <div className="flex justify-end">
+          <sp-button onClick={onSave}>Save</sp-button>
+        </div>
+      )}
     </div>
   );
 }

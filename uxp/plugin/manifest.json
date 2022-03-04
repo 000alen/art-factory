@@ -22,10 +22,10 @@
       "label": {
         "default": "Configuration"
       },
-      "minimumSize": { "width": 230, "height": 200 },
+      "minimumSize": { "width": 230, "height": 480 },
       "maximumSize": { "width": 2000, "height": 2000 },
-      "preferredDockedSize": { "width": 230, "height": 300 },
-      "preferredFloatingSize": { "width": 230, "height": 300 },
+      "preferredDockedSize": { "width": 230, "height": 480 },
+      "preferredFloatingSize": { "width": 230, "height": 480 },
       "icons": [
         {
           "width": 23,
@@ -51,10 +51,10 @@
       "label": {
         "default": "Edition"
       },
-      "minimumSize": { "width": 230, "height": 200 },
+      "minimumSize": { "width": 230, "height": 480 },
       "maximumSize": { "width": 2000, "height": 2000 },
-      "preferredDockedSize": { "width": 230, "height": 300 },
-      "preferredFloatingSize": { "width": 230, "height": 300 },
+      "preferredDockedSize": { "width": 230, "height": 480 },
+      "preferredFloatingSize": { "width": 230, "height": 480 },
       "icons": [
         {
           "width": 23,
