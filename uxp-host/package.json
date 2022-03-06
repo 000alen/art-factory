@@ -107,14 +107,12 @@
     "xhr2-cookies": "^1.1.0"
   },
   "build": {
-    "appId": "com.electron.adobe.example.desktop-helper-sample",
-    "productName": "UXP Helper App",
+    "appId": "art-factory.uxp-host",
+    "productName": "Art Factory",
     "files": [
       "build/**/*",
-      "contracts/**/*",
       "node_modules/**/*",
       "public/**/*",
-      ".env",
       "package.json"
     ],
     "mac": {

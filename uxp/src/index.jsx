@@ -16,7 +16,7 @@ export const aboutController = new CommandController(
   ({ dialog }) => <About dialog={dialog} />,
   {
     id: "showAbout",
-    title: "POSTON Art Factory",
+    title: "Art Factory",
     size: { width: 480, height: 480 },
   }
 );
