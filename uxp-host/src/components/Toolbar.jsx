@@ -51,7 +51,7 @@ export function Toolbar({ children }) {
       <Flex direction="row-reverse" gap="size-100">
         <DialogTrigger>
           <ActionButton>
-            <Settings />
+            <Settings size="M"/>
           </ActionButton>
           {(close) => <SecretsDialog close={close} />}
         </DialogTrigger>
