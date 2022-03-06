@@ -1,6 +1,6 @@
 {
   "id": "com.adobe.uxp.starter.react",
-  "name": "UXP React Starter Plugin",
+  "name": "Poston - UXP Plugin",
   "version": "1.0.0",
   "main": "index.html",
   "manifestVersion": 4,
@@ -9,13 +9,6 @@
     "minVersion": "23.0.0"
   },
   "entrypoints": [
-    {
-      "type": "command",
-      "id": "showAbout",
-      "label": {
-        "default": "About React Demo"
-      }
-    },
     {
       "type": "panel",
       "id": "configuration",

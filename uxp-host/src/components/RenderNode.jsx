@@ -35,7 +35,7 @@ export function RenderNode({ sidebar, data }) {
         <NumberField
           label="n"
           {...{
-            value: sidebar ? null : Math.max(0, data.n),
+            value: sidebar ? null : Math.max(1, data.n),
             onChange: sidebar ? null : data.onChange,
             isDisabled: sidebar ? true : false,
           }}

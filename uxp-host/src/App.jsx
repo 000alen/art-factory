@@ -22,9 +22,9 @@ const App = () => {
           <Flex direction="column" height="100vh" gap="size-100">
             <Toolbar>
               {connectionStatus ? (
-                <StatusLight variant="positive">UXP Connected</StatusLight>
+                <StatusLight variant="positive"> UXP Connected </StatusLight>
               ) : (
-                <StatusLight variant="negative">UXP Disconnected</StatusLight>
+                <StatusLight variant="negative"> UXP Disconnected </StatusLight>
               )}
             </Toolbar>
 
