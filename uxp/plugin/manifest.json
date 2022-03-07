@@ -1,6 +1,6 @@
 {
-  "id": "com.adobe.uxp.starter.react",
-  "name": "Poston - UXP Plugin",
+  "id": "art-factory.uxp",
+  "name": "Art Factory",
   "version": "1.0.0",
   "main": "index.html",
   "manifestVersion": 4,
