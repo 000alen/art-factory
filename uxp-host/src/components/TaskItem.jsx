@@ -69,6 +69,17 @@ export function TaskItem({ task, onRun, fields, dialog }) {
             key={field.key}
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
+            minValue={1}
+          />
+        );
+      case "float":
+        return (
+          <NumberField
+            key={field.key}
+            label={field.label}
+            onChange={(value) => onSet(field.key, value)}
+            minValue={0}
+            step={0.01}
           />
         );
       case "string":

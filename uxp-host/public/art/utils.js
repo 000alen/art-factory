@@ -300,7 +300,7 @@ function layersNames(inputDir) {
     if (layer.match(pattern)) correctMatch++;
   }
 
-  if (correctMatch != allLayers.length) {
+  if (correctMatch !== allLayers.length) {
     // Just return the folders
     return allLayers;
   }
