@@ -1,7 +1,7 @@
 import React from "react";
 import { LayerNode } from "./LayerNode";
 import { RenderNode } from "./RenderNode";
-import { RootNode } from "./RootNode";
+
 
 export function Sidebar({ layers, buffers, urls }) {
   const onDragStart = (event, data) => {
@@ -22,12 +22,14 @@ export function Sidebar({ layers, buffers, urls }) {
           direction: "ltr",
         }}
       >
+        {/*
         <div
           onDragStart={(event) => onDragStart(event, { type: "rootNode" })}
           draggable
         >
           <RootNode sidebar />
         </div>
+        */}
         <div
           onDragStart={(event) =>
             onDragStart(event, { type: "renderNode", label: "Render" })

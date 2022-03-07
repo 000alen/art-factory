@@ -57,7 +57,7 @@ export function ArrayItem({
           </>
         )}
         <Item key="remove">
-          <Remove />
+          <Remove/>
         </Item>
       </ActionGroup>
     </Flex>

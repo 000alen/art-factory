@@ -9,7 +9,14 @@ export function Configuration721({
 }) {
   return (
     <Flex direction="column">
-      <TextField label="Cost" value={cost} onChange={setCost} />
+      {/*<TextField label="Cost" value={cost} onChange={setCost} />*/}
+      <NumberField
+        label="Cost"
+        value={cost}
+        onChange={setCost}
+        minValue={0.01}
+        step={0.01}
+      />
       <NumberField
         label="Max Mint Amount"
         value={maxMintAmount}
