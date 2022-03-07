@@ -80,6 +80,20 @@ export function useNodes(
 
   const updatePreview = () => {
     setElements((els) => {
+      els = els.map((el) =>
+        el.type === "renderNode"
+          ? {
+              ...el,
+              data: {
+                ...el.data,
+                connected: false,
+                buffers: undefined,
+                urls: undefined,
+              },
+            }
+          : el
+      );
+
       const toUpdate = {};
 
       allPaths(els)
@@ -91,18 +105,21 @@ export function useNodes(
           toUpdate[render.id] = [buffers, urls];
         });
 
-      return els.map((el) =>
+      els = els.map((el) =>
         el.id in toUpdate
           ? {
               ...el,
               data: {
                 ...el.data,
+                connected: true,
                 buffers: toUpdate[el.id][0],
                 urls: toUpdate[el.id][1],
               },
             }
           : el
       );
+
+      return els;
     });
   };
 

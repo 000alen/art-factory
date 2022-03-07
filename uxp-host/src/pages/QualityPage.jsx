@@ -15,9 +15,12 @@ import { ImageItem } from "../components/ImageItem";
 import { EditorDialog } from "../components/EditorDialog";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { UXPContext } from "../components/UXPContext";
+import { ToolbarContext } from "../components/Toolbar";
+import Close from "@spectrum-icons/workflow/Close";
 
 export function QualityPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -39,6 +42,8 @@ export function QualityPage() {
   const [editorAttributes, setEditorAttributes] = useState(null);
 
   useEffect(() => {
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+
     Promise.all(
       [...Array(25).keys()].map(async (i) => {
         if (index + i >= attributes.length) return null;
@@ -69,6 +74,7 @@ export function QualityPage() {
     uxpContext.on("uxp-reload", uxpReload);
 
     return () => {
+      toolbarContext.removeButton("close");
       uxpContext.off("uxp-reload", uxpReload);
     };
   }, [index, attributes.length, genericDialogContext, id]);

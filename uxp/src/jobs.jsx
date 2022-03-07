@@ -12,14 +12,12 @@ export async function hideAll(executionContext, doc) {
   }
 }
 
-export async function exportAll(executionContext, doc, userFolder) {
+export async function exportAll(executionContext, doc, folder) {
   for (let i = 0; i < doc.layers.length; i++) {
     const layer = doc.layers[i];
     layer.visible = true;
 
-    const layerFolder = await userFolder.createFolder(
-      `${doc.layers.length - i}. ${layer.name}`
-    );
+    const layerFolder = await folder.createFolder(layer.name);
     for (const layerElement of layer.layers) {
       layerElement.visible = true;
 
@@ -33,13 +31,9 @@ export async function exportAll(executionContext, doc, userFolder) {
 
     layer.visible = false;
   }
-
-  return userFolder;
 }
 
 export async function edit(executionContext, doc, name, traits) {
-  const re = /(\d+)\. /;
-
   const newDoc = await app.createDocument({
     name,
     width: doc.width,
@@ -47,8 +41,7 @@ export async function edit(executionContext, doc, name, traits) {
   });
 
   for (const { name, value } of traits) {
-    const displayName = name.replace(re, "");
-    const layer = doc.layers.getByName(displayName);
+    const layer = doc.layers.getByName(name);
     const layerElement = layer.layers.getByName(value);
     const newLayerElement = await layerElement.duplicate(newDoc);
     newLayerElement.visible = true;

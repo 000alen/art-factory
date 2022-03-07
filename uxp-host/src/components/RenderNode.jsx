@@ -7,11 +7,13 @@ import { ImageItem } from "./ImageItem";
 export function RenderNode({ sidebar, data }) {
   const [url, setUrl] = useState(null);
 
+  const { connected, buffers } = data;
+
   useEffect(() => {
     if (data.buffers) {
       // ! TODO: Pass configuration state
       compose(
-        data.buffers.map((buffer) => buffer.buffer),
+        buffers.map((buffer) => buffer.buffer),
         { width: 200, height: 200 }
       )
         .then((buffer) => {
@@ -31,7 +33,8 @@ export function RenderNode({ sidebar, data }) {
         <Handle id="renderIn" type="target" position={Position.Left} />
       )}
       <div>
-        <ImageItem src={url} />
+        {/* ! TODO: Placeholder */}
+        <ImageItem src={connected || sidebar ? url : null} />{" "}
         <NumberField
           label="n"
           {...{

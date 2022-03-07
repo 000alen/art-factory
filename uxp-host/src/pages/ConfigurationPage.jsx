@@ -11,11 +11,14 @@ import { ConfigurationLayers } from "../components/ConfigurationLayers";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { initializeFactory } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
+import { ToolbarContext } from "../components/Toolbar";
+import Close from "@spectrum-icons/workflow/Close";
 
 export function ConfigurationPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const toolbarContext = useContext(ToolbarContext);
   const { task } = useErrorHandler(genericDialogContext);
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   const { state } = useLocation();
   const { inputDir, outputDir, photoshopId, photoshop, partialConfiguration } =
     state;
@@ -40,7 +43,9 @@ export function ConfigurationPage() {
   const [layers, setLayers] = useState([""]);
 
   useEffect(() => {
-    task("information retrieval", async () => {
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+
+    const loadInformation = task("load information", async () => {
       const layers = await layersNames(inputDir);
       const name = await _name(inputDir);
       const { width, height } = await sizeOf(inputDir);
@@ -48,7 +53,7 @@ export function ConfigurationPage() {
       setName(name);
       setWidth(width);
       setHeight(height);
-    })();
+    });
 
     if (partialConfiguration) {
       if (partialConfiguration.name) setName(partialConfiguration.name);
@@ -70,7 +75,13 @@ export function ConfigurationPage() {
         setMaxMintAmount(partialConfiguration.maxMintAmount);
 
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
+    } else {
+      loadInformation();
     }
+
+    return () => {
+      toolbarContext.removeButton("close");
+    };
   }, [genericDialogContext, inputDir, partialConfiguration]);
 
   const canContinue = useMemo(
@@ -138,7 +149,7 @@ export function ConfigurationPage() {
       outputDir
     );
 
-    navigator("/nodes", {
+    navigate("/nodes", {
       state: {
         id,
         inputDir,

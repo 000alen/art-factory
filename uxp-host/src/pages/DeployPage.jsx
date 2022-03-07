@@ -33,6 +33,7 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
 import { factoryDeployAssets, factoryDeployContract } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
+import Close from "@spectrum-icons/workflow/Close";
 
 function resolveEtherscanUrl(network, transactionHash) {
   return network === Networks.mainnet
@@ -49,10 +50,10 @@ function resolveEtherscanUrl(network, transactionHash) {
 // https://docs.opensea.io/docs/metadata-standards
 export function DeployPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const toolbarContext = useContext(ToolbarContext);
   const { task, isWorking } = useErrorHandler(genericDialogContext);
 
-  const toolbarContext = useContext(ToolbarContext);
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   const { state } = useLocation();
   const {
     id,
@@ -77,14 +78,12 @@ export function DeployPage() {
   const [timerId, setTimerId] = useState(null);
   const [contractAddressTooltipShown, setContractAddressTooltipShown] =
     useState(false);
-  const [
-    contractAddressTooltipLinkPressed,
-    setContractAddressTooltipLinkPressed,
-  ] = useState(false);
 
   useEffect(() => () => clearTimeout(timerId), [timerId]);
 
   useEffect(() => {
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+
     toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
       localStorage.clear()
     );
@@ -129,6 +128,7 @@ export function DeployPage() {
       });
 
     return () => {
+      toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
   }, [networkKey]);
@@ -172,7 +172,7 @@ export function DeployPage() {
   });
 
   const onContinue = () => {
-    navigator("/instance", {
+    navigate("/instance", {
       state: {
         id,
         attributes,
@@ -251,9 +251,7 @@ export function DeployPage() {
                     You can check the transaction status in Etherscan, and if it
                     is already processed, you can choose to continue.
                   </Text>
-                  <Link
-                    onPress={() => setContractAddressTooltipLinkPressed(true)}
-                  >
+                  <Link>
                     <a
                       href={resolveEtherscanUrl(
                         Networks[networkKey],
@@ -264,15 +262,6 @@ export function DeployPage() {
                       Transaction at Etherscan.
                     </a>
                   </Link>
-                  {/* <Button
-                    isDisabled={!contractAddressTooltipLinkPressed}
-                    onPress={() => {
-                      setIsDeploying(false);
-                      setDeployedDone(true);
-                    }}
-                  >
-                    The transaction is already deployed
-                  </Button> */}
                 </Flex>
               </Content>
             </ContextualHelp>

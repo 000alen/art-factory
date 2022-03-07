@@ -1405,7 +1405,6 @@ contract NFT is ERC721Enumerable, Ownable {
     uint256 public cost = 0.05 ether;
     uint256 public maxSupply = 10000;
     uint256 public maxMintAmount = 20;
-    // bool public paused = false;
 
     constructor(
         string memory _name,
@@ -1429,7 +1428,6 @@ contract NFT is ERC721Enumerable, Ownable {
     // public
     function mint(uint256 _mintAmount) public payable {
         uint256 supply = totalSupply();
-        // require(!paused);
         require(_mintAmount > 0);
         require(_mintAmount <= maxMintAmount);
         require(supply + _mintAmount <= maxSupply);
@@ -1499,10 +1497,6 @@ contract NFT is ERC721Enumerable, Ownable {
     {
         baseExtension = _newBaseExtension;
     }
-
-    // function pause(bool _state) public onlyOwner {
-    //     paused = _state;
-    // }
 
     function withdraw() public payable onlyOwner {
         (bool os, ) = payable(owner()).call{value: address(this).balance}("");

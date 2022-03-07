@@ -287,32 +287,8 @@ function composeImages(back, front, width, height) {
   return back;
 }
 
-
 function layersNames(inputDir) {
-  let allLayers = fs
-    .readdirSync(inputDir)
-    .filter((file) => !file.startsWith("."));
-
-  const pattern = /(\d+)\..+/g;
-  let correctMatch = 0;
-
-  for (const layer of allLayers) {
-    if (layer.match(pattern)) correctMatch++;
-  }
-
-  if (correctMatch != allLayers.length) {
-    // Just return the folders
-    return allLayers;
-  }
-
-  allLayers.sort((a, b) => {
-    const numberA = Number(a.split(".")[0]);
-    const numberB = Number(b.split(".")[0]);
-
-    return numberA - numberB;
-  });
-
-  return allLayers;
+  return fs.readdirSync(inputDir).filter((file) => !file.startsWith("."));
 }
 
 function name(inputDir) {

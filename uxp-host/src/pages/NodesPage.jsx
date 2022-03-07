@@ -7,9 +7,12 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
 import { Nodes, NodesContextProvider } from "../components/NodesContext";
 import { useErrorHandler } from "../components/ErrorHandler";
+import Close from "@spectrum-icons/workflow/Close";
+import { ToolbarContext } from "../components/Toolbar";
 
 export function NodesPage() {
   const genericDialogContext = useContext(GenericDialogContext);
+  const toolbarContext = useContext(ToolbarContext);
   const { task, isWorking } = useErrorHandler(genericDialogContext);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -33,6 +36,8 @@ export function NodesPage() {
   const [configuration, setConfiguration] = useState(null);
 
   useEffect(() => {
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+
     Promise.all(
       partialConfiguration.layers.map(
         async (layer) => await factoryGetRandomTraitImage(id, layer)
@@ -66,6 +71,9 @@ export function NodesPage() {
         setBuffers(buffers);
         setUrls(urls);
       });
+    return () => {
+      toolbarContext.removeButton("close");
+    };
   }, [id, partialConfiguration.layers]);
 
   const onProgress = (i) => {

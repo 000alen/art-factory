@@ -43,10 +43,8 @@ export const ConfigurationPanel = () => {
         await hideAll(executionContext, doc);
         await exportAll(executionContext, doc, folder);
 
-        const layers = doc.layers
-          .map((layer, i) => `${doc.layers.length - i}. ${layer.name}`)
-          .reverse();
-
+        // NOTE: It's already sorted
+        const layers = doc.layers.map((layer) => layer.name).reverse();
         const inputDir = folder.nativePath;
 
         resolve({ id, layers, inputDir });

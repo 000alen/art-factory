@@ -16,10 +16,10 @@ code {
     monospace;
 }
 
-svg > path {
+/* svg > path {
   padding: auto !important;
 }
 
 path {
   transform: scale(0.5) !important;
-}
+} */
