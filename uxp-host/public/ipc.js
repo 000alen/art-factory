@@ -97,8 +97,8 @@ const ipcSetterAndGetter = (property, setter, getter) => {
 
 const factories = {};
 
-ipcTaskWithRequestId("factoryGetImage", async (id, index) =>
-  factories[id].getImage(index)
+ipcTaskWithRequestId("factoryGetImage", async (id, index, maxSize) =>
+  factories[id].getImage(index, maxSize)
 );
 
 ipcTaskWithProgress(
@@ -187,8 +187,10 @@ ipcAsyncTask(
   async (id) => await factories[id].deployMetadata()
 );
 
-ipcTask("factoryGetRandomImage", (id, attributes) =>
-  factories[id].getRandomImage(attributes)
+ipcAsyncTask(
+  "factoryGetRandomImage",
+  async (id, attributes, maxSize) =>
+    await factories[id].getRandomImage(attributes, maxSize)
 );
 
 ipcAsyncTask("getContract", async (name) => {
@@ -248,12 +250,14 @@ ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
 ipcTaskWithRequestId(
   "factoryGetRandomTraitImage",
-  async (id, layerName) => await factories[id].getRandomTraitImage(layerName)
+  async (id, layerName, maxSize) =>
+    await factories[id].getRandomTraitImage(layerName, maxSize)
 );
 
 ipcTaskWithRequestId(
   "factoryGetTraitImage",
-  async (id, trait) => await factories[id].getTraitImage(trait)
+  async (id, trait, maxSize) =>
+    await factories[id].getTraitImage(trait, maxSize)
 );
 
 ipcAsyncTask("factoryRewriteImage", async (id, i, dataUrl) => {

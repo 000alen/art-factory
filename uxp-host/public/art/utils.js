@@ -7,7 +7,6 @@ const { getOutgoers } = require("react-flow-renderer");
 const { tuple } = require("immutable-tuple");
 const { v4: uuid } = require("uuid");
 const imageSize = require("image-size");
-const { Factory } = require("./Factory");
 
 const RARITY_DELIMITER = "#";
 

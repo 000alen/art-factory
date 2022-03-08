@@ -90,8 +90,8 @@ export const createFactory = (id, config, inputDir, outputDir, props) =>
 export const factorySetProps = (id, props) =>
   ipcTask("factorySetProps")(id, JSON.stringify(props));
 
-export const factoryGetImage = (id, index) =>
-  ipcTaskWithRequestId("factoryGetImage")(id, index);
+export const factoryGetImage = (id, index, maxSize) =>
+  ipcTaskWithRequestId("factoryGetImage")(id, index, maxSize);
 
 export const factoryGenerateImages = (id, attributes, onProgress) =>
   ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, attributes);
@@ -121,7 +121,7 @@ export const factoryDeployImages = (id) => ipcTask("factoryDeployImages")(id);
 export const factoryDeployMetadata = (id) =>
   ipcTask("factoryDeployMetadata")(id);
 
-export const factoryGetRandomImage = (id, attributes) =>
+export const factoryGetRandomImage = (id, attributes, maxSize) =>
   ipcTask("factoryGetRandomImage")(id, attributes);
 
 export const factoryLoadSecrets = (id, secrets) =>
@@ -133,14 +133,14 @@ export const getContractSource = (name) => ipcTask("getContractSource")(name);
 
 export const getOutputDir = (inputDir) => ipcTask("getOutputDir")(inputDir);
 
-export const factoryGetTraitImage = (id, trait) =>
-  ipcTaskWithRequestId("factoryGetTraitImage")(id, trait);
+export const factoryGetTraitImage = (id, trait, maxSize) =>
+  ipcTaskWithRequestId("factoryGetTraitImage")(id, trait, maxSize);
 
 export const factoryRewriteImage = (id, i, dataURL) =>
   ipcTask("factoryRewriteImage")(id, i, dataURL);
 
-export const factoryGetRandomTraitImage = (id, layersName) =>
-  ipcTaskWithRequestId("factoryGetRandomTraitImage")(id, layersName);
+export const factoryGetRandomTraitImage = (id, layersName, maxSize) =>
+  ipcTaskWithRequestId("factoryGetRandomTraitImage")(id, layersName, maxSize);
 
 export const compose = (buffers, configuration) =>
   ipcTaskWithRequestId("compose")(buffers, configuration);

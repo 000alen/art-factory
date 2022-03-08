@@ -40,7 +40,7 @@ export function NodesPage() {
 
     Promise.all(
       partialConfiguration.layers.map(
-        async (layer) => await factoryGetRandomTraitImage(id, layer)
+        async (layer) => await factoryGetRandomTraitImage(id, layer, 500)
       )
     )
       .then((buffers) => [
@@ -124,6 +124,7 @@ export function NodesPage() {
       setElements={setElements}
       buffers={buffers}
       urls={urls}
+      partialConfiguration={partialConfiguration}
     >
       <div className="w-full h-full flex overflow-hidden">
         <Sidebar

@@ -18,6 +18,7 @@ const {
   sizeOf,
   compose,
 } = require("./utils");
+const imageSize = require("image-size");
 
 /** @typedef {{ name: string, value: string, rarity: number }} Trait */
 
@@ -285,8 +286,6 @@ class Factory {
         );
 
         for (const trait of traits) {
-          // if (trait.)
-
           const layerElementPath = this.layerElementsPaths.get(
             path.join(trait.name, trait.value)
           );
@@ -390,35 +389,57 @@ class Factory {
     return this.metadataCID;
   }
 
-  getRandomImage(attributes) {
+  async getRandomImage(attributes, maxSize) {
     const index = Math.floor(Math.random() * attributes.length);
-    return fs.readFileSync(
+    return await this.getImage(index, maxSize);
+  }
+
+  async getImage(index, maxSize) {
+    let buffer = fs.readFileSync(
       path.join(this.outputDir, "images", `${index + 1}.png`)
     );
+
+    if (maxSize) {
+      let { width, height } = imageSize(buffer);
+      const ratio = Math.max(width, height) / maxSize;
+      if (ratio > 1) {
+        width = Math.floor(width / ratio);
+        height = Math.floor(height / ratio);
+        const current = await Jimp.read(buffer);
+        current.resize(width, height);
+        buffer = await current.getBufferAsync(Jimp.MIME_PNG);
+      }
+    }
+
+    return buffer;
   }
 
-  getImage(index) {
-    return fs.readFileSync(
-      path.join(this.outputDir, "images", `${index + 1}.png`)
-    );
-  }
-
-  async getRandomTraitImage(layerName) {
-    const layerElements = this.layers.get(layerName);
-    const { name } = rarityWeightedChoice(layerElements);
-    const layerElementPath = this.layerElementsPaths.get(
-      path.join(layerName, name)
-    );
-    await this.ensureLayerElementBuffer(layerElementPath);
-    return this.layerElementsBuffers.get(layerElementPath);
-  }
-
-  async getTraitImage(trait) {
+  async getTraitImage(trait, maxSize) {
     const layerElementPath = this.layerElementsPaths.get(
       path.join(trait.name, trait.value)
     );
     await this.ensureLayerElementBuffer(layerElementPath);
-    return this.layerElementsBuffers.get(layerElementPath);
+    let buffer = this.layerElementsBuffers.get(layerElementPath);
+
+    if (maxSize) {
+      let { width, height } = imageSize(buffer);
+      const ratio = Math.max(width, height) / maxSize;
+      if (ratio > 1) {
+        width = Math.floor(width / ratio);
+        height = Math.floor(height / ratio);
+        const current = await Jimp.read(buffer);
+        current.resize(width, height);
+        buffer = await current.getBufferAsync(Jimp.MIME_PNG);
+      }
+    }
+
+    return buffer;
+  }
+
+  async getRandomTraitImage(layerName, maxSize) {
+    const layerElements = this.layers.get(layerName);
+    const { name: value } = rarityWeightedChoice(layerElements);
+    return await this.getTraitImage({ name: layerName, value }, maxSize);
   }
 
   async rewriteImage(i, dataUrl) {

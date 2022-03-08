@@ -1,8 +1,6 @@
-BoredApes_build/
-Eyes_build/
-
+.VsCodeCounter/
 build/
-typechain-types/
+sample/
 
 # Logs
 logs

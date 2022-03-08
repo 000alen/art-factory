@@ -47,7 +47,7 @@ export function QualityPage() {
     Promise.all(
       [...Array(25).keys()].map(async (i) => {
         if (index + i >= attributes.length) return null;
-        const buffer = await factoryGetImage(id, index + i);
+        const buffer = await factoryGetImage(id, index + i, 500);
         const url = URL.createObjectURL(
           new Blob([buffer], { type: "image/png" })
         );
