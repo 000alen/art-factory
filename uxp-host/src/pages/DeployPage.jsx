@@ -84,7 +84,7 @@ export function DeployPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
-    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
+    toolbarContext.addButton("logOut", "Log Out", <LogOut UNSAFE_className="fix-icon-size"/>, () =>
       localStorage.clear()
     );
 

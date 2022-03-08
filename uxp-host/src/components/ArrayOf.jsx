@@ -131,7 +131,7 @@ export function ArrayOf({
         </Flex>
       </View>
       <ActionButton marginTop={8} onPress={onAdd}>
-        <Add />
+        <Add/>
       </ActionButton>
     </View>
   );

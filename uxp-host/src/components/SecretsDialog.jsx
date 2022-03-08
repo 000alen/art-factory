@@ -91,7 +91,7 @@ export function SecretsDialog({ close }) {
       <Heading>
         <Flex alignItems="center" gap="size-100">
           <Text>Secrets</Text>
-          <ContextualHelp variant="help">
+          <ContextualHelp variant="help" UNSAFE_className="fix-icon-size">
             <Heading>What are secrets?</Heading>
             <Content>
               <Text>
