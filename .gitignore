@@ -1,6 +1,7 @@
 .VsCodeCounter/
 build/
 sample/
+playground/
 
 # Logs
 logs
