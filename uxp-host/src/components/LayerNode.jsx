@@ -1,6 +1,15 @@
 import React from "react";
+import {
+  MenuTrigger,
+  ActionButton,
+  Menu,
+  Item,
+  Flex,
+  Text,
+} from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
 import { ImageItem } from "./ImageItem";
+import More from "@spectrum-icons/workflow/More";
 
 export function LayerNode({ sidebar, data }) {
   const isValidConnection = (connection) =>
@@ -12,10 +21,26 @@ export function LayerNode({ sidebar, data }) {
       {!sidebar && (
         <Handle id="layerIn" type="target" position={Position.Left} />
       )}
-      <div>
+
+      <Flex direction="column">
         <ImageItem src={data.url} />
-        <div>{data.layer}</div>
-      </div>
+        <Flex justifyContent="space-between" alignItems="center">
+          <Text>{data.layer}</Text>
+          <MenuTrigger>
+            <ActionButton>
+              <More />
+            </ActionButton>
+            <Menu onAction={(key) => alert(key)}>
+              <Item>Normal</Item>
+              <Item>Screen</Item>
+              <Item>Multiply</Item>
+              <Item>Darken</Item>
+              <Item>Overlay</Item>
+            </Menu>
+          </MenuTrigger>
+        </Flex>
+      </Flex>
+
       {!sidebar && (
         <Handle
           id="layerOut"

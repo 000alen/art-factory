@@ -25,6 +25,13 @@ export function ColorPicker({ label, color, setColor, isDisabled }) {
         value={color}
         onChange={setColor}
       />
+      {/* <ColorSlider
+        isDisabled={isDisabled}
+        channel="alpha"
+        value={color}
+        onChange={setColor}
+      /> */}
+
     </Flex>
   );
 }

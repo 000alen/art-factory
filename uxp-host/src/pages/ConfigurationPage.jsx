@@ -27,6 +27,9 @@ export function ConfigurationPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
+
+  const [originalWidth, setOriginalWidth] = useState(null);
+  const [originalHeight, setOriginalHeight] = useState(null);
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
@@ -43,7 +46,7 @@ export function ConfigurationPage() {
   const [layers, setLayers] = useState([""]);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close/>, () => navigate("/"));
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
     const loadInformation = task("load information", async () => {
       const layers = await layersNames(inputDir);
@@ -51,6 +54,8 @@ export function ConfigurationPage() {
       const { width, height } = await sizeOf(inputDir);
       setLayers(layers);
       setName(name);
+      setOriginalWidth(width);
+      setOriginalHeight(height);
       setWidth(width);
       setHeight(height);
     });
@@ -182,6 +187,8 @@ export function ConfigurationPage() {
             setDescription,
             symbol,
             setSymbol,
+            originalWidth,
+            originalHeight,
             width,
             setWidth,
             height,

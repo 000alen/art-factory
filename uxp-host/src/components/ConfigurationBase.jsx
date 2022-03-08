@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Flex,
   TextField,
@@ -7,6 +7,7 @@ import {
   TextArea,
   RadioGroup,
   Radio,
+  Slider,
 } from "@adobe/react-spectrum";
 import { ColorPicker } from "./ColorPicker";
 
@@ -17,6 +18,8 @@ export function ConfigurationBase({
   setDescription,
   symbol,
   setSymbol,
+  originalWidth,
+  originalHeight,
   width,
   setWidth,
   height,
@@ -28,8 +31,13 @@ export function ConfigurationBase({
   contractType,
   setContractType,
 }) {
+  const onResolutionChange = (value) => {
+    setWidth(Math.floor(originalWidth * (value / 100)));
+    setHeight(Math.floor(originalHeight * (value / 100)));
+  };
+
   return (
-    <Flex direction="column">
+    <Flex direction="column" gap="size-100">
       <TextField label="Name" value={name} onChange={setName} />
       <TextArea
         label="Description"
@@ -38,8 +46,29 @@ export function ConfigurationBase({
       />
 
       <TextField label="Symbol" value={symbol} onChange={setSymbol} />
-      <NumberField label="Width" value={width} onChange={setWidth} />
-      <NumberField label="Height" value={height} onChange={setHeight} />
+
+      <Flex direction="column">
+        <Slider
+          label="Resolution"
+          defaultValue={100}
+          minValue={10}
+          maxValue={100}
+          onChange={onResolutionChange}
+        />
+
+        <NumberField
+          label="Width"
+          value={width}
+          onChange={setWidth}
+          isReadOnly
+        />
+        <NumberField
+          label="Height"
+          value={height}
+          onChange={setHeight}
+          isReadOnly
+        />
+      </Flex>
 
       <Switch
         margin="size-10"
