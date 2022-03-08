@@ -16,10 +16,20 @@ code {
     monospace;
 }
 
-/* svg > path {
-  padding: auto !important;
+
+/* Temporal solution */
+.fix-icon-size > path {
+  transform: scale(0.5);
 }
 
-path {
-  transform: scale(0.5) !important;
-} */
+.fix-icon-size > svg > path {
+  transform: scale(0.5);
+}
+
+.react-spectrum-ContextualHelp-button_d88303 > svg > path {
+  transform: scale(0.5);
+}
+
+button > svg > circle {
+  transform: scale(0.5);
+}

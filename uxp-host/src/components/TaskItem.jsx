@@ -164,7 +164,7 @@ export function TaskItem({ task, onRun, fields, dialog }) {
         <Flex direction="column" gap="size-100">
           <Flex alignItems="center" justifyContent="space-between">
             <Text>{task}</Text>
-            <ActionButton onPress={onPress}>
+            <ActionButton onPress={onPress} UNSAFE_className="fix-icon-size">
               {dialog ? <ShowMenu /> : <Play />}
             </ActionButton>
           </Flex>

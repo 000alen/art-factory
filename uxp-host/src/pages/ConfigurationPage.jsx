@@ -43,7 +43,7 @@ export function ConfigurationPage() {
   const [layers, setLayers] = useState([""]);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+    toolbarContext.addButton("close", "Close", <Close/>, () => navigate("/"));
 
     const loadInformation = task("load information", async () => {
       const layers = await layersNames(inputDir);
