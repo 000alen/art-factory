@@ -415,9 +415,12 @@ class Factory {
   }
 
   async getTraitImage(trait, maxSize) {
+    console.log(trait.name, trait.value);
+
     const layerElementPath = this.layerElementsPaths.get(
       path.join(trait.name, trait.value)
     );
+
     await this.ensureLayerElementBuffer(layerElementPath);
     let buffer = this.layerElementsBuffers.get(layerElementPath);
 

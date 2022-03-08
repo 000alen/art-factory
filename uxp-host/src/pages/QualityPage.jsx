@@ -4,6 +4,7 @@ import {
   ActionGroup,
   DialogTrigger,
   Item,
+  Button,
 } from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,12 +12,30 @@ import Back from "@spectrum-icons/workflow/Back";
 import Forward from "@spectrum-icons/workflow/Forward";
 import FastForward from "@spectrum-icons/workflow/FastForward";
 import { factoryGetImage, factoryRewriteImage } from "../ipc";
-import { ImageItem } from "../components/ImageItem";
 import { EditorDialog } from "../components/EditorDialog";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { UXPContext } from "../components/UXPContext";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
+
+export function _ImageItem({ src, onEdit }) {
+  return (
+    <div className="relative w-32 h-32 m-auto rounded">
+      {onEdit && (
+        <div className="absolute w-full h-full bg-gray-600 bg-opacity-75 flex justify-center items-center opacity-0 hover:opacity-100">
+          <Button onPress={onEdit}>Edit</Button>
+        </div>
+      )}
+
+      <img
+        className="w-full h-full select-none rounded"
+        draggable="false"
+        src={src}
+        alt=""
+      />
+    </div>
+  );
+}
 
 export function QualityPage() {
   const genericDialogContext = useContext(GenericDialogContext);
@@ -44,31 +63,33 @@ export function QualityPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
-    Promise.all(
-      [...Array(25).keys()].map(async (i) => {
-        if (index + i >= attributes.length) return null;
-        const buffer = await factoryGetImage(id, index + i, 500);
-        const url = URL.createObjectURL(
-          new Blob([buffer], { type: "image/png" })
-        );
-        return url;
-      })
-    )
-      .then((urls) => {
-        setImagesUrls(urls.filter((url) => url !== null));
-      })
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
+    Array.from({ length: 25 })
+      .map((_, i) =>
+        (async () => {
+          if (index + i >= attributes.length) return null;
+          const buffer = await factoryGetImage(id, index + i, 500);
+          const url = URL.createObjectURL(
+            new Blob([buffer], { type: "image/png" })
+          );
+          return url;
+        })()
+      )
+      .forEach((f, i) =>
+        f.then((url) => {
+          if (url) setImagesUrls((imagesUrls) => [...imagesUrls, [url, i]]);
+        })
+      );
 
     const uxpReload = async ({ photoshopId, name }) => {
       const i = Number(name) - index - 1;
-      const buffer = await factoryGetImage(id, index + i);
+      const buffer = await factoryGetImage(id, index + i, 500);
       const url = URL.createObjectURL(
         new Blob([buffer], { type: "image/png" })
       );
 
-      setImagesUrls((prevUrls) => prevUrls.map((u, j) => (j === i ? url : u)));
+      setImagesUrls((prevUrls) =>
+        prevUrls.map(([u, j]) => (j === i ? [url, i] : [u, j]))
+      );
     };
 
     uxpContext.on("uxp-reload", uxpReload);
@@ -80,11 +101,15 @@ export function QualityPage() {
   }, [index, attributes.length, genericDialogContext, id]);
 
   const onBack = () => {
+    if (index === 0) return;
+    setImagesUrls([]);
     setIndex((prevIndex) => Math.max(prevIndex - 25, 0));
   };
 
   const onForward = () => {
-    if (index < attributes.length - 25) setIndex((prevIndex) => prevIndex + 25);
+    if (index >= attributes.length - 25) return;
+    setImagesUrls([]);
+    setIndex((prevIndex) => prevIndex + 25);
   };
 
   const onFastForward = () => {
@@ -115,7 +140,7 @@ export function QualityPage() {
     await factoryRewriteImage(id, i, dataURL);
     setImagesUrls((prevUrls) => {
       const urls = [...prevUrls];
-      urls[i % 25] = dataURL;
+      urls[i % 25] = [dataURL, i];
       return urls;
     });
   };
@@ -174,10 +199,10 @@ export function QualityPage() {
         {Math.floor(index / 25) + 1} of {Math.ceil(attributes.length / 25)}
       </Heading>
 
-      <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5">
-        {imagesUrls.map((url, _i) => {
+      <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">
+        {imagesUrls.map(([url, _i]) => {
           return (
-            <ImageItem key={_i} src={url} onEdit={() => onEdit(index + _i)} />
+            <_ImageItem key={_i} src={url} onEdit={() => onEdit(index + _i)} />
           );
         })}
       </div>

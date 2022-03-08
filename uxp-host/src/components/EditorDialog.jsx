@@ -32,7 +32,7 @@ export function EditorDialog({
   const onLoad = (canvas) => {
     Promise.all(
       attributes.map(async (trait) => {
-        const buffer = await factoryGetTraitImage(id, trait);
+        const buffer = await factoryGetTraitImage(id, trait, 500); // ! TODO
         return URL.createObjectURL(new Blob([buffer], { type: "image/png" }));
       })
     )
@@ -45,6 +45,8 @@ export function EditorDialog({
           image.hasBorders = false;
           canvas.add(image);
         });
+      }).catch((err) => {
+        console.log(i, attributes, err);
       });
   };
 
