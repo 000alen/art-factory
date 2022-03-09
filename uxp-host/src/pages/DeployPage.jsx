@@ -84,8 +84,11 @@ export function DeployPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
-    toolbarContext.addButton("logOut", "Log Out", <LogOut UNSAFE_className="fix-icon-size"/>, () =>
-      localStorage.clear()
+    toolbarContext.addButton(
+      "logOut",
+      "Log Out",
+      <LogOut UNSAFE_className="fix-icon-size" />,
+      () => localStorage.clear()
     );
 
     const loadSecrets = async () => {
@@ -202,8 +205,8 @@ export function DeployPage() {
           </ActionButton>
           <Menu
             selectionMode="single"
-            selectedKeys={[networkKey]}
             disallowEmptySelection={true}
+            selectedKeys={[networkKey]}
             onSelectionChange={(selectedKeys) =>
               setNetworkKey([...selectedKeys].shift())
             }

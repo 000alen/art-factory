@@ -22,6 +22,8 @@ const imageSize = require("image-size");
 
 /** @typedef {{ name: string, value: string, rarity: number }} Trait */
 
+const DEFAULT_BACKGROUND = "#ffffff";
+
 class Factory {
   // ! TODO: extract?
   /** @type {{pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string}} */
@@ -273,38 +275,39 @@ class Factory {
     return attributes;
   }
 
+  async generateImage(traits, i) {
+    const image = await Jimp.create(
+      this.configuration.width,
+      this.configuration.height,
+      this.configuration.generateBackground
+        ? randomColor()
+        : this.configuration.defaultBackground || DEFAULT_BACKGROUND
+    );
+
+    for (const trait of traits) {
+      const layerElementPath = this.layerElementsPaths.get(
+        path.join(trait.name, trait.value)
+      );
+      await this.ensureLayerElementBuffer(layerElementPath);
+      const current = await Jimp.read(
+        this.layerElementsBuffers.get(layerElementPath)
+      );
+      composeImages(
+        image,
+        current,
+        this.configuration.width,
+        this.configuration.height
+      );
+    }
+
+    await image.writeAsync(path.join(this.outputDir, "images", `${i + 1}.png`));
+  }
+
   // ! TODO: Careful with memory usage (algorithm complexity: O(n) to O(log n))
   async generateImages(attributes, callback) {
     await Promise.all(
       attributes.map(async (traits, i) => {
-        const image = await Jimp.create(
-          this.configuration.width,
-          this.configuration.height,
-          this.configuration.generateBackground
-            ? randomColor()
-            : this.configuration.defaultBackground || "#ffffff"
-        );
-
-        for (const trait of traits) {
-          const layerElementPath = this.layerElementsPaths.get(
-            path.join(trait.name, trait.value)
-          );
-          await this.ensureLayerElementBuffer(layerElementPath);
-          const current = await Jimp.read(
-            this.layerElementsBuffers.get(layerElementPath)
-          );
-          composeImages(
-            image,
-            current,
-            this.configuration.width,
-            this.configuration.height
-          );
-        }
-
-        await image.writeAsync(
-          path.join(this.outputDir, "images", `${i + 1}.png`)
-        );
-
+        await this.generateImage(traits, i);
         if (callback !== undefined) callback(i + 1);
       })
     );

@@ -16,10 +16,20 @@ export function LayerNode({ sidebar, data }) {
     connection.targetHandle === "layerIn" ||
     connection.targetHandle === "renderIn";
 
+  console.log(data);
+
   return (
     <div className="p-2 border-2 border-solid border-white rounded">
       {!sidebar && (
-        <Handle id="layerIn" type="target" position={Position.Left} />
+        <>
+          <Handle id="layerIn" type="target" position={Position.Left} />
+          <Handle
+            id="layerOut"
+            type="source"
+            position={Position.Right}
+            isValidConnection={isValidConnection}
+          />
+        </>
       )}
 
       <Flex direction="column">
@@ -30,25 +40,20 @@ export function LayerNode({ sidebar, data }) {
             <ActionButton>
               <More />
             </ActionButton>
-            <Menu onAction={(key) => alert(key)}>
-              <Item>Normal</Item>
-              <Item>Screen</Item>
-              <Item>Multiply</Item>
-              <Item>Darken</Item>
-              <Item>Overlay</Item>
+            <Menu
+              selectionMode="single"
+              disallowEmptySelection={true}
+              defaultSelectedKeys={["normal"]}
+            >
+              <Item key="normal">Normal</Item>
+              <Item key="screen">Screen</Item>
+              <Item key="multiply">Multiply</Item>
+              <Item key="darken">Darken</Item>
+              <Item key="overlay">Overlay</Item>
             </Menu>
           </MenuTrigger>
         </Flex>
       </Flex>
-
-      {!sidebar && (
-        <Handle
-          id="layerOut"
-          type="source"
-          position={Position.Right}
-          isValidConnection={isValidConnection}
-        />
-      )}
     </div>
   );
 }

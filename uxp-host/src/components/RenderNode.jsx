@@ -1,5 +1,5 @@
-import { NumberField } from "@adobe/react-spectrum";
 import React, { useEffect, useState } from "react";
+import { NumberField } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
 import { compose } from "../ipc";
 import { ImageItem } from "./ImageItem";
@@ -30,7 +30,11 @@ export function RenderNode({ sidebar, data }) {
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">
       {!sidebar && (
-        <Handle id="renderIn" type="target" position={Position.Left} />
+        <>
+          <Handle id="renderIn" type="target" position={Position.Left} />
+          <Handle id="bundleIn" type="target" position={Position.Top} />
+          <Handle id="bundleOut" type="source" position={Position.Bottom} />
+        </>
       )}
       <div>
         {/* ! TODO: Placeholder */}

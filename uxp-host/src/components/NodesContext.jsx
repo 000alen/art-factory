@@ -10,6 +10,7 @@ import ReactFlow, {
   Background,
   getOutgoers,
 } from "react-flow-renderer";
+import { SwitchNode } from "./SwitchNode";
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -18,6 +19,7 @@ const nodeTypes = {
   rootNode: RootNode,
   layerNode: LayerNode,
   renderNode: RenderNode,
+  switchNode: SwitchNode,
 };
 
 const edgeTypes = {
@@ -38,21 +40,22 @@ const allPaths = (elements) => {
   const savedPaths = [];
   while (stack.length > 0) {
     const actualNode = stack.pop();
-    const neighbors = getOutgoers(actualNode.node, elements);
 
-    // Leaf node
-    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
+    if (actualNode.node.type === "renderNode") {
       savedPaths.push(actualNode.path);
+    } else {
+      const neighbors = getOutgoers(actualNode.node, elements);
 
-    for (const v of neighbors) {
-      stack.push({
-        node: v,
-        path: [...actualNode.path, v],
-      });
+      for (const v of neighbors) {
+        stack.push({
+          node: v,
+          path: [...actualNode.path, v],
+        });
+      }
     }
   }
 
-  return savedPaths;
+  return savedPaths.map((path) => path.slice(1));
 };
 
 export function useNodes(
@@ -96,14 +99,12 @@ export function useNodes(
 
       const toUpdate = {};
 
-      allPaths(els)
-        .map((path) => path.slice(1))
-        .forEach((path) => {
-          const render = path.pop();
-          const buffers = path.map((node) => node.data.buffer);
-          const urls = path.map((node) => node.data.url);
-          toUpdate[render.id] = [buffers, urls];
-        });
+      allPaths(els).forEach((path) => {
+        const render = path.pop();
+        const buffers = path.map((node) => node.data.buffer);
+        const urls = path.map((node) => node.data.url);
+        toUpdate[render.id] = [buffers, urls];
+      });
 
       els = els.map((el) =>
         el.id in toUpdate
@@ -124,9 +125,19 @@ export function useNodes(
   };
 
   const onConnect = (params) => {
-    setElements((els) =>
-      addEdge({ ...params, type: "customEdge", data: { onEdgeRemove } }, els)
-    );
+    setElements((els) => {
+      if (
+        params.sourceHandle === "bundleOut" &&
+        params.targetHandle === "bundleIn"
+      ) {
+        return addEdge({ ...params, animated: true }, els);
+      } else {
+        return addEdge(
+          { ...params, type: "customEdge", data: { onEdgeRemove } },
+          els
+        );
+      }
+    });
     updatePreview();
   };
 
@@ -155,6 +166,8 @@ export function useNodes(
     const { type, layer } = JSON.parse(
       event.dataTransfer.getData("application/reactflow")
     );
+
+    console.log(type);
 
     const position = reactFlowInstance.project({
       x: event.clientX - reactFlowBounds.left,
@@ -192,6 +205,19 @@ export function useNodes(
             data: {
               n: 1,
               onChange: (n) => onChangeN(id, n),
+            },
+          }
+        : type === "switchNode"
+        ? {
+            id,
+            type,
+            sourcePosition: "right",
+            targetPosition: "left",
+            position,
+            data: {
+              layers: partialConfiguration.layers,
+              buffers,
+              urls,
             },
           }
         : {

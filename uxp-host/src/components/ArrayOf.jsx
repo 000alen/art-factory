@@ -57,7 +57,7 @@ export function ArrayItem({
           </>
         )}
         <Item key="remove">
-          <Remove/>
+          <Remove />
         </Item>
       </ActionGroup>
     </Flex>
@@ -72,6 +72,7 @@ export function ArrayOf({
   items,
   setItems,
   moveable,
+  width = "30vw",
 }) {
   const onAdd = () => {
     setItems([...items, emptyValue]);
@@ -106,7 +107,7 @@ export function ArrayOf({
       <label className="spectrum-FieldLabel">{label}</label>
 
       <View
-        width="30vw"
+        width={width}
         height="100%"
         padding="size-100"
         overflow="auto"
@@ -131,7 +132,7 @@ export function ArrayOf({
         </Flex>
       </View>
       <ActionButton marginTop={8} onPress={onAdd}>
-        <Add/>
+        <Add />
       </ActionButton>
     </View>
   );

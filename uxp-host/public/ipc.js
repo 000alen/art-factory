@@ -231,10 +231,7 @@ ipcAsyncTask(
     )
 );
 
-ipcTask("getOutputDir", (inputDir) =>
-  // path.join(path.dirname(inputDir), `${path.basename(inputDir)}_build`)
-  path.join(inputDir, ".build")
-);
+ipcTask("getOutputDir", (inputDir) => path.join(inputDir, ".build"));
 
 ipcSetterAndGetter("pinataApiKey", setPinataApiKey, getPinataApiKey);
 
