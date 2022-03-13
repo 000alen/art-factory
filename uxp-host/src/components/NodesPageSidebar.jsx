@@ -22,19 +22,19 @@ export function Sidebar({ layers, buffers, urls }) {
           direction: "ltr",
         }}
       >
-        <div
-          onDragStart={(event) =>
-            onDragStart(event, { type: "switchNode", label: "Switch" })
-          }
-          draggable
-        >
-          <SwitchNode
-            sidebar
-            data={{
-              buffers,
-            }}
-          />
-        </div>
+        {/* <div
+            onDragStart={(event) =>
+              onDragStart(event, { type: "switchNode", label: "Switch" })
+            }
+            draggable
+          >
+            <SwitchNode
+              sidebar
+              data={{
+                buffers,
+              }}
+            />
+          </div> */}
         <div
           onDragStart={(event) =>
             onDragStart(event, { type: "renderNode", label: "Render" })

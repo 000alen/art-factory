@@ -29,6 +29,7 @@ function removeRarity(elementName) {
   return elementName.split(RARITY_DELIMITER).shift();
 }
 
+// ! TODO: Rewrite
 // Source: https://github.com/parmentf/random-weighted-choice
 function rarityWeightedChoice(
   layerElements,
@@ -69,11 +70,19 @@ function rarityWeightedChoice(
   const names = Object.keys(cumulatedUrgencies);
   const rarities = layerElements.map((element) => element.rarity);
   const types = layerElements.map((element) => element.type);
+  const blendings = layerElements.map((element) => element.blending);
+  const opacities = layerElements.map((element) => element.opacity);
   for (let i = 0; i < names.length; i++) {
     const name = names[i];
     const urgency = cumulatedUrgencies[name];
     if (choice <= urgency) {
-      return { name, rarity: rarities[i], type: types[i] };
+      return {
+        name,
+        rarity: rarities[i],
+        type: types[i],
+        blending: blendings[i],
+        opacity: opacities[i],
+      };
     }
   }
 }
@@ -280,6 +289,20 @@ function append(a, b) {
   return a.map((a_i, i) => [...a_i, ...b[i]]);
 }
 
+// ! TODO: Implement darken, overlay
+// Jimp.BLEND_SOURCE_OVER;
+// Jimp.BLEND_DESTINATION_OVER;
+// Jimp.BLEND_MULTIPLY;
+// Jimp.BLEND_ADD;
+// Jimp.BLEND_SCREEN;
+// Jimp.BLEND_OVERLAY;
+// Jimp.BLEND_DARKEN;
+// Jimp.BLEND_LIGHTEN;
+// Jimp.BLEND_HARDLIGHT;
+// Jimp.BLEND_DIFFERENCE;
+// Jimp.BLEND_EXCLUSION;
+// opacitySource;
+// opacityDest;
 function composeImages(back, front, width, height) {
   front.resize(width, height);
   back.composite(front, 0, 0);

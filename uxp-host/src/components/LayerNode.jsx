@@ -6,6 +6,7 @@ import {
   Item,
   Flex,
   Text,
+  Slider,
 } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
 import { ImageItem } from "./ImageItem";
@@ -32,10 +33,18 @@ export function LayerNode({ sidebar, data }) {
         </>
       )}
 
-      <Flex direction="column">
+      <Flex direction="column" gap="size-100">
         <ImageItem src={data.url} />
-        <Flex justifyContent="space-between" alignItems="center">
-          <Text>{data.layer}</Text>
+        <Text>{data.layer}</Text>
+        <Flex justifyContent="space-between" alignItems="center" gap="size-100">
+          <Slider
+            width="50%"
+            label="Opacity"
+            step={0.01}
+            maxValue={1}
+            defaultValue={1}
+            formatOptions={{ style: "percent" }}
+          />
           <MenuTrigger>
             <ActionButton>
               <More />

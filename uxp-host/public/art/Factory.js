@@ -1,3 +1,5 @@
+// @ts-check
+
 const fs = require("fs");
 const path = require("path");
 const Jimp = require("jimp");
@@ -20,50 +22,43 @@ const {
 } = require("./utils");
 const imageSize = require("image-size");
 
-/** @typedef {{ name: string, value: string, rarity: number }} Trait */
+/** @typedef { {pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string} } Secrets */
+/** @typedef {{n: number, layers: string[], width: number, height: number, generateBackground: boolean, defaultBackground: string, name: string, description: string, symbol: string}} Configuration */
+
+/** @typedef {{ name: string, rarity: number, type: string, blending: string, opacity: number }} Layer */
+/** @typedef { Layer & { value: string } } Trait */
+
+/** @typedef {{ inputDir: string, outputDir: string, configuration: Configuration, attributes: Trait[][], generated: boolean, metadataGenerated: boolean, imagesCID: string, metadataCID: string, network: string, contractAddress: string, abi: any[], compilerVersion: string }} Instance */
 
 const DEFAULT_BACKGROUND = "#ffffff";
 
 class Factory {
-  // ! TODO: extract?
-  /** @type {{pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string}} */
-  secrets;
+  /** @type {Secrets} */ secrets;
 
-  /** @type {Map<string, { name: string, rarity: number, type: string }[]>} */
-  layers;
+  /** @type {Map<string, Layer[]>} */ layers;
 
-  /** @type {Map<string, Buffer>} */
-  layerElementsBuffers;
+  /** @type {Map<string, Buffer>} */ layerElementsBuffers;
 
-  /** @type {Map<string, string>} */
-  layerElementsPaths;
+  /** @type {Map<string, string>} */ layerElementsPaths;
 
-  /** @type {Trait[][]} */
-  attributes;
+  /** @type {Trait[][]} */ attributes;
 
-  /** @type {boolean} */
-  generated;
+  /** @type {boolean} */ generated;
 
-  /** @type {boolean} */
-  metadataGenerated;
+  /** @type {boolean} */ metadataGenerated;
 
-  /** @type {string} */
-  imagesCID;
+  /** @type {string} */ imagesCID;
 
-  /** @type {string} */
-  metadataCID;
+  /** @type {string} */ metadataCID;
 
-  /** @type {string} */
-  network;
+  /** @type {string} */ network;
 
-  /** @type {string} */
-  contractAddress;
+  /** @type {string} */ contractAddress;
 
-  abi;
+  /** @type {any[]} */ abi;
 
-  // ! TODO
   /**
-   * @param {any} configuration
+   * @param {Configuration} configuration
    * @param {string} inputDir
    * @param {string} outputDir
    */
@@ -77,12 +72,14 @@ class Factory {
     this.layerElementsPaths = new Map();
   }
 
+  /** @returns {number} */
   get maxCombinations() {
     return this.configuration.layers.reduce((accumulator, layer) => {
       return accumulator * this.layers.get(layer).length;
     }, 1);
   }
 
+  /** @returns {Instance} */
   get instance() {
     return {
       inputDir: this.inputDir,
@@ -100,6 +97,7 @@ class Factory {
     };
   }
 
+  /** @param {Partial<Instance>} props */
   setProps(props) {
     const {
       attributes,
@@ -124,6 +122,7 @@ class Factory {
   }
 
   // ! TODO
+  /** @param {Partial<Secrets>} partialSecrets */
   loadSecrets({ pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey }) {
     this.secrets = {
       ...this.secrets,
@@ -173,6 +172,8 @@ class Factory {
           name: removeRarity(name),
           rarity: rarity(name),
           type: ext.slice(1),
+          blending: "normal",
+          opacity: 1,
         };
       })
     );
@@ -189,6 +190,7 @@ class Factory {
     });
   }
 
+  /** @param {string} layerElementPath */
   async ensureLayerElementBuffer(layerElementPath) {
     if (!this.layerElementsBuffers.has(layerElementPath)) {
       this.layerElementsBuffers.set(
@@ -198,6 +200,12 @@ class Factory {
     }
   }
 
+  /**
+   * @param {string[]} layers
+   * @param {number} n
+   * @param {Map<string, Trait[][]>} attributesCache
+   * @returns {Trait[][]}
+   */
   generateAttributesFromLayers(layers, n, attributesCache) {
     if (n > this.maxCombinations)
       console.warn(
@@ -215,12 +223,15 @@ class Factory {
       } else {
         for (let i = 0; i < n; i++) {
           const layerElements = this.layers.get(layerName);
-          const { name, rarity, type } = rarityWeightedChoice(layerElements);
+          const { name, rarity, type, blending, opacity } =
+            rarityWeightedChoice(layerElements);
           attributes[i].push({
             name: layerName,
             value: name,
             rarity,
             type,
+            blending,
+            opacity,
           });
         }
       }
@@ -229,6 +240,10 @@ class Factory {
     return attributes;
   }
 
+  /**
+   * @param {any[]} layersNodes
+   * @returns {Trait[][]}
+   */
   generateRandomAttributesFromNodes(layersNodes) {
     const paths = getPaths(layersNodes)
       .map((p) => p.slice(1))
@@ -275,6 +290,10 @@ class Factory {
     return attributes;
   }
 
+  /**
+   * @param {Trait[]} traits
+   * @param {number} i
+   */
   async generateImage(traits, i) {
     const image = await Jimp.create(
       this.configuration.width,
@@ -304,6 +323,10 @@ class Factory {
   }
 
   // ! TODO: Careful with memory usage (algorithm complexity: O(n) to O(log n))
+  /**
+   * @param {Trait[][]} attributes
+   * @param {(i: number) => void} callback
+   */
   async generateImages(attributes, callback) {
     await Promise.all(
       attributes.map(async (traits, i) => {
@@ -315,6 +338,10 @@ class Factory {
   }
 
   // ! TODO: https://docs.opensea.io/docs/metadata-standards
+  /**
+   * @param {string} cid
+   * @param {Trait[][]} attributes
+   */
   async generateMetadata(cid, attributes) {
     const metadatas = [];
     for (let i = 0; i < attributes.length; i++) {
@@ -347,7 +374,11 @@ class Factory {
     this.metadataGenerated = true;
   }
 
-  // ! TODO: Extract
+  // TODO: Extract?
+  /**
+   * @param {boolean} force
+   * @returns {Promise<string>}
+   */
   async deployImages(force = false) {
     if (this.imagesCID !== undefined && !force) {
       console.warn(
@@ -368,7 +399,11 @@ class Factory {
     return this.imagesCID;
   }
 
-  // ! TODO: Extract
+  // TODO: Extract?
+  /**
+   * @param {boolean} force
+   * @returns {Promise<string>}
+   */
   async deployMetadata(force = false) {
     if (this.metadataCID !== undefined && !force) {
       console.warn(
@@ -392,11 +427,21 @@ class Factory {
     return this.metadataCID;
   }
 
+  /**
+   * @param {Trait[][]} attributes
+   * @param {number} maxSize
+   * @returns {Buffer}
+   */
   async getRandomImage(attributes, maxSize) {
     const index = Math.floor(Math.random() * attributes.length);
     return await this.getImage(index, maxSize);
   }
 
+  /**
+   * @param {number} index
+   * @param {number} maxSize
+   * @returns {Buffer}
+   */
   async getImage(index, maxSize) {
     let buffer = fs.readFileSync(
       path.join(this.outputDir, "images", `${index + 1}.png`)
@@ -417,6 +462,11 @@ class Factory {
     return buffer;
   }
 
+  /**
+   * @param {Trait} trait
+   * @param {number} maxSize
+   * @returns {Buffer}
+   */
   async getTraitImage(trait, maxSize) {
     console.log(trait.name, trait.value);
 
@@ -442,12 +492,21 @@ class Factory {
     return buffer;
   }
 
+  /**
+   * @param {string} layerName
+   * @param {number} maxSize
+   * @returns {Buffer}
+   */
   async getRandomTraitImage(layerName, maxSize) {
     const layerElements = this.layers.get(layerName);
     const { name: value } = rarityWeightedChoice(layerElements);
     return await this.getTraitImage({ name: layerName, value }, maxSize);
   }
 
+  /**
+   * @param {number} i
+   * @param {string} dataUrl
+   */
   async rewriteImage(i, dataUrl) {
     await fs.promises.writeFile(
       path.join(this.outputDir, "images", `${i + 1}.png`),
