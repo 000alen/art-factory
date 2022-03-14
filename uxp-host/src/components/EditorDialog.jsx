@@ -45,8 +45,9 @@ export function EditorDialog({
           image.hasBorders = false;
           canvas.add(image);
         });
-      }).catch((err) => {
-        console.log(i, attributes, err);
+      })
+      .catch((err) => {
+        console.error(i, attributes, err);
       });
   };
 

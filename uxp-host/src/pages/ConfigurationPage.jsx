@@ -70,8 +70,7 @@ export function ConfigurationPage() {
       if (partialConfiguration.generateBackground)
         setGenerateBackground(partialConfiguration.generateBackground);
       if (partialConfiguration.defaultBackground)
-        // setDefaultBackground(partialConfiguration.defaultBackground);
-        console.log(partialConfiguration.defaultBackground);
+        setDefaultBackground(partialConfiguration.defaultBackground);
       if (partialConfiguration.contractType)
         setContractType(partialConfiguration.contractType);
 

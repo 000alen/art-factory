@@ -54,11 +54,12 @@ export function LayerNode({ sidebar, data }) {
             <Menu
               selectionMode="single"
               disallowEmptySelection={true}
-              defaultSelectedKeys={["normal"]}
+              // defaultSelectedKeys={["normal"]}
+              selectedKeys={sidebar ? ["normal"] : [data.blending]}
               onSelectionChange={(selectedKeys) =>
                 sidebar
                   ? null
-                  : data.onChangeBlendMode([...selectedKeys].shift())
+                  : data.onChangeBlending([...selectedKeys].shift())
               }
             >
               <Item key="normal">Normal</Item>

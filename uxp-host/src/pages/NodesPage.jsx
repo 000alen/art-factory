@@ -58,14 +58,6 @@ export function NodesPage() {
             data: { label: "Root" },
             position: { x: 0, y: 0 },
           },
-          ...partialConfiguration.layers.map((layer, i) => ({
-            id: getId(),
-            type: "layerNode",
-            sourcePosition: "right",
-            targetPosition: "left",
-            data: { layer, buffer: buffers[i], url: urls[i] },
-            position: { x: 250 * (i + 1), y: 100 * i },
-          })),
         ]);
 
         setBuffers(buffers);

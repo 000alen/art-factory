@@ -4,7 +4,6 @@ export const WC = (props) => {
   const elRef = useRef(null);
 
   const handleEvent = (evt) => {
-    console.log(evt.type);
     const propName = `on${evt.type[0].toUpperCase()}${evt.type.substr(1)}`;
     if (props[propName]) {
       props[propName].call(evt.target, evt);

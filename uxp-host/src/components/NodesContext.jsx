@@ -217,6 +217,8 @@ export function useNodes(
               url: urls[
                 partialConfiguration.layers.findIndex((e) => e === layer)
               ],
+              opacity: 1, // Default opacity
+              blending: "normal", // Default blending
               onChangeOpacity: (opacity) => onChangeOpacity(id, opacity),
               onChangeBlending: (blending) => onChangeBlending(id, blending),
             },
