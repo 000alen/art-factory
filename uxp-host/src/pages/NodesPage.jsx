@@ -91,6 +91,8 @@ export function NodesPage() {
       onProgress
     );
 
+    console.log(attributes);
+
     setAttributes(attributes);
     setGenerationDone(true);
   });

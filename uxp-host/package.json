@@ -11,7 +11,9 @@
     "start:electron": "electron public/electron.js",
     "build": "npm run build:react && npm run build:electron",
     "build:react": "node scripts/build.js",
-    "build:electron": "electron-builder"
+    "build:electron": "electron-builder",
+    "watch": "concurrently -k \"npm run start:react\" \"npm run watch:electron\"",
+    "watch:electron": "nodemon --exec electron public/electron.js"
   },
   "devDependencies": {
     "@adobe/react-spectrum": "^3.11.2",
@@ -72,6 +74,7 @@
     "jest-watch-typeahead": "^1.0.0",
     "jimp": "^0.16.1",
     "mini-css-extract-plugin": "^2.4.5",
+    "nodemon": "^2.0.15",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "postcss-flexbugs-fixes": "^5.0.2",

@@ -1,3 +1,10 @@
+/** @typedef {import("./Factory.js").Element} Element */
+/** @typedef {import("./Factory.js").RootNode} RootNode */
+/** @typedef {import("./Factory.js").LayerNode} LayerNode */
+/** @typedef {import("./Factory.js").RenderNode} RenderNode */
+/** @typedef {import("./Factory.js").LayerNodeData} LayerNodeData */
+/** @typedef {import("./Factory.js").RenderNodeData} RenderNodeData */
+
 const Jimp = require("jimp");
 const path = require("path");
 const axios = require("axios");
@@ -172,6 +179,10 @@ function verifyContract(
     .then((response) => response.data);
 }
 
+/**
+ * @param {Element[]} elements 
+ * @returns {(RootNode | LayerNode | RenderNode)[][]}
+ */
 function getPaths(elements) {
   const root = elements
     .filter((element) => element.type === "rootNode")
@@ -203,11 +214,15 @@ function getPaths(elements) {
   return savedPaths;
 }
 
+/**
+ * @param {(LayerNodeData | RenderNodeData)[][]} paths 
+ * @returns {Set<(LayerNode | RenderNode)[]>}
+ */
 function getPrefixes(paths) {
   const prefixes = new Set();
 
   for (const path of paths) {
-    const filteredPaths = paths.filter((_path) => _path[0] === path[0]);
+    const filteredPaths = paths.filter((_path) => _path[0].layer === path[0].layer);
     const subPaths = filteredPaths.map((_path) => _path.slice(1));
 
     if (subPaths.length > 1) {
@@ -220,31 +235,59 @@ function getPrefixes(paths) {
     }
   }
 
-  return prefixes;
+  return [...prefixes].map((prefix) => [...prefix]);
 }
 
+/**
+ * @param {(LayerNodeData | RenderNodeData)[][]} paths 
+ */
 function reducePaths(paths) {
   const cache = new Map();
 
+  // let i = 0;
   while (true) {
     const id = uuid();
-    const prefix = [...getPrefixes(paths)]
-      .map((prefix) => [...prefix])
-      .map((prefix) =>
-        prefix.length === 1 ? (cache.has(prefix[0]) ? null : prefix) : prefix
-      )
+    const prefixes = getPrefixes(paths)
+      .map((prefix) => {
+        if (prefix.length === 1 && cache.has(prefix[0].id)) return null;
+        return prefix
+      })
       .filter((prefix) => prefix !== null)
-      .sort((a, b) => a.length - b.length)[0];
+      .sort((a, b) => a.length - b.length)
+
+    const prefix = prefixes[0];
+
 
     if (prefix === undefined) break;
 
     cache.set(id, prefix);
 
-    paths = paths.map((path) =>
-      tuple(...path.slice(0, prefix.length)) === tuple(...prefix)
-        ? [id, ...path.slice(prefix.length)]
+    paths = paths.map((path) => {
+      const _path = path.map((node) => {
+        if ("layer" in node) {
+          return node.layer;
+        } else if ("id" in node) {
+          return node.id;
+        } else {
+          return node;
+        }
+      });
+      const _prefix = prefix.map((node) => {
+        if ("layer" in node) {
+          return node.layer;
+        } else if ("id" in node) {
+          return node.id;
+        } else {
+          return node;
+        }
+      });
+
+      return tuple(..._path.slice(0, _prefix.length)) === tuple(..._prefix)
+        ? [{ id }, ...path.slice(_prefix.length)]
         : path
-    );
+    });
+
+    // if (i++ > 1) break;
   }
 
   return [cache, paths];
@@ -255,8 +298,8 @@ function computeNs(cache, paths) {
 
   for (const [id, cachedPath] of cache) {
     let n = paths
-      .filter((path) => path.find((p) => p === id))
-      .map((path) => path[path.length - 1])
+      .filter((path) => path.find((p) => p.id === id))
+      .map((path) => path[path.length - 1].n)
       .reduce((a, b) => Math.max(a, b), 0);
 
     n = Math.max(ns.has(id) ? ns.get(id) : 0, n);
@@ -264,7 +307,10 @@ function computeNs(cache, paths) {
     while (stack.length > 0) {
       const current = stack.pop();
       if (!ns.has(current) || ns.get(current) < n) ns.set(current, n);
-      for (const v of cache.get(current)) if (ns.has(v)) stack.push(v);
+      for (const v of cache.get(current)) {
+        if ("id" in v && ns.has(v.id)) stack.push(v.id)
+
+      };
     }
   }
 
@@ -274,11 +320,12 @@ function computeNs(cache, paths) {
 function expandPathIfNeeded(cache, layers, path) {
   const _path = [];
 
-  for (const id of path) {
-    if (!layers.includes(id) && !cache.has(id)) {
-      _path.push(...expandPathIfNeeded(cache, layers, cache.get(id)));
+  for (const node of path) {
+    if ("id" in node && !cache.has(node.id)) {
+      _path.push(...expandPathIfNeeded(cache, layers, cache.get(node.id)));
     } else {
-      _path.push(id);
+      _path.push(node);
+
     }
   }
 
@@ -286,6 +333,9 @@ function expandPathIfNeeded(cache, layers, path) {
 }
 
 function append(a, b) {
+  console.log("a", a)
+  console.log("b", b)
+
   return a.map((a_i, i) => [...a_i, ...b[i]]);
 }
 
@@ -303,9 +353,22 @@ function append(a, b) {
 // Jimp.BLEND_EXCLUSION;
 // opacitySource;
 // opacityDest;
-function composeImages(back, front, width, height) {
+function composeImages(back, front, width, height, blending, opacity) {
   front.resize(width, height);
-  back.composite(front, 0, 0);
+  back.composite(front, 0, 0, {
+    mode: blending === "normal"
+      ? Jimp.BLEND_NORMAL
+      : blending === "screen"
+        ? Jimp.BLEND_SCREEN
+        : blending === "multiply"
+          ? Jimp.BLEND_MULTIPLY
+          : blending === "darken"
+            ? Jimp.BLEND_DARKEN
+            : blending === "overlay"
+              ? Jimp.BLEND_OVERLAY
+              : Jimp.BLEND_NORMAL,
+    opacityDest: opacity
+  });
   return back;
 }
 

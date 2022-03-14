@@ -31,12 +31,12 @@ export function TriStateButton({
   ) : (
     <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
       {loadingDone ? (
-        <Button variant="cta" onPress={preAction}>
-          {preLabel}
-        </Button>
-      ) : (
         <Button variant="cta" onPress={postAction}>
           {postLabel}
+        </Button>
+      ) : (
+        <Button variant="cta" onPress={preAction}>
+          {preLabel}
         </Button>
       )}
     </ButtonGroup>

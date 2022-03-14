@@ -6,6 +6,17 @@
 /** @typedef {Trait[][]} Attributes */
 /** @typedef {{ inputDir: string, outputDir: string, configuration: Configuration, attributes: Attributes, generated: boolean, metadataGenerated: boolean, imagesCID: string, metadataCID: string, network: string, contractAddress: string, abi: any[], compilerVersion: string }} Instance */
 
+// TODO
+/** @typedef {{n: number}} RenderNodeData */
+/** @typedef {{layer: string, opacity: number, blending: string}} LayerNodeData */
+/** @typedef {{id: string }} BaseNode */
+/** @typedef {{id: string, type: string, source: string, target: string, sourceHandle?: string, targetHandle?: string, data?: any}} Edge */
+/** @typedef {BaseNode & {type: "rootNode"}} RootNode */
+/** @typedef {BaseNode & {type: "layerNode", data: LayerNodeData}} LayerNode */
+/** @typedef {BaseNode & {type: "renderNode", data: RenderNodeData}} RenderNode */
+/** @typedef {RootNode | LayerNode | RenderNode} Node */
+/** @typedef {Node | Edge} Element */
+
 const fs = require("fs");
 const path = require("path");
 const Jimp = require("jimp");
@@ -195,7 +206,7 @@ class Factory {
 
   // #region Attributes Generation
   /**
-   * @param {string[]} layers
+   * @param {LayerNodeData[]} layers
    * @param {number} n
    * @param {Map<string, Attributes>} attributesCache
    * @returns {Attributes}
@@ -206,26 +217,29 @@ class Factory {
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
 
+    console.log(n)
+
     let attributes = [...Array(n).keys()].map(() => []);
 
-    for (const layerName of layers) {
-      if (attributesCache && attributesCache.has(layerName)) {
+    // @ts-ignore
+    for (const { layer, blending, opacity, id } of layers) {
+      if (attributesCache && id && attributesCache.has(id)) {
         attributes = append(
           attributes,
-          attributesCache.get(layerName).slice(0, n)
+          attributesCache.get(id).slice(0, n)
         );
       } else {
         for (let i = 0; i < n; i++) {
-          const layerElements = this.layers.get(layerName);
-          const { name, rarity, type, blending, opacity } =
+          const layerElements = this.layers.get(layer);
+          const { name, rarity, type, } =
             rarityWeightedChoice(layerElements);
           attributes[i].push({
-            name: layerName,
+            name: layer,
             value: name,
             rarity,
             type,
-            blending,
-            opacity,
+            blending: blending,
+            opacity: opacity,
           });
         }
       }
@@ -235,42 +249,46 @@ class Factory {
   }
 
   /**
-   * @param {any[]} layersNodes
+   * @param {Element[]} layersNodes
    * @returns {Attributes}
    */
   generateRandomAttributesFromNodes(layersNodes) {
-    const paths = getPaths(layersNodes)
+    /** @type {(LayerNodeData | RenderNodeData)[][]} */ const paths = getPaths(layersNodes)
       .map((p) => p.slice(1))
-      .map((p) =>
-        p.map(({ type: t, data: d }) => (t === "layerNode" ? d.layer : d.n))
-      )
+      .map((p) => p.map(
+        // @ts-ignore
+        (n) => n.data))
       .sort((a, b) => a.length - b.length);
 
-    this.configuration.n = layersNodes.reduce(
-      (p, c) => p + (c.type === "renderNode" ? c.data.n : 0),
-      0
-    );
+    this.configuration.n = paths.reduce((acc, p) => acc + /** @type {RenderNodeData} */ (p[p.length - 1]).n, 0);
 
     const [cache, reducedPaths] = reducePaths(paths);
     const ns = computeNs(cache, reducedPaths);
+
     const attributesCache = new Map();
 
-    for (const [id, value] of cache)
+    for (const [id, path] of cache) {
+      const x = this.generateRandomAttributesFromLayers(
+        expandPathIfNeeded(cache, this.configuration.layers, path),
+        ns.get(id),
+        attributesCache
+      )
+
+      console.log(id, x)
+
       attributesCache.set(
         id,
-        this.generateRandomAttributesFromLayers(
-          expandPathIfNeeded(cache, this.configuration.layers, value),
-          ns.get(id),
-          attributesCache
-        )
+        x
       );
+    }
 
     const attributes = [];
 
     for (const path of reducedPaths) {
-      const n = path.pop();
+      const n = path.pop().n;
 
       const _attributes = this.generateRandomAttributesFromLayers(
+        // @ts-ignore
         path,
         n,
         attributesCache
@@ -311,7 +329,9 @@ class Factory {
         image,
         current,
         this.configuration.width,
-        this.configuration.height
+        this.configuration.height,
+        trait.blending,
+        trait.opacity
       );
     }
 
