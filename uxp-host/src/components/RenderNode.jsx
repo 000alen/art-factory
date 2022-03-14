@@ -43,7 +43,7 @@ export function RenderNode({ sidebar, data }) {
           label="n"
           {...{
             value: sidebar ? null : Math.max(1, data.n),
-            onChange: sidebar ? null : data.onChange,
+            onChange: sidebar ? null : data.onChangeN,
             isDisabled: sidebar ? true : false,
           }}
         />

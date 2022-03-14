@@ -129,13 +129,13 @@ ipcAsyncTask(
 
 ipcTask("createFactory", (id, configuration, inputDir, outputDir, props) => {
   const factory = new Factory(configuration, inputDir, outputDir);
-  if (props) factory.setProps(props);
+  if (props) factory.loadProps(props);
   factories[id] = factory;
   return true;
 });
 
-ipcTask("factorySetProps", (id, props) => {
-  factories[id].setProps(JSON.parse(props));
+ipcTask("factoryLoadProps", (id, props) => {
+  factories[id].loadProps(JSON.parse(props));
   return true;
 });
 

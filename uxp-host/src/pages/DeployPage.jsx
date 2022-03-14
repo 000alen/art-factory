@@ -34,6 +34,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { factoryDeployAssets, factoryDeployContract } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
+import { TriStateButton } from "../components/TriStateButton";
 
 function resolveEtherscanUrl(network, transactionHash) {
   return network === Networks.mainnet
@@ -272,23 +273,15 @@ export function DeployPage() {
         </Flex>
       </Flex>
 
-      {isWorking ? (
-        <Flex marginBottom={8} marginX={8} justifyContent="end">
-          <ProgressBar label="Deploying…" isIndeterminate />
-        </Flex>
-      ) : (
-        <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-          {deployedDone ? (
-            <Button variant="cta" onPress={onContinue}>
-              Continue!
-            </Button>
-          ) : (
-            <Button variant="cta" onPress={onDeploy}>
-              Deploy!
-            </Button>
-          )}
-        </ButtonGroup>
-      )}
+      <TriStateButton
+        preLabel="Deploy"
+        preAction={onDeploy}
+        loading={isWorking}
+        loadingDone={deployedDone}
+        loadingLabel="Deploying…"
+        postLabel="Continue"
+        postAction={onContinue}
+      />
     </Flex>
   );
 }

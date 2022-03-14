@@ -17,8 +17,6 @@ export function LayerNode({ sidebar, data }) {
     connection.targetHandle === "layerIn" ||
     connection.targetHandle === "renderIn";
 
-  console.log(data);
-
   return (
     <div className="p-2 border-2 border-solid border-white rounded">
       {!sidebar && (
@@ -44,6 +42,7 @@ export function LayerNode({ sidebar, data }) {
             maxValue={1}
             defaultValue={1}
             formatOptions={{ style: "percent" }}
+            onChange={sidebar ? null : data.onChangeOpacity}
           />
           <MenuTrigger>
             <ActionButton>
@@ -53,6 +52,11 @@ export function LayerNode({ sidebar, data }) {
               selectionMode="single"
               disallowEmptySelection={true}
               defaultSelectedKeys={["normal"]}
+              onSelectionChange={(selectedKeys) =>
+                sidebar
+                  ? null
+                  : data.onChangeBlendMode([...selectedKeys].shift())
+              }
             >
               <Item key="normal">Normal</Item>
               <Item key="screen">Screen</Item>

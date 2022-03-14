@@ -13,7 +13,7 @@ import ReactFlow, {
 import { SwitchNode } from "./SwitchNode";
 
 let id = 0;
-const getId = () => `dndnode_${id++}`;
+export const getId = () => `${id++}`;
 
 const nodeTypes = {
   rootNode: RootNode,
@@ -75,6 +75,32 @@ export function useNodes(
           ? {
               ...el,
               data: { ...el.data, n },
+            }
+          : el
+      )
+    );
+  };
+
+  const onChangeOpacity = (id, opacity) => {
+    setElements((els) =>
+      els.map((el) =>
+        el.id === id
+          ? {
+              ...el,
+              data: { ...el.data, opacity },
+            }
+          : el
+      )
+    );
+  };
+
+  const onChangeBlending = (id, blending) => {
+    setElements((els) =>
+      els.map((el) =>
+        el.id === id
+          ? {
+              ...el,
+              data: { ...el.data, blending },
             }
           : el
       )
@@ -167,8 +193,6 @@ export function useNodes(
       event.dataTransfer.getData("application/reactflow")
     );
 
-    console.log(type);
-
     const position = reactFlowInstance.project({
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
@@ -193,6 +217,8 @@ export function useNodes(
               url: urls[
                 partialConfiguration.layers.findIndex((e) => e === layer)
               ],
+              onChangeOpacity: (opacity) => onChangeOpacity(id, opacity),
+              onChangeBlending: (blending) => onChangeBlending(id, blending),
             },
           }
         : type === "renderNode"
@@ -204,7 +230,7 @@ export function useNodes(
             position,
             data: {
               n: 1,
-              onChange: (n) => onChangeN(id, n),
+              onChangeN: (n) => onChangeN(id, n),
             },
           }
         : type === "switchNode"
@@ -237,6 +263,8 @@ export function useNodes(
     reactFlowInstance,
     elements,
     onChangeN,
+    onChangeOpacity,
+    onChangeBlending,
     updatePreview,
     onConnect,
     onElementsRemove,
@@ -252,6 +280,8 @@ export const NodesContext = createContext({
   reactFlowInstance: null,
   elements: [],
   onChangeN: (id, n) => {},
+  onChangeOpacity: (id, opacity) => {},
+  onChangeBlending: (id, blending) => {},
   updatePreview: () => {},
   onConnect: (params) => {},
   onElementsRemove: (elementsToRemove) => {},

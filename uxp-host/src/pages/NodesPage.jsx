@@ -5,10 +5,11 @@ import { Button, Flex, ButtonGroup, ProgressBar } from "@adobe/react-spectrum";
 import { factoryGetRandomTraitImage } from "../ipc";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
-import { Nodes, NodesContextProvider } from "../components/NodesContext";
+import { getId, Nodes, NodesContextProvider } from "../components/NodesContext";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { ToolbarContext } from "../components/Toolbar";
+import { TriStateButton } from "../components/TriStateButton";
 
 export function NodesPage() {
   const genericDialogContext = useContext(GenericDialogContext);
@@ -59,7 +60,7 @@ export function NodesPage() {
             position: { x: 0, y: 0 },
           },
           ...partialConfiguration.layers.map((layer, i) => ({
-            id: (i + 2).toString(),
+            id: getId(),
             type: "layerNode",
             sourcePosition: "right",
             targetPosition: "left",
@@ -134,27 +135,17 @@ export function NodesPage() {
         />
         <Nodes>
           <div className="absolute z-10 bottom-4 right-4">
-            {isWorking ? (
-              <Flex marginBottom={8} marginX={8} justifyContent="end">
-                <ProgressBar
-                  label="Generating…"
-                  maxValue={n}
-                  value={currentGeneration}
-                />
-              </Flex>
-            ) : (
-              <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-                {generationDone ? (
-                  <Button variant="cta" onPress={onContinue}>
-                    Continue!
-                  </Button>
-                ) : (
-                  <Button variant="cta" onPress={onGenerate}>
-                    Generate!
-                  </Button>
-                )}
-              </ButtonGroup>
-            )}
+            <TriStateButton
+              preLabel="Generate"
+              preAction={onGenerate}
+              loading={isWorking}
+              loadingDone={generationDone}
+              loadingLabel="Generating…"
+              loadingMaxValue={n}
+              loadingValue={currentGeneration}
+              postLabel="Continue"
+              postAction={onContinue}
+            />
           </div>
         </Nodes>
       </div>

@@ -7,7 +7,7 @@ import {
   getOutputDir,
   factoryLoadInstance,
   factoryInstance,
-  factorySetProps,
+  factoryLoadProps,
   factoryGenerateRandomAttributesFromNodes,
   factoryGenerateImages,
   factoryDeployImages,
@@ -186,6 +186,8 @@ export const filterNodes = (nodes) =>
               targetPosition: node.targetPosition,
               data: {
                 layer: node.data.layer,
+                opacity: node.data.opacity,
+                blending: node.data.blending,
               },
               position: node.position,
             }
@@ -203,7 +205,7 @@ export const factoryGenerate = async (
   layersNodes,
   onProgress
 ) => {
-  await factorySetProps(id, { configuration });
+  await factoryLoadProps(id, { configuration });
   await factorySaveInstance(id);
 
   const attributes = await factoryGenerateRandomAttributesFromNodes(
@@ -256,7 +258,7 @@ export const factoryDeployAssets = async (
     });
   }
 
-  await factorySetProps(id, {
+  await factoryLoadProps(id, {
     imagesCID,
     metadataCID,
   });
@@ -328,7 +330,7 @@ export const factoryDeployContract = async (
   const contractAddress = contract.address;
   const transactionHash = contract.deployTransaction.hash;
 
-  await factorySetProps(id, {
+  await factoryLoadProps(id, {
     network,
     contractAddress,
     abi,

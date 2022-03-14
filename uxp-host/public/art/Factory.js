@@ -1,4 +1,10 @@
 // @ts-check
+/** @typedef { {pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string} } Secrets */
+/** @typedef {{n: number, layers: string[], width: number, height: number, generateBackground: boolean, defaultBackground: string, name: string, description: string, symbol: string}} Configuration */
+/** @typedef {{ name: string, rarity: number, type: string, blending: string, opacity: number }} Layer */
+/** @typedef { Layer & { value: string } } Trait */
+/** @typedef {Trait[][]} Attributes */
+/** @typedef {{ inputDir: string, outputDir: string, configuration: Configuration, attributes: Attributes, generated: boolean, metadataGenerated: boolean, imagesCID: string, metadataCID: string, network: string, contractAddress: string, abi: any[], compilerVersion: string }} Instance */
 
 const fs = require("fs");
 const path = require("path");
@@ -22,39 +28,20 @@ const {
 } = require("./utils");
 const imageSize = require("image-size");
 
-/** @typedef { {pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string} } Secrets */
-/** @typedef {{n: number, layers: string[], width: number, height: number, generateBackground: boolean, defaultBackground: string, name: string, description: string, symbol: string}} Configuration */
-
-/** @typedef {{ name: string, rarity: number, type: string, blending: string, opacity: number }} Layer */
-/** @typedef { Layer & { value: string } } Trait */
-
-/** @typedef {{ inputDir: string, outputDir: string, configuration: Configuration, attributes: Trait[][], generated: boolean, metadataGenerated: boolean, imagesCID: string, metadataCID: string, network: string, contractAddress: string, abi: any[], compilerVersion: string }} Instance */
-
 const DEFAULT_BACKGROUND = "#ffffff";
 
 class Factory {
   /** @type {Secrets} */ secrets;
-
   /** @type {Map<string, Layer[]>} */ layers;
-
   /** @type {Map<string, Buffer>} */ layerElementsBuffers;
-
   /** @type {Map<string, string>} */ layerElementsPaths;
-
-  /** @type {Trait[][]} */ attributes;
-
+  /** @type {Attributes} */ attributes;
   /** @type {boolean} */ generated;
-
   /** @type {boolean} */ metadataGenerated;
-
   /** @type {string} */ imagesCID;
-
   /** @type {string} */ metadataCID;
-
   /** @type {string} */ network;
-
   /** @type {string} */ contractAddress;
-
   /** @type {any[]} */ abi;
 
   /**
@@ -72,6 +59,14 @@ class Factory {
     this.layerElementsPaths = new Map();
   }
 
+  async saveInstance() {
+    await this.ensureOutputDir();
+    const instancePath = path.join(this.outputDir, "instance.json");
+    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance));
+    return instancePath;
+  }
+
+  // #region Properties
   /** @returns {number} */
   get maxCombinations() {
     return this.configuration.layers.reduce((accumulator, layer) => {
@@ -96,9 +91,11 @@ class Factory {
       compilerVersion: this.compilerVersion,
     };
   }
+  // #endregion
 
+  // #region Loaders
   /** @param {Partial<Instance>} props */
-  setProps(props) {
+  loadProps(props) {
     const {
       attributes,
       generated,
@@ -121,7 +118,7 @@ class Factory {
     if (compilerVersion) this.compilerVersion = compilerVersion;
   }
 
-  // ! TODO
+  // TODO
   /** @param {Partial<Secrets>} partialSecrets */
   loadSecrets({ pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey }) {
     this.secrets = {
@@ -132,14 +129,9 @@ class Factory {
       etherscanApiKey,
     };
   }
+  // #endregion
 
-  async saveInstance() {
-    await this.ensureOutputDir();
-    const instancePath = path.join(this.outputDir, "instance.json");
-    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance));
-    return instancePath;
-  }
-
+  // #region Setup helpers
   async ensureOutputDir() {
     if (!fs.existsSync(this.outputDir)) fs.mkdirSync(this.outputDir);
 
@@ -172,8 +164,8 @@ class Factory {
           name: removeRarity(name),
           rarity: rarity(name),
           type: ext.slice(1),
-          blending: "normal",
-          opacity: 1,
+          blending: "normal", // Default blending
+          opacity: 1,         // Default opacity
         };
       })
     );
@@ -199,14 +191,16 @@ class Factory {
       );
     }
   }
+  // #endregion
 
+  // #region Attributes Generation
   /**
    * @param {string[]} layers
    * @param {number} n
-   * @param {Map<string, Trait[][]>} attributesCache
-   * @returns {Trait[][]}
+   * @param {Map<string, Attributes>} attributesCache
+   * @returns {Attributes}
    */
-  generateAttributesFromLayers(layers, n, attributesCache) {
+  generateRandomAttributesFromLayers(layers, n, attributesCache) {
     if (n > this.maxCombinations)
       console.warn(
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
@@ -242,7 +236,7 @@ class Factory {
 
   /**
    * @param {any[]} layersNodes
-   * @returns {Trait[][]}
+   * @returns {Attributes}
    */
   generateRandomAttributesFromNodes(layersNodes) {
     const paths = getPaths(layersNodes)
@@ -264,7 +258,7 @@ class Factory {
     for (const [id, value] of cache)
       attributesCache.set(
         id,
-        this.generateAttributesFromLayers(
+        this.generateRandomAttributesFromLayers(
           expandPathIfNeeded(cache, this.configuration.layers, value),
           ns.get(id),
           attributesCache
@@ -276,7 +270,7 @@ class Factory {
     for (const path of reducedPaths) {
       const n = path.pop();
 
-      const _attributes = this.generateAttributesFromLayers(
+      const _attributes = this.generateRandomAttributesFromLayers(
         path,
         n,
         attributesCache
@@ -289,7 +283,9 @@ class Factory {
 
     return attributes;
   }
+  // #endregion
 
+  // #region Images Generation
   /**
    * @param {Trait[]} traits
    * @param {number} i
@@ -324,7 +320,7 @@ class Factory {
 
   // ! TODO: Careful with memory usage (algorithm complexity: O(n) to O(log n))
   /**
-   * @param {Trait[][]} attributes
+   * @param {Attributes} attributes
    * @param {(i: number) => void} callback
    */
   async generateImages(attributes, callback) {
@@ -336,11 +332,13 @@ class Factory {
     );
     this.generated = true;
   }
+  // #endregion
 
+  // #region Metadata Generation
   // ! TODO: https://docs.opensea.io/docs/metadata-standards
   /**
    * @param {string} cid
-   * @param {Trait[][]} attributes
+   * @param {Attributes} attributes
    */
   async generateMetadata(cid, attributes) {
     const metadatas = [];
@@ -373,7 +371,9 @@ class Factory {
 
     this.metadataGenerated = true;
   }
+  // #endregion
 
+  // #region Deployment
   // TODO: Extract?
   /**
    * @param {boolean} force
@@ -426,46 +426,13 @@ class Factory {
 
     return this.metadataCID;
   }
+  // #endregion
 
-  /**
-   * @param {Trait[][]} attributes
-   * @param {number} maxSize
-   * @returns {Buffer}
-   */
-  async getRandomImage(attributes, maxSize) {
-    const index = Math.floor(Math.random() * attributes.length);
-    return await this.getImage(index, maxSize);
-  }
-
-  /**
-   * @param {number} index
-   * @param {number} maxSize
-   * @returns {Buffer}
-   */
-  async getImage(index, maxSize) {
-    let buffer = fs.readFileSync(
-      path.join(this.outputDir, "images", `${index + 1}.png`)
-    );
-
-    if (maxSize) {
-      let { width, height } = imageSize(buffer);
-      const ratio = Math.max(width, height) / maxSize;
-      if (ratio > 1) {
-        width = Math.floor(width / ratio);
-        height = Math.floor(height / ratio);
-        const current = await Jimp.read(buffer);
-        current.resize(width, height);
-        buffer = await current.getBufferAsync(Jimp.MIME_PNG);
-      }
-    }
-
-    return buffer;
-  }
-
+  // #region Traits Images
   /**
    * @param {Trait} trait
    * @param {number} maxSize
-   * @returns {Buffer}
+   * @returns {Promise<Buffer>}
    */
   async getTraitImage(trait, maxSize) {
     console.log(trait.name, trait.value);
@@ -478,6 +445,7 @@ class Factory {
     let buffer = this.layerElementsBuffers.get(layerElementPath);
 
     if (maxSize) {
+      // @ts-ignore
       let { width, height } = imageSize(buffer);
       const ratio = Math.max(width, height) / maxSize;
       if (ratio > 1) {
@@ -495,12 +463,61 @@ class Factory {
   /**
    * @param {string} layerName
    * @param {number} maxSize
-   * @returns {Buffer}
+   * @returns {Promise<Buffer>}
    */
   async getRandomTraitImage(layerName, maxSize) {
     const layerElements = this.layers.get(layerName);
-    const { name: value } = rarityWeightedChoice(layerElements);
-    return await this.getTraitImage({ name: layerName, value }, maxSize);
+    const { name: value,
+      rarity,
+      type,
+      blending,
+      opacity,
+    } = rarityWeightedChoice(layerElements);
+    return await this.getTraitImage({
+      name: layerName, value,
+      rarity,
+      type,
+      blending,
+      opacity,
+    }, maxSize);
+  }
+  // #endregion
+
+  // #region Images
+  /**
+   * @param {Attributes} attributes
+   * @param {number} maxSize
+   * @returns {Promise<Buffer>}
+   */
+  async getRandomImage(attributes, maxSize) {
+    const index = Math.floor(Math.random() * attributes.length);
+    return await this.getImage(index, maxSize);
+  }
+
+  /**
+   * @param {number} index
+   * @param {number} maxSize
+   * @returns {Promise<Buffer>}
+   */
+  async getImage(index, maxSize) {
+    let buffer = fs.readFileSync(
+      path.join(this.outputDir, "images", `${index + 1}.png`)
+    );
+
+    if (maxSize) {
+      // @ts-ignore
+      let { width, height } = imageSize(buffer);
+      const ratio = Math.max(width, height) / maxSize;
+      if (ratio > 1) {
+        width = Math.floor(width / ratio);
+        height = Math.floor(height / ratio);
+        const current = await Jimp.read(buffer);
+        current.resize(width, height);
+        buffer = await current.getBufferAsync(Jimp.MIME_PNG);
+      }
+    }
+
+    return buffer;
   }
 
   /**
@@ -513,6 +530,7 @@ class Factory {
       Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
     );
   }
+  // #endregion
 }
 
 // ? For some reason, this function must remain inside this file,
@@ -522,7 +540,7 @@ async function loadInstance(instancePath) {
     await fs.promises.readFile(instancePath, "utf8")
   );
   const factory = new Factory(configuration, inputDir, outputDir);
-  factory.setProps(props);
+  factory.loadProps(props);
   return factory;
 }
 

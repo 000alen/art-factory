@@ -87,8 +87,8 @@ export const showSaveDialog = (options) => ipcTask("showSaveDialog")(options);
 export const createFactory = (id, config, inputDir, outputDir, props) =>
   ipcTask("createFactory")(id, config, inputDir, outputDir, props);
 
-export const factorySetProps = (id, props) =>
-  ipcTask("factorySetProps")(id, JSON.stringify(props));
+export const factoryLoadProps = (id, props) =>
+  ipcTask("factoryLoadProps")(id, JSON.stringify(props));
 
 export const factoryGetImage = (id, index, maxSize) =>
   ipcTaskWithRequestId("factoryGetImage")(id, index, maxSize);
