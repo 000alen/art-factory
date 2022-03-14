@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button, Flex, ButtonGroup, ProgressBar } from "@adobe/react-spectrum";
 import { factoryGetRandomTraitImage } from "../ipc";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";

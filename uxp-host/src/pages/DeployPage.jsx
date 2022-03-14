@@ -3,12 +3,9 @@ import useStateRef from "react-usestateref";
 import { useNavigate, useLocation } from "react-router-dom";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import {
-  Button,
   TextField,
   Flex,
-  ButtonGroup,
   Heading,
-  ProgressBar,
   MenuTrigger,
   Menu,
   Item,
@@ -135,7 +132,7 @@ export function DeployPage() {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
-  }, [networkKey]);
+  }, [networkKey, genericDialogContext, navigate, toolbarContext]);
 
   const onDeploy = task("deployment", async () => {
     await provider.enable();
@@ -262,6 +259,7 @@ export function DeployPage() {
                         transactionHash
                       )}
                       target="_blank"
+                      rel="noreferrer"
                     >
                       Transaction at Etherscan.
                     </a>

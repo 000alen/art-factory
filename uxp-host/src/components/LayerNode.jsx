@@ -40,9 +40,12 @@ export function LayerNode({ sidebar, data }) {
             label="Opacity"
             step={0.01}
             maxValue={1}
-            defaultValue={1}
             formatOptions={{ style: "percent" }}
-            onChange={sidebar ? null : data.onChangeOpacity}
+            {...{
+              value: sidebar ? 1 : data.opacity,
+              onChange: sidebar ? null : data.onChangeOpacity,
+              isDisabled: sidebar ? true : false,
+            }}
           />
           <MenuTrigger>
             <ActionButton>
