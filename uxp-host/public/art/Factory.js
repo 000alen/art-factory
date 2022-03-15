@@ -32,10 +32,6 @@ const {
   expandPathIfNeeded,
   append,
   composeImages,
-  layersNames,
-  name,
-  sizeOf,
-  compose,
 } = require("./utils");
 const imageSize = require("image-size");
 
@@ -176,7 +172,7 @@ class Factory {
           rarity: rarity(name),
           type: ext.slice(1),
           blending: "normal", // Default blending
-          opacity: 1,         // Default opacity
+          opacity: 1, // Default opacity
         };
       })
     );
@@ -196,10 +192,20 @@ class Factory {
   /** @param {string} layerElementPath */
   async ensureLayerElementBuffer(layerElementPath) {
     if (!this.layerElementsBuffers.has(layerElementPath)) {
-      this.layerElementsBuffers.set(
-        layerElementPath,
-        await fs.promises.readFile(path.join(this.inputDir, layerElementPath))
+      let buffer = await fs.promises.readFile(
+        path.join(this.inputDir, layerElementPath)
       );
+      // @ts-ignore
+      let { width, height } = imageSize(buffer);
+      if (
+        width !== this.configuration.width ||
+        height !== this.configuration.height
+      ) {
+        const image = await Jimp.read(buffer);
+        image.resize(this.configuration.width, this.configuration.height);
+        buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+      }
+      this.layerElementsBuffers.set(layerElementPath, buffer);
     }
   }
   // #endregion
@@ -217,22 +223,18 @@ class Factory {
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
 
-    console.log(n)
+    console.log(n);
 
     let attributes = [...Array(n).keys()].map(() => []);
 
     // @ts-ignore
     for (const { layer, blending, opacity, id } of layers) {
       if (attributesCache && id && attributesCache.has(id)) {
-        attributes = append(
-          attributes,
-          attributesCache.get(id).slice(0, n)
-        );
+        attributes = append(attributes, attributesCache.get(id).slice(0, n));
       } else {
         for (let i = 0; i < n; i++) {
           const layerElements = this.layers.get(layer);
-          const { name, rarity, type, } =
-            rarityWeightedChoice(layerElements);
+          const { name, rarity, type } = rarityWeightedChoice(layerElements);
           attributes[i].push({
             name: layer,
             value: name,
@@ -253,14 +255,22 @@ class Factory {
    * @returns {Attributes}
    */
   generateRandomAttributesFromNodes(layersNodes) {
-    /** @type {(LayerNodeData | RenderNodeData)[][]} */ const paths = getPaths(layersNodes)
+    /** @type {(LayerNodeData | RenderNodeData)[][]} */ const paths = getPaths(
+      layersNodes
+    )
       .map((p) => p.slice(1))
-      .map((p) => p.map(
-        // @ts-ignore
-        (n) => n.data))
+      .map((p) =>
+        p.map(
+          // @ts-ignore
+          (n) => n.data
+        )
+      )
       .sort((a, b) => a.length - b.length);
 
-    this.configuration.n = paths.reduce((acc, p) => acc + /** @type {RenderNodeData} */ (p[p.length - 1]).n, 0);
+    this.configuration.n = paths.reduce(
+      (acc, p) => acc + /** @type {RenderNodeData} */ (p[p.length - 1]).n,
+      0
+    );
 
     const [cache, reducedPaths] = reducePaths(paths);
     const ns = computeNs(cache, reducedPaths);
@@ -272,14 +282,11 @@ class Factory {
         expandPathIfNeeded(cache, this.configuration.layers, path),
         ns.get(id),
         attributesCache
-      )
-
-      console.log(id, x)
-
-      attributesCache.set(
-        id,
-        x
       );
+
+      console.log(id, x);
+
+      attributesCache.set(id, x);
     }
 
     const attributes = [];
@@ -325,14 +332,7 @@ class Factory {
       const current = await Jimp.read(
         this.layerElementsBuffers.get(layerElementPath)
       );
-      composeImages(
-        image,
-        current,
-        this.configuration.width,
-        this.configuration.height,
-        trait.blending,
-        trait.opacity
-      );
+      composeImages(image, current, trait.blending, trait.opacity);
     }
 
     await image.writeAsync(path.join(this.outputDir, "images", `${i + 1}.png`));
@@ -485,19 +485,24 @@ class Factory {
    */
   async getRandomTraitImage(layerName, maxSize) {
     const layerElements = this.layers.get(layerName);
-    const { name: value,
+    const {
+      name: value,
       rarity,
       type,
       blending,
       opacity,
     } = rarityWeightedChoice(layerElements);
-    return await this.getTraitImage({
-      name: layerName, value,
-      rarity,
-      type,
-      blending,
-      opacity,
-    }, maxSize);
+    return await this.getTraitImage(
+      {
+        name: layerName,
+        value,
+        rarity,
+        type,
+        blending,
+        opacity,
+      },
+      maxSize
+    );
   }
   // #endregion
 

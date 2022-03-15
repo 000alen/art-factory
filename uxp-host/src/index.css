@@ -16,7 +16,6 @@ code {
     monospace;
 }
 
-
 /* Temporal solution */
 .fix-icon-size > path {
   transform: scale(0.5);

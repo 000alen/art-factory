@@ -180,7 +180,7 @@ function verifyContract(
 }
 
 /**
- * @param {Element[]} elements 
+ * @param {Element[]} elements
  * @returns {(RootNode | LayerNode | RenderNode)[][]}
  */
 function getPaths(elements) {
@@ -215,14 +215,16 @@ function getPaths(elements) {
 }
 
 /**
- * @param {(LayerNodeData | RenderNodeData)[][]} paths 
+ * @param {(LayerNodeData | RenderNodeData)[][]} paths
  * @returns {Set<(LayerNode | RenderNode)[]>}
  */
 function getPrefixes(paths) {
   const prefixes = new Set();
 
   for (const path of paths) {
-    const filteredPaths = paths.filter((_path) => _path[0].layer === path[0].layer);
+    const filteredPaths = paths.filter(
+      (_path) => _path[0].layer === path[0].layer
+    );
     const subPaths = filteredPaths.map((_path) => _path.slice(1));
 
     if (subPaths.length > 1) {
@@ -239,7 +241,7 @@ function getPrefixes(paths) {
 }
 
 /**
- * @param {(LayerNodeData | RenderNodeData)[][]} paths 
+ * @param {(LayerNodeData | RenderNodeData)[][]} paths
  */
 function reducePaths(paths) {
   const cache = new Map();
@@ -250,13 +252,12 @@ function reducePaths(paths) {
     const prefixes = getPrefixes(paths)
       .map((prefix) => {
         if (prefix.length === 1 && cache.has(prefix[0].id)) return null;
-        return prefix
+        return prefix;
       })
       .filter((prefix) => prefix !== null)
-      .sort((a, b) => a.length - b.length)
+      .sort((a, b) => a.length - b.length);
 
     const prefix = prefixes[0];
-
 
     if (prefix === undefined) break;
 
@@ -284,7 +285,7 @@ function reducePaths(paths) {
 
       return tuple(..._path.slice(0, _prefix.length)) === tuple(..._prefix)
         ? [{ id }, ...path.slice(_prefix.length)]
-        : path
+        : path;
     });
 
     // if (i++ > 1) break;
@@ -308,9 +309,8 @@ function computeNs(cache, paths) {
       const current = stack.pop();
       if (!ns.has(current) || ns.get(current) < n) ns.set(current, n);
       for (const v of cache.get(current)) {
-        if ("id" in v && ns.has(v.id)) stack.push(v.id)
-
-      };
+        if ("id" in v && ns.has(v.id)) stack.push(v.id);
+      }
     }
   }
 
@@ -325,7 +325,6 @@ function expandPathIfNeeded(cache, layers, path) {
       _path.push(...expandPathIfNeeded(cache, layers, cache.get(node.id)));
     } else {
       _path.push(node);
-
     }
   }
 
@@ -333,8 +332,8 @@ function expandPathIfNeeded(cache, layers, path) {
 }
 
 function append(a, b) {
-  console.log("a", a)
-  console.log("b", b)
+  console.log("a", a);
+  console.log("b", b);
 
   return a.map((a_i, i) => [...a_i, ...b[i]]);
 }
@@ -353,21 +352,21 @@ function append(a, b) {
 // Jimp.BLEND_EXCLUSION;
 // opacitySource;
 // opacityDest;
-function composeImages(back, front, width, height, blending, opacity) {
-  front.resize(width, height);
+function composeImages(back, front, blending, opacity) {
   back.composite(front, 0, 0, {
-    mode: blending === "normal"
-      ? Jimp.BLEND_NORMAL
-      : blending === "screen"
+    mode:
+      blending === "normal"
+        ? Jimp.BLEND_NORMAL
+        : blending === "screen"
         ? Jimp.BLEND_SCREEN
         : blending === "multiply"
-          ? Jimp.BLEND_MULTIPLY
-          : blending === "darken"
-            ? Jimp.BLEND_DARKEN
-            : blending === "overlay"
-              ? Jimp.BLEND_OVERLAY
-              : Jimp.BLEND_NORMAL,
-    opacityDest: opacity
+        ? Jimp.BLEND_MULTIPLY
+        : blending === "darken"
+        ? Jimp.BLEND_DARKEN
+        : blending === "overlay"
+        ? Jimp.BLEND_OVERLAY
+        : Jimp.BLEND_NORMAL,
+    opacityDest: opacity,
   });
   return back;
 }

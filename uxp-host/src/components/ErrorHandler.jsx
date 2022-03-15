@@ -6,10 +6,9 @@ const errorIndicator = /\[E\d+\]/;
 export const FormattedError = (code, message, props) =>
   new Error(`[E${code}]: ${message}: ${JSON.stringify(props)}`);
 
-function getMessageError (text) {
-
+function getMessageError(text) {
   const start = text.indexOf("{");
-  const end = text.lastIndexOf("}")+1;
+  const end = text.lastIndexOf("}") + 1;
 
   const textObject = JSON.parse(text.substr(start, end));
 
@@ -37,10 +36,8 @@ export function useErrorHandler(genericDialogContext) {
         const messageError = getMessageError(message);
 
         if (messageError !== undefined)
-        genericDialogContext.show(`Error during ${name}`, messageError);
-        else
-          genericDialogContext.show(`Error during ${name}`, message);
-
+          genericDialogContext.show(`Error during ${name}`, messageError);
+        else genericDialogContext.show(`Error during ${name}`, message);
       } finally {
         setIsWorking(false);
       }

@@ -8,7 +8,7 @@
 - Define number
 
 ## QualityPage
- 
+
 - Manual Revision
 - Link back to PS to edit files
 - Skipable

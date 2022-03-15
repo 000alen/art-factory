@@ -33,7 +33,9 @@ function setEtherscanApiKey(etherscanApiKey) {
 }
 
 function getEtherscanApiKey() {
-  return store.has("etherscanApiKey") ? store.get("etherscanApiKey") : undefined;
+  return store.has("etherscanApiKey")
+    ? store.get("etherscanApiKey")
+    : undefined;
 }
 
 module.exports = {

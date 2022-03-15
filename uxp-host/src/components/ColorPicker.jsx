@@ -31,7 +31,6 @@ export function ColorPicker({ label, color, setColor, isDisabled }) {
         value={color}
         onChange={setColor}
       /> */}
-
     </Flex>
   );
 }
