@@ -35,6 +35,14 @@ const {
 } = require("./utils");
 const imageSize = require("image-size");
 
+const { uniqueNamesGenerator, adjectives, colors, names } = require('unique-names-generator');
+
+const capitalizedName = uniqueNamesGenerator({
+  dictionaries: [colors, adjectives, names],
+  separator: " ",
+  style: 'capital'
+}); // Red Big Winona
+
 const DEFAULT_BACKGROUND = "#ffffff";
 
 class Factory {
@@ -256,8 +264,8 @@ class Factory {
    */
   generateRandomAttributesFromNodes(layersNodes) {
     /** @type {(LayerNodeData | RenderNodeData)[][]} */ const paths = getPaths(
-      layersNodes
-    )
+    layersNodes
+  )
       .map((p) => p.slice(1))
       .map((p) =>
         p.map(
