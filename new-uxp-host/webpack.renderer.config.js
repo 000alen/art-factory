@@ -1,6 +1,10 @@
+const path = require("path")
 const rules = require('./webpack.rules');
 const plugins = require('./webpack.plugins');
 const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const assets = ['lib']; // asset directories
 
 rules.push({
   test: /\.css$/,
@@ -17,23 +21,16 @@ plugins.push(
   })
 )
 
-// plugins.push([
-//   "@electron-forge/plugin-webpack",
-//   {
-//     "mainConfig": "./webpack.main.config.js",
-//     "devContentSecurityPolicy": "connect-src 'self' * 'unsafe-eval'",
-//     "renderer": {
-//       "config": "./webpack.renderer.config.js",
-//       "entryPoints": [
-//         {
-//           "html": "./src/index.html",
-//           "js": "./src/renderer.ts",
-//           "name": "main_window"
-//         }
-//       ]
-//     }
-//   }
-// ])
+assets.forEach((asset) => plugins.push(
+  new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: path.resolve(__dirname, "src", asset),
+        to: path.resolve(__dirname, ".webpack/renderer", asset),
+      }
+    ]
+  })
+))
 
 module.exports = {
   module: {

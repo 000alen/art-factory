@@ -91,6 +91,7 @@ const onWhitelist = [
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
   send: (channel: string, ...args: any[]) => {
+    console.log("send");
     if (sendWhitelist.includes(channel)) {
       ipcRenderer.send(channel, ...args);
     } else {
@@ -98,6 +99,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     }
   },
   on: (channel: string, listener: (...args: any[]) => void) => {
+    console.log("on");
+
     if (onWhitelist.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => listener(...args));
     } else {
@@ -105,6 +108,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     }
   },
   once: (channel: string, listener: (...args: any[]) => void) => {
+    console.log("once");
+
     if (onWhitelist.includes(channel)) {
       ipcRenderer.once(channel, (event, ...args) => listener(...args));
     } else {
@@ -112,6 +117,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     }
   },
   removeListener: (channel: string, listener: (...args: any[]) => void) => {
+    console.log("removeListener");
+
     if (onWhitelist.includes(channel)) {
       ipcRenderer.removeListener(channel, listener);
     } else {
