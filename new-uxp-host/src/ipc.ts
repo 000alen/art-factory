@@ -1,16 +1,15 @@
 import { ipcMain, dialog } from "electron";
 import path from "path";
 import solc from "solc";
+import { Factory, loadInstance } from "./Factory";
 import {
-  Factory,
-  loadInstance,
   layersNames,
   name,
   sizeOf,
   compose,
   pinFileToIPFS,
   verifyContract,
-} from "./art";
+} from "./utils";
 import fs from "fs";
 import {
   setPinataApiKey,
@@ -275,7 +274,7 @@ ipcAsyncTask("factoryRewriteImage", async (id, i, dataUrl) => {
 
 ipcTaskWithRequestId(
   "compose",
-  async (...buffers) => await compose(...buffers)
+  async (buffers, configuration) => await compose(buffers, configuration)
 );
 
 ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) =>

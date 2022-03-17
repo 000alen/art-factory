@@ -1,26 +1,90 @@
-// // @ts-check
-/** @typedef { {pinataApiKey: string, pinataSecretApiKey: string, infuraId: string, etherscanApiKey: string} } Secrets */
-/** @typedef {{n: number, layers: string[], width: number, height: number, generateBackground: boolean, defaultBackground: string, name: string, description: string, symbol: string}} Configuration */
-/** @typedef {{ name: string, rarity: number, type: string, blending: string, opacity: number }} Layer */
-/** @typedef { Layer & { value: string } } Trait */
-/** @typedef {Trait[][]} Attributes */
-/** @typedef {{ inputDir: string, outputDir: string, configuration: Configuration, attributes: Attributes, generated: boolean, metadataGenerated: boolean, imagesCID: string, metadataCID: string, network: string, contractAddress: string, abi: any[], compilerVersion: string }} Instance */
+export interface Secrets {
+  pinataApiKey: string;
+  pinataSecretApiKey: string;
+  infuraId: string;
+  etherscanApiKey: string;
+}
 
-// TODO
-/** @typedef {{n: number}} RenderNodeData */
-/** @typedef {{layer: string, opacity: number, blending: string}} LayerNodeData */
-/** @typedef {{id: string }} BaseNode */
-/** @typedef {{id: string, type: string, source: string, target: string, sourceHandle?: string, targetHandle?: string, data?: any}} Edge */
-/** @typedef {BaseNode & {type: "rootNode"}} RootNode */
-/** @typedef {BaseNode & {type: "layerNode", data: LayerNodeData}} LayerNode */
-/** @typedef {BaseNode & {type: "renderNode", data: RenderNodeData}} RenderNode */
-/** @typedef {RootNode | LayerNode | RenderNode} Node */
-/** @typedef {Node | Edge} Element */
+export interface Configuration {
+  n: number;
+  layers: string[];
+  width: number;
+  height: number;
+  generateBackground: boolean;
+  defaultBackground: string;
+  name: string;
+  description: string;
+  symbol: string;
+}
 
-const fs = require("fs");
-const path = require("path");
-const Jimp = require("jimp");
-const {
+export interface Layer {
+  name: string;
+  rarity: number;
+  type: string;
+  blending: string;
+  opacity: number;
+}
+
+export type Trait = Layer & { value: string };
+
+export type Attributes = Trait[][];
+
+export interface Instance {
+  inputDir: string;
+  outputDir: string;
+  configuration: Configuration;
+  attributes: Attributes;
+  generated: boolean;
+  metadataGenerated: boolean;
+  imagesCID: string;
+  metadataCID: string;
+  network: string;
+  contractAddress: string;
+  abi: any[];
+  compilerVersion: string;
+}
+
+export interface RenderNodeData {
+  n: number;
+}
+
+export interface LayerNodeData {
+  layer: string;
+  opacity: number;
+  blending: string;
+}
+
+export interface BaseNode {
+  id: string;
+}
+
+export interface Edge {
+  id: string;
+  type: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+  data?: any;
+}
+
+export type RootNode = BaseNode & { type: "rootNode" };
+
+export type LayerNode = BaseNode & { type: "layerNode"; data: LayerNodeData };
+
+export type RenderNode = BaseNode & {
+  type: "renderNode";
+  data: RenderNodeData;
+};
+
+export type Node = RootNode | LayerNode | RenderNode;
+
+export type Element = Node | Edge;
+
+import fs from "fs";
+import path from "path";
+import Jimp from "jimp";
+import {
   randomColor,
   rarity,
   removeRarity,
@@ -32,43 +96,44 @@ const {
   expandPathIfNeeded,
   append,
   composeImages,
-} = require("./utils");
-const imageSize = require("image-size");
+} from "./utils";
+import imageSize from "image-size";
 
-const { uniqueNamesGenerator, adjectives, colors, names } = require('unique-names-generator');
+import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  names,
+} from "unique-names-generator";
 
 const capitalizedName = uniqueNamesGenerator({
   dictionaries: [colors, adjectives, names],
   separator: " ",
-  style: 'capital'
+  style: "capital",
 }); // Red Big Winona
 
-const DEFAULT_BACKGROUND = "#ffffff";
+export const DEFAULT_BACKGROUND = "#ffffff";
 
-class Factory {
-  /** @type {Secrets} */ secrets;
-  /** @type {Map<string, Layer[]>} */ layers;
-  /** @type {Map<string, Buffer>} */ layerElementsBuffers;
-  /** @type {Map<string, string>} */ layerElementsPaths;
-  /** @type {Attributes} */ attributes;
-  /** @type {boolean} */ generated;
-  /** @type {boolean} */ metadataGenerated;
-  /** @type {string} */ imagesCID;
-  /** @type {string} */ metadataCID;
-  /** @type {string} */ network;
-  /** @type {string} */ contractAddress;
-  /** @type {any[]} */ abi;
+export class Factory {
+  secrets: Secrets;
+  layers: Map<string, Layer[]>;
+  layerElementsBuffers: Map<string, Buffer>;
+  layerElementsPaths: Map<string, string>;
+  attributes: Attributes;
+  generated: boolean;
+  metadataGenerated: boolean;
+  imagesCID: string;
+  metadataCID: string;
+  network: string;
+  contractAddress: string;
+  abi: any[];
+  compilerVersion: string;
 
-  /**
-   * @param {Configuration} configuration
-   * @param {string} inputDir
-   * @param {string} outputDir
-   */
-  constructor(configuration, inputDir, outputDir) {
-    this.configuration = configuration;
-    this.inputDir = inputDir;
-    this.outputDir = outputDir;
-
+  constructor(
+    public configuration: Configuration,
+    public inputDir: string,
+    public outputDir: string
+  ) {
     this.layers = new Map();
     this.layerElementsBuffers = new Map();
     this.layerElementsPaths = new Map();
@@ -82,15 +147,13 @@ class Factory {
   }
 
   // #region Properties
-  /** @returns {number} */
-  maxCombinations() {
+  maxCombinations(): number {
     return this.configuration.layers.reduce((accumulator, layer) => {
       return accumulator * this.layers.get(layer).length;
     }, 1);
   }
 
-  /** @returns {Instance} */
-  instance() {
+  instance(): Instance {
     return {
       inputDir: this.inputDir,
       outputDir: this.outputDir,
@@ -109,8 +172,7 @@ class Factory {
   // #endregion
 
   // #region Loaders
-  /** @param {Partial<Instance>} props */
-  loadProps(props) {
+  loadProps(props: Partial<Instance>) {
     const {
       attributes,
       generated,
@@ -134,8 +196,9 @@ class Factory {
   }
 
   // TODO
-  /** @param {Partial<Secrets>} partialSecrets */
-  loadSecrets({ pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey }) {
+  loadSecrets(secrets: Partial<Secrets>) {
+    const { pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey } =
+      secrets;
     this.secrets = {
       ...this.secrets,
       pinataApiKey,
@@ -197,8 +260,7 @@ class Factory {
     });
   }
 
-  /** @param {string} layerElementPath */
-  async ensureLayerElementBuffer(layerElementPath) {
+  async ensureLayerElementBuffer(layerElementPath: string) {
     if (!this.layerElementsBuffers.has(layerElementPath)) {
       let buffer = await fs.promises.readFile(
         path.join(this.inputDir, layerElementPath)
@@ -219,21 +281,19 @@ class Factory {
   // #endregion
 
   // #region Attributes Generation
-  /**
-   * @param {LayerNodeData[]} layers
-   * @param {number} n
-   * @param {Map<string, Attributes>} attributesCache
-   * @returns {Attributes}
-   */
-  generateRandomAttributesFromLayers(layers, n, attributesCache) {
-    if (n > this.maxCombinations)
+  generateRandomAttributesFromLayers(
+    layers: LayerNodeData[],
+    n: number,
+    attributesCache: Map<string, Attributes>
+  ): Attributes {
+    if (n > this.maxCombinations())
       console.warn(
         `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
       );
 
     console.log(n);
 
-    let attributes = [...Array(n).keys()].map(() => []);
+    let attributes = Array.from({ length: n }, () => []);
 
     // @ts-ignore
     for (const { layer, blending, opacity, id } of layers) {
@@ -258,14 +318,10 @@ class Factory {
     return attributes;
   }
 
-  /**
-   * @param {Element[]} layersNodes
-   * @returns {Attributes}
-   */
-  generateRandomAttributesFromNodes(layersNodes) {
+  generateRandomAttributesFromNodes(layersNodes: Element[]): Attributes {
     /** @type {(LayerNodeData | RenderNodeData)[][]} */ const paths = getPaths(
-    layersNodes
-  )
+      layersNodes
+    )
       .map((p) => p.slice(1))
       .map((p) =>
         p.map(
@@ -276,18 +332,20 @@ class Factory {
       .sort((a, b) => a.length - b.length);
 
     this.configuration.n = paths.reduce(
-      (acc, p) => acc + /** @type {RenderNodeData} */ (p[p.length - 1]).n,
+      (acc, p) => acc + /** @type {RenderNodeData} */ p[p.length - 1].n,
       0
     );
 
     const [cache, reducedPaths] = reducePaths(paths);
+    // @ts-ignore
     const ns = computeNs(cache, reducedPaths);
 
     const attributesCache = new Map();
 
     for (const [id, path] of cache) {
       const x = this.generateRandomAttributesFromLayers(
-        expandPathIfNeeded(cache, this.configuration.layers, path),
+        // @ts-ignore
+        expandPathIfNeeded(cache, path),
         ns.get(id),
         attributesCache
       );
@@ -319,11 +377,7 @@ class Factory {
   // #endregion
 
   // #region Images Generation
-  /**
-   * @param {Trait[]} traits
-   * @param {number} i
-   */
-  async generateImage(traits, i) {
+  async generateImage(traits: Trait[], i: number) {
     const image = await Jimp.create(
       this.configuration.width,
       this.configuration.height,
@@ -347,11 +401,7 @@ class Factory {
   }
 
   // ! TODO: Careful with memory usage (algorithm complexity: O(n) to O(log n))
-  /**
-   * @param {Attributes} attributes
-   * @param {(i: number) => void} callback
-   */
-  async generateImages(attributes, callback) {
+  async generateImages(attributes: Attributes, callback: (i: number) => void) {
     await Promise.all(
       attributes.map(async (traits, i) => {
         await this.generateImage(traits, i);
@@ -364,11 +414,7 @@ class Factory {
 
   // #region Metadata Generation
   // ! TODO: https://docs.opensea.io/docs/metadata-standards
-  /**
-   * @param {string} cid
-   * @param {Attributes} attributes
-   */
-  async generateMetadata(cid, attributes) {
+  async generateMetadata(cid: string, attributes: Attributes) {
     const metadatas = [];
     for (let i = 0; i < attributes.length; i++) {
       const traits = attributes[i];
@@ -457,12 +503,7 @@ class Factory {
   // #endregion
 
   // #region Traits Images
-  /**
-   * @param {Trait} trait
-   * @param {number} maxSize
-   * @returns {Promise<Buffer>}
-   */
-  async getTraitImage(trait, maxSize) {
+  async getTraitImage(trait: Trait, maxSize: number) {
     const layerElementPath = this.layerElementsPaths.get(
       path.join(trait.name, trait.value)
     );
@@ -486,12 +527,7 @@ class Factory {
     return buffer;
   }
 
-  /**
-   * @param {string} layerName
-   * @param {number} maxSize
-   * @returns {Promise<Buffer>}
-   */
-  async getRandomTraitImage(layerName, maxSize) {
+  async getRandomTraitImage(layerName: string, maxSize: number) {
     const layerElements = this.layers.get(layerName);
     const {
       name: value,
@@ -515,22 +551,12 @@ class Factory {
   // #endregion
 
   // #region Images
-  /**
-   * @param {Attributes} attributes
-   * @param {number} maxSize
-   * @returns {Promise<Buffer>}
-   */
-  async getRandomImage(attributes, maxSize) {
+  async getRandomImage(attributes: Attributes, maxSize: number) {
     const index = Math.floor(Math.random() * attributes.length);
     return await this.getImage(index, maxSize);
   }
 
-  /**
-   * @param {number} index
-   * @param {number} maxSize
-   * @returns {Promise<Buffer>}
-   */
-  async getImage(index, maxSize) {
+  async getImage(index: number, maxSize: number) {
     let buffer = fs.readFileSync(
       path.join(this.outputDir, "images", `${index + 1}.png`)
     );
@@ -555,7 +581,7 @@ class Factory {
    * @param {number} i
    * @param {string} dataUrl
    */
-  async rewriteImage(i, dataUrl) {
+  async rewriteImage(i: number, dataUrl: string) {
     await fs.promises.writeFile(
       path.join(this.outputDir, "images", `${i + 1}.png`),
       Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
@@ -566,7 +592,7 @@ class Factory {
 
 // ? For some reason, this function must remain inside this file,
 // ? otherwise it doesn't work ("Factory is not a constructor").
-async function loadInstance(instancePath) {
+export async function loadInstance(instancePath: string) {
   const { inputDir, outputDir, configuration, ...props } = JSON.parse(
     await fs.promises.readFile(instancePath, "utf8")
   );
@@ -574,5 +600,3 @@ async function loadInstance(instancePath) {
   factory.loadProps(props);
   return factory;
 }
-
-module.exports = { Factory, loadInstance };

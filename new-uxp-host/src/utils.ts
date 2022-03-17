@@ -1,23 +1,26 @@
-/** @typedef {import("./Factory.js").Element} Element */
-/** @typedef {import("./Factory.js").RootNode} RootNode */
-/** @typedef {import("./Factory.js").LayerNode} LayerNode */
-/** @typedef {import("./Factory.js").RenderNode} RenderNode */
-/** @typedef {import("./Factory.js").LayerNodeData} LayerNodeData */
-/** @typedef {import("./Factory.js").RenderNodeData} RenderNodeData */
+import Jimp from "jimp";
+import path from "path";
+import axios from "axios";
+import fs from "fs";
+import FormData from "form-data";
+import { getOutgoers } from "react-flow-renderer";
+import { tuple } from "immutable-tuple";
+import { v4 as uuid } from "uuid";
+import imageSize from "image-size";
+import {
+  Element,
+  RootNode,
+  LayerNode,
+  RenderNode,
+  LayerNodeData,
+  RenderNodeData,
+  Configuration,
+  Layer,
+} from "./Factory";
 
-const Jimp = require("jimp");
-const path = require("path");
-const axios = require("axios");
-const fs = require("fs");
-const FormData = require("form-data");
-const { getOutgoers } = require("react-flow-renderer");
-const { tuple } = require("immutable-tuple");
-const { v4: uuid } = require("uuid");
-const imageSize = require("image-size");
+export const RARITY_DELIMITER = "#";
 
-const RARITY_DELIMITER = "#";
-
-function randomColor() {
+export function randomColor() {
   const r = Math.floor(Math.random() * 256);
   const g = Math.floor(Math.random() * 256);
   const b = Math.floor(Math.random() * 256);
@@ -26,20 +29,20 @@ function randomColor() {
   return Jimp.rgbaToInt(r, g, b, a);
 }
 
-function rarity(elementName) {
+export function rarity(elementName: string) {
   let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
   if (isNaN(rarity)) rarity = 1;
   return rarity;
 }
 
-function removeRarity(elementName) {
+export function removeRarity(elementName: string) {
   return elementName.split(RARITY_DELIMITER).shift();
 }
 
 // ! TODO: Rewrite
 // Source: https://github.com/parmentf/random-weighted-choice
-function rarityWeightedChoice(
-  layerElements,
+export function rarityWeightedChoice(
+  layerElements: Layer[],
   temperature = 50,
   randomFunction = Math.random,
   influence = 2
@@ -60,6 +63,7 @@ function rarityWeightedChoice(
     const { name, rarity } = element;
     let urgency = rarity + T * influence * (avg - rarity);
     if (urgency < 0) urgency = 0;
+    // @ts-ignore
     ur[name] = (ur[name] || 0) + urgency;
     return previousSum + urgency;
   }, 0);
@@ -67,7 +71,9 @@ function rarityWeightedChoice(
   let currentUrgency = 0;
   const cumulatedUrgencies = {};
   Object.keys(ur).forEach((id) => {
+    // @ts-ignore
     currentUrgency += ur[id];
+    // @ts-ignore
     cumulatedUrgencies[id] = currentUrgency;
   });
 
@@ -81,6 +87,7 @@ function rarityWeightedChoice(
   const opacities = layerElements.map((element) => element.opacity);
   for (let i = 0; i < names.length; i++) {
     const name = names[i];
+    // @ts-ignore
     const urgency = cumulatedUrgencies[name];
     if (choice <= urgency) {
       return {
@@ -100,7 +107,11 @@ function rarityWeightedChoice(
 //   PinSize: This is how large (in bytes) the content you just pinned is,
 //   Timestamp: This is the timestamp for your content pinning (represented in ISO 8601 format)
 // }
-async function pinDirectoryToIPFS(pinataApiKey, pinataSecretApiKey, src) {
+export async function pinDirectoryToIPFS(
+  pinataApiKey: string,
+  pinataSecretApiKey: string,
+  src: string
+) {
   const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
   const base = path.parse(src).base;
 
@@ -115,8 +126,10 @@ async function pinDirectoryToIPFS(pinataApiKey, pinataSecretApiKey, src) {
 
   return axios
     .post(url, data, {
+      // @ts-ignore
       maxBodyLength: "Infinity",
       headers: {
+        // @ts-ignore
         "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
         pinata_api_key: pinataApiKey,
         pinata_secret_api_key: pinataSecretApiKey,
@@ -126,7 +139,11 @@ async function pinDirectoryToIPFS(pinataApiKey, pinataSecretApiKey, src) {
   // .catch((error) => console.error(error));
 }
 
-function pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src) {
+export function pinFileToIPFS(
+  pinataApiKey: string,
+  pinataSecretApiKey: string,
+  src: string
+) {
   const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
 
   const data = new FormData();
@@ -134,8 +151,10 @@ function pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src) {
 
   return axios
     .post(url, data, {
+      // @ts-ignore
       maxBodyLength: "Infinity",
       headers: {
+        // @ts-ignore
         "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
         pinata_api_key: pinataApiKey,
         pinata_secret_api_key: pinataSecretApiKey,
@@ -147,21 +166,22 @@ function pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src) {
 
 // ! TODO
 // Source: https://docs.etherscan.io/tutorials/verifying-contracts-programmatically
-function verifyContract(
-  apiKey,
-  sourceCode,
-  network,
-  contractaddress,
-  codeformat,
-  contractname,
-  compilerversion,
-  optimizationUsed
+export function verifyContract(
+  apiKey: string,
+  sourceCode: string,
+  network: string,
+  contractaddress: string,
+  codeformat: string,
+  contractname: string,
+  compilerversion: string,
+  optimizationUsed: number
 ) {
   const urls = {
     mainnet: "https://api.etherscan.io/api",
     ropsten: "https://api-ropsten.etherscan.io/api",
     rinkeby: "https://api-rinkeby.etherscan.io/api",
   };
+  // @ts-ignore
   const url = urls[network];
 
   return axios
@@ -183,20 +203,22 @@ function verifyContract(
  * @param {Element[]} elements
  * @returns {(RootNode | LayerNode | RenderNode)[][]}
  */
-function getPaths(elements) {
+export function getPaths(elements: Element[]) {
   const root = elements
     .filter((element) => element.type === "rootNode")
     .shift();
 
-  const stack = [];
-  stack.push({
-    node: root,
-    path: [root],
-  });
+  const stack = [
+    {
+      node: root,
+      path: [root],
+    },
+  ];
 
   const savedPaths = [];
   while (stack.length > 0) {
     const actualNode = stack.pop();
+    // @ts-ignore
     const neighbors = getOutgoers(actualNode.node, elements);
 
     // Leaf node
@@ -205,7 +227,9 @@ function getPaths(elements) {
 
     for (const v of neighbors) {
       stack.push({
+        // @ts-ignore
         node: v,
+        // @ts-ignore
         path: [...actualNode.path, v],
       });
     }
@@ -214,15 +238,14 @@ function getPaths(elements) {
   return savedPaths;
 }
 
-/**
- * @param {(LayerNodeData | RenderNodeData)[][]} paths
- * @returns {Set<(LayerNode | RenderNode)[]>}
- */
-function getPrefixes(paths) {
+export function getPrefixes(
+  paths: (LayerNodeData | RenderNodeData)[][]
+): (LayerNode | RenderNode)[][] {
   const prefixes = new Set();
 
   for (const path of paths) {
     const filteredPaths = paths.filter(
+      // @ts-ignore
       (_path) => _path[0].layer === path[0].layer
     );
     const subPaths = filteredPaths.map((_path) => _path.slice(1));
@@ -231,19 +254,18 @@ function getPrefixes(paths) {
       prefixes.add(tuple(path[0]));
 
       const subPrefixes = getPrefixes(subPaths);
+
       for (const subPrefix of subPrefixes) {
         prefixes.add(tuple(path[0], ...subPrefix));
       }
     }
   }
 
+  // @ts-ignore
   return [...prefixes].map((prefix) => [...prefix]);
 }
 
-/**
- * @param {(LayerNodeData | RenderNodeData)[][]} paths
- */
-function reducePaths(paths) {
+export function reducePaths(paths: (LayerNodeData | RenderNodeData)[][]) {
   const cache = new Map();
 
   // let i = 0;
@@ -263,11 +285,13 @@ function reducePaths(paths) {
 
     cache.set(id, prefix);
 
+    // @ts-ignore
     paths = paths.map((path) => {
       const _path = path.map((node) => {
         if ("layer" in node) {
           return node.layer;
         } else if ("id" in node) {
+          // @ts-ignore
           return node.id;
         } else {
           return node;
@@ -275,6 +299,7 @@ function reducePaths(paths) {
       });
       const _prefix = prefix.map((node) => {
         if ("layer" in node) {
+          // @ts-ignore
           return node.layer;
         } else if ("id" in node) {
           return node.id;
@@ -294,12 +319,17 @@ function reducePaths(paths) {
   return [cache, paths];
 }
 
-function computeNs(cache, paths) {
+export function computeNs(
+  cache: Map<string, (LayerNodeData | RenderNodeData)[]>,
+  paths: (LayerNodeData | RenderNodeData)[][]
+) {
   const ns = new Map();
 
   for (const [id, cachedPath] of cache) {
     let n = paths
+      // @ts-ignore
       .filter((path) => path.find((p) => p.id === id))
+      // @ts-ignore
       .map((path) => path[path.length - 1].n)
       .reduce((a, b) => Math.max(a, b), 0);
 
@@ -309,6 +339,7 @@ function computeNs(cache, paths) {
       const current = stack.pop();
       if (!ns.has(current) || ns.get(current) < n) ns.set(current, n);
       for (const v of cache.get(current)) {
+        // @ts-ignore
         if ("id" in v && ns.has(v.id)) stack.push(v.id);
       }
     }
@@ -317,12 +348,17 @@ function computeNs(cache, paths) {
   return ns;
 }
 
-function expandPathIfNeeded(cache, layers, path) {
+export function expandPathIfNeeded(
+  cache: Map<string, (LayerNodeData | RenderNodeData)[]>,
+  path: (LayerNodeData | RenderNodeData)[]
+): (LayerNodeData | RenderNodeData)[] {
   const _path = [];
 
   for (const node of path) {
+    // @ts-ignore
     if ("id" in node && !cache.has(node.id)) {
-      _path.push(...expandPathIfNeeded(cache, layers, cache.get(node.id)));
+      // @ts-ignore
+      _path.push(...expandPathIfNeeded(cache, cache.get(node.id)));
     } else {
       _path.push(node);
     }
@@ -331,10 +367,7 @@ function expandPathIfNeeded(cache, layers, path) {
   return _path;
 }
 
-function append(a, b) {
-  console.log("a", a);
-  console.log("b", b);
-
+export function append(a: any[], b: any[]) {
   return a.map((a_i, i) => [...a_i, ...b[i]]);
 }
 
@@ -352,34 +385,45 @@ function append(a, b) {
 // Jimp.BLEND_EXCLUSION;
 // opacitySource;
 // opacityDest;
-function composeImages(back, front, blending, opacity) {
-  back.composite(front, 0, 0, {
-    mode:
-      blending === "normal"
-        ? Jimp.BLEND_NORMAL
-        : blending === "screen"
-        ? Jimp.BLEND_SCREEN
-        : blending === "multiply"
-        ? Jimp.BLEND_MULTIPLY
-        : blending === "darken"
-        ? Jimp.BLEND_DARKEN
-        : blending === "overlay"
-        ? Jimp.BLEND_OVERLAY
-        : Jimp.BLEND_NORMAL,
-    opacityDest: opacity,
-  });
+export function composeImages(
+  back: Jimp,
+  front: Jimp,
+  blending: string,
+  opacity: number
+) {
+  back.composite(
+    front,
+    0,
+    0,
+    // @ts-ignore
+    {
+      mode:
+        blending === "normal"
+          ? Jimp.BLEND_SOURCE_OVER // TODO: Check
+          : blending === "screen"
+          ? Jimp.BLEND_SCREEN
+          : blending === "multiply"
+          ? Jimp.BLEND_MULTIPLY
+          : blending === "darken"
+          ? Jimp.BLEND_DARKEN
+          : blending === "overlay"
+          ? Jimp.BLEND_OVERLAY
+          : Jimp.BLEND_SOURCE_OVER,
+      opacityDest: opacity,
+    }
+  );
   return back;
 }
 
-function layersNames(inputDir) {
+export function layersNames(inputDir: string) {
   return fs.readdirSync(inputDir).filter((file) => !file.startsWith("."));
 }
 
-function name(inputDir) {
+export function name(inputDir: string) {
   return path.basename(inputDir);
 }
 
-function sizeOf(inputDir) {
+export function sizeOf(inputDir: string) {
   const layer = fs
     .readdirSync(inputDir)
     .filter((file) => !file.startsWith("."))[0];
@@ -391,7 +435,7 @@ function sizeOf(inputDir) {
   return { width, height };
 }
 
-async function compose(buffers, configuration) {
+export async function compose(buffers: Buffer[], configuration: Configuration) {
   const height = configuration.height;
   const width = configuration.width;
 
@@ -412,25 +456,3 @@ async function compose(buffers, configuration) {
     });
   });
 }
-
-module.exports = {
-  RARITY_DELIMITER,
-  randomColor,
-  rarity,
-  removeRarity,
-  rarityWeightedChoice,
-  pinDirectoryToIPFS,
-  pinFileToIPFS,
-  verifyContract,
-  getPaths,
-  getPrefixes,
-  reducePaths,
-  computeNs,
-  expandPathIfNeeded,
-  append,
-  composeImages,
-  layersNames,
-  name,
-  sizeOf,
-  compose,
-};
