@@ -198,10 +198,6 @@ export function verifyContract(
     .then((response) => response.data);
 }
 
-/**
- * @param {Element[]} elements
- * @returns {(RootNode | LayerNode | RenderNode)[][]}
- */
 export function getPaths(elements: Element[]) {
   const root = elements
     .filter((element) => element.type === "rootNode")

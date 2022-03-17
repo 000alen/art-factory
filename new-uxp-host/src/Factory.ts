@@ -42,8 +42,10 @@ const capitalizedName = uniqueNamesGenerator({
 export const DEFAULT_BACKGROUND = "#ffffff";
 
 export class Factory {
-  secrets: Secrets;
   layers: Map<string, Layer[]>;
+
+
+  secrets: Secrets;
   layerElementsBuffers: Map<string, Buffer>;
   layerElementsPaths: Map<string, string>;
   attributes: Attributes;
