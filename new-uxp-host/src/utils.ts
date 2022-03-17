@@ -8,15 +8,14 @@ import { tuple } from "immutable-tuple";
 import { v4 as uuid } from "uuid";
 import imageSize from "image-size";
 import {
-  Element,
-  RootNode,
-  LayerNode,
-  RenderNode,
-  LayerNodeData,
-  RenderNodeData,
   Configuration,
   Layer,
-} from "./Factory";
+  RenderNodeData,
+  LayerNodeData,
+  LayerNode,
+  RenderNode,
+  Element,
+} from "./typings";
 
 export const RARITY_DELIMITER = "#";
 
