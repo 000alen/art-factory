@@ -6,12 +6,13 @@ import {
 } from "@adobe/react-spectrum";
 
 import { App } from "./App";
-import { SocketContext, socket } from "./components/SocketContext";
+import { SocketContext } from "./components/SocketContext";
 import { UXPContextProvider } from "./components/UXPContext";
 import "./index.css";
 
 ReactDOM.render(
-  <SocketContext.Provider value={socket}>
+  // <SocketContext.Provider value={socket}>
+  <SocketContext.Provider value={null}>
     <UXPContextProvider>
       <SpectrumProvider theme={defaultTheme}>
         <App />

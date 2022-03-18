@@ -15,20 +15,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
-
-/* Temporal solution */
-.fix-icon-size > path {
-  transform: scale(0.5);
-}
-
-.fix-icon-size > svg > path {
-  transform: scale(0.5);
-}
-
-.react-spectrum-ContextualHelp-button_d88303 > svg > path {
-  transform: scale(0.5);
-}
-
-button > svg > circle {
-  transform: scale(0.5);
-}

@@ -86,7 +86,7 @@ export function GenericDialogProvider({
   autoPlace = true,
   children,
 }: {
-  autoPlace: boolean;
+  autoPlace?: boolean;
   children?: JSX.Element[] | JSX.Element;
 }) {
   const { isShown, title, content, buttons, show, hide } = useGenericDialog();

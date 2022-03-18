@@ -55,6 +55,7 @@ export function HomePage() {
 
   const onOpenDirectory = task("open directory", async () => {
     const result = await openDirectory();
+
     if (result) {
       const { inputDir, outputDir, photoshopId, photoshop } = result;
       navigate("/configuration", {

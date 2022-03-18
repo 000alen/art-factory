@@ -160,7 +160,7 @@ ipcAsyncTask(
   }
 );
 
-ipcAsyncTask("isValidInputDir", async (inputDir) => {
+ipcAsyncTask("isValidInputDir", async (inputDir: string) => {
   const layersNames = (await fs.promises.readdir(inputDir)).filter(
     (file) => !file.startsWith(".")
   );
@@ -169,14 +169,14 @@ ipcAsyncTask("isValidInputDir", async (inputDir) => {
 
   for (const layerName of layersNames) {
     const layerPath = path.join(inputDir, layerName);
-    const isDir = await (await fs.promises.lstat(layerPath)).isDirectory();
+    const isDir = (await fs.promises.lstat(layerPath)).isDirectory();
     if (!isDir) return false;
     const layerElements = (await fs.promises.readdir(layerPath)).filter(
       (file) => !file.startsWith(".")
     );
     for (const layerElement of layerElements) {
       const elementPath = path.join(layerPath, layerElement);
-      const isFile = await (await fs.promises.lstat(elementPath)).isFile();
+      const isFile = (await fs.promises.lstat(elementPath)).isFile();
       if (!isFile) return false;
       const ext = path.parse(elementPath).ext;
       if (ext !== ".png" && ext !== ".gif") return false;

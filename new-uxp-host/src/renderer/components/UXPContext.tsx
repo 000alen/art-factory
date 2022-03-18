@@ -41,17 +41,17 @@ export function UXPContextProvider({ children }: UXPContextProviderProps) {
   const [connectionStatus, setConnectionStatus] = useState(false);
 
   useEffect(() => {
-    socket.on("uxp-connected", (isUXPConnected: boolean) => {
-      setConnectionStatus(isUXPConnected);
-    });
+    // socket.on("uxp-connected", (isUXPConnected: boolean) => {
+    //   setConnectionStatus(isUXPConnected);
+    // });
   }, [socket]);
 
   const on = (channel: string, callback: (...args: any[]) => void) => {
-    socket.on(channel, callback);
+    // socket.on(channel, callback);
   };
 
   const off = (channel: string, callback: (...args: any[]) => void) => {
-    socket.off(channel, callback);
+    // socket.off(channel, callback);
   };
 
   const hostEdit = ({
@@ -63,11 +63,11 @@ export function UXPContextProvider({ children }: UXPContextProviderProps) {
     name: string;
     traits: any[];
   }) => {
-    socket.emit("host-edit", {
-      photoshopId,
-      name,
-      traits,
-    });
+    // socket.emit("host-edit", {
+    //   photoshopId,
+    //   name,
+    //   traits,
+    // });
   };
 
   return (

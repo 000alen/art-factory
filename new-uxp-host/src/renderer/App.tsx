@@ -9,33 +9,38 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { NodesPage } from "./pages/NodesPage";
 
 import React, { useContext } from "react";
-import { Toolbar } from "./components/Toolbar";
+import { Toolbar, ToolbarProvider } from "./components/Toolbar";
 import { UXPContext } from "./components/UXPContext";
+import { GenericDialogProvider } from "./components/GenericDialog";
 
 export function App() {
   const { connectionStatus } = useContext(UXPContext);
 
   return (
-    <Router>
-      <Flex direction="column" height="100vh" gap="size-100">
-        <Toolbar>
-          {connectionStatus ? (
-            <StatusLight variant="positive"> UXP Connected </StatusLight>
-          ) : (
-            <StatusLight variant="negative"> UXP Disconnected </StatusLight>
-          )}
-        </Toolbar>
+    <GenericDialogProvider>
+      <ToolbarProvider autoPlace={false}>
+        <Router>
+          <Flex direction="column" height="100vh" gap="size-100">
+            <Toolbar>
+              {connectionStatus ? (
+                <StatusLight variant="positive"> UXP Connected </StatusLight>
+              ) : (
+                <StatusLight variant="negative"> UXP Disconnected </StatusLight>
+              )}
+            </Toolbar>
 
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/configuration" element={<ConfigurationPage />} />
-          <Route path="/nodes" element={<NodesPage />} />
-          <Route path="/quality" element={<QualityPage />} />
-          <Route path="/deploy" element={<DeployPage />} />
-          <Route path="/instance" element={<InstancePage />} />
-          <Route path="/*" element={<NotFoundPage />} />
-        </Routes>
-      </Flex>
-    </Router>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/configuration" element={<ConfigurationPage />} />
+              <Route path="/nodes" element={<NodesPage />} />
+              <Route path="/quality" element={<QualityPage />} />
+              <Route path="/deploy" element={<DeployPage />} />
+              <Route path="/instance" element={<InstancePage />} />
+              <Route path="/*" element={<NotFoundPage />} />
+            </Routes>
+          </Flex>
+        </Router>
+      </ToolbarProvider>
+    </GenericDialogProvider>
   );
 }

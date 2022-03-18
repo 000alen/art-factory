@@ -90,7 +90,7 @@ export function ToolbarProvider({
   children,
 }: {
   autoPlace: boolean;
-  children?: JSX.Element[];
+  children?: JSX.Element[] | JSX.Element;
 }) {
   const { buttons, addButton, removeButton } = useToolbar();
 

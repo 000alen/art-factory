@@ -35,6 +35,7 @@ export const openDirectory = async () => {
     canceled: boolean;
     filePaths: string[];
   };
+
   if (canceled) return;
   const [inputDir] = filePaths;
 
@@ -82,10 +83,16 @@ export const openInstance = async () => {
   return {
     id,
     instance,
+  } as {
+    id: string;
+    instance: Partial<Instance>;
   };
 };
 
-export const resolvePathFromInstance = (id: string, instance: Instance) => {
+export const resolvePathFromInstance = (
+  id: string,
+  instance: Partial<Instance>
+) => {
   const {
     inputDir,
     outputDir,

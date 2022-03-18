@@ -88,36 +88,29 @@ const onWhitelist = [
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
   send: (channel: string, ...args: any[]) => {
-    console.log("send");
     if (sendWhitelist.includes(channel)) {
-      ipcRenderer.send(channel, ...args);
+      return ipcRenderer.send(channel, ...args);
     } else {
       throw new Error(`${channel} is not on the whitelist`);
     }
   },
   on: (channel: string, listener: (...args: any[]) => void) => {
-    console.log("on");
-
     if (onWhitelist.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => listener(...args));
+      return ipcRenderer.on(channel, (event, ...args) => listener(...args));
     } else {
       throw new Error(`${channel} is not on the whitelist`);
     }
   },
   once: (channel: string, listener: (...args: any[]) => void) => {
-    console.log("once");
-
     if (onWhitelist.includes(channel)) {
-      ipcRenderer.once(channel, (event, ...args) => listener(...args));
+      return ipcRenderer.once(channel, (event, ...args) => listener(...args));
     } else {
       throw new Error(`${channel} is not on the whitelist`);
     }
   },
   removeListener: (channel: string, listener: (...args: any[]) => void) => {
-    console.log("removeListener");
-
     if (onWhitelist.includes(channel)) {
-      ipcRenderer.removeListener(channel, listener);
+      return ipcRenderer.removeListener(channel, listener);
     } else {
       throw new Error(`${channel} is not on the whitelist`);
     }

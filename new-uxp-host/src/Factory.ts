@@ -506,7 +506,7 @@ export class Factory {
   async saveInstance() {
     await this._ensureOutputDir();
     const instancePath = path.join(this.outputDir, "instance.json");
-    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance));
+    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance()));
     return instancePath;
   }
 

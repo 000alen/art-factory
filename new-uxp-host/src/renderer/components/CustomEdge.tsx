@@ -4,7 +4,7 @@ import {
   getEdgeCenter,
   getMarkerEnd,
   Position,
-  MarkerType,
+  ArrowHeadType,
 } from "react-flow-renderer";
 
 const foreignObjectSize = 20;
@@ -19,7 +19,7 @@ interface CustomEdgeProps {
   targetPosition: Position;
   style: CSSProperties;
   data: any;
-  arrowHeadType: MarkerType;
+  arrowHeadType: ArrowHeadType;
   markerEndId: string;
 }
 
