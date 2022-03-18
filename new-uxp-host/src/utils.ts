@@ -135,7 +135,6 @@ export async function pinDirectoryToIPFS(
       },
     })
     .then((response) => response.data);
-  // .catch((error) => console.error(error));
 }
 
 export function pinFileToIPFS(
@@ -160,7 +159,6 @@ export function pinFileToIPFS(
       },
     })
     .then((response) => response.data);
-  // .catch((error) => console.error(error));
 }
 
 // ! TODO

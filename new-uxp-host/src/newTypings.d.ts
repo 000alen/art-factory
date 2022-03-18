@@ -69,6 +69,8 @@ export interface CacheNodeData {
 
 export interface BaseNode {
   id: string;
+  type: string;
+  data: any;
 }
 
 export interface Edge {

@@ -44,7 +44,6 @@ export const DEFAULT_BACKGROUND = "#ffffff";
 export class Factory {
   layers: Map<string, Layer[]>;
 
-
   secrets: Secrets;
   layerElementsBuffers: Map<string, Buffer>;
   layerElementsPaths: Map<string, string>;
@@ -272,16 +271,15 @@ export class Factory {
     const attributesCache = new Map();
 
     for (const [id, path] of cache) {
-      const x = this.generateRandomAttributesFromLayers(
-        // @ts-ignore
-        expandPathIfNeeded(cache, path),
-        ns.get(id),
-        attributesCache
+      attributesCache.set(
+        id,
+        this.generateRandomAttributesFromLayers(
+          // @ts-ignore
+          expandPathIfNeeded(cache, path),
+          ns.get(id),
+          attributesCache
+        )
       );
-
-      console.log(id, x);
-
-      attributesCache.set(id, x);
     }
 
     const attributes = [];
