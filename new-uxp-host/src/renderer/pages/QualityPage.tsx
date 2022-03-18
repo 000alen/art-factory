@@ -17,15 +17,16 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { UXPContext } from "../components/UXPContext";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
+import { Collection, Configuration } from "../typings";
 
 interface QualityPageState {
   id: string;
-  attributes: any;
+  collection: Collection;
   inputDir: string;
   outputDir: string;
   photoshopId: string;
   photoshop: boolean;
-  configuration: any;
+  configuration: Partial<Configuration>;
 }
 
 interface _ImageItemProps {
@@ -63,7 +64,7 @@ export function QualityPage() {
 
   const {
     id,
-    attributes,
+    collection,
     inputDir,
     outputDir,
     photoshopId,
@@ -83,8 +84,8 @@ export function QualityPage() {
     Array.from({ length: 25 })
       .map((_, i) =>
         (async () => {
-          if (index + i >= attributes.length) return null;
-          const buffer = await factoryGetImage(id, index + i, 500);
+          if (index + i >= collection.length) return null;
+          const buffer = await factoryGetImage(id, collection[index + i], 500);
           const url = URL.createObjectURL(
             // @ts-ignore
             new Blob([buffer], { type: "image/png" })
@@ -106,7 +107,7 @@ export function QualityPage() {
       name: string;
     }) => {
       const i = Number(name) - index - 1;
-      const buffer = await factoryGetImage(id, index + i, 500);
+      const buffer = await factoryGetImage(id, collection[index + i], 500);
       const url = URL.createObjectURL(
         // @ts-ignore
         new Blob([buffer], { type: "image/png" })
@@ -123,7 +124,7 @@ export function QualityPage() {
       toolbarContext.removeButton("close");
       uxpContext.off("uxp-reload", uxpReload);
     };
-  }, [index, attributes.length, genericDialogContext, id]);
+  }, [index, collection.length, genericDialogContext, id]);
 
   const onBack = () => {
     if (index === 0) return;
@@ -132,7 +133,7 @@ export function QualityPage() {
   };
 
   const onForward = () => {
-    if (index >= attributes.length - 25) return;
+    if (index >= collection.length - 25) return;
     setImagesUrls([]);
     setIndex((prevIndex) => prevIndex + 25);
   };
@@ -141,7 +142,7 @@ export function QualityPage() {
     navigate("/deploy", {
       state: {
         id,
-        attributes,
+        attributes: collection,
         inputDir,
         outputDir,
         configuration,
@@ -153,16 +154,15 @@ export function QualityPage() {
     if (photoshop) {
       uxpContext.hostEdit({
         photoshopId,
-        name: (i + index + 1).toString(),
-        traits: attributes[i],
+        ...collection[i],
       });
     } else {
-      onSetEditor(i, attributes[i], true);
+      onSetEditor(i, collection[i], true);
     }
   };
 
   const onSave = async (i: number, dataURL: string) => {
-    await factoryRewriteImage(id, i, dataURL);
+    await factoryRewriteImage(id, collection[i], dataURL);
     setImagesUrls((prevUrls) => {
       const urls = [...prevUrls];
       urls[i % 25] = [dataURL, i];
@@ -221,7 +221,7 @@ export function QualityPage() {
       </DialogTrigger>
 
       <Heading level={1} marginStart={16}>
-        {Math.floor(index / 25) + 1} of {Math.ceil(attributes.length / 25)}
+        {Math.floor(index / 25) + 1} of {Math.ceil(collection.length / 25)}
       </Heading>
 
       <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">

@@ -8,19 +8,23 @@ import { InstancePage } from "./pages/InstancePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { NodesPage } from "./pages/NodesPage";
 
-import React from "react";
+import React, { useContext } from "react";
+import { Toolbar } from "./components/Toolbar";
+import { UXPContext } from "./components/UXPContext";
 
 export function App() {
+  const { connectionStatus } = useContext(UXPContext);
+
   return (
     <Router>
       <Flex direction="column" height="100vh" gap="size-100">
-        {/* <Toolbar>
+        <Toolbar>
           {connectionStatus ? (
             <StatusLight variant="positive"> UXP Connected </StatusLight>
           ) : (
             <StatusLight variant="negative"> UXP Disconnected </StatusLight>
           )}
-        </Toolbar> */}
+        </Toolbar>
 
         <Routes>
           <Route path="/" element={<HomePage />} />

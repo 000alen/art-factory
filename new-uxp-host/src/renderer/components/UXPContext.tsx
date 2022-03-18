@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { SocketContext } from "./SocketContext";
 
 interface UXPContextProviderProps {
-  children: JSX.Element[];
+  children: JSX.Element[] | JSX.Element;
 }
 
 interface UXPContextValue {

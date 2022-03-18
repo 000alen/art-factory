@@ -41,7 +41,7 @@ export function NodesPage() {
   const [n, setN] = useState(0);
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [generationDone, setGenerationDone] = useState(false);
-  const [attributes, setAttributes] = useState([]);
+  const [collection, setCollection] = useState([]);
   const [configuration, setConfiguration] = useState(null);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export function NodesPage() {
     };
   }, [id, partialConfiguration.layers]);
 
-  const onProgress = (i: number) => {
+  const onProgress = (name: string) => {
     setCurrentGeneration((prevGeneration) => prevGeneration + 1);
   };
 
@@ -94,7 +94,7 @@ export function NodesPage() {
     setN(n);
     setConfiguration(configuration);
 
-    const { attributes } = await factoryGenerate(
+    const { collection } = await factoryGenerate(
       id,
       configuration,
       layersNodes,
@@ -102,7 +102,7 @@ export function NodesPage() {
     );
 
     // @ts-ignore
-    setAttributes(attributes);
+    setCollection(collection);
     setGenerationDone(true);
   });
 
@@ -110,7 +110,7 @@ export function NodesPage() {
     navigate("/quality", {
       state: {
         id,
-        attributes,
+        collection,
         inputDir,
         outputDir,
         photoshopId,

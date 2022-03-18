@@ -27,12 +27,13 @@ import LogOut from "@spectrum-icons/workflow/LogOut";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
+import { Configuration } from "../typings";
 
 interface InstancePageState {
-  configuration: any;
+  configuration: Configuration;
   network: string;
   contractAddress: string;
-  abi: any;
+  abi: any[];
 }
 
 function resolveEtherscanUrl(network: string, contractAddress: string) {

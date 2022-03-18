@@ -32,14 +32,15 @@ import { factoryDeployAssets, factoryDeployContract } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { TriStateButton } from "../components/TriStateButton";
+import { Collection, Configuration } from "../typings";
 
 interface DeployPageState {
   id: string;
-  attributes: any[];
+  collection: Collection;
   inputDir: string;
   outputDir: string;
   photoshop: boolean;
-  configuration: any;
+  configuration: Configuration;
   partialDeploy: any;
 }
 
@@ -68,7 +69,7 @@ export function DeployPage() {
   const { state } = useLocation();
   const {
     id,
-    attributes,
+    collection,
     inputDir,
     outputDir,
     photoshop,
@@ -157,16 +158,16 @@ export function DeployPage() {
     const web3Provider = new providers.Web3Provider(provider);
     const signer = await web3Provider.getSigner();
 
-    const { imagesCID, metadataCID } = await factoryDeployAssets(
+    const { imagesCid, metadataCid } = await factoryDeployAssets(
       id,
       secrets,
-      attributes,
+      collection,
       partialDeploy
     );
 
     await factorySaveInstance(id);
-    setImagesCID(imagesCID);
-    setMetadataCID(metadataCID);
+    setImagesCID(imagesCid);
+    setMetadataCID(metadataCid);
 
     const { contractAddress, abi, transactionHash, wait } =
       await factoryDeployContract(
@@ -174,7 +175,7 @@ export function DeployPage() {
         configuration,
         networkKey,
         signer,
-        metadataCID
+        metadataCid
       );
     setContractAddress(contractAddress);
     setAbi(abi);
@@ -194,7 +195,7 @@ export function DeployPage() {
     navigate("/instance", {
       state: {
         id,
-        attributes,
+        attributes: collection,
         inputDir,
         outputDir,
         photoshop,

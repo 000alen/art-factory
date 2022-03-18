@@ -157,7 +157,7 @@ export const resolvePathFromInstance = (id: string, instance: Instance) => {
 };
 
 export const initializeFactory = async (
-  configuration: Configuration,
+  configuration: Partial<Configuration>,
   inputDir: string,
   outputDir: string
 ) => {

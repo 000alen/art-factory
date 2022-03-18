@@ -176,7 +176,7 @@ export const isValidInputDir = (inputDir: string) =>
 
 export const createFactory = (
   id: string,
-  configuration: Configuration,
+  configuration: Partial<Configuration>,
   inputDir: string,
   outputDir: string,
   instance?: Partial<Instance>

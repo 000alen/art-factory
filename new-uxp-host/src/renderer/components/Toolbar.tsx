@@ -59,7 +59,11 @@ const ButtonItem = ({
   );
 };
 
-export function Toolbar({ children }: { children?: JSX.Element[] }) {
+export function Toolbar({
+  children,
+}: {
+  children?: JSX.Element[] | JSX.Element;
+}) {
   const { buttons } = useContext(ToolbarContext);
 
   return (

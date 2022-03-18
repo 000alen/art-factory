@@ -13,13 +13,14 @@ import { initializeFactory } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
+import { Configuration } from "../typings";
 
 interface ConfigurationPageState {
   inputDir: string;
   outputDir: string;
   photoshopId?: string;
   photoshop: boolean;
-  partialConfiguration: any;
+  partialConfiguration: Partial<Configuration>;
 }
 
 export function ConfigurationPage() {
@@ -85,8 +86,12 @@ export function ConfigurationPage() {
       if (partialConfiguration.contractType)
         setContractType(partialConfiguration.contractType);
 
-      if (partialConfiguration.cost) setCost(partialConfiguration.cost);
-      if (partialConfiguration.maxMintAmount)
+      if ("cost" in partialConfiguration && partialConfiguration.cost)
+        setCost(partialConfiguration.cost);
+      if (
+        "maxMintAmount" in partialConfiguration &&
+        partialConfiguration.maxMintAmount
+      )
         setMaxMintAmount(partialConfiguration.maxMintAmount);
 
       if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
@@ -155,7 +160,7 @@ export function ConfigurationPage() {
         : {}),
 
       layers,
-    };
+    } as Partial<Configuration>;
 
     // ! TODO: Proper error handling
     const { id } = await initializeFactory(
