@@ -5,7 +5,7 @@ export interface Secrets {
   etherscanApiKey: string;
 }
 
-export interface Configuration {
+export interface BaseConfiguration {
   n: number;
   layers: string[];
   width: number;
@@ -15,7 +15,17 @@ export interface Configuration {
   name: string;
   description: string;
   symbol: string;
+  contractType: string;
 }
+
+export interface Configuration721 extends BaseConfiguration {
+  cost: number;
+  maxMintAmount: number;
+}
+
+export interface Configuration1155 extends BaseConfiguration {}
+
+export type Configuration = Configuration721 | Configuration1155;
 
 export interface Layer {
   basePath: string;
@@ -105,3 +115,18 @@ export interface RenderNode extends BaseNode {
 export type Node = RootNode | LayerNode | CacheNode | RenderNode;
 
 export type NodesAndEdges = (Node | Edge)[];
+
+export interface Instance {
+  inputDir: string;
+  outputDir: string;
+  configuration: Configuration;
+  collection: Collection;
+  imagesGenerated: boolean;
+  metadataGenerated: boolean;
+  imagesCid: string;
+  metadataCid: string;
+  network: string;
+  contractAddress: string;
+  abi: any[];
+  compilerVersion: string;
+}

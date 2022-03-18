@@ -2,13 +2,9 @@ import {
   showOpenDialog,
   factorySaveInstance,
   createFactory,
-  factoryEnsureLayers,
-  factoryEnsureOutputDir,
   getOutputDir,
   factoryLoadInstance,
   factoryInstance,
-  factoryLoadProps,
-  factoryGenerateRandomAttributesFromNodes,
   factoryGenerateImages,
   factoryDeployImages,
   getContract,
@@ -16,11 +12,21 @@ import {
   factoryDeployMetadata,
   factoryGenerateMetadata,
   isValidInputDir,
-  // getContractSource,
+  createFactoryFromInstance,
+  factoryGenerateCollection,
 } from "./ipc";
 import { v4 as uuid } from "uuid";
 import { ContractFactory, Signer, utils } from "ethers";
 import { FormattedError } from "./components/ErrorHandler";
+import {
+  Collection,
+  Configuration,
+  Configuration1155,
+  Configuration721,
+  Instance,
+  NodesAndEdges,
+  Secrets,
+} from "./typings";
 
 export const openDirectory = async () => {
   const { canceled, filePaths } = (await showOpenDialog({
@@ -63,7 +69,7 @@ export const openInstance = async () => {
 
   const id = uuid();
   try {
-    await factoryLoadInstance(id, instancePath);
+    await createFactoryFromInstance(id, instancePath);
   } catch (error) {
     throw FormattedError(1, "Could not load instance", {
       instancePath,
@@ -79,15 +85,15 @@ export const openInstance = async () => {
   };
 };
 
-export const resolvePathFromInstance = (id: string, instance: any) => {
+export const resolvePathFromInstance = (id: string, instance: Instance) => {
   const {
     inputDir,
     outputDir,
     attributes,
     generated,
     metadataGenerated,
-    imagesCID,
-    metadataCID,
+    imagesCid,
+    metadataCid,
     contractAddress,
     configuration,
     network,
@@ -99,7 +105,7 @@ export const resolvePathFromInstance = (id: string, instance: any) => {
         "/configuration",
         { inputDir, outputDir, partialConfiguration: configuration },
       ]
-    : !metadataGenerated && !imagesCID && !metadataCID && !contractAddress
+    : !metadataGenerated && !imagesCid && !metadataCid && !contractAddress
     ? [
         "/quality",
         {
@@ -112,7 +118,7 @@ export const resolvePathFromInstance = (id: string, instance: any) => {
           configuration,
         },
       ]
-    : imagesCID && metadataCID && !contractAddress
+    : imagesCid && metadataCid && !contractAddress
     ? [
         "/deploy",
         {
@@ -124,8 +130,8 @@ export const resolvePathFromInstance = (id: string, instance: any) => {
           photoshop: false,
           configuration,
           partialDeploy: {
-            imagesCID,
-            metadataCID,
+            imagesCID: imagesCid,
+            metadataCID: metadataCid,
           },
         },
       ]
@@ -140,8 +146,8 @@ export const resolvePathFromInstance = (id: string, instance: any) => {
           photoshopId: "",
           photoshop: false,
           configuration,
-          imagesCID,
-          metadataCID,
+          imagesCID: imagesCid,
+          metadataCID: metadataCid,
           network,
           contractAddress,
           abi,
@@ -151,7 +157,7 @@ export const resolvePathFromInstance = (id: string, instance: any) => {
 };
 
 export const initializeFactory = async (
-  configuration: any,
+  configuration: Configuration,
   inputDir: string,
   outputDir: string
 ) => {
@@ -160,8 +166,6 @@ export const initializeFactory = async (
   try {
     await createFactory(id, configuration, inputDir, outputDir);
     await factorySaveInstance(id);
-    await factoryEnsureLayers(id);
-    await factoryEnsureOutputDir(id);
   } catch (error) {
     throw FormattedError(2, "Could not initialize factory", {
       configuration,
@@ -176,7 +180,7 @@ export const initializeFactory = async (
   };
 };
 
-export const filterNodes = (nodes: any[]) =>
+export const filterNodes = (nodes: NodesAndEdges) =>
   JSON.parse(
     JSON.stringify(
       nodes.map((node) =>
@@ -184,132 +188,127 @@ export const filterNodes = (nodes: any[]) =>
           ? {
               id: node.id,
               type: node.type,
-              targetPosition: node.targetPosition,
               data: { n: node.data.n },
-              position: node.position,
             }
           : node.type === "layerNode"
           ? {
               id: node.id,
               type: node.type,
-              sourcePosition: node.sourcePosition,
-              targetPosition: node.targetPosition,
               data: {
                 layer: node.data.layer,
                 opacity: node.data.opacity,
                 blending: node.data.blending,
               },
-              position: node.position,
             }
           : node
       )
     )
   );
 
-export const computeN = (nodes: any[]) =>
-  nodes.reduce((p, c) => p + (c.type === "renderNode" ? c.data.n : 0), 0);
+// TODO
+export const computeN = (nodes: NodesAndEdges) =>
+  nodes.reduce(
+    (n, node) => n + (node.type === "renderNode" ? node.data.n : 0),
+    0
+  );
 
 export const factoryGenerate = async (
   id: string,
-  configuration: any,
-  layersNodes: any[],
-  onProgress: (i: number) => void
+  configuration: Configuration,
+  nodesAndEdges: NodesAndEdges,
+  onProgress: (name: string) => void
 ) => {
-  await factoryLoadProps(id, { configuration });
+  await factoryLoadInstance(id, { configuration });
   await factorySaveInstance(id);
 
-  const attributes = await factoryGenerateRandomAttributesFromNodes(
-    id,
-    layersNodes
-  );
+  const collection = await factoryGenerateCollection(id, nodesAndEdges);
 
   try {
-    await factoryGenerateImages(id, attributes, onProgress);
+    await factoryGenerateImages(id, collection, onProgress);
   } catch (error) {
     throw FormattedError(3, "Could not generate images", {
-      attributes,
+      collection,
       message: error.message,
     });
   }
   await factorySaveInstance(id);
 
   return {
-    attributes,
+    collection,
   };
 };
 
 export const factoryDeployAssets = async (
   id: string,
-  secrets: Record<string, string>,
-  attributes: any[],
+  secrets: Secrets,
+  collection: Collection,
   partialDeploy: any
 ) => {
-  let imagesCID, metadataCID;
+  let imagesCid, metadataCid;
 
   await factoryLoadSecrets(id, secrets);
 
   try {
-    imagesCID = partialDeploy
+    imagesCid = partialDeploy
       ? partialDeploy.imagesCID
       : await factoryDeployImages(id);
 
-    if (!partialDeploy)
-      await factoryGenerateMetadata(id, imagesCID, attributes);
+    if (!partialDeploy) await factoryGenerateMetadata(id);
 
-    metadataCID = partialDeploy
+    metadataCid = partialDeploy
       ? partialDeploy.metadataCID
       : await factoryDeployMetadata(id);
   } catch (error) {
     throw FormattedError(4, "Could not deploy assets", {
-      attributes,
-      imagesCID,
-      metadataCID,
+      collection,
+      imagesCid,
+      metadataCid,
       message: error.message,
     });
   }
 
-  await factoryLoadProps(id, {
-    imagesCID,
-    metadataCID,
+  await factoryLoadInstance(id, {
+    imagesCid,
+    metadataCid,
   });
 
   return {
-    imagesCID,
-    metadataCID,
+    imagesCid,
+    metadataCid,
   };
 };
 
 export const deploy721 = async (
   contractFactory: ContractFactory,
-  configuration: any,
-  metadataCID: string
+  configuration: Configuration721,
+  metadataCid: string
 ) =>
   await contractFactory.deploy(
     configuration.name,
     configuration.symbol,
-    `ipfs://${metadataCID}/`,
-    utils.parseEther(configuration.cost),
+    `ipfs://${metadataCid}/`,
+    utils.parseEther(`${configuration.cost}`),
     configuration.n,
     configuration.maxMintAmount
   );
 
 export const deploy1155 = async (
   contractFactory: ContractFactory,
-  configuration: any,
-  metadataCID: string
+  configuration: Configuration1155,
+  metadataCid: string
 ) =>
   await contractFactory.deploy(
     configuration.name,
     configuration.symbol,
-    `ipfs://${metadataCID}/`
+    `ipfs://${metadataCid}/`
   );
 
 export const factoryDeployContract = async (
   id: string,
-  configuration: any,
+  configuration: Configuration,
   network: string,
   signer: Signer,
-  metadataCID: string
+  metadataCid: string
 ) => {
   let contracts;
   // let source;
@@ -337,8 +336,16 @@ export const factoryDeployContract = async (
   try {
     contract =
       configuration.contractType === "721"
-        ? await deploy721(contractFactory, configuration, metadataCID)
-        : await deploy1155(contractFactory, configuration, metadataCID);
+        ? await deploy721(
+            contractFactory,
+            configuration as Configuration721,
+            metadataCid
+          )
+        : await deploy1155(
+            contractFactory,
+            configuration as Configuration1155,
+            metadataCid
+          );
   } catch (error) {
     throw FormattedError(6, "Could not deploy contract", {
       configuration,
@@ -349,7 +356,7 @@ export const factoryDeployContract = async (
   const contractAddress = contract.address;
   const transactionHash = contract.deployTransaction.hash;
 
-  await factoryLoadProps(id, {
+  await factoryLoadInstance(id, {
     network,
     contractAddress,
     abi,

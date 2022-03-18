@@ -2,14 +2,7 @@ import { ipcMain, dialog } from "electron";
 import path from "path";
 import solc from "solc";
 import { Factory, loadInstance } from "./Factory";
-import {
-  layersNames,
-  name,
-  sizeOf,
-  compose,
-  pinFileToIPFS,
-  verifyContract,
-} from "./utils";
+import { layersNames, name, sizeOf, compose, verifyContract } from "./utils";
 import fs from "fs";
 import {
   setPinataApiKey,
@@ -21,7 +14,18 @@ import {
   setEtherscanApiKey,
   getEtherscanApiKey,
 } from "./store";
+import {
+  Collection,
+  CollectionItem,
+  Configuration,
+  Instance,
+  Layer,
+  NodesAndEdges,
+  Secrets,
+  Trait,
+} from "./typings";
 
+// #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
   ipcMain.on(task, (event, ...args) => {
     let error = null;
@@ -104,19 +108,9 @@ const ipcSetterAndGetter = (
   );
   ipcAsyncTask(`get${capitalize(property)}`, async () => await getter());
 };
+// #endregion
 
-const factories: Record<string, Factory> = {};
-
-ipcTaskWithRequestId("factoryGetImage", async (id, index, maxSize) =>
-  factories[id].getImage(index, maxSize)
-);
-
-ipcTaskWithProgress(
-  "factoryGenerateImages",
-  async (onProgress, id, attributes) =>
-    await factories[id].generateImages(attributes, onProgress)
-);
-
+// #region General
 ipcAsyncTask("writeFile", async (file, data, options) => {
   await fs.promises.writeFile(file, data, options);
   return true;
@@ -137,71 +131,59 @@ ipcAsyncTask(
   async (options) => await dialog.showSaveDialog(options)
 );
 
-ipcTask("createFactory", (id, configuration, inputDir, outputDir, props) => {
-  const factory = new Factory(configuration, inputDir, outputDir);
-  if (props) factory.loadProps(props);
-  factories[id] = factory;
-  return true;
-});
+ipcTask("name", (inputDir) => name(inputDir));
 
-ipcTask("factoryLoadProps", (id, props) => {
-  factories[id].loadProps(JSON.parse(props));
-  return true;
-});
-
-ipcTask("factoryMaxCombinations", (id) => factories[id].maxCombinations);
-
-ipcTask("layersNames", (inputDir) => layersNames(inputDir));
-
-ipcTask("factoryInstance", (id) => factories[id].instance);
-
-ipcTask("factoryLoadSecrets", (id, secrets) => {
-  factories[id].loadSecrets(secrets);
-  return true;
-});
+ipcTask("sizeOf", (inputDir) => sizeOf(inputDir));
 
 ipcAsyncTask(
-  "factorySaveInstance",
-  async (id) => await factories[id].saveInstance()
+  "verifyContract",
+  async function (
+    apiKey,
+    sourceCode,
+    network,
+    contractaddress,
+    codeformat,
+    contractname,
+    compilerversion,
+    optimizationUsed
+  ) {
+    return verifyContract(
+      apiKey,
+      sourceCode,
+      network,
+      contractaddress,
+      codeformat,
+      contractname,
+      compilerversion,
+      optimizationUsed
+    );
+  }
 );
 
-ipcAsyncTask("factoryLoadInstance", async (id, instancePath) => {
-  factories[id] = await loadInstance(instancePath);
+ipcAsyncTask("isValidInputDir", async (inputDir) => {
+  const layersNames = (await fs.promises.readdir(inputDir)).filter(
+    (file) => !file.startsWith(".")
+  );
+
+  if (layersNames.length === 0) return false;
+
+  for (const layerName of layersNames) {
+    const layerPath = path.join(inputDir, layerName);
+    const isDir = await (await fs.promises.lstat(layerPath)).isDirectory();
+    if (!isDir) return false;
+    const layerElements = (await fs.promises.readdir(layerPath)).filter(
+      (file) => !file.startsWith(".")
+    );
+    for (const layerElement of layerElements) {
+      const elementPath = path.join(layerPath, layerElement);
+      const isFile = await (await fs.promises.lstat(elementPath)).isFile();
+      if (!isFile) return false;
+      const ext = path.parse(elementPath).ext;
+      if (ext !== ".png" && ext !== ".gif") return false;
+    }
+  }
   return true;
 });
-
-ipcAsyncTask("factoryEnsureLayers", async (id) => {
-  const factory = factories[id];
-  await factory.ensureLayers();
-  return true;
-});
-
-ipcAsyncTask("factoryEnsureOutputDir", async (id) => {
-  const factory = factories[id];
-  await factory.ensureOutputDir();
-  return true;
-});
-
-ipcAsyncTask("factoryGenerateMetadata", async (id, cid, attributes) => {
-  await factories[id].generateMetadata(cid, attributes);
-  return true;
-});
-
-ipcAsyncTask(
-  "factoryDeployImages",
-  async (id) => await factories[id].deployImages()
-);
-
-ipcAsyncTask(
-  "factoryDeployMetadata",
-  async (id) => await factories[id].deployMetadata()
-);
-
-ipcAsyncTask(
-  "factoryGetRandomImage",
-  async (id, attributes, maxSize) =>
-    await factories[id].getRandomImage(attributes, maxSize)
-);
 
 ipcAsyncTask("getContract", async (name) => {
   const content = await fs.promises.readFile(
@@ -256,85 +238,124 @@ ipcSetterAndGetter("infuraId", setInfuraId, getInfuraId);
 ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
 ipcTaskWithRequestId(
-  "factoryGetRandomTraitImage",
-  async (id, layerName, maxSize) =>
-    await factories[id].getRandomTraitImage(layerName, maxSize)
-);
-
-ipcTaskWithRequestId(
-  "factoryGetTraitImage",
-  async (id, trait, maxSize) =>
-    await factories[id].getTraitImage(trait, maxSize)
-);
-
-ipcAsyncTask("factoryRewriteImage", async (id, i, dataUrl) => {
-  await factories[id].rewriteImage(i, dataUrl);
-  return true;
-});
-
-ipcTaskWithRequestId(
   "compose",
   async (buffers, configuration) => await compose(buffers, configuration)
 );
 
-ipcTask("factoryGenerateRandomAttributesFromNodes", (id, nodes) =>
-  factories[id].generateRandomAttributesFromNodes(nodes)
-);
+ipcTask("layersNames", (inputDir) => layersNames(inputDir));
+// #endregion
 
-ipcTask("name", (inputDir) => name(inputDir));
+// #region Factory
+const factories: Record<string, Factory> = {};
 
-ipcTask("sizeOf", (inputDir) => sizeOf(inputDir));
-
-ipcAsyncTask("pinFileToIPFS", async (pinataApiKey, pinataSecretApiKey, src) =>
-  pinFileToIPFS(pinataApiKey, pinataSecretApiKey, src)
+ipcTask(
+  "createFactory",
+  (
+    id: string,
+    configuration: Configuration,
+    inputDir: string,
+    outputDir: string,
+    instance?: Partial<Instance>
+  ) => {
+    const factory = new Factory(configuration, inputDir, outputDir);
+    if (instance) factory.loadInstance(instance);
+    factories[id] = factory;
+    return true;
+  }
 );
 
 ipcAsyncTask(
-  "verifyContract",
-  async function (
-    apiKey,
-    sourceCode,
-    network,
-    contractaddress,
-    codeformat,
-    contractname,
-    compilerversion,
-    optimizationUsed
-  ) {
-    return verifyContract(
-      apiKey,
-      sourceCode,
-      network,
-      contractaddress,
-      codeformat,
-      contractname,
-      compilerversion,
-      optimizationUsed
-    );
+  "createFactoryFromInstance",
+  async (id: string, instancePath: string) => {
+    factories[id] = await loadInstance(instancePath);
+    return true;
   }
 );
 
-ipcAsyncTask("isValidInputDir", async (inputDir) => {
-  const layersNames = (await fs.promises.readdir(inputDir)).filter(
-    (file) => !file.startsWith(".")
-  );
+ipcTask("factoryInstance", (id: string) => factories[id].instance());
 
-  if (layersNames.length === 0) return false;
-
-  for (const layerName of layersNames) {
-    const layerPath = path.join(inputDir, layerName);
-    const isDir = await (await fs.promises.lstat(layerPath)).isDirectory();
-    if (!isDir) return false;
-    const layerElements = (await fs.promises.readdir(layerPath)).filter(
-      (file) => !file.startsWith(".")
-    );
-    for (const layerElement of layerElements) {
-      const elementPath = path.join(layerPath, layerElement);
-      const isFile = await (await fs.promises.lstat(elementPath)).isFile();
-      if (!isFile) return false;
-      const ext = path.parse(elementPath).ext;
-      if (ext !== ".png" && ext !== ".gif") return false;
-    }
-  }
+// TODO
+ipcTask("factoryLoadInstance", (id: string, instance: Partial<Instance>) => {
+  factories[id].loadInstance(instance);
   return true;
 });
+
+ipcAsyncTask(
+  "factorySaveInstance",
+  async (id: string) => await factories[id].saveInstance()
+);
+
+ipcTask("factoryLoadSecrets", (id: string, secrets: Secrets) => {
+  factories[id].loadSecrets(secrets);
+  return true;
+});
+
+ipcTask(
+  "factoryGenerateCollection",
+  (id: string, nodesAndEdges: NodesAndEdges) =>
+    factories[id].generateCollection(nodesAndEdges)
+);
+
+ipcTaskWithProgress(
+  "factoryGenerateImages",
+  async (
+    onProgress: (name: string) => void,
+    id: string,
+    collection: Collection
+  ) => {
+    await factories[id].generateImages(collection, onProgress);
+    return true;
+  }
+);
+
+ipcTaskWithProgress(
+  "factoryGenerateMetadata",
+  async (onProgress: (name: string) => void, id: string) => {
+    await factories[id].generateMetadata(onProgress);
+    return true;
+  }
+);
+
+ipcAsyncTask(
+  "factoryDeployImages",
+  async (id: string) => await factories[id].deployImages()
+);
+
+ipcAsyncTask(
+  "factoryDeployMetadata",
+  async (id: string) => await factories[id].deployMetadata()
+);
+
+ipcTaskWithRequestId(
+  "factoryGetTraitImage",
+  async (id: string, trait: Trait, maxSize?: number) =>
+    await factories[id].getTraitImage(trait, maxSize)
+);
+
+ipcTaskWithRequestId(
+  "factoryGetRandomTraitImage",
+  async (id: string, layer: Layer, maxSize?: number) =>
+    await factories[id].getRandomTraitImage(layer, maxSize)
+);
+
+ipcTaskWithRequestId(
+  "factoryGetImage",
+  async (id: string, collectionItem: CollectionItem, maxSize?: number) =>
+    factories[id].getImage(collectionItem, maxSize)
+);
+
+ipcAsyncTask(
+  "factoryGetRandomImage",
+  async (id: string, maxSize?: number) =>
+    await factories[id].getRandomImage(maxSize)
+);
+
+ipcAsyncTask(
+  "factoryRewriteImage",
+  async (id: string, collectionItem: CollectionItem, dataUrl: string) => {
+    await factories[id].rewriteImage(collectionItem, dataUrl);
+    return true;
+  }
+);
+
+// #endregion

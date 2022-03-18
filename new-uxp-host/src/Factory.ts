@@ -1,144 +1,396 @@
 import fs from "fs";
 import path from "path";
 import Jimp from "jimp";
-import {
-  randomColor,
-  rarity,
-  removeRarity,
-  rarityWeightedChoice,
-  pinDirectoryToIPFS,
-  getPaths,
-  reducePaths,
-  computeNs,
-  expandPathIfNeeded,
-  append,
-  composeImages,
-} from "./utils";
 import imageSize from "image-size";
+import { tuple } from "immutable-tuple";
+import { v4 as uuid } from "uuid";
+import FormData from "form-data";
+import axios from "axios";
+
 import {
-  Secrets,
+  CacheNodeData,
+  Collection,
+  CollectionItem,
   Configuration,
-  Layer,
-  Trait,
-  Attributes,
   Instance,
+  Layer,
   LayerNodeData,
-  Element,
+  Node,
+  NodesAndEdges,
+  Secrets,
+  Trait,
+  RenderNodeData,
 } from "./typings";
+import { append, rarity, removeRarity } from "./utils";
 
-import {
-  uniqueNamesGenerator,
-  adjectives,
-  colors,
-  names,
-} from "unique-names-generator";
-
-const capitalizedName = uniqueNamesGenerator({
-  dictionaries: [colors, adjectives, names],
-  separator: " ",
-  style: "capital",
-}); // Red Big Winona
-
+const DEFAULT_BLENDING = "normal";
+const DEFAULT_OPACITY = 1;
 export const DEFAULT_BACKGROUND = "#ffffff";
 
+async function readDir(dir: string): Promise<string[]> {
+  return (await fs.promises.readdir(dir)).filter(
+    (file) => !file.startsWith(".")
+  );
+}
+
+export function choose(
+  traits: Trait[],
+  temperature = 50,
+  randomFunction = Math.random,
+  influence = 2
+): Trait {
+  const T = (temperature - 50) / 50;
+  const n = traits.length;
+  if (!n) return null;
+
+  const total = traits.reduce(
+    (previousTotal, element) => previousTotal + element.rarity,
+    0
+  );
+
+  const average = total / n;
+
+  const urgencies: Record<string, number> = {};
+  const urgencySum = traits.reduce((previousSum, element) => {
+    const { value, rarity } = element;
+    let urgency = rarity + T * influence * (average - rarity);
+    if (urgency < 0) urgency = 0;
+    urgencies[value] = (urgencies[value] || 0) + urgency;
+    return previousSum + urgency;
+  }, 0);
+
+  let currentUrgency = 0;
+  const cumulatedUrgencies: Record<string, number> = {};
+  Object.keys(urgencies).forEach((id) => {
+    currentUrgency += urgencies[id];
+    cumulatedUrgencies[id] = currentUrgency;
+  });
+
+  if (urgencySum <= 0) return null;
+
+  const choice = randomFunction() * urgencySum;
+  const values = Object.keys(cumulatedUrgencies);
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
+    const urgency = cumulatedUrgencies[value];
+    if (choice <= urgency) {
+      return traits.find((trait) => trait.value === value);
+    }
+  }
+}
+
+export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
+  const root = nodesAndEdges.find((node) => node.type === "rootNode") as Node;
+
+  const stack: {
+    node: Node;
+    path: Node[];
+  }[] = [
+    {
+      node: root,
+      path: [root],
+    },
+  ];
+
+  const savedPaths = [];
+  while (stack.length > 0) {
+    const actualNode = stack.pop();
+    // @ts-ignore
+    const neighbors = getOutgoers(actualNode.node, nodesAndEdges);
+
+    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
+      savedPaths.push(actualNode.path);
+
+    for (const v of neighbors) {
+      stack.push({
+        node: v,
+        path: [...actualNode.path, v],
+      });
+    }
+  }
+
+  return savedPaths;
+}
+
+export function getBranchesDataPrefixes(
+  branchesData: (LayerNodeData | RenderNodeData | CacheNodeData)[][]
+): (LayerNodeData | RenderNodeData | CacheNodeData)[][] {
+  const branchDataPrefixes = new Set();
+
+  for (const branchData of branchesData) {
+    const filteredBranchesData = branchesData.filter(
+      (_branchData) =>
+        (_branchData[0] as LayerNodeData | CacheNodeData).name ===
+        (branchData[0] as LayerNodeData | CacheNodeData).name
+    );
+    const subBranchesData = filteredBranchesData.map((_branchData) =>
+      _branchData.slice(1)
+    );
+    if (subBranchesData.length > 1) {
+      branchDataPrefixes.add(tuple(branchData[0]));
+      const subBranchDataPrefixes = getBranchesDataPrefixes(subBranchesData);
+      for (const subBranchDataPrefix of subBranchDataPrefixes) {
+        branchDataPrefixes.add(tuple(branchData[0], ...subBranchDataPrefix));
+      }
+    }
+  }
+
+  return Array.from(branchDataPrefixes, (branchDataPrefix) =>
+    Array.from(branchDataPrefix as Iterable<any>)
+  );
+}
+
+export function reduceBranches(
+  branchesData: (LayerNodeData | RenderNodeData | CacheNodeData)[][]
+): [
+  Map<string, (LayerNodeData | RenderNodeData | CacheNodeData)[]>,
+  (LayerNodeData | RenderNodeData | CacheNodeData)[][]
+] {
+  const branchesCache = new Map();
+
+  while (true) {
+    const id = uuid();
+    const branchesDataPrefixes = getBranchesDataPrefixes(branchesData)
+      .map((branchDataPrefix) =>
+        branchDataPrefix.length === 1 &&
+        branchesCache.has(
+          (branchDataPrefix[0] as LayerNodeData | CacheNodeData).name
+        )
+          ? null
+          : branchDataPrefix
+      )
+      .filter((branchDataPrefix) => branchDataPrefix !== null)
+      .sort((a, b) => a.length - b.length);
+
+    const branchDataPrefix = branchesDataPrefixes[0];
+
+    if (branchDataPrefix === undefined) break;
+
+    branchesCache.set(id, branchDataPrefix);
+
+    branchesData = branchesData.map((branchData) => {
+      const _branchData = branchData.map((data) =>
+        "name" in data ? data.name : data
+      );
+      const _branchDataPrefix = branchDataPrefix.map((data) =>
+        "name" in data ? data.name : data
+      );
+
+      return tuple(..._branchData.slice(0, _branchDataPrefix.length)) ===
+        tuple(..._branchDataPrefix)
+        ? [
+            { name: id } as CacheNodeData,
+            ...branchData.slice(_branchDataPrefix.length),
+          ]
+        : branchData;
+    });
+  }
+
+  return [branchesCache, branchesData];
+}
+
+export function computeNs(
+  branchesCache: Map<
+    string,
+    (LayerNodeData | RenderNodeData | CacheNodeData)[]
+  >,
+  branches: (LayerNodeData | RenderNodeData | CacheNodeData)[][]
+) {
+  const ns = new Map();
+
+  for (const [name, cachedPath] of branchesCache) {
+    let n = branches
+      .filter((branch) =>
+        branch.find(
+          (data) => (data as LayerNodeData | CacheNodeData).name === name
+        )
+      )
+      .map((branch) => (branch.at(-1) as RenderNodeData).n)
+      .reduce((a, b) => Math.max(a, b), 0);
+
+    n = Math.max(ns.has(name) ? ns.get(name) : 0, n);
+    const stack = [name];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!ns.has(current) || ns.get(current) < n) ns.set(current, n);
+      for (const v of branchesCache.get(current)) {
+        if ("name" in v && ns.has(v.name)) stack.push(v.name);
+      }
+    }
+  }
+
+  return ns;
+}
+
+export function expandBranch(
+  cache: Map<string, (LayerNodeData | RenderNodeData | CacheNodeData)[]>,
+  branchData: (LayerNodeData | RenderNodeData | CacheNodeData)[]
+): (LayerNodeData | RenderNodeData | CacheNodeData)[] {
+  const _branchData = [];
+
+  for (const node of branchData) {
+    if ("name" in node && !cache.has(node.name)) {
+      _branchData.push(...expandBranch(cache, cache.get(node.name)));
+    } else {
+      _branchData.push(node);
+    }
+  }
+
+  return _branchData;
+}
+
+export function dataToLayer(
+  data: LayerNodeData | CacheNodeData,
+  layerByName: Map<string, Layer>
+): Layer {
+  return "name" in data && layerByName.has(data.name)
+    ? layerByName.get(data.name)
+    : {
+        name: data.name,
+        basePath: "<cache>",
+        blending: "<cache>",
+        opacity: DEFAULT_OPACITY,
+      };
+}
+
+export function getRandomColor() {
+  return Jimp.rgbaToInt(
+    Math.floor(Math.random() * 256),
+    Math.floor(Math.random() * 256),
+    Math.floor(Math.random() * 256),
+    255
+  );
+}
+
+export function composeImages(
+  back: Jimp,
+  front: Jimp,
+  blending: string,
+  opacity: number
+) {
+  back.composite(front, 0, 0, {
+    mode:
+      blending === "normal"
+        ? Jimp.BLEND_SOURCE_OVER // TODO: Check
+        : blending === "screen"
+        ? Jimp.BLEND_SCREEN
+        : blending === "multiply"
+        ? Jimp.BLEND_MULTIPLY
+        : blending === "darken"
+        ? Jimp.BLEND_DARKEN
+        : blending === "overlay"
+        ? Jimp.BLEND_OVERLAY
+        : Jimp.BLEND_SOURCE_OVER,
+    opacitySource: 1,
+    opacityDest: opacity,
+  });
+}
+
+export async function pinDirectoryToIPFS(
+  pinataApiKey: string,
+  pinataSecretApiKey: string,
+  src: string
+): Promise<{
+  IpfsHash: string;
+  PinSize: number;
+  Timestamp: string;
+}> {
+  const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+  const base = path.parse(src).base;
+
+  const data = new FormData();
+  (await readDir(src)).forEach((file) => {
+    data.append("file", fs.createReadStream(path.join(src, file)), {
+      filepath: path.join(base, path.parse(file).base),
+    });
+  });
+
+  return axios
+    .post(url, data, {
+      // @ts-ignore
+      maxBodyLength: "Infinity",
+      headers: {
+        // @ts-ignore
+        "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
+        pinata_api_key: pinataApiKey,
+        pinata_secret_api_key: pinataSecretApiKey,
+      },
+    })
+    .then((response) => response.data);
+}
+
+export async function pinFileToIPFS(
+  pinataApiKey: string,
+  pinataSecretApiKey: string,
+  src: string
+): Promise<{
+  IpfsHash: string;
+  PinSize: number;
+  Timestamp: string;
+}> {
+  const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+
+  const data = new FormData();
+  data.append("file", fs.createReadStream(src));
+
+  return axios
+    .post(url, data, {
+      // @ts-ignore
+      maxBodyLength: "Infinity",
+      headers: {
+        // @ts-ignore
+        "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
+        pinata_api_key: pinataApiKey,
+        pinata_secret_api_key: pinataSecretApiKey,
+      },
+    })
+    .then((response) => response.data);
+}
+
+export async function restrictImage(buffer: Buffer, maxSize?: number) {
+  if (maxSize) {
+    let { width, height } = imageSize(buffer);
+    const ratio = Math.max(width, height) / maxSize;
+    if (ratio > 1) {
+      width = Math.floor(width / ratio);
+      height = Math.floor(height / ratio);
+      const image = await Jimp.read(buffer);
+      image.resize(width, height);
+      buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+    }
+  }
+  return buffer;
+}
+
 export class Factory {
-  layers: Map<string, Layer[]>;
+  layerByName: Map<string, Layer>;
+  traitsByLayerName: Map<string, Trait[]>;
+  traitsBuffer: Map<string, Buffer>;
 
   secrets: Secrets;
-  layerElementsBuffers: Map<string, Buffer>;
-  layerElementsPaths: Map<string, string>;
-  attributes: Attributes;
-  generated: boolean;
+  collection: Collection;
+  imagesGenerated: boolean;
   metadataGenerated: boolean;
-  imagesCID: string;
-  metadataCID: string;
+  imagesCid: string;
+  metadataCid: string;
   network: string;
-  contractAddress: string;
-  abi: any[];
   compilerVersion: string;
+  abi: any[];
+  contractAddress: string;
 
   constructor(
     public configuration: Configuration,
     public inputDir: string,
     public outputDir: string
   ) {
-    this.layers = new Map();
-    this.layerElementsBuffers = new Map();
-    this.layerElementsPaths = new Map();
+    this.layerByName = new Map();
+    this.traitsByLayerName = new Map();
+
+    this._ensureOutputDir();
+    this._ensureLayers();
   }
 
-  async saveInstance() {
-    await this.ensureOutputDir();
-    const instancePath = path.join(this.outputDir, "instance.json");
-    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance));
-    return instancePath;
-  }
-
-  // #region Properties
-  maxCombinations(): number {
-    return this.configuration.layers.reduce((accumulator, layer) => {
-      return accumulator * this.layers.get(layer).length;
-    }, 1);
-  }
-
-  instance(): Instance {
-    return {
-      inputDir: this.inputDir,
-      outputDir: this.outputDir,
-      configuration: this.configuration,
-      attributes: this.attributes,
-      generated: this.generated,
-      metadataGenerated: this.metadataGenerated,
-      imagesCID: this.imagesCID,
-      metadataCID: this.metadataCID,
-      network: this.network,
-      contractAddress: this.contractAddress,
-      abi: this.abi,
-      compilerVersion: this.compilerVersion,
-    };
-  }
-  // #endregion
-
-  // #region Loaders
-  loadProps(props: Partial<Instance>) {
-    const {
-      attributes,
-      generated,
-      metadataGenerated,
-      imagesCID,
-      metadataCID,
-      network,
-      contractAddress,
-      abi,
-      compilerVersion,
-    } = props;
-    if (attributes) this.attributes = attributes;
-    if (generated) this.generated = generated;
-    if (metadataGenerated) this.metadataGenerated = metadataGenerated;
-    if (imagesCID) this.imagesCID = imagesCID;
-    if (metadataCID) this.metadataCID = metadataCID;
-    if (network) this.network = network;
-    if (contractAddress) this.contractAddress = contractAddress;
-    if (abi) this.abi = abi;
-    if (compilerVersion) this.compilerVersion = compilerVersion;
-  }
-
-  // TODO
-  loadSecrets(secrets: Partial<Secrets>) {
-    const { pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey } =
-      secrets;
-    this.secrets = {
-      ...this.secrets,
-      pinataApiKey,
-      pinataSecretApiKey,
-      infuraId,
-      etherscanApiKey,
-    };
-  }
-  // #endregion
-
-  // #region Setup helpers
-  async ensureOutputDir() {
+  private async _ensureOutputDir() {
     if (!fs.existsSync(this.outputDir)) fs.mkdirSync(this.outputDir);
 
     if (!fs.existsSync(path.join(this.outputDir, "json")))
@@ -148,97 +400,136 @@ export class Factory {
       fs.mkdirSync(path.join(this.outputDir, "images"));
   }
 
-  async ensureLayers() {
-    if (this.layers.size > 0) return;
+  private async _ensureLayers() {
+    const layersPaths: string[] = await readDir(this.inputDir);
 
-    const layersNames = (await fs.promises.readdir(this.inputDir)).filter(
-      (file) => !file.startsWith(".")
-    );
+    const layers: Layer[] = layersPaths.map((layerPath) => ({
+      basePath: path.join(this.inputDir, layerPath),
+      name: layerPath,
+      blending: DEFAULT_BLENDING,
+      opacity: DEFAULT_OPACITY,
+    }));
 
-    const layerElementsPaths = await Promise.all(
-      layersNames.map(async (layerName) =>
-        (
-          await fs.promises.readdir(path.join(this.inputDir, layerName))
-        ).filter((file) => !file.startsWith("."))
+    const traitsPathsByLayerIndex: string[][] = await Promise.all(
+      layersPaths.map((layerName) =>
+        readDir(path.join(this.inputDir, layerName))
       )
     );
 
-    const layersElements = layerElementsPaths.map((layerElementsPath) =>
-      layerElementsPath.map((layerElementPath) => {
-        const { name, ext } = path.parse(layerElementPath);
-        return {
-          name: removeRarity(name),
-          rarity: rarity(name),
-          type: ext.slice(1),
-          blending: "normal", // Default blending
-          opacity: 1, // Default opacity
-        };
-      })
+    const traitsByLayerIndex: Trait[][] = traitsPathsByLayerIndex.map(
+      (traitsPaths, i) =>
+        traitsPaths.map((traitPath) => {
+          const { name: value, ext } = path.parse(traitPath);
+          return {
+            ...layers[i],
+            fileName: traitPath,
+            value: removeRarity(value),
+            rarity: rarity(value),
+            type: ext.slice(1),
+          };
+        })
     );
 
-    layersNames.forEach((layerName, i) => {
-      this.layers.set(layerName, layersElements[i]);
-
-      layersElements[i].forEach((layerElements, j) => {
-        this.layerElementsPaths.set(
-          path.join(layerName, layerElements.name),
-          path.join(layerName, layerElementsPaths[i][j])
-        );
-      });
+    layersPaths.forEach((layerPath, i) => {
+      this.layerByName.set(layerPath, layers[i]);
+      this.traitsByLayerName.set(layerPath, traitsByLayerIndex[i]);
     });
   }
 
-  async ensureLayerElementBuffer(layerElementPath: string) {
-    if (!this.layerElementsBuffers.has(layerElementPath)) {
-      let buffer = await fs.promises.readFile(
-        path.join(this.inputDir, layerElementPath)
-      );
-      // @ts-ignore
-      let { width, height } = imageSize(buffer);
-      if (
-        width !== this.configuration.width ||
-        height !== this.configuration.height
-      ) {
-        const image = await Jimp.read(buffer);
-        image.resize(this.configuration.width, this.configuration.height);
-        buffer = await image.getBufferAsync(Jimp.MIME_PNG);
-      }
-      this.layerElementsBuffers.set(layerElementPath, buffer);
+  private async _ensureTraitBuffer(trait: Trait) {
+    const key = path.join(trait.basePath, trait.fileName);
+    if (this.traitsBuffer.has(key)) return;
+
+    let buffer = await fs.promises.readFile(key);
+    let { width, height } = imageSize(buffer);
+
+    if (
+      trait.type === "png" &&
+      (width !== this.configuration.width ||
+        height !== this.configuration.height)
+    ) {
+      const image = await Jimp.read(buffer);
+      image.resize(this.configuration.width, this.configuration.height);
+      buffer = await image.getBufferAsync(Jimp.MIME_PNG);
     }
+
+    this.traitsBuffer.set(key, buffer);
   }
-  // #endregion
 
-  // #region Attributes Generation
-  generateRandomAttributesFromLayers(
-    layers: LayerNodeData[],
+  instance() {
+    return {
+      inputDir: this.inputDir,
+      outputDir: this.outputDir,
+      configuration: this.configuration,
+      collection: this.collection,
+      imagesGenerated: this.imagesGenerated,
+      metadataGenerated: this.metadataGenerated,
+      imagesCid: this.imagesCid,
+      metadataCid: this.metadataCid,
+      network: this.network,
+      contractAddress: this.contractAddress,
+      abi: this.abi,
+      compilerVersion: this.compilerVersion,
+    };
+  }
+
+  loadInstance(instance: Partial<Instance>) {
+    const {
+      inputDir,
+      outputDir,
+      configuration,
+      collection,
+      imagesGenerated,
+      metadataGenerated,
+      imagesCid,
+      metadataCid,
+      network,
+      contractAddress,
+      abi,
+      compilerVersion,
+    } = instance;
+
+    if (inputDir) this.inputDir = inputDir;
+    if (outputDir) this.outputDir = outputDir;
+    if (configuration) this.configuration = configuration;
+    if (collection) this.collection = collection;
+    if (imagesGenerated) this.imagesGenerated = imagesGenerated;
+    if (metadataGenerated) this.metadataGenerated = metadataGenerated;
+    if (imagesCid) this.imagesCid = imagesCid;
+    if (metadataCid) this.metadataCid = metadataCid;
+    if (network) this.network = network;
+    if (contractAddress) this.contractAddress = contractAddress;
+    if (abi) this.abi = abi;
+    if (compilerVersion) this.compilerVersion = compilerVersion;
+  }
+
+  async saveInstance() {
+    await this._ensureOutputDir();
+    const instancePath = path.join(this.outputDir, "instance.json");
+    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance));
+    return instancePath;
+  }
+
+  loadSecrets(secrets: Secrets) {
+    this.secrets = secrets;
+  }
+
+  generateNTraits(
+    layers: Layer[],
     n: number,
-    attributesCache: Map<string, Attributes>
-  ): Attributes {
-    if (n > this.maxCombinations())
-      console.warn(
-        `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
-      );
+    traitsCache: Map<string, Trait[]> = new Map()
+  ) {
+    let attributes: Trait[][] = Array.from({ length: n }, () => []);
 
-    console.log(n);
-
-    let attributes = Array.from({ length: n }, () => []);
-
-    // @ts-ignore
-    for (const { layer, blending, opacity, id } of layers) {
-      if (attributesCache && id && attributesCache.has(id)) {
-        attributes = append(attributes, attributesCache.get(id).slice(0, n));
+    for (const layer of layers) {
+      const { name } = layer;
+      if (traitsCache.has(name)) {
+        attributes = append(attributes, traitsCache.get(name).slice(0, n));
       } else {
         for (let i = 0; i < n; i++) {
-          const layerElements = this.layers.get(layer);
-          const { name, rarity, type } = rarityWeightedChoice(layerElements);
-          attributes[i].push({
-            name: layer,
-            value: name,
-            rarity,
-            type,
-            blending: blending,
-            opacity: opacity,
-          });
+          const traits = this.traitsByLayerName.get(name);
+          const trait = choose(traits);
+          attributes[i].push(trait);
         }
       }
     }
@@ -246,113 +537,95 @@ export class Factory {
     return attributes;
   }
 
-  generateRandomAttributesFromNodes(layersNodes: Element[]): Attributes {
-    /** @type {(LayerNodeData | RenderNodeData)[][]} */ const paths = getPaths(
-      layersNodes
-    )
-      .map((p) => p.slice(1))
-      .map((p) =>
-        p.map(
-          // @ts-ignore
-          (n) => n.data
-        )
-      )
-      .sort((a, b) => a.length - b.length);
+  generateCollection(nodesAndEdges: NodesAndEdges) {
+    const branchesData = getBranches(nodesAndEdges)
+      .map((path) => path.slice(1))
+      .map((path) => path.map((node) => node.data));
 
-    this.configuration.n = paths.reduce(
-      (acc, p) => acc + /** @type {RenderNodeData} */ p[p.length - 1].n,
-      0
-    );
+    const [branchesCache, reducedBranches] = reduceBranches(branchesData);
+    const ns = computeNs(branchesCache, reducedBranches);
 
-    const [cache, reducedPaths] = reducePaths(paths);
-    // @ts-ignore
-    const ns = computeNs(cache, reducedPaths);
-
-    const attributesCache = new Map();
-
-    for (const [id, path] of cache) {
-      attributesCache.set(
-        id,
-        this.generateRandomAttributesFromLayers(
-          // @ts-ignore
-          expandPathIfNeeded(cache, path),
-          ns.get(id),
-          attributesCache
-        )
+    const traitsCache = new Map();
+    for (const [name, branch] of branchesCache) {
+      const layers: Layer[] = (
+        expandBranch(branchesCache, branch) as unknown as (
+          | LayerNodeData
+          | CacheNodeData
+        )[]
+      ).map((data) => dataToLayer(data, this.layerByName));
+      traitsCache.set(
+        name,
+        this.generateNTraits(layers, ns.get(name), traitsCache)
       );
     }
 
-    const attributes = [];
-
-    for (const path of reducedPaths) {
-      const n = path.pop().n;
-
-      const _attributes = this.generateRandomAttributesFromLayers(
-        // @ts-ignore
-        path,
-        n,
-        attributesCache
+    const collection: Collection = [];
+    for (const branch of reducedBranches) {
+      const n = (branch.pop() as RenderNodeData).n;
+      const layers: Layer[] = branch.map((data) =>
+        dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
       );
-
-      attributes.push(..._attributes);
+      const nTraits = this.generateNTraits(layers, n, traitsCache);
+      nTraits.forEach((traits, i) =>
+        collection.push({
+          name: `${i + 1}`, // ! TODO
+          traits,
+        })
+      );
     }
 
-    this.attributes = attributes;
+    this.collection = collection;
 
-    return attributes;
+    return collection;
   }
-  // #endregion
 
-  // #region Images Generation
-  async generateImage(traits: Trait[], i: number) {
+  async generateImage(collectionItem: CollectionItem) {
     const image = await Jimp.create(
       this.configuration.width,
       this.configuration.height,
       this.configuration.generateBackground
-        ? randomColor()
+        ? getRandomColor()
         : this.configuration.defaultBackground || DEFAULT_BACKGROUND
     );
 
-    for (const trait of traits) {
-      const layerElementPath = this.layerElementsPaths.get(
-        path.join(trait.name, trait.value)
-      );
-      await this.ensureLayerElementBuffer(layerElementPath);
-      const current = await Jimp.read(
-        this.layerElementsBuffers.get(layerElementPath)
-      );
+    for (const trait of collectionItem.traits) {
+      await this._ensureTraitBuffer(trait);
+      const key = path.join(trait.basePath, trait.fileName);
+      const current = await Jimp.read(this.traitsBuffer.get(key));
       composeImages(image, current, trait.blending, trait.opacity);
     }
 
-    await image.writeAsync(path.join(this.outputDir, "images", `${i + 1}.png`));
+    await image.writeAsync(
+      path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+    );
   }
 
-  // ! TODO: Careful with memory usage (algorithm complexity: O(n) to O(log n))
-  async generateImages(attributes: Attributes, callback: (i: number) => void) {
+  async generateImages(
+    collection: Collection,
+    callback?: (name: string) => void
+  ) {
     await Promise.all(
-      attributes.map(async (traits, i) => {
-        await this.generateImage(traits, i);
-        if (callback !== undefined) callback(i + 1);
+      collection.map(async (collectionItem) => {
+        await this.generateImage(collectionItem);
+        if (callback) callback(collectionItem.name);
       })
     );
-    this.generated = true;
+    this.imagesGenerated = true;
   }
-  // #endregion
 
-  // #region Metadata Generation
-  // ! TODO: https://docs.opensea.io/docs/metadata-standards
-  async generateMetadata(cid: string, attributes: Attributes) {
+  async generateMetadata(callback?: (name: string) => void) {
+    if (!this.imagesGenerated) return; // TODO
+    if (!this.imagesCid) return; // TODO
+
     const metadatas = [];
-    for (let i = 0; i < attributes.length; i++) {
-      const traits = attributes[i];
-
+    for (const collectionItem of this.collection) {
       const metadata = {
         name: this.configuration.name,
         description: this.configuration.description,
-        image: `ipfs://${cid}/${i + 1}.png`,
-        edition: i + 1,
+        image: `ipfs://${this.imagesCid}/${collectionItem.name}.png`,
+        edition: collectionItem.name,
         date: Date.now(),
-        attributes: traits.map((trait) => ({
+        attributes: collectionItem.traits.map((trait) => ({
           trait_type: trait.name,
           value: trait.value,
         })),
@@ -360,7 +633,7 @@ export class Factory {
       metadatas.push(metadata);
 
       await fs.promises.writeFile(
-        path.join(this.outputDir, "json", `${i + 1}.json`),
+        path.join(this.outputDir, "json", `${collectionItem.name}.json`),
         JSON.stringify(metadata)
       );
     }
@@ -372,21 +645,9 @@ export class Factory {
 
     this.metadataGenerated = true;
   }
-  // #endregion
 
-  // #region Deployment
-  // TODO: Extract?
-  /**
-   * @param {boolean} force
-   * @returns {Promise<string>}
-   */
-  async deployImages(force = false) {
-    if (this.imagesCID !== undefined && !force) {
-      console.warn(
-        `WARN: images have already been deployed to IPFS (cid: ${this.imagesCID})`
-      );
-      return this.imagesCID;
-    }
+  async deployImages() {
+    if (this.imagesCid) return this.imagesCid;
 
     const imagesDir = path.join(this.outputDir, "images");
 
@@ -395,26 +656,15 @@ export class Factory {
       this.secrets.pinataSecretApiKey,
       imagesDir
     );
-    this.imagesCID = IpfsHash;
+    this.imagesCid = IpfsHash;
 
-    return this.imagesCID;
+    return this.imagesCid;
   }
 
-  // TODO: Extract?
-  /**
-   * @param {boolean} force
-   * @returns {Promise<string>}
-   */
-  async deployMetadata(force = false) {
-    if (this.metadataCID !== undefined && !force) {
-      console.warn(
-        `WARN: metadata has already been deployed to IPFS (cid: ${this.metadataCID})`
-      );
-      return this.metadataCID;
-    }
+  async deployMetadata() {
+    if (this.metadataCid) return this.metadataCid;
 
-    if (this.imagesCID === undefined)
-      throw new Error("Images have not been deployed to IPFS");
+    if (!this.imagesCid) return;
 
     const jsonDir = path.join(this.outputDir, "json");
 
@@ -423,107 +673,73 @@ export class Factory {
       this.secrets.pinataSecretApiKey,
       jsonDir
     );
-    this.metadataCID = IpfsHash;
+    this.metadataCid = IpfsHash;
 
-    return this.metadataCID;
+    return this.metadataCid;
   }
-  // #endregion
 
-  // #region Traits Images
-  async getTraitImage(trait: Trait, maxSize: number) {
-    const layerElementPath = this.layerElementsPaths.get(
-      path.join(trait.name, trait.value)
-    );
-
-    await this.ensureLayerElementBuffer(layerElementPath);
-    let buffer = this.layerElementsBuffers.get(layerElementPath);
-
-    if (maxSize) {
-      // @ts-ignore
-      let { width, height } = imageSize(buffer);
-      const ratio = Math.max(width, height) / maxSize;
-      if (ratio > 1) {
-        width = Math.floor(width / ratio);
-        height = Math.floor(height / ratio);
-        const current = await Jimp.read(buffer);
-        current.resize(width, height);
-        buffer = await current.getBufferAsync(Jimp.MIME_PNG);
-      }
-    }
-
+  async getTraitImage(trait: Trait, maxSize?: number) {
+    await this._ensureTraitBuffer(trait);
+    const key = path.join(trait.name, trait.value);
+    const buffer = restrictImage(this.traitsBuffer.get(key), maxSize);
     return buffer;
   }
 
-  async getRandomTraitImage(layerName: string, maxSize: number) {
-    const layerElements = this.layers.get(layerName);
-    const {
-      name: value,
-      rarity,
-      type,
-      blending,
-      opacity,
-    } = rarityWeightedChoice(layerElements);
-    return await this.getTraitImage(
-      {
-        name: layerName,
-        value,
-        rarity,
-        type,
-        blending,
-        opacity,
-      },
-      maxSize
-    );
-  }
-  // #endregion
-
-  // #region Images
-  async getRandomImage(attributes: Attributes, maxSize: number) {
-    const index = Math.floor(Math.random() * attributes.length);
-    return await this.getImage(index, maxSize);
+  async getRandomTraitImage(layer: Layer, maxSize?: number) {
+    const traits = this.traitsByLayerName.get(layer.name);
+    const trait = choose(traits);
+    return this.getTraitImage(trait, maxSize);
   }
 
-  async getImage(index: number, maxSize: number) {
-    let buffer = fs.readFileSync(
-      path.join(this.outputDir, "images", `${index + 1}.png`)
-    );
-
-    if (maxSize) {
-      // @ts-ignore
-      let { width, height } = imageSize(buffer);
-      const ratio = Math.max(width, height) / maxSize;
-      if (ratio > 1) {
-        width = Math.floor(width / ratio);
-        height = Math.floor(height / ratio);
-        const current = await Jimp.read(buffer);
-        current.resize(width, height);
-        buffer = await current.getBufferAsync(Jimp.MIME_PNG);
-      }
-    }
-
-    return buffer;
-  }
-
-  /**
-   * @param {number} i
-   * @param {string} dataUrl
-   */
-  async rewriteImage(i: number, dataUrl: string) {
+  async rewriteTraitImage(trait: Trait, dataUrl: string) {
     await fs.promises.writeFile(
-      path.join(this.outputDir, "images", `${i + 1}.png`),
+      path.join(trait.basePath, trait.fileName),
       Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
     );
   }
-  // #endregion
+
+  async getImage(collectionItem: CollectionItem, maxSize?: number) {
+    const buffer = restrictImage(
+      await fs.promises.readFile(
+        path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+      ),
+      maxSize
+    );
+    return buffer;
+  }
+
+  async getRandomImage(maxSize?: number) {
+    const collectionItem =
+      this.collection[Math.floor(Math.random() * this.collection.length)];
+    return this.getImage(collectionItem, maxSize);
+  }
+
+  async rewriteImage(collectionItem: CollectionItem, dataUrl: string) {
+    await fs.promises.writeFile(
+      path.join(this.outputDir, "images", `${collectionItem.name}.png`),
+      Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
+    );
+  }
+
+  async getMetadata(collectionItem: CollectionItem) {
+    const metadata = await fs.promises.readFile(
+      path.join(this.outputDir, "json", `${collectionItem.name}.json`)
+    );
+    return JSON.parse(metadata.toString());
+  }
+
+  async getRandomMetadata() {
+    const collectionItem =
+      this.collection[Math.floor(Math.random() * this.collection.length)];
+    return this.getMetadata(collectionItem);
+  }
 }
 
-// ? For some reason, this function must remain inside this file,
-// ? otherwise it doesn't work ("Factory is not a constructor").
 export async function loadInstance(instancePath: string) {
-  const { inputDir, outputDir, configuration, ...props } = JSON.parse(
+  const { inputDir, outputDir, configuration, ...instance } = JSON.parse(
     await fs.promises.readFile(instancePath, "utf8")
   );
   const factory = new Factory(configuration, inputDir, outputDir);
-  factory.loadProps(props);
+  factory.loadInstance(instance);
   return factory;
 }

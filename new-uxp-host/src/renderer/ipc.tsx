@@ -1,3 +1,4 @@
+// #region Declarations
 declare global {
   interface Window {
     ipcRenderer: {
@@ -12,9 +13,22 @@ declare global {
   }
 }
 
+// #endregion
+
 import { v4 as uuid } from "uuid";
+import {
+  Collection,
+  CollectionItem,
+  Configuration,
+  Instance,
+  Layer,
+  NodesAndEdges,
+  Secrets,
+  Trait,
+} from "./typings";
 import { capitalize } from "./utils";
 
+// #region Helpers
 const ipcTask =
   (task: string) =>
   (...args: any[]) =>
@@ -31,10 +45,14 @@ const ipcTask =
 
 const ipcTaskWithProgress =
   (task: string) =>
-  (onProgress: (i: number) => void, id: string, ...args: any[]) =>
+  (
+    onProgress: (...args: any[]) => void | undefined,
+    id: string,
+    ...args: any[]
+  ) =>
     new Promise((resolve, reject) => {
-      const _onProgress = ({ id: _id, i }: { id: string; i: number }) => {
-        if (_id === id && onProgress !== undefined) onProgress(i);
+      const _onProgress = ({ id: _id, args }: { id: string; args: any[] }) => {
+        if (_id === id && onProgress) onProgress(...args);
       };
 
       const _onResult = ({ error, result }: { error: any; result: any }) => {
@@ -86,6 +104,9 @@ const ipcSetterAndGetter = (property: string) => [
   () => ipcTask(`get${capitalize(property)}`)(),
 ];
 
+// #endregion
+
+// #region General
 export const [setPinataApiKey, getPinataApiKey] =
   ipcSetterAndGetter("pinataApiKey");
 
@@ -109,68 +130,8 @@ export const showOpenDialog = (options: any) =>
 export const showSaveDialog = (options: any) =>
   ipcTask("showSaveDialog")(options);
 
-export const createFactory = (
-  id: string,
-  config: any,
-  inputDir: string,
-  outputDir: string,
-  props?: any
-) => ipcTask("createFactory")(id, config, inputDir, outputDir, props);
-
-export const factoryLoadProps = (id: string, props: any) =>
-  ipcTask("factoryLoadProps")(id, JSON.stringify(props));
-
-export const factoryGetImage = (id: string, index: number, maxSize: number) =>
-  ipcTaskWithRequestId("factoryGetImage")(id, index, maxSize);
-
-export const factoryGenerateImages = (
-  id: string,
-  attributes: any,
-  onProgress: (i: number) => void
-) => ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, attributes);
-
-export const factoryMaxCombinations = (id: string) =>
-  ipcTask("factoryMaxCombinations")(id);
-
 export const layersNames = (inputDir: string) =>
   ipcTask("layersNames")(inputDir);
-
-export const factoryInstance = (id: string) => ipcTask("factoryInstance")(id);
-
-export const factorySaveInstance = (id: string) =>
-  ipcTask("factorySaveInstance")(id);
-
-export const factoryLoadInstance = (id: string, instancePath: string) =>
-  ipcTask("factoryLoadInstance")(id, instancePath);
-
-export const factoryEnsureLayers = (id: string) =>
-  ipcTask("factoryEnsureLayers")(id);
-
-export const factoryEnsureOutputDir = (id: string) =>
-  ipcTask("factoryEnsureOutputDir")(id);
-
-export const factoryGenerateMetadata = (
-  id: string,
-  cid: string,
-  attributes: any
-) => ipcTask("factoryGenerateMetadata")(id, cid, attributes);
-
-export const factoryDeployImages = (id: string) =>
-  ipcTask("factoryDeployImages")(id);
-
-export const factoryDeployMetadata = (id: string) =>
-  ipcTask("factoryDeployMetadata")(id);
-
-export const factoryGetRandomImage = (
-  id: string,
-  attributes: any,
-  maxSize: number
-) => ipcTask("factoryGetRandomImage")(id, attributes);
-
-export const factoryLoadSecrets = (
-  id: string,
-  secrets: Record<string, string>
-) => ipcTask("factoryLoadSecrets")(id, secrets);
 
 export const getContract = (name: string) => ipcTask("getContract")(name);
 
@@ -180,36 +141,12 @@ export const getContractSource = (name: string) =>
 export const getOutputDir = (inputDir: string) =>
   ipcTask("getOutputDir")(inputDir);
 
-export const factoryGetTraitImage = (id: string, trait: any, maxSize: number) =>
-  ipcTaskWithRequestId("factoryGetTraitImage")(id, trait, maxSize);
-
-export const factoryRewriteImage = (id: string, i: number, dataURL: string) =>
-  ipcTask("factoryRewriteImage")(id, i, dataURL);
-
-export const factoryGetRandomTraitImage = (
-  id: string,
-  layersName: string[],
-  maxSize: number
-) =>
-  ipcTaskWithRequestId("factoryGetRandomTraitImage")(id, layersName, maxSize);
-
 export const compose = (buffers: Buffer[], configuration: any) =>
   ipcTaskWithRequestId("compose")(buffers, configuration);
-
-export const factoryGenerateRandomAttributesFromNodes = (
-  id: string,
-  nodes: any[]
-) => ipcTask("factoryGenerateRandomAttributesFromNodes")(id, nodes);
 
 export const name = (inputDir: string) => ipcTask("name")(inputDir);
 
 export const sizeOf = (inputDir: string) => ipcTask("sizeOf")(inputDir);
-
-export const pinFileToIPFS = (
-  pinataApiKey: string,
-  pinataSecretApiKey: string,
-  src: string
-) => ipcTask("pinFileToIPFS")(pinataApiKey, pinataSecretApiKey, src);
 
 export const verifyContract = (
   apiKey: string,
@@ -234,3 +171,80 @@ export const verifyContract = (
 
 export const isValidInputDir = (inputDir: string) =>
   ipcTask("isValidInputDir")(inputDir);
+
+// #endregion
+
+export const createFactory = (
+  id: string,
+  configuration: Configuration,
+  inputDir: string,
+  outputDir: string,
+  instance?: Partial<Instance>
+) => ipcTask("createFactory")(id, configuration, inputDir, outputDir, instance);
+
+export const createFactoryFromInstance = (id: string, instancePath: string) =>
+  ipcTask("createFactoryFromInstance")(id, instancePath);
+
+export const factoryInstance = (id: string) => ipcTask("factoryInstance")(id);
+
+export const factoryLoadInstance = (id: string, instance: Partial<Instance>) =>
+  ipcTask("factoryLoadInstance")(id, instance);
+
+export const factorySaveInstance = (id: string) =>
+  ipcTask("factorySaveInstance")(id);
+
+export const factoryLoadSecrets = (id: string, secrets: Secrets) =>
+  ipcTask("factoryLoadSecrets")(id, secrets);
+
+export const factoryGenerateCollection = (
+  id: string,
+  nodesAndEdges: NodesAndEdges
+) =>
+  ipcTask("factoryGenerateCollection")(
+    id,
+    nodesAndEdges
+  ) as Promise<Collection>;
+
+export const factoryGenerateImages = (
+  id: string,
+  collection: Collection,
+  onProgress?: (name: string) => void
+) => ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, collection);
+
+export const factoryGenerateMetadata = (
+  id: string,
+  onProgress?: (name: string) => void
+) => ipcTaskWithProgress("factoryGenerateMetadata")(onProgress, id);
+
+export const factoryDeployImages = (id: string) =>
+  ipcTask("factoryDeployImages")(id);
+
+export const factoryDeployMetadata = (id: string) =>
+  ipcTask("factoryDeployMetadata")(id);
+
+export const factoryGetTraitImage = (
+  id: string,
+  trait: Trait,
+  maxSize?: number
+) => ipcTaskWithRequestId("factoryGetTraitImage")(id, trait, maxSize);
+
+export const factoryGetRandomTraitImage = (
+  id: string,
+  layer: Layer,
+  maxSize?: number
+) => ipcTaskWithRequestId("factoryGetRandomTraitImage")(id, layer, maxSize);
+
+export const factoryGetImage = (
+  id: string,
+  collectionItem: CollectionItem,
+  maxSize?: number
+) => ipcTaskWithRequestId("factoryGetImage")(id, collectionItem, maxSize);
+
+export const factoryGetRandomImage = (id: string, maxSize?: number) =>
+  ipcTask("factoryGetRandomImage")(id, maxSize);
+
+export const factoryRewriteImage = (
+  id: string,
+  collectionItem: CollectionItem,
+  dataUrl: string
+) => ipcTask("factoryRewriteImage")(id, collectionItem, dataUrl);
