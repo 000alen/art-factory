@@ -27,17 +27,19 @@ export function useErrorHandler(genericDialogContext: any) {
         setIsWorking(true);
         await callback(...args);
       } catch (error) {
-        const message = errorIndicator.test(error.message)
-          ? error.message
-          : FormattedError(999, "Unexpected error", { message: error.message })
-              .message;
-        setError(message);
+        // const message = errorIndicator.test(error.message)
+        //   ? error.message
+        //   : FormattedError(999, "Unexpected error", { message: error.message })
+        //       .message;
+        // setError(message);
 
-        const messageError = getMessageError(message);
+        // const messageError = getMessageError(message);
+        // if (messageError !== undefined)
+        //   genericDialogContext.show(`Error during ${name}`, messageError);
+        // else
 
-        if (messageError !== undefined)
-          genericDialogContext.show(`Error during ${name}`, messageError);
-        else genericDialogContext.show(`Error during ${name}`, message);
+        // genericDialogContext.show(`Error during ${name}`, message);
+        genericDialogContext.show(`Error during ${name}`, error.message);
       } finally {
         setIsWorking(false);
       }

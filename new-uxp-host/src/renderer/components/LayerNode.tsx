@@ -33,7 +33,8 @@ export function LayerNode({ sidebar, data }: { sidebar: boolean; data: any }) {
 
       <Flex direction="column" gap="size-100">
         <ImageItem src={data.url} />
-        <Text>{data.layer}</Text>
+        {/* <Text>{data.layer}</Text> */}
+        <Text>{data.name}</Text>
         <Flex justifyContent="space-between" alignItems="center" gap="size-100">
           <Slider
             width="50%"

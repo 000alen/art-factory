@@ -196,6 +196,17 @@ export const factorySaveInstance = (id: string) =>
 export const factoryLoadSecrets = (id: string, secrets: Secrets) =>
   ipcTask("factoryLoadSecrets")(id, secrets);
 
+export const factoryGetLayerByName = (id: string, layerName: string) =>
+  ipcTaskWithRequestId("factoryGetLayerByName")(
+    id,
+    layerName
+  ) as Promise<Layer>;
+
+export const factoryGetTraitsByLayerName = (id: string, layerName: string) =>
+  ipcTaskWithRequestId("factoryGetTraitsByLayerName")(id, layerName) as Promise<
+    Trait[]
+  >;
+
 export const factoryGenerateCollection = (
   id: string,
   nodesAndEdges: NodesAndEdges
@@ -232,7 +243,12 @@ export const factoryGetRandomTraitImage = (
   id: string,
   layer: Layer,
   maxSize?: number
-) => ipcTaskWithRequestId("factoryGetRandomTraitImage")(id, layer, maxSize);
+) =>
+  ipcTaskWithRequestId("factoryGetRandomTraitImage")(
+    id,
+    layer,
+    maxSize
+  ) as Promise<Buffer>;
 
 export const factoryGetImage = (
   id: string,

@@ -6,7 +6,6 @@ import { RenderNode } from "./RenderNode";
 import { CustomEdge } from "./CustomEdge";
 import ReactFlow, {
   addEdge,
-  // @ts-ignore
   removeElements,
   Controls,
   Background,
@@ -214,7 +213,7 @@ export function useNodes(
     event.preventDefault();
 
     const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-    const { type, layer } = JSON.parse(
+    const { type, name } = JSON.parse(
       event.dataTransfer.getData("application/reactflow")
     );
 
@@ -234,15 +233,15 @@ export function useNodes(
             targetPosition: "left",
             position,
             data: {
-              layer,
+              name,
               buffer:
                 buffers[
                   // @ts-ignore
-                  partialConfiguration.layers.findIndex((e) => e === layer)
+                  partialConfiguration.layers.findIndex((e) => e === name)
                 ],
               url: urls[
                 // @ts-ignore
-                partialConfiguration.layers.findIndex((e) => e === layer)
+                partialConfiguration.layers.findIndex((e) => e === name)
               ],
               opacity: 1, // Default opacity
               blending: "normal", // Default blending

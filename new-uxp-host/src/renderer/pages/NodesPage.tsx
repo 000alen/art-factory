@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { useLocation, useNavigate } from "react-router-dom";
-import { factoryGetRandomTraitImage } from "../ipc";
+import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
 import { Nodes, NodesContextProvider } from "../components/NodesContext";
@@ -9,6 +9,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
+import { Configuration } from "../typings";
 
 interface NodesPageState {
   id: string;
@@ -16,7 +17,7 @@ interface NodesPageState {
   outputDir: string;
   photoshopId: string;
   photoshop: boolean;
-  partialConfiguration: any;
+  partialConfiguration: Partial<Configuration>;
 }
 
 export function NodesPage() {
@@ -47,32 +48,35 @@ export function NodesPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
-    Promise.all(
-      partialConfiguration.layers.map(
-        // @ts-ignore
-        async (layer) => await factoryGetRandomTraitImage(id, layer, 500)
-      )
-    )
-      .then((buffers) => [
-        buffers,
-        buffers.map((buffer) =>
-          URL.createObjectURL(new Blob([buffer], { type: "image/png" }))
-        ),
-      ])
-      .then(([buffers, urls]) => {
-        setElements([
-          {
-            id: "root",
-            type: "rootNode",
-            sourcePosition: "right",
-            data: { label: "Root" },
-            position: { x: 0, y: 0 },
-          },
-        ]);
+    task("loading preview", async () => {
+      const layers = await Promise.all(
+        partialConfiguration.layers.map((layerName) =>
+          factoryGetLayerByName(id, layerName)
+        )
+      );
 
-        setBuffers(buffers);
-        setUrls(urls);
-      });
+      const buffers = await Promise.all(
+        layers.map((layer) => factoryGetRandomTraitImage(id, layer, 500))
+      );
+
+      const urls = buffers.map((buffer) =>
+        URL.createObjectURL(new Blob([buffer], { type: "image/png" }))
+      );
+
+      setElements([
+        {
+          id: "root",
+          type: "rootNode",
+          sourcePosition: "right",
+          data: { label: "Root" },
+          position: { x: 0, y: 0 },
+        },
+      ]);
+
+      setBuffers(buffers);
+      setUrls(urls);
+    })();
+
     return () => {
       toolbarContext.removeButton("close");
     };
@@ -101,7 +105,6 @@ export function NodesPage() {
       onProgress
     );
 
-    // @ts-ignore
     setCollection(collection);
     setGenerationDone(true);
   });

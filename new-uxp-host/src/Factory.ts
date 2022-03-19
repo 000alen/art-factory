@@ -22,11 +22,13 @@ import {
   RenderNodeData,
 } from "./typings";
 import { append, rarity, removeRarity } from "./utils";
+import { getOutgoers } from "react-flow-renderer";
 
 const DEFAULT_BLENDING = "normal";
 const DEFAULT_OPACITY = 1;
 export const DEFAULT_BACKGROUND = "#ffffff";
 
+// #region Utils
 async function readDir(dir: string): Promise<string[]> {
   return (await fs.promises.readdir(dir)).filter(
     (file) => !file.startsWith(".")
@@ -95,8 +97,11 @@ export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
   const savedPaths = [];
   while (stack.length > 0) {
     const actualNode = stack.pop();
-    // @ts-ignore
-    const neighbors = getOutgoers(actualNode.node, nodesAndEdges);
+    const neighbors = getOutgoers(
+      // @ts-ignore
+      actualNode.node,
+      nodesAndEdges
+    ) as Node[];
 
     if (neighbors.length === 0 && actualNode.node.type === "renderNode")
       savedPaths.push(actualNode.path);
@@ -361,6 +366,7 @@ export async function restrictImage(buffer: Buffer, maxSize?: number) {
   }
   return buffer;
 }
+// #endregion
 
 export class Factory {
   layerByName: Map<string, Layer>;
@@ -385,6 +391,7 @@ export class Factory {
   ) {
     this.layerByName = new Map();
     this.traitsByLayerName = new Map();
+    this.traitsBuffer = new Map();
 
     this._ensureOutputDir();
     this._ensureLayers();
@@ -454,6 +461,7 @@ export class Factory {
     }
 
     this.traitsBuffer.set(key, buffer);
+    return key;
   }
 
   instance() {
@@ -512,6 +520,14 @@ export class Factory {
 
   loadSecrets(secrets: Secrets) {
     this.secrets = secrets;
+  }
+
+  getLayerByName(layerName: string) {
+    return this.layerByName.get(layerName);
+  }
+
+  getTraitsByLayerName(layerName: string) {
+    return this.traitsByLayerName.get(layerName);
   }
 
   generateNTraits(
@@ -589,8 +605,7 @@ export class Factory {
     );
 
     for (const trait of collectionItem.traits) {
-      await this._ensureTraitBuffer(trait);
-      const key = path.join(trait.basePath, trait.fileName);
+      const key = await this._ensureTraitBuffer(trait);
       const current = await Jimp.read(this.traitsBuffer.get(key));
       composeImages(image, current, trait.blending, trait.opacity);
     }
@@ -679,16 +694,15 @@ export class Factory {
   }
 
   async getTraitImage(trait: Trait, maxSize?: number) {
-    await this._ensureTraitBuffer(trait);
-    const key = path.join(trait.name, trait.value);
-    const buffer = restrictImage(this.traitsBuffer.get(key), maxSize);
+    const key = await this._ensureTraitBuffer(trait);
+    const buffer = await restrictImage(this.traitsBuffer.get(key), maxSize);
     return buffer;
   }
 
   async getRandomTraitImage(layer: Layer, maxSize?: number) {
     const traits = this.traitsByLayerName.get(layer.name);
     const trait = choose(traits);
-    return this.getTraitImage(trait, maxSize);
+    return await this.getTraitImage(trait, maxSize);
   }
 
   async rewriteTraitImage(trait: Trait, dataUrl: string) {
@@ -699,7 +713,7 @@ export class Factory {
   }
 
   async getImage(collectionItem: CollectionItem, maxSize?: number) {
-    const buffer = restrictImage(
+    const buffer = await restrictImage(
       await fs.promises.readFile(
         path.join(this.outputDir, "images", `${collectionItem.name}.png`)
       ),
@@ -711,7 +725,7 @@ export class Factory {
   async getRandomImage(maxSize?: number) {
     const collectionItem =
       this.collection[Math.floor(Math.random() * this.collection.length)];
-    return this.getImage(collectionItem, maxSize);
+    return await this.getImage(collectionItem, maxSize);
   }
 
   async rewriteImage(collectionItem: CollectionItem, dataUrl: string) {

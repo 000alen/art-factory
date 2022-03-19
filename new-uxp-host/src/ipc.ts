@@ -290,6 +290,16 @@ ipcTask("factoryLoadSecrets", (id: string, secrets: Secrets) => {
   return true;
 });
 
+ipcTaskWithRequestId("factoryGetLayerByName", (id: string, layerName: string) =>
+  factories[id].getLayerByName(layerName)
+);
+
+ipcTaskWithRequestId(
+  "factoryGetTraitsByLayerName",
+  (id: string, layerName: string) =>
+    factories[id].getTraitsByLayerName(layerName)
+);
+
 ipcTask(
   "factoryGenerateCollection",
   (id: string, nodesAndEdges: NodesAndEdges) =>

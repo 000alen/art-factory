@@ -202,7 +202,7 @@ export const filterNodes = (nodes: NodesAndEdges) =>
               id: node.id,
               type: node.type,
               data: {
-                layer: node.data.layer,
+                name: node.data.name,
                 opacity: node.data.opacity,
                 blending: node.data.blending,
               },
@@ -221,14 +221,17 @@ export const computeN = (nodes: NodesAndEdges) =>
 
 export const factoryGenerate = async (
   id: string,
-  configuration: Configuration,
+  configuration: Partial<Configuration>,
   nodesAndEdges: NodesAndEdges,
   onProgress: (name: string) => void
 ) => {
+  // @ts-ignore
   await factoryLoadInstance(id, { configuration });
   await factorySaveInstance(id);
 
   const collection = await factoryGenerateCollection(id, nodesAndEdges);
+
+  console.log("collection", collection);
 
   try {
     await factoryGenerateImages(id, collection, onProgress);

@@ -55,19 +55,19 @@ export function Sidebar({
             }}
           />
         </div>
-        {layers.map((layer, i) => (
+        {layers.map((name, i) => (
           <div
             key={i}
             onDragStart={(event) =>
-              onDragStart(event, { type: "layerNode", layer })
+              onDragStart(event, { name, type: "layerNode" })
             }
             draggable
           >
             <LayerNode
               sidebar
               data={{
+                name,
                 url: urls[i],
-                layer,
               }}
             />
           </div>

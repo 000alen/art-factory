@@ -119,7 +119,7 @@ export type NodesAndEdges = (Node | Edge)[];
 export interface Instance {
   inputDir: string;
   outputDir: string;
-  configuration: Configuration;
+  configuration: Partial<Configuration>;
   collection: Collection;
   imagesGenerated: boolean;
   metadataGenerated: boolean;
