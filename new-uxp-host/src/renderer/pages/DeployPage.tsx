@@ -134,6 +134,7 @@ export function DeployPage() {
         _secrets = __secrets;
 
         _provider = new WalletConnectProvider({
+
           infuraId: _secrets.infuraId,
           // @ts-ignore
           chainId: Networks[networkKey].id as number,

@@ -11,6 +11,7 @@ import {
 } from "@adobe/react-spectrum";
 import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
 import { factoryGetTraitImage } from "../ipc";
+import { Trait } from "../typings";
 
 export const loadImage = (url: string) =>
   new Promise((resolve, reject) => {
@@ -26,20 +27,20 @@ export function EditorDialog({
   onHide,
   onSave,
   i,
-  attributes,
+  traits,
 }: {
   id: string;
   configuration: any;
   onHide: () => void;
   onSave: (i: number, dataURL: string) => void;
   i: number;
-  attributes: any[];
+  traits: Trait[];
 }) {
   const { editor, onReady } = useFabricJSEditor();
 
   const onLoad = (canvas: any) => {
     Promise.all(
-      attributes.map(async (trait) => {
+      traits.map(async (trait) => {
         const buffer = await factoryGetTraitImage(id, trait, 500); // ! TODO
         // @ts-ignore
         return URL.createObjectURL(new Blob([buffer], { type: "image/png" }));
@@ -60,7 +61,7 @@ export function EditorDialog({
         });
       })
       .catch((err) => {
-        console.error(i, attributes, err);
+        console.error(i, traits, err);
       });
   };
 

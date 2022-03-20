@@ -231,8 +231,6 @@ export const factoryGenerate = async (
 
   const collection = await factoryGenerateCollection(id, nodesAndEdges);
 
-  console.log("collection", collection);
-
   try {
     await factoryGenerateImages(id, collection, onProgress);
   } catch (error) {

@@ -445,7 +445,7 @@ export class Factory {
 
   private async _ensureTraitBuffer(trait: Trait) {
     const key = path.join(trait.basePath, trait.fileName);
-    if (this.traitsBuffer.has(key)) return;
+    if (this.traitsBuffer.has(key)) return key;
 
     let buffer = await fs.promises.readFile(key);
     let { width, height } = imageSize(buffer);

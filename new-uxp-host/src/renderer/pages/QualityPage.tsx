@@ -76,7 +76,7 @@ export function QualityPage() {
   const [imagesUrls, setImagesUrls] = useState([]);
   const [editorShown, setEditorShown] = useState(false);
   const [editorI, setEditorI] = useState(null);
-  const [editorAttributes, setEditorAttributes] = useState(null);
+  const [editorTraits, setEditorTraits] = useState(null);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -142,7 +142,7 @@ export function QualityPage() {
     navigate("/deploy", {
       state: {
         id,
-        attributes: collection,
+        collection,
         inputDir,
         outputDir,
         configuration,
@@ -157,7 +157,7 @@ export function QualityPage() {
         ...collection[i],
       });
     } else {
-      onSetEditor(i, collection[i], true);
+      onSetEditor(i, collection[i].traits, true);
     }
   };
 
@@ -190,9 +190,9 @@ export function QualityPage() {
     setEditorShown(true);
   };
 
-  const onSetEditor = (i: number, attributes: any, show: boolean) => {
+  const onSetEditor = (i: number, traits: any, show: boolean) => {
     setEditorI(i);
-    setEditorAttributes(attributes);
+    setEditorTraits(traits);
     if (show) onShowEditor();
   };
 
@@ -216,7 +216,7 @@ export function QualityPage() {
           onHide={onHideEditor}
           onSave={onSave}
           i={editorI}
-          attributes={editorAttributes}
+          traits={editorTraits}
         />
       </DialogTrigger>
 
