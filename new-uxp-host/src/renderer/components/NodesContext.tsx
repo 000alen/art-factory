@@ -12,6 +12,7 @@ import ReactFlow, {
   getOutgoers,
   BackgroundVariant,
 } from "react-flow-renderer";
+import { BundleNode } from "./BundleNode";
 
 interface NodesContextProviderProps {
   autoPlace?: boolean;
@@ -29,6 +30,7 @@ const nodeTypes = {
   rootNode: RootNode,
   layerNode: LayerNode,
   renderNode: RenderNode,
+  bundleNode: BundleNode,
 };
 
 const edgeTypes = {
@@ -175,9 +177,7 @@ export function useNodes(
     });
   };
 
-  // @ts-ignore
-  const onConnect = (params) => {
-    // @ts-ignore
+  const onConnect = (params: any) => {
     setElements((els) => {
       if (
         params.sourceHandle === "bundleOut" &&
@@ -194,31 +194,25 @@ export function useNodes(
     updatePreview();
   };
 
-  // @ts-ignore
-  const onElementsRemove = (elementsToRemove) => {
-    // @ts-ignore
+  const onElementsRemove = (elementsToRemove: any[]) => {
     setElements((els) => removeElements(elementsToRemove, els));
     updatePreview();
   };
 
-  // @ts-ignore
-  const onEdgeRemove = (id) => {
+  const onEdgeRemove = (id: string) => {
     onElementsRemove([{ id }]);
   };
 
-  // @ts-ignore
-  const onLoad = (_reactFlowInstance) => {
+  const onLoad = (_reactFlowInstance: any) => {
     setReactFlowInstance(_reactFlowInstance);
   };
 
-  // @ts-ignore
-  const onDragOver = (event) => {
+  const onDragOver = (event: any) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   };
 
-  // @ts-ignore
-  const onDrop = (event) => {
+  const onDrop = (event: any) => {
     event.preventDefault();
 
     const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -245,15 +239,15 @@ export function useNodes(
               name,
               buffer:
                 buffers[
-                  // @ts-ignore
-                  partialConfiguration.layers.findIndex((e) => e === name)
+                  partialConfiguration.layers.findIndex(
+                    (e: string) => e === name
+                  )
                 ],
               url: urls[
-                // @ts-ignore
-                partialConfiguration.layers.findIndex((e) => e === name)
+                partialConfiguration.layers.findIndex((e: string) => e === name)
               ],
-              opacity: 1, // Default opacity
-              blending: "normal", // Default blending
+              opacity: 1,
+              blending: "normal",
               onChangeOpacity: (opacity: number) =>
                 onChangeOpacity(id, opacity),
               onChangeBlending: (blending: string) =>
@@ -270,19 +264,6 @@ export function useNodes(
             data: {
               n: 1,
               onChangeN: (n: number) => onChangeN(id, n),
-            },
-          }
-        : type === "switchNode"
-        ? {
-            id,
-            type,
-            sourcePosition: "right",
-            targetPosition: "left",
-            position,
-            data: {
-              layers: partialConfiguration.layers,
-              buffers,
-              urls,
             },
           }
         : {

@@ -1,4 +1,5 @@
 import React from "react";
+import { BundleNode } from "./BundleNode";
 import { LayerNode } from "./LayerNode";
 import { RenderNode } from "./RenderNode";
 
@@ -28,9 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
         }}
       >
         <div
-          onDragStart={(event) =>
-            onDragStart(event, { type: "renderNode", label: "Render" })
-          }
+          onDragStart={(event) => onDragStart(event, { type: "renderNode" })}
           draggable
         >
           <RenderNode
@@ -40,6 +39,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
             }}
           />
         </div>
+        <div
+          onDragStart={(event) => onDragStart(event, { type: "bundleNode" })}
+          draggable
+        >
+          <BundleNode sidebar />
+        </div>
+
         {layers.map((name, i) => (
           <div
             key={i}

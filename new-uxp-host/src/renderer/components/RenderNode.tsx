@@ -34,8 +34,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
       {!sidebar && (
         <>
           <Handle id="renderIn" type="target" position={Position.Left} />
-          <Handle id="bundleIn" type="target" position={Position.Top} />
-          <Handle id="bundleOut" type="source" position={Position.Bottom} />
+          <Handle id="renderOut" type="source" position={Position.Right} />
         </>
       )}
       <div>
