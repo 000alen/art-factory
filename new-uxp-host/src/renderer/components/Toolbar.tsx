@@ -3,6 +3,16 @@ import { Flex, DialogTrigger, ActionButton, Text } from "@adobe/react-spectrum";
 import Settings from "@spectrum-icons/workflow/Settings";
 import { SecretsDialog } from "./SecretsDialog";
 
+interface ButtonItemProps {
+  label: string;
+  icon: JSX.Element;
+  onClick: () => void;
+}
+
+interface ToolbarProviderProps {
+  autoPlace: boolean;
+}
+
 export function useToolbar() {
   const [buttons, setButtons] = useState([]);
 
@@ -42,15 +52,7 @@ export const ToolbarContext = createContext({
   removeButton: (key: string) => {},
 });
 
-const ButtonItem = ({
-  label,
-  icon,
-  onClick,
-}: {
-  label: string;
-  icon: JSX.Element;
-  onClick: () => void;
-}) => {
+const ButtonItem: React.FC<ButtonItemProps> = ({ label, icon, onClick }) => {
   return (
     <ActionButton onPress={() => onClick && onClick()}>
       {icon}
@@ -59,11 +61,7 @@ const ButtonItem = ({
   );
 };
 
-export function Toolbar({
-  children,
-}: {
-  children?: JSX.Element[] | JSX.Element;
-}) {
+export const Toolbar: React.FC = ({ children }) => {
   const { buttons } = useContext(ToolbarContext);
 
   return (
@@ -83,15 +81,12 @@ export function Toolbar({
       </Flex>
     </Flex>
   );
-}
+};
 
-export function ToolbarProvider({
+export const ToolbarProvider: React.FC<ToolbarProviderProps> = ({
   autoPlace = true,
   children,
-}: {
-  autoPlace: boolean;
-  children?: JSX.Element[] | JSX.Element;
-}) {
+}) => {
   const { buttons, addButton, removeButton } = useToolbar();
 
   return (
@@ -100,4 +95,4 @@ export function ToolbarProvider({
       {children}
     </ToolbarContext.Provider>
   );
-}
+};

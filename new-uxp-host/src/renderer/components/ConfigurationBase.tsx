@@ -32,7 +32,7 @@ interface ConfigurationBaseProps {
   setContractType: (contractType: string) => void;
 }
 
-export function ConfigurationBase({
+export const ConfigurationBase: React.FC<ConfigurationBaseProps> = ({
   name,
   setName,
   description,
@@ -51,7 +51,7 @@ export function ConfigurationBase({
   setDefaultBackground,
   contractType,
   setContractType,
-}: ConfigurationBaseProps) {
+}) => {
   const onResolutionChange = (value: number) => {
     setWidth(Math.floor(originalWidth * (value / 100)));
     setHeight(Math.floor(originalHeight * (value / 100)));
@@ -116,4 +116,4 @@ export function ConfigurationBase({
       </RadioGroup>
     </Flex>
   );
-}
+};

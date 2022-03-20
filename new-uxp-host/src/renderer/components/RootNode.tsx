@@ -2,7 +2,11 @@ import React from "react";
 import { Handle, Position } from "react-flow-renderer";
 import { Text } from "@adobe/react-spectrum";
 
-export function RootNode({ sidebar }: { sidebar: boolean }) {
+interface RootNodeProps {
+  sidebar: boolean;
+}
+
+export const RootNode: React.FC<RootNodeProps> = ({ sidebar }) => {
   const isValidConnection = (connection: any) =>
     connection.targetHandle === "layerIn";
 
@@ -21,4 +25,4 @@ export function RootNode({ sidebar }: { sidebar: boolean }) {
       </div>
     </div>
   );
-}
+};

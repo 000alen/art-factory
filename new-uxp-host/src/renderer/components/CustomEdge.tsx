@@ -23,7 +23,7 @@ interface CustomEdgeProps {
   markerEndId: string;
 }
 
-export function CustomEdge({
+export const CustomEdge: React.FC<CustomEdgeProps> = ({
   id,
   sourceX,
   sourceY,
@@ -35,7 +35,7 @@ export function CustomEdge({
   data,
   arrowHeadType,
   markerEndId,
-}: CustomEdgeProps) {
+}) => {
   const edgePath = getBezierPath({
     sourceX,
     sourceY,
@@ -86,4 +86,4 @@ export function CustomEdge({
       </foreignObject>
     </>
   );
-}
+};

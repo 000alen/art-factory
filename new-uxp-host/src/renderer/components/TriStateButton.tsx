@@ -15,7 +15,7 @@ interface TriStateButtonProps {
   postAction: () => void;
 }
 
-export function TriStateButton({
+export const TriStateButton: React.FC<TriStateButtonProps> = ({
   preLabel,
   preAction,
 
@@ -27,7 +27,7 @@ export function TriStateButton({
 
   postLabel,
   postAction,
-}: TriStateButtonProps) {
+}) => {
   return loading ? (
     <Flex marginBottom={8} marginX={8} justifyContent="end">
       <ProgressBar
@@ -55,4 +55,4 @@ export function TriStateButton({
       )}
     </ButtonGroup>
   );
-}
+};

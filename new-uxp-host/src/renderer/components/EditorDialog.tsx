@@ -1,5 +1,6 @@
-/* global fabric */
-/* eslint no-undef: "error" */
+declare global {
+  const fabric: any;
+}
 
 import React from "react";
 import {
@@ -13,29 +14,30 @@ import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
 import { factoryGetTraitImage } from "../ipc";
 import { Trait } from "../typings";
 
-export const loadImage = (url: string) =>
-  new Promise((resolve, reject) => {
-    // @ts-ignore
-    fabric.Image.fromURL(url, (image) => {
-      resolve(image);
-    });
-  });
-
-export function EditorDialog({
-  id,
-  configuration,
-  onHide,
-  onSave,
-  i,
-  traits,
-}: {
+interface EditorDialogProps {
   id: string;
   configuration: any;
   onHide: () => void;
   onSave: (i: number, dataURL: string) => void;
   i: number;
   traits: Trait[];
-}) {
+}
+
+export const loadImage = (url: string) =>
+  new Promise((resolve, reject) => {
+    fabric.Image.fromURL(url, (image: any) => {
+      resolve(image);
+    });
+  });
+
+export const EditorDialog: React.FC<EditorDialogProps> = ({
+  id,
+  configuration,
+  onHide,
+  onSave,
+  i,
+  traits,
+}) => {
   const { editor, onReady } = useFabricJSEditor();
 
   const onLoad = (canvas: any) => {
@@ -48,14 +50,10 @@ export function EditorDialog({
     )
       .then((urls) => Promise.all(urls.map(loadImage)))
       .then((images) => {
-        images.forEach((image) => {
-          // @ts-ignore
+        images.forEach((image: any) => {
           image.perPixelTargetFind = true;
-          // @ts-ignore
           image.targetFindTolerance = 4;
-          // @ts-ignore
           image.hasControls = false;
-          // @ts-ignore
           image.hasBorders = false;
           canvas.add(image);
         });
@@ -101,4 +99,4 @@ export function EditorDialog({
       </ButtonGroup>
     </Dialog>
   );
-}
+};

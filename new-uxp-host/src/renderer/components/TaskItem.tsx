@@ -20,18 +20,27 @@ import ShowMenu from "@spectrum-icons/workflow/ShowMenu";
 
 import { ArrayOf } from "./ArrayOf";
 
-const TaskDialog = ({
-  task,
-  onHideDialog,
-  onRun,
-  fields,
-  resolveField,
-}: {
+interface TaskDialogProps {
   task: string;
   onHideDialog: () => void;
   onRun: () => void;
   fields: any[];
   resolveField: (field: string) => any;
+}
+
+interface TaskItemProps {
+  task: string;
+  onRun: (...args: any[]) => void;
+  fields?: any[];
+  dialog?: boolean;
+}
+
+const TaskDialog: React.FC<TaskDialogProps> = ({
+  task,
+  onHideDialog,
+  onRun,
+  fields,
+  resolveField,
 }) => {
   return (
     <Dialog>
@@ -56,17 +65,12 @@ const TaskDialog = ({
   );
 };
 
-export function TaskItem({
+export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onRun,
   fields,
   dialog,
-}: {
-  task: string;
-  onRun: (...args: any[]) => void;
-  fields?: any[];
-  dialog?: boolean;
-}) {
+}) => {
   const [state, setState] = useState({});
   const [dialogShown, setDialogShown] = useState(false);
 
@@ -200,4 +204,4 @@ export function TaskItem({
       </View>
     </>
   );
-}
+};

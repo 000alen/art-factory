@@ -27,7 +27,11 @@ import {
 } from "../ipc";
 import { GenericDialogContext } from "./GenericDialog";
 
-export function SecretsDialog({ close }: { close: () => void }) {
+interface SecretsDialogProps {
+  close: () => void;
+}
+
+export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const genericDialogContext = useContext(GenericDialogContext);
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
@@ -152,4 +156,4 @@ export function SecretsDialog({ close }: { close: () => void }) {
       </ButtonGroup>
     </Dialog>
   );
-}
+};

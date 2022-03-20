@@ -2,10 +2,6 @@ import React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { SocketContext } from "./SocketContext";
 
-interface UXPContextProviderProps {
-  children: JSX.Element[] | JSX.Element;
-}
-
 interface UXPContextValue {
   connectionStatus: boolean;
   on: (channel: string, callback: (...args: any[]) => void) => void;
@@ -36,22 +32,22 @@ export const UXPContext = createContext<UXPContextValue>({
   }) => {},
 });
 
-export function UXPContextProvider({ children }: UXPContextProviderProps) {
+export const UXPContextProvider: React.FC = ({ children }) => {
   const socket = useContext(SocketContext);
   const [connectionStatus, setConnectionStatus] = useState(false);
 
   useEffect(() => {
-    // socket.on("uxp-connected", (isUXPConnected: boolean) => {
-    //   setConnectionStatus(isUXPConnected);
-    // });
+    socket.on("uxp-connected", (isUXPConnected: boolean) => {
+      setConnectionStatus(isUXPConnected);
+    });
   }, [socket]);
 
   const on = (channel: string, callback: (...args: any[]) => void) => {
-    // socket.on(channel, callback);
+    socket.on(channel, callback);
   };
 
   const off = (channel: string, callback: (...args: any[]) => void) => {
-    // socket.off(channel, callback);
+    socket.off(channel, callback);
   };
 
   const hostEdit = ({
@@ -63,11 +59,11 @@ export function UXPContextProvider({ children }: UXPContextProviderProps) {
     name: string;
     traits: any[];
   }) => {
-    // socket.emit("host-edit", {
-    //   photoshopId,
-    //   name,
-    //   traits,
-    // });
+    socket.emit("host-edit", {
+      photoshopId,
+      name,
+      traits,
+    });
   };
 
   return (
@@ -82,4 +78,4 @@ export function UXPContextProvider({ children }: UXPContextProviderProps) {
       {children}
     </UXPContext.Provider>
   );
-}
+};

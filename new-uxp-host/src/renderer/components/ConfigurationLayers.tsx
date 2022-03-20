@@ -8,10 +8,10 @@ interface ConfigurationLayersProps {
   setLayers: (layers: string[]) => void;
 }
 
-export function ConfigurationLayers({
+export const ConfigurationLayers: React.FC<ConfigurationLayersProps> = ({
   layers,
   setLayers,
-}: ConfigurationLayersProps) {
+}) => {
   return (
     <ArrayOf
       Component={TextField}
@@ -21,4 +21,4 @@ export function ConfigurationLayers({
       setItems={setLayers}
     />
   );
-}
+};

@@ -8,15 +8,14 @@ interface Configuration721Props {
   setMaxMintAmount: (maxMintAmount: number) => void;
 }
 
-export function Configuration721({
+export const Configuration721: React.FC<Configuration721Props> = ({
   cost,
   setCost,
   maxMintAmount,
   setMaxMintAmount,
-}: Configuration721Props) {
+}) => {
   return (
     <Flex direction="column" gap="size-100">
-      {/*<TextField label="Cost" value={cost} onChange={setCost} />*/}
       <NumberField
         label="Cost"
         value={cost}
@@ -31,4 +30,4 @@ export function Configuration721({
       />
     </Flex>
   );
-}
+};

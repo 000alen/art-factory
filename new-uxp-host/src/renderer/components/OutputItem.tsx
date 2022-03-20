@@ -2,15 +2,17 @@ import React from "react";
 import { Flex, Text, ActionButton, Heading } from "@adobe/react-spectrum";
 import Copy from "@spectrum-icons/workflow/Copy";
 
-export function OutputItem({
-  title,
-  text,
-  isCopiable,
-}: {
+interface OutputItemProps {
   title: string;
   text: string;
   isCopiable: boolean;
-}) {
+}
+
+export const OutputItem: React.FC<OutputItemProps> = ({
+  title,
+  text,
+  isCopiable,
+}) => {
   const onCopy = () => {
     navigator.clipboard.writeText(text);
   };
@@ -36,4 +38,4 @@ export function OutputItem({
       )}
     </Flex>
   );
-}
+};

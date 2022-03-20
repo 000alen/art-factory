@@ -24,7 +24,7 @@ interface ArrayItemProps {
   onRemove: () => void;
 }
 
-export function ArrayItem({
+export const ArrayItem: React.FC<ArrayItemProps> = ({
   Component,
   props,
   value,
@@ -33,7 +33,7 @@ export function ArrayItem({
   onMoveDown,
   onMoveUp,
   onRemove,
-}: ArrayItemProps) {
+}) => {
   const onAction = (action: string) => {
     switch (action) {
       case "moveDown":
@@ -73,7 +73,7 @@ export function ArrayItem({
       </ActionGroup>
     </Flex>
   );
-}
+};
 
 interface ArrayOfProps {
   Component: React.ComponentType<any>;
@@ -86,7 +86,7 @@ interface ArrayOfProps {
   width?: string;
 }
 
-export function ArrayOf({
+export const ArrayOf: React.FC<ArrayOfProps> = ({
   Component,
   props,
   label,
@@ -95,7 +95,7 @@ export function ArrayOf({
   setItems,
   moveable,
   width = "30vw",
-}: ArrayOfProps) {
+}) => {
   const onAdd = () => {
     setItems([...items, emptyValue]);
   };
@@ -158,4 +158,4 @@ export function ArrayOf({
       </ActionButton>
     </View>
   );
-}
+};

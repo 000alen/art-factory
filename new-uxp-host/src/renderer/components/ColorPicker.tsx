@@ -10,12 +10,12 @@ interface ColorPickerProps {
   isDisabled?: boolean;
 }
 
-export function ColorPicker({
+export const ColorPicker: React.FC<ColorPickerProps> = ({
   label,
   color,
   setColor,
   isDisabled,
-}: ColorPickerProps) {
+}) => {
   return (
     <Flex direction="column">
       <label className="spectrum-FieldLabel">{label}</label>
@@ -29,22 +29,20 @@ export function ColorPicker({
         isDisabled={isDisabled}
         channel="green"
         value={color}
-        // @ts-ignore
         onChange={setColor}
       />
       <ColorSlider
         isDisabled={isDisabled}
         channel="blue"
         value={color}
-        // @ts-ignore
         onChange={setColor}
       />
-      {/* <ColorSlider
+      <ColorSlider
         isDisabled={isDisabled}
         channel="alpha"
         value={color}
         onChange={setColor}
-      /> */}
+      />
     </Flex>
   );
-}
+};

@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext } from "react";
+import React, { useState, createContext, useContext, ReactNode } from "react";
 import {
   Dialog,
   Heading,
@@ -9,17 +9,21 @@ import {
   DialogTrigger,
 } from "@adobe/react-spectrum";
 
+interface GenericDialogProviderProps {
+  autoPlace?: boolean;
+  children?: ReactNode;
+}
+
 export function useGenericDialog() {
   const [isShown, setIsShown] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [buttons, setButtons] = useState([]);
+  const [buttons, setButtons] = useState(null);
 
-  const show = (title: string, content: any, buttons?: JSX.Element) => {
+  const show = (title: string, content: any, buttons?: ReactNode) => {
     setIsShown(true);
     setTitle(title);
     setContent(content);
-    // @ts-ignore
     setButtons(buttons);
   };
 
@@ -42,7 +46,7 @@ export const GenericDialogContext = createContext({
   title: "",
   content: "",
   buttons: [],
-  show: (title: string, content: any, buttons?: JSX.Element) => {},
+  show: (title: string, content: any, buttons?: ReactNode) => {},
   hide: () => {},
 });
 
@@ -82,13 +86,10 @@ export function GenericDialog() {
   );
 }
 
-export function GenericDialogProvider({
+export const GenericDialogProvider: React.FC<GenericDialogProviderProps> = ({
   autoPlace = true,
   children,
-}: {
-  autoPlace?: boolean;
-  children?: JSX.Element[] | JSX.Element;
-}) {
+}) => {
   const { isShown, title, content, buttons, show, hide } = useGenericDialog();
 
   return (
@@ -99,4 +100,4 @@ export function GenericDialogProvider({
       {children}
     </GenericDialogContext.Provider>
   );
-}
+};

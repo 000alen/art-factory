@@ -4,16 +4,18 @@ import { Flex } from "@adobe/react-spectrum";
 import { chopAddress } from "../utils";
 import { Contract } from "ethers";
 
-// ! TODO: Test
-export function Panel1155({
-  task,
-  contract,
-  addOutput,
-}: {
+interface Panel1155Props {
   task: (name: string, callback: (...args: any[]) => void) => () => void;
   contract: Contract;
   addOutput: (output: any) => void;
-}) {
+}
+
+// ! TODO: Test
+export const Panel1155: React.FC<Panel1155Props> = ({
+  task,
+  contract,
+  addOutput,
+}) => {
   const onBalanceOf = task("balance of", async ({ address, id }) => {
     const balance = await contract.balanceOf(address, id);
 
@@ -220,4 +222,4 @@ export function Panel1155({
       </Flex>
     </>
   );
-}
+};

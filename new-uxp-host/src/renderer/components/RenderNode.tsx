@@ -4,7 +4,12 @@ import { Handle, Position } from "react-flow-renderer";
 import { compose } from "../ipc";
 import { ImageItem } from "./ImageItem";
 
-export function RenderNode({ sidebar, data }: { sidebar: boolean; data: any }) {
+interface RenderNodeProps {
+  sidebar: boolean;
+  data: any;
+}
+
+export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
   const [url, setUrl] = useState(null);
 
   const { connected, buffers } = data;
@@ -13,19 +18,14 @@ export function RenderNode({ sidebar, data }: { sidebar: boolean; data: any }) {
     if (data.buffers) {
       // ! TODO: Pass configuration state
       compose(
-        // @ts-ignore
-        buffers.map((buffer) => buffer.buffer),
+        buffers.map((buffer: Buffer) => buffer.buffer),
         { width: 200, height: 200 }
-      )
-        .then((buffer) => {
-          const url = URL.createObjectURL(
-            // @ts-ignore
-            new Blob([buffer], { type: "image/png" })
-          );
-          setUrl(url);
-        })
-        // ! TODO: LOL
-        .catch((error) => {});
+      ).then((buffer: Buffer) => {
+        const url = URL.createObjectURL(
+          new Blob([buffer], { type: "image/png" })
+        );
+        setUrl(url);
+      });
     }
   }, [data]);
 
@@ -52,4 +52,4 @@ export function RenderNode({ sidebar, data }: { sidebar: boolean; data: any }) {
       </div>
     </div>
   );
-}
+};

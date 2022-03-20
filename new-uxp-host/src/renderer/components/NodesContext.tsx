@@ -13,6 +13,15 @@ import ReactFlow, {
   BackgroundVariant,
 } from "react-flow-renderer";
 
+interface NodesContextProviderProps {
+  autoPlace?: boolean;
+  elements: any[];
+  setElements: any;
+  partialConfiguration: any;
+  buffers: any[];
+  urls: string[];
+}
+
 let id = 0;
 export const getId = () => `${id++}`;
 
@@ -321,11 +330,7 @@ export const NodesContext = createContext({
   onDrop: (event: any) => {},
 });
 
-export function Nodes({
-  children,
-}: {
-  children?: JSX.Element[] | JSX.Element;
-}) {
+export const Nodes: React.FC = ({ children }) => {
   const {
     reactFlowWrapper,
     elements,
@@ -339,7 +344,6 @@ export function Nodes({
   return (
     <div className="w-full h-full" ref={reactFlowWrapper}>
       <ReactFlow
-        // @ts-ignore
         elements={elements}
         onConnect={onConnect}
         onElementsRemove={onElementsRemove}
@@ -355,9 +359,9 @@ export function Nodes({
       </ReactFlow>
     </div>
   );
-}
+};
 
-export function NodesContextProvider({
+export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   autoPlace = true,
   elements,
   setElements,
@@ -365,15 +369,7 @@ export function NodesContextProvider({
   buffers,
   urls,
   children,
-}: {
-  autoPlace?: boolean;
-  elements: any[];
-  setElements: any;
-  partialConfiguration: any;
-  buffers: any[];
-  urls: string[];
-  children?: JSX.Element[] | JSX.Element;
-}) {
+}) => {
   const {
     reactFlowWrapper,
     reactFlowInstance,
@@ -408,4 +404,4 @@ export function NodesContextProvider({
       {children}
     </NodesContext.Provider>
   );
-}
+};

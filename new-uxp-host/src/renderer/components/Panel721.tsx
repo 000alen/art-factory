@@ -6,15 +6,17 @@ import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Contract, utils } from "ethers";
 import { chopAddress } from "../utils";
 
-export function Panel721({
-  task,
-  contract,
-  addOutput,
-}: {
+interface Panel721Props {
   task: (name: string, callback: (...args: any[]) => void) => () => void;
   contract: Contract;
   addOutput: (output: any) => void;
-}) {
+}
+
+export const Panel721: React.FC<Panel721Props> = ({
+  task,
+  contract,
+  addOutput,
+}) => {
   const onCost = task("cost", async () => {
     const cost = await contract.cost();
 
@@ -224,4 +226,4 @@ export function Panel721({
       </Flex>
     </>
   );
-}
+};

@@ -1,10 +1,10 @@
 import React from "react";
 import { Flex } from "@adobe/react-spectrum";
 
-export function Configuration1155() {
+export const Configuration1155: React.FC = () => {
   return (
     <Flex direction="column">
       <></>
     </Flex>
   );
-}
+};

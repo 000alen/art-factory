@@ -1,13 +1,12 @@
 import { Button } from "@adobe/react-spectrum";
 import React from "react";
 
-export function ImageItem({
-  src,
-  onEdit,
-}: {
+interface ImageItemProps {
   src: string;
   onEdit?: () => void;
-}) {
+}
+
+export const ImageItem: React.FC<ImageItemProps> = ({ src, onEdit }) => {
   return (
     <div className="relative w-32 m-auto rounded">
       {onEdit && (
@@ -26,4 +25,4 @@ export function ImageItem({
       />
     </div>
   );
-}
+};

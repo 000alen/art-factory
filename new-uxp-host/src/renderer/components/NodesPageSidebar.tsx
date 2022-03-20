@@ -1,16 +1,14 @@
-import React, { MouseEvent } from "react";
+import React from "react";
 import { LayerNode } from "./LayerNode";
 import { RenderNode } from "./RenderNode";
 
-export function Sidebar({
-  layers,
-  buffers,
-  urls,
-}: {
+interface SidebarProps {
   layers: string[];
   buffers: any[];
   urls: string[];
-}) {
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
   const onDragStart = (event: any, data: any) => {
     event.dataTransfer.setData("application/reactflow", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
@@ -29,19 +27,6 @@ export function Sidebar({
           direction: "ltr",
         }}
       >
-        {/* <div
-            onDragStart={(event) =>
-              onDragStart(event, { type: "switchNode", label: "Switch" })
-            }
-            draggable
-          >
-            <SwitchNode
-              sidebar
-              data={{
-                buffers,
-              }}
-            />
-          </div> */}
         <div
           onDragStart={(event) =>
             onDragStart(event, { type: "renderNode", label: "Render" })
@@ -75,4 +60,4 @@ export function Sidebar({
       </div>
     </div>
   );
-}
+};

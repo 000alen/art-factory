@@ -12,7 +12,12 @@ import { Handle, Position } from "react-flow-renderer";
 import { ImageItem } from "./ImageItem";
 import More from "@spectrum-icons/workflow/More";
 
-export function LayerNode({ sidebar, data }: { sidebar: boolean; data: any }) {
+interface LayerNodeProps {
+  sidebar: boolean;
+  data: any;
+}
+
+export const LayerNode: React.FC<LayerNodeProps> = ({ sidebar, data }) => {
   const isValidConnection = (connection: any) =>
     connection.targetHandle === "layerIn" ||
     connection.targetHandle === "renderIn";
@@ -33,7 +38,6 @@ export function LayerNode({ sidebar, data }: { sidebar: boolean; data: any }) {
 
       <Flex direction="column" gap="size-100">
         <ImageItem src={data.url} />
-        {/* <Text>{data.layer}</Text> */}
         <Text>{data.name}</Text>
         <Flex justifyContent="space-between" alignItems="center" gap="size-100">
           <Slider
@@ -55,13 +59,11 @@ export function LayerNode({ sidebar, data }: { sidebar: boolean; data: any }) {
             <Menu
               selectionMode="single"
               disallowEmptySelection={true}
-              // defaultSelectedKeys={["normal"]}
               selectedKeys={sidebar ? ["normal"] : [data.blending]}
               onSelectionChange={(selectedKeys) =>
                 sidebar
                   ? null
-                  : // @ts-ignore
-                    data.onChangeBlending([...selectedKeys].shift())
+                  : data.onChangeBlending([...selectedKeys].shift())
               }
             >
               <Item key="normal">Normal</Item>
@@ -75,4 +77,4 @@ export function LayerNode({ sidebar, data }: { sidebar: boolean; data: any }) {
       </Flex>
     </div>
   );
-}
+};
