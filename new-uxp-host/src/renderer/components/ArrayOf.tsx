@@ -14,7 +14,7 @@ import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 
 interface ArrayItemProps {
-  Component: React.ComponentType<any>;
+  Component: React.ComponentType;
   props: any;
   value: any;
   moveable: boolean;

@@ -11,15 +11,27 @@ import ReactFlow, {
   Background,
   getOutgoers,
   BackgroundVariant,
+  Elements as FlowElements,
+  Node as FlowNode,
+  Edge as FlowEdge,
+  Connection as FlowConnection,
 } from "react-flow-renderer";
 import { BundleNode } from "./BundleNode";
+import {
+  NodesAndEdges,
+  Node,
+  RenderNode as IRenderNode,
+  Configuration,
+} from "../typings";
 
 interface NodesContextProviderProps {
   autoPlace?: boolean;
-  elements: any[];
-  setElements: any;
-  partialConfiguration: any;
-  buffers: any[];
+  elements: FlowElements;
+  setElements: (
+    elements: FlowElements | ((prev: FlowElements) => FlowElements)
+  ) => void;
+  partialConfiguration: Partial<Configuration>;
+  buffers: Buffer[];
   urls: string[];
 }
 
@@ -37,39 +49,124 @@ const edgeTypes = {
   customEdge: CustomEdge,
 };
 
-const allPaths = (elements: any[]) => {
-  const root = elements
-    .filter((element) => element.type === "rootNode")
-    .shift();
+export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
+  const root = nodesAndEdges.find((node) => node.type === "rootNode") as Node;
 
-  const stack = [];
-  stack.push({
-    node: root,
-    path: [root],
-  });
+  const stack: {
+    node: Node;
+    path: Node[];
+  }[] = [
+    {
+      node: root,
+      path: [root],
+    },
+  ];
 
   const savedPaths = [];
   while (stack.length > 0) {
-    // @ts-ignore
     const actualNode = stack.pop();
+    const neighbors = getOutgoers(
+      actualNode.node as FlowNode,
+      nodesAndEdges as FlowElements
+    ) as Node[];
 
-    if (actualNode.node.type === "renderNode") {
+    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
       savedPaths.push(actualNode.path);
-    } else {
-      // @ts-ignore
-      const neighbors = getOutgoers(actualNode.node, elements);
-      // @ts-ignore
-      for (const v of neighbors) {
-        stack.push({
-          node: v,
-          path: [...actualNode.path, v],
-        });
-      }
+
+    for (const v of neighbors) {
+      stack.push({
+        node: v,
+        path: [...actualNode.path, v],
+      });
     }
   }
 
-  return savedPaths.map((path) => path.slice(1));
-};
+  return savedPaths;
+}
+
+const cleanRender = (element: any) =>
+  element.type === "renderNode"
+    ? {
+        ...element,
+        data: {
+          ...element.data,
+          connected: false,
+          buffers: undefined,
+          urls: undefined,
+        },
+      }
+    : element;
+
+const populateRender = (element: any, toUpdate: any) =>
+  element.id in toUpdate
+    ? {
+        ...element,
+        data: {
+          ...element.data,
+          connected: true,
+          buffers: toUpdate[element.id][0],
+          urls: toUpdate[element.id][1],
+        },
+      }
+    : element;
+
+const property =
+  (
+    name: string,
+    setElements: (value: any | ((prevValue: any) => any)) => void
+  ) =>
+  (id: string, value: any) =>
+    setElements((prevElements: any) =>
+      prevElements.map((prevElement: any) =>
+        prevElement.id === id
+          ? {
+              ...prevElement,
+              data: { ...prevElement.data, [name]: value },
+            }
+          : prevElement
+      )
+    );
+
+const makeNode = (
+  id: string,
+  type: string,
+  position: any,
+  name: string,
+  buffers: Buffer[],
+  urls: string[],
+  partialConfiguration: Partial<Configuration>,
+  onChangeOpacity: (id: string, value: number) => void,
+  onChangeBlending: (id: string, value: string) => void,
+  onChangeN: (id: string, value: number) => void
+) => ({
+  id,
+  type,
+  position,
+  data: {
+    ...(type === "layerNode"
+      ? {
+          name,
+          buffer:
+            buffers[
+              partialConfiguration.layers.findIndex((e: string) => e === name)
+            ],
+          url: urls[
+            partialConfiguration.layers.findIndex((e: string) => e === name)
+          ],
+          opacity: 1,
+          blending: "normal",
+          onChangeOpacity: (opacity: number) => onChangeOpacity(id, opacity),
+          onChangeBlending: (blending: string) =>
+            onChangeBlending(id, blending),
+        }
+      : type === "renderNode"
+      ? {
+          n: 1,
+          onChangeN: (n: number) => onChangeN(id, n),
+        }
+      : {}),
+  },
+});
 
 export function useNodes(
   elements: any[],
@@ -78,133 +175,56 @@ export function useNodes(
   buffers: any[],
   urls: string[]
 ) {
-  const reactFlowWrapper = useRef(null);
+  const reactFlowWrapperRef = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  const onChangeN = (id: string, n: number) => {
-    // @ts-ignore
-    setElements((els) =>
-      // @ts-ignore
-      els.map((el) =>
-        el.id === id
-          ? {
-              ...el,
-              data: { ...el.data, n },
-            }
-          : el
-      )
-    );
-  };
+  const onChangeN = property("n", setElements);
+  const onChangeOpacity = property("opacity", setElements);
+  const onChangeBlending = property("blending", setElements);
 
-  const onChangeOpacity = (id: string, opacity: number) => {
-    // @ts-ignore
-    setElements((els) =>
-      // @ts-ignore
-      els.map((el) =>
-        el.id === id
-          ? {
-              ...el,
-              data: { ...el.data, opacity },
-            }
-          : el
-      )
-    );
-  };
+  const updateRender = () => {
+    setElements((prevElements) => {
+      const toUpdate: Record<string, [Buffer[], string[]]> = {};
 
-  const onChangeBlending = (id: string, blending: string) => {
-    // @ts-ignore
-    setElements((els) =>
-      // @ts-ignore
-      els.map((el) =>
-        el.id === id
-          ? {
-              ...el,
-              data: { ...el.data, blending },
-            }
-          : el
-      )
-    );
-  };
+      prevElements = prevElements.map(cleanRender);
 
-  const updatePreview = () => {
-    // @ts-ignore
-    setElements((els) => {
-      // @ts-ignore
-      els = els.map((el) =>
-        el.type === "renderNode"
-          ? {
-              ...el,
-              data: {
-                ...el.data,
-                connected: false,
-                buffers: undefined,
-                urls: undefined,
-              },
-            }
-          : el
-      );
-
-      const toUpdate = {};
-
-      allPaths(els).forEach((path) => {
-        const render = path.pop();
-        // @ts-ignore
-        const buffers = path.map((node) => node.data.buffer);
-        // @ts-ignore
-        const urls = path.map((node) => node.data.url);
-        // @ts-ignore
+      getBranches(prevElements).forEach((branch) => {
+        branch.shift();
+        const render = branch.pop() as IRenderNode;
+        const buffers = branch.map((node) => node.data.buffer);
+        const urls = branch.map((node) => node.data.url);
         toUpdate[render.id] = [buffers, urls];
       });
-      // @ts-ignore
 
-      els = els.map((el) =>
-        el.id in toUpdate
-          ? {
-              ...el,
-              data: {
-                ...el.data,
-                connected: true,
-                // @ts-ignore
-                buffers: toUpdate[el.id][0],
-                // @ts-ignore
-                urls: toUpdate[el.id][1],
-              },
-            }
-          : el
+      prevElements = prevElements.map((prevElement) =>
+        populateRender(prevElement, toUpdate)
       );
 
-      return els;
+      return prevElements;
     });
   };
 
-  const onConnect = (params: any) => {
-    setElements((els) => {
-      if (
-        params.sourceHandle === "bundleOut" &&
-        params.targetHandle === "bundleIn"
-      ) {
-        return addEdge({ ...params, animated: true }, els);
-      } else {
-        return addEdge(
-          { ...params, type: "customEdge", data: { onEdgeRemove } },
-          els
-        );
-      }
-    });
-    updatePreview();
+  const onConnect = (connection: FlowEdge | FlowConnection) => {
+    setElements((prevElements) =>
+      addEdge(
+        { ...connection, type: "customEdge", data: { onEdgeRemove } },
+        prevElements
+      )
+    );
+    updateRender();
   };
 
-  const onElementsRemove = (elementsToRemove: any[]) => {
-    setElements((els) => removeElements(elementsToRemove, els));
-    updatePreview();
+  const onElementsRemove = (elements: FlowElements) => {
+    setElements((prevElements) => removeElements(elements, prevElements));
+    updateRender();
   };
 
   const onEdgeRemove = (id: string) => {
-    onElementsRemove([{ id }]);
+    onElementsRemove([{ id }] as FlowElements);
   };
 
-  const onLoad = (_reactFlowInstance: any) => {
-    setReactFlowInstance(_reactFlowInstance);
+  const onLoad = (reactFlowInstance: any) => {
+    setReactFlowInstance(reactFlowInstance);
   };
 
   const onDragOver = (event: any) => {
@@ -215,77 +235,39 @@ export function useNodes(
   const onDrop = (event: any) => {
     event.preventDefault();
 
-    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    const reactFlowBounds = reactFlowWrapperRef.current.getBoundingClientRect();
     const { type, name } = JSON.parse(
       event.dataTransfer.getData("application/reactflow")
     );
 
-    const position = reactFlowInstance.project({
-      x: event.clientX - reactFlowBounds.left,
-      y: event.clientY - reactFlowBounds.top,
-    });
+    const newNode = makeNode(
+      getId(),
+      type,
+      reactFlowInstance.project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      }),
+      name,
+      buffers,
+      urls,
+      partialConfiguration,
+      onChangeOpacity,
+      onChangeBlending,
+      onChangeN
+    );
 
-    const id = getId();
-
-    const newNode =
-      type === "layerNode"
-        ? {
-            id,
-            type,
-            sourcePosition: "right",
-            targetPosition: "left",
-            position,
-            data: {
-              name,
-              buffer:
-                buffers[
-                  partialConfiguration.layers.findIndex(
-                    (e: string) => e === name
-                  )
-                ],
-              url: urls[
-                partialConfiguration.layers.findIndex((e: string) => e === name)
-              ],
-              opacity: 1,
-              blending: "normal",
-              onChangeOpacity: (opacity: number) =>
-                onChangeOpacity(id, opacity),
-              onChangeBlending: (blending: string) =>
-                onChangeBlending(id, blending),
-            },
-          }
-        : type === "renderNode"
-        ? {
-            id,
-            type,
-            sourcePosition: "right",
-            targetPosition: "left",
-            position,
-            data: {
-              n: 1,
-              onChangeN: (n: number) => onChangeN(id, n),
-            },
-          }
-        : {
-            id,
-            type,
-            sourcePosition: "right",
-            targetPosition: "left",
-            position,
-          };
-
-    setElements((es) => es.concat(newNode));
-    updatePreview();
+    setElements((prevElements) => prevElements.concat(newNode));
+    updateRender();
   };
 
   return {
-    reactFlowWrapper,
+    reactFlowWrapperRef,
     reactFlowInstance,
     elements,
     onChangeN,
     onChangeOpacity,
     onChangeBlending,
-    updatePreview,
+    updateRender,
     onConnect,
     onElementsRemove,
     onEdgeRemove,
@@ -296,24 +278,24 @@ export function useNodes(
 }
 
 export const NodesContext = createContext({
-  reactFlowWrapper: null,
+  reactFlowWrapperRef: null,
   reactFlowInstance: null,
   elements: [],
   onChangeN: (id: string, n: number) => {},
   onChangeOpacity: (id: string, opacity: number) => {},
   onChangeBlending: (id: string, blending: string) => {},
-  updatePreview: () => {},
-  onConnect: (params: any) => {},
-  onElementsRemove: (elementsToRemove: any) => {},
+  updateRender: () => {},
+  onConnect: (connection: FlowEdge | FlowConnection) => {},
+  onElementsRemove: (elements: FlowElements) => {},
   onEdgeRemove: (id: string) => {},
-  onLoad: (_reactFlowInstance: any) => {},
+  onLoad: (reactFlowInstance: any) => {},
   onDragOver: (event: any) => {},
   onDrop: (event: any) => {},
 });
 
 export const Nodes: React.FC = ({ children }) => {
   const {
-    reactFlowWrapper,
+    reactFlowWrapperRef,
     elements,
     onConnect,
     onElementsRemove,
@@ -323,16 +305,16 @@ export const Nodes: React.FC = ({ children }) => {
   } = useContext(NodesContext);
 
   return (
-    <div className="w-full h-full" ref={reactFlowWrapper}>
+    <div className="w-full h-full" ref={reactFlowWrapperRef}>
       <ReactFlow
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         elements={elements}
         onConnect={onConnect}
         onElementsRemove={onElementsRemove}
         onLoad={onLoad}
         onDrop={onDrop}
         onDragOver={onDragOver}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={50} />
@@ -352,10 +334,10 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   children,
 }) => {
   const {
-    reactFlowWrapper,
+    reactFlowWrapperRef,
     reactFlowInstance,
     onChangeN,
-    updatePreview,
+    updateRender,
     onConnect,
     onElementsRemove,
     onEdgeRemove,
@@ -368,11 +350,11 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     <NodesContext.Provider
       // @ts-ignore
       value={{
-        reactFlowWrapper,
+        reactFlowWrapperRef,
         reactFlowInstance,
         elements,
         onChangeN,
-        updatePreview,
+        updateRender,
         onConnect,
         onElementsRemove,
         onEdgeRemove,

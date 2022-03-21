@@ -7,7 +7,7 @@ import {
   ButtonGroup,
 } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
-import { getOutputDir } from "../ipc";
+import { createFactory, getOutputDir } from "../ipc";
 import { GenericDialogContext } from "../components/GenericDialog";
 import {
   openDirectory,
@@ -16,6 +16,7 @@ import {
 } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { UXPContext } from "../components/UXPContext";
+import { v4 as uuid } from "uuid";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -109,6 +110,51 @@ export function HomePage() {
 
         <Button variant="secondary" onPress={onOpenInstance}>
           Open Instance!
+        </Button>
+
+        <Button
+          variant="secondary"
+          onPress={async () => {
+            const id = uuid();
+            const configuration = {
+              name: "BoredApes",
+              description: "A",
+              symbol: "A",
+              width: 500,
+              height: 500,
+              generateBackground: true,
+              defaultBackground: "#",
+              contractType,
+        
+              ...(contractType === "721"
+                ? {
+                    cost,
+                    maxMintAmount,
+                  }
+                : contractType === "1155"
+                ? {}
+                : {}),
+        
+              layers,
+        
+            };
+            const inputDir = "C:\\Users\\alenk\\Desktop\\sample\\BoredApes";
+            const outputDir =
+              "C:\\Users\\alenk\\Desktop\\sample\\BoredApes\\.build";
+            await createFactory(id, configuration, inputDir, outputDir);
+            navigate("/nodes", {
+              state: {
+                id,
+                inputDir,
+                outputDir,
+                photoshopId: "",
+                photoshop: false,
+                partialConfiguration: configuration,
+              },
+            });
+          }}
+        >
+          Test
         </Button>
       </ButtonGroup>
     </Flex>

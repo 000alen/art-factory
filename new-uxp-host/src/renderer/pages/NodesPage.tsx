@@ -95,6 +95,9 @@ export function NodesPage() {
       layersNodes,
     };
 
+    console.log("layerNodes", layersNodes);
+    console.log("n", n);
+
     setN(n);
     setConfiguration(configuration);
 
@@ -105,8 +108,10 @@ export function NodesPage() {
       onProgress
     );
 
-    setCollection(collection);
-    setGenerationDone(true);
+    console.log("collection", collection);
+
+    // setCollection(collection);
+    // setGenerationDone(true);
   });
 
   const onContinue = () => {

@@ -554,9 +554,13 @@ export class Factory {
   }
 
   generateCollection(nodesAndEdges: NodesAndEdges) {
+    console.log("nodesAndEdges", nodesAndEdges);
+
     const branchesData = getBranches(nodesAndEdges)
       .map((path) => path.slice(1))
       .map((path) => path.map((node) => node.data));
+
+    console.log("branchesData", branchesData);
 
     const [branchesCache, reducedBranches] = reduceBranches(branchesData);
     const ns = computeNs(branchesCache, reducedBranches);

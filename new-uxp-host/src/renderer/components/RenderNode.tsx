@@ -16,7 +16,6 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
 
   useEffect(() => {
     if (data.buffers) {
-      // ! TODO: Pass configuration state
       compose(
         buffers.map((buffer: Buffer) => buffer.buffer),
         { width: 200, height: 200 }
@@ -38,8 +37,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
         </>
       )}
       <div>
-        {/* ! TODO: Placeholder */}
-        <ImageItem src={connected || sidebar ? url : null} />{" "}
+        <ImageItem src={connected || sidebar ? url : null} />
         <NumberField
           label="n"
           {...{
