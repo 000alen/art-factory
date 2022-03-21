@@ -234,7 +234,7 @@ export function expandBranch(
   const _branchData = [];
 
   for (const node of branchData) {
-    if ("name" in node && !cache.has(node.name)) {
+    if ("name" in node && cache.has(node.name)) {
       _branchData.push(...expandBranch(cache, cache.get(node.name)));
     } else {
       _branchData.push(node);
@@ -554,25 +554,24 @@ export class Factory {
   }
 
   generateCollection(nodesAndEdges: NodesAndEdges) {
-    console.log("nodesAndEdges", nodesAndEdges);
-
     const branchesData = getBranches(nodesAndEdges)
       .map((path) => path.slice(1))
       .map((path) => path.map((node) => node.data));
 
-    console.log("branchesData", branchesData);
-
     const [branchesCache, reducedBranches] = reduceBranches(branchesData);
     const ns = computeNs(branchesCache, reducedBranches);
-
     const traitsCache = new Map();
     for (const [name, branch] of branchesCache) {
-      const layers: Layer[] = (
+      console.log("name", name);
+      console.log("branch", branch);
+
+      const layers = (
         expandBranch(branchesCache, branch) as unknown as (
           | LayerNodeData
           | CacheNodeData
         )[]
       ).map((data) => dataToLayer(data, this.layerByName));
+
       traitsCache.set(
         name,
         this.generateNTraits(layers, ns.get(name), traitsCache)

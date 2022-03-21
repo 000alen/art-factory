@@ -39,13 +39,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
             }}
           />
         </div>
-        <div
+        {/* <div
           onDragStart={(event) => onDragStart(event, { type: "bundleNode" })}
           draggable
         >
           <BundleNode sidebar />
-        </div>
-
+        </div> */}
         {layers.map((name, i) => (
           <div
             key={i}

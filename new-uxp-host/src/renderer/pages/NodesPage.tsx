@@ -89,14 +89,12 @@ export function NodesPage() {
   const onGenerate = task("generation", async () => {
     const layersNodes = filterNodes(elements);
     const n = computeN(layersNodes);
+
     const configuration = {
       ...partialConfiguration,
       n,
       layersNodes,
     };
-
-    console.log("layerNodes", layersNodes);
-    console.log("n", n);
 
     setN(n);
     setConfiguration(configuration);
@@ -108,10 +106,8 @@ export function NodesPage() {
       onProgress
     );
 
-    console.log("collection", collection);
-
-    // setCollection(collection);
-    // setGenerationDone(true);
+    setCollection(collection);
+    setGenerationDone(true);
   });
 
   const onContinue = () => {

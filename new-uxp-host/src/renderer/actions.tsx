@@ -191,12 +191,11 @@ export const filterNodes = (nodes: NodesAndEdges) =>
   JSON.parse(
     JSON.stringify(
       nodes.map((node) =>
-        node.type in ["layerNode", "renderNode"]
+        node.type === "layerNode" || node.type === "renderNode"
           ? {
               id: node.id,
               type: node.type,
               data: {
-                ...node.data,
                 ...(node.type === "renderNode"
                   ? {
                       n: node.data.n,
