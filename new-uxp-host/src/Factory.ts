@@ -556,42 +556,48 @@ export class Factory {
   generateCollection(nodesAndEdges: NodesAndEdges) {
     const branchesData = getBranches(nodesAndEdges)
       .map((path) => path.slice(1))
-      .map((path) => path.map((node) => node.data));
+      .map((path) => path.map((node) => node.data))
+      .sort((a, b) => a.length - b.length);
 
     const [branchesCache, reducedBranches] = reduceBranches(branchesData);
     const ns = computeNs(branchesCache, reducedBranches);
-    const traitsCache = new Map();
-    for (const [name, branch] of branchesCache) {
-      console.log("name", name);
-      console.log("branch", branch);
 
-      const layers = (
-        expandBranch(branchesCache, branch) as unknown as (
-          | LayerNodeData
-          | CacheNodeData
-        )[]
-      ).map((data) => dataToLayer(data, this.layerByName));
+    console.log("branchesData", branchesData);
+    console.log("branchesCache", branchesCache);
+    console.log("reducedBranches", reducedBranches);
 
-      traitsCache.set(
-        name,
-        this.generateNTraits(layers, ns.get(name), traitsCache)
-      );
-    }
+    // const traitsCache = new Map();
+    // for (const [name, branch] of branchesCache) {
+    //   console.log("name", name);
+    //   console.log("branch", branch);
+
+    //   const layers = (
+    //     expandBranch(branchesCache, branch) as unknown as (
+    //       | LayerNodeData
+    //       | CacheNodeData
+    //     )[]
+    //   ).map((data) => dataToLayer(data, this.layerByName));
+
+    //   traitsCache.set(
+    //     name,
+    //     this.generateNTraits(layers, ns.get(name), traitsCache)
+    //   );
+    // }
 
     const collection: Collection = [];
-    for (const branch of reducedBranches) {
-      const n = (branch.pop() as RenderNodeData).n;
-      const layers: Layer[] = branch.map((data) =>
-        dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
-      );
-      const nTraits = this.generateNTraits(layers, n, traitsCache);
-      nTraits.forEach((traits, i) =>
-        collection.push({
-          name: `${i + 1}`, // ! TODO
-          traits,
-        })
-      );
-    }
+    // for (const branch of reducedBranches) {
+    //   const n = (branch.pop() as RenderNodeData).n;
+    //   const layers: Layer[] = branch.map((data) =>
+    //     dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
+    //   );
+    //   const nTraits = this.generateNTraits(layers, n, traitsCache);
+    //   nTraits.forEach((traits, i) =>
+    //     collection.push({
+    //       name: `${i + 1}`, // ! TODO
+    //       traits,
+    //     })
+    //   );
+    // }
 
     this.collection = collection;
 
