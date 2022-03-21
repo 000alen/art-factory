@@ -123,20 +123,18 @@ export function HomePage() {
               width: 500,
               height: 500,
               generateBackground: true,
-              defaultBackground: "#",
-              contractType,
-        
-              ...(contractType === "721"
-                ? {
-                    cost,
-                    maxMintAmount,
-                  }
-                : contractType === "1155"
-                ? {}
-                : {}),
-        
-              layers,
-        
+              defaultBackground: "#1e1e1e",
+              contractType: "721",
+              cost: 0.05,
+              maxMintAmount: 20,
+              layers: [
+                "Background",
+                "Clothes",
+                "Eyes",
+                "Fur",
+                "Head Accessories",
+                "Mouth Accessories",
+              ],
             };
             const inputDir = "C:\\Users\\alenk\\Desktop\\sample\\BoredApes";
             const outputDir =

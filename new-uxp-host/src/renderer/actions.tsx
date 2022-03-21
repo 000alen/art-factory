@@ -190,22 +190,26 @@ export const initializeFactory = async (
 export const filterNodes = (nodes: NodesAndEdges) =>
   JSON.parse(
     JSON.stringify(
-      nodes.map((node) => ({
-        id: node.id,
-        type: node.type,
-        data: {
-          ...node.data,
-          ...(node.type === "renderNode"
-            ? {
-                n: node.data.n,
-              }
-            : {
-                name: node.data.name,
-                opacity: node.data.opacity,
-                blending: node.data.blending,
-              }),
-        },
-      }))
+      nodes.map((node) =>
+        node.type in ["layerNode", "renderNode"]
+          ? {
+              id: node.id,
+              type: node.type,
+              data: {
+                ...node.data,
+                ...(node.type === "renderNode"
+                  ? {
+                      n: node.data.n,
+                    }
+                  : {
+                      name: node.data.name,
+                      opacity: node.data.opacity,
+                      blending: node.data.blending,
+                    }),
+              },
+            }
+          : node
+      )
     )
   );
 
