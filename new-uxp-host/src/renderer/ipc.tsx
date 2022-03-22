@@ -99,7 +99,9 @@ const ipcTaskWithRequestId =
     });
   };
 
-const ipcSetterAndGetter = (property: string) => [
+const ipcSetterAndGetter = (
+  property: string
+): [(value: any) => void, () => void] => [
   (value: any) => ipcTask(`set${capitalize(property)}`)(value),
   () => ipcTask(`get${capitalize(property)}`)(),
 ];

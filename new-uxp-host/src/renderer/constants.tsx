@@ -1,4 +1,4 @@
-export const Networks = {
+export const Networks: Record<string, any> = {
   mainnet: {
     name: "Mainnet",
     id: 1,
@@ -13,7 +13,7 @@ export const Networks = {
   },
 };
 
-export const ContractTypes = {
+export const ContractTypes: Record<string, any> = {
   721: {
     name: "ERC721",
   },

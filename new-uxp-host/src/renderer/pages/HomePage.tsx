@@ -52,7 +52,7 @@ export function HomePage() {
     return () => {
       uxpContext.off("uxp-generate", uxpGenerate);
     };
-  }, [navigate, genericDialogContext]);
+  }, []);
 
   const onOpenDirectory = task("open directory", async () => {
     const result = await openDirectory();

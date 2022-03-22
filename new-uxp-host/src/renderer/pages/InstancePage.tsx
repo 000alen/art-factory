@@ -16,7 +16,6 @@ import { Networks } from "../constants";
 import { Contract, providers } from "ethers";
 
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { getInfuraId, getPinataApiKey, getPinataSecretApiKey } from "../ipc";
 import Copy from "@spectrum-icons/workflow/Copy";
 import Close from "@spectrum-icons/workflow/Close";
 
@@ -28,6 +27,7 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Configuration } from "../typings";
+import { loadSecrets } from "../actions";
 
 interface InstancePageState {
   configuration: Configuration;
@@ -61,61 +61,31 @@ export function InstancePage() {
   const [contract, setContract] = useState(null);
   const [outputs, setOutputs] = useState([]);
 
-  const loadSecrets = async () => ({
-    // @ts-ignore
-    pinataApiKey: await getPinataApiKey(),
-    // @ts-ignore
-    pinataSecretApiKey: await getPinataSecretApiKey(),
-    // @ts-ignore
-    infuraId: await getInfuraId(),
-  });
-
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-
-    toolbarContext.addButton(
-      "logOut",
-      "Log Out",
-      <LogOut />,
-      () => localStorage.clear()
+    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
+      localStorage.clear()
     );
 
-    let _secrets: Record<string, string>;
-    // @ts-ignore
-    let _provider;
-    let _contract;
-
-    loadSecrets()
-      .then((__secrets) => {
-        // @ts-ignore
-        _secrets = __secrets;
-
-        _provider = new WalletConnectProvider({
-          infuraId: _secrets.infuraId,
-          // @ts-ignore
-          chainId: Networks[network].id,
-        });
-
-        _provider.enable().then((_) => {
-          // @ts-ignore
-          const _web3Provider = new providers.Web3Provider(_provider);
-          const _signer = _web3Provider.getSigner();
-
-          _contract = new Contract(contractAddress, abi, _signer);
-
-          setContract(_contract);
-        });
-      })
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-        return;
+    task("loading secrets", async () => {
+      const secrets = await loadSecrets();
+      const provider = new WalletConnectProvider({
+        infuraId: secrets.infuraId,
+        chainId: Networks[network].id,
       });
+      await provider.enable();
+      const web3Provider = new providers.Web3Provider(provider);
+      const signer = web3Provider.getSigner();
+      const contract = new Contract(contractAddress, abi, signer);
+
+      setContract(contract);
+    })();
 
     return () => {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
-  }, [abi, contractAddress, network, navigate]);
+  }, [abi, contractAddress, network]);
 
   const addOutput = (output: {
     title: string;

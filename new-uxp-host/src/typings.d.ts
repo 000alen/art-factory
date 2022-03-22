@@ -52,7 +52,7 @@ export interface Instance {
   inputDir: string;
   outputDir: string;
   configuration: Configuration;
-  attributes: Attributes;
+  collection: Collection;
   generated: boolean;
   metadataGenerated: boolean;
   imagesCID: string;

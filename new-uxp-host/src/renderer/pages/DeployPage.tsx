@@ -15,20 +15,18 @@ import {
   Content,
   Text,
 } from "@adobe/react-spectrum";
-import {
-  factorySaveInstance,
-  getEtherscanApiKey,
-  getInfuraId,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-} from "../ipc";
+import { factorySaveInstance } from "../ipc";
 import { providers } from "ethers";
 import More from "@spectrum-icons/workflow/More";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { ToolbarContext } from "../components/Toolbar";
-import { factoryDeployAssets, factoryDeployContract } from "../actions";
+import {
+  factoryDeployAssets,
+  factoryDeployContract,
+  loadSecrets,
+} from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { TriStateButton } from "../components/TriStateButton";
@@ -100,49 +98,16 @@ export function DeployPage() {
       localStorage.clear()
     );
 
-    const loadSecrets = async () => {
-      const secrets = await Promise.all([
-        // @ts-ignore
-        (await getPinataApiKey()) as string,
-        // @ts-ignore
-        (await getPinataSecretApiKey()) as string,
-        // @ts-ignore
-        (await getInfuraId()) as string,
-        // @ts-ignore
-        (await getEtherscanApiKey()) as string,
-      ]);
-
-      const [pinataApiKey, pinataSecretApiKey, infuraId, etherscanApiKey] =
-        secrets;
-
-      return {
-        pinataApiKey,
-        pinataSecretApiKey,
-        infuraId,
-        etherscanApiKey,
-      };
-    };
-
-    let _secrets;
-    let _provider;
-
-    loadSecrets()
-      .then((__secrets) => {
-        _secrets = __secrets;
-
-        _provider = new WalletConnectProvider({
-          infuraId: _secrets.infuraId,
-          // @ts-ignore
-          chainId: Networks[networkKey].id as number,
-        });
-
-        setSecrets(_secrets);
-        setProvider(_provider);
-      })
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-        return;
+    task("loading secrets", async () => {
+      const secrets = await loadSecrets();
+      const provider = new WalletConnectProvider({
+        infuraId: secrets.infuraId,
+        chainId: Networks[networkKey].id as number,
       });
+
+      setSecrets(secrets);
+      setProvider(provider);
+    })();
 
     return () => {
       toolbarContext.removeButton("close");
@@ -152,41 +117,41 @@ export function DeployPage() {
 
   const onDeploy = task("deployment", async () => {
     await provider.enable();
-    // const web3Provider = new providers.Web3Provider(provider);
-    // const signer = await web3Provider.getSigner();
-    // const { imagesCid, metadataCid } = await factoryDeployAssets(
-    //   id,
-    //   secrets,
-    //   collection,
-    //   partialDeploy
-    // );
-    // await factorySaveInstance(id);
-    // setImagesCID(imagesCid);
-    // setMetadataCID(metadataCid);
-    // const { contractAddress, abi, transactionHash, wait } =
-    //   await factoryDeployContract(
-    //     id,
-    //     configuration,
-    //     networkKey,
-    //     signer,
-    //     metadataCid
-    //   );
-    // setContractAddress(contractAddress);
-    // setAbi(abi);
-    // setTransactionHash(transactionHash);
-    // const timerId = setTimeout(() => {
-    //   if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
-    // }, 30 * 1000);
-    // setTimerId(timerId);
-    // await wait;
-    // setDeployedDone(true);
+    const web3Provider = new providers.Web3Provider(provider);
+    const signer = await web3Provider.getSigner();
+    const { imagesCid, metadataCid } = await factoryDeployAssets(
+      id,
+      secrets,
+      collection,
+      partialDeploy
+    );
+    await factorySaveInstance(id);
+    setImagesCID(imagesCid);
+    setMetadataCID(metadataCid);
+    const { contractAddress, abi, transactionHash, wait } =
+      await factoryDeployContract(
+        id,
+        configuration,
+        networkKey,
+        signer,
+        metadataCid
+      );
+    setContractAddress(contractAddress);
+    setAbi(abi);
+    setTransactionHash(transactionHash);
+    const timerId = setTimeout(() => {
+      if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
+    }, 30 * 1000);
+    setTimerId(timerId);
+    await wait;
+    setDeployedDone(true);
   });
 
   const onContinue = () => {
     navigate("/instance", {
       state: {
         id,
-        attributes: collection,
+        collection,
         inputDir,
         outputDir,
         photoshop,
@@ -204,10 +169,8 @@ export function DeployPage() {
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">
       <Flex gap="size-100" alignItems="center">
         <Heading level={1} marginStart={16}>
-          {/* @ts-ignore */}
-          Deploy {ContractTypes[configuration.contractType].name}{" "}
-          {/* @ts-ignore */}
-          to {Networks[networkKey].name}
+          Deploy {ContractTypes[configuration.contractType].name} to{" "}
+          {Networks[networkKey].name}
         </Heading>
         <MenuTrigger>
           <ActionButton>
@@ -268,7 +231,6 @@ export function DeployPage() {
                   <Link>
                     <a
                       href={resolveEtherscanUrl(
-                        // @ts-ignore
                         Networks[networkKey],
                         transactionHash
                       )}

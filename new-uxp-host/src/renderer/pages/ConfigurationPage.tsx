@@ -102,7 +102,7 @@ export function ConfigurationPage() {
     return () => {
       toolbarContext.removeButton("close");
     };
-  }, [genericDialogContext, inputDir, partialConfiguration]);
+  }, [inputDir, partialConfiguration]);
 
   const canContinue = useMemo(
     () =>

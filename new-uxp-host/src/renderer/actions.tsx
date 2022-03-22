@@ -14,6 +14,10 @@ import {
   isValidInputDir,
   createFactoryFromInstance,
   factoryGenerateCollection,
+  getPinataApiKey,
+  getPinataSecretApiKey,
+  getInfuraId,
+  getEtherscanApiKey,
 } from "./ipc";
 import { v4 as uuid } from "uuid";
 import { ContractFactory, Signer, utils } from "ethers";
@@ -27,6 +31,15 @@ import {
   NodesAndEdges,
   Secrets,
 } from "./typings";
+
+export const loadSecrets = async () =>
+  ({
+    pinataApiKey: ((await getPinataApiKey()) as unknown as string) || "",
+    pinataSecretApiKey:
+      ((await getPinataSecretApiKey()) as unknown as string) || "",
+    infuraId: ((await getInfuraId()) as unknown as string) || "",
+    etherscanApiKey: ((await getEtherscanApiKey()) as unknown as string) || "",
+  } as Secrets);
 
 export const openDirectory = async () => {
   const { canceled, filePaths } = (await showOpenDialog({
@@ -96,7 +109,7 @@ export const resolvePathFromInstance = (
   const {
     inputDir,
     outputDir,
-    attributes,
+    collection,
     generated,
     metadataGenerated,
     imagesCid,
@@ -107,7 +120,7 @@ export const resolvePathFromInstance = (
     abi,
   } = instance;
 
-  return !attributes && !generated
+  return !collection && !generated
     ? [
         "/configuration",
         { inputDir, outputDir, partialConfiguration: configuration },
@@ -117,7 +130,7 @@ export const resolvePathFromInstance = (
         "/quality",
         {
           id,
-          attributes,
+          collection,
           inputDir,
           outputDir,
           photoshopId: "",
@@ -130,7 +143,7 @@ export const resolvePathFromInstance = (
         "/deploy",
         {
           id,
-          attributes,
+          collection,
           inputDir,
           outputDir,
           photoshopId: "",
@@ -147,7 +160,7 @@ export const resolvePathFromInstance = (
         "/instance",
         {
           id,
-          attributes,
+          collection,
           inputDir,
           outputDir,
           photoshopId: "",

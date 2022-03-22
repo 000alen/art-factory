@@ -26,6 +26,7 @@ import {
   setEtherscanApiKey,
 } from "../ipc";
 import { GenericDialogContext } from "./GenericDialog";
+import { useErrorHandler } from "./ErrorHandler";
 
 interface SecretsDialogProps {
   close: () => void;
@@ -37,64 +38,31 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
   const [infuraId, _setInfuraId] = useState("");
   const [etherscanApiKey, _setEtherscanApiKey] = useState("");
+  const { task } = useErrorHandler(genericDialogContext);
 
   useEffect(() => {
-    // ! TODO: Proper error handling
-    // @ts-ignore
-    getPinataApiKey()
-      .then((_pinataApiKey: string) => _setPinataApiKey(_pinataApiKey || ""))
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
+    task("loading secrets", async () => {
+      const pinataApiKey =
+        ((await getPinataApiKey()) as unknown as string) || "";
+      const pinataSecretApiKey =
+        ((await getPinataSecretApiKey()) as unknown as string) || "";
+      const infuraId = ((await getInfuraId()) as unknown as string) || "";
+      const etherscanApiKey =
+        ((await getEtherscanApiKey()) as unknown as string) || "";
+      _setPinataApiKey(pinataApiKey);
+      _setPinataSecretApiKey(pinataSecretApiKey);
+      _setInfuraId(infuraId);
+      _setEtherscanApiKey(etherscanApiKey);
+    })();
+  }, []);
 
-    // ! TODO: Proper error handling
-    // @ts-ignore
-    getPinataSecretApiKey()
-      .then((_pinataSecretApiKey: string) =>
-        _setPinataSecretApiKey(_pinataSecretApiKey || "")
-      )
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
-
-    // ! TODO: Proper error handling
-    // @ts-ignore
-    getInfuraId()
-      .then((_infuraId: string) => _setInfuraId(_infuraId || ""))
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
-
-    // ! TODO: Proper error handling
-    // @ts-ignore
-    getEtherscanApiKey()
-      .then((_etherscanApiKey: string) =>
-        _setEtherscanApiKey(_etherscanApiKey || "")
-      )
-      .catch((error) => {
-        genericDialogContext.show("Error", error.message, null);
-      });
-  }, [genericDialogContext]);
-
-  const onSave = () => {
-    // ! TODO: Proper error handling
-    setPinataApiKey(pinataApiKey).catch((error) => {
-      genericDialogContext.show("Error", error.message, null);
-    });
-    // ! TODO: Proper error handling
-    setPinataSecretApiKey(pinataSecretApiKey).catch((error) => {
-      genericDialogContext.show("Error", error.message, null);
-    });
-    // ! TODO: Proper error handling
-    setInfuraId(infuraId).catch((error) => {
-      genericDialogContext.show("Error", error.message, null);
-    });
-    // ! TODO: Proper error handling
-    setEtherscanApiKey(etherscanApiKey).catch((error) => {
-      genericDialogContext.show("Error", error.message, null);
-    });
+  const onSave = task("save", async () => {
+    await setPinataApiKey(pinataApiKey);
+    await setPinataSecretApiKey(pinataSecretApiKey);
+    await setInfuraId(infuraId);
+    await setEtherscanApiKey(etherscanApiKey);
     close();
-  };
+  });
 
   return (
     <Dialog>
