@@ -147,7 +147,7 @@ export function DeployPage() {
     setDeployedDone(true);
   });
 
-  const onContinue = () => {
+  const onContinue = task("continue", async () => {
     navigate("/instance", {
       state: {
         id,
@@ -163,7 +163,7 @@ export function DeployPage() {
         abi,
       },
     });
-  };
+  });
 
   return (
     <Flex direction="column" height="100%" margin="size-100" gap="size-100">
@@ -180,8 +180,7 @@ export function DeployPage() {
             selectionMode="single"
             disallowEmptySelection={true}
             selectedKeys={[networkKey]}
-            onSelectionChange={(selectedKeys) =>
-              // @ts-ignore
+            onSelectionChange={(selectedKeys: Set<string>) =>
               setNetworkKey([...selectedKeys].shift())
             }
           >

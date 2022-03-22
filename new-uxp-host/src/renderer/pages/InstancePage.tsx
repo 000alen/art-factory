@@ -111,7 +111,6 @@ export function InstancePage() {
         <Flex gap="size-100" alignItems="center">
           <Heading level={1} marginStart={16}>
             <pre className="inline">{chopAddress(contractAddress)}</pre> at{" "}
-            {/* @ts-ignore */}
             {Networks[network].name}
           </Heading>
           <ActionButton onPress={onCopy}>

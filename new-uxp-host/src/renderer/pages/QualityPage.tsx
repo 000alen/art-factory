@@ -18,6 +18,7 @@ import { UXPContext } from "../components/UXPContext";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
 import { Collection, Configuration } from "../typings";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 interface QualityPageState {
   id: string;
@@ -61,6 +62,7 @@ export function QualityPage() {
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { task } = useErrorHandler(genericDialogContext);
 
   const {
     id,
@@ -79,26 +81,6 @@ export function QualityPage() {
   const [editorTraits, setEditorTraits] = useState(null);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-
-    Array.from({ length: 25 })
-      .map((_, i) =>
-        (async () => {
-          if (index + i >= collection.length) return null;
-          const buffer = await factoryGetImage(id, collection[index + i], 500);
-          const url = URL.createObjectURL(
-            // @ts-ignore
-            new Blob([buffer], { type: "image/png" })
-          );
-          return url;
-        })()
-      )
-      .forEach((f, i) =>
-        f.then((url) => {
-          if (url) setImagesUrls((imagesUrls) => [...imagesUrls, [url, i]]);
-        })
-      );
-
     const uxpReload = async ({
       photoshopId,
       name,
@@ -109,8 +91,7 @@ export function QualityPage() {
       const i = Number(name) - index - 1;
       const buffer = await factoryGetImage(id, collection[index + i], 500);
       const url = URL.createObjectURL(
-        // @ts-ignore
-        new Blob([buffer], { type: "image/png" })
+        new Blob([buffer as BlobPart], { type: "image/png" })
       );
 
       setImagesUrls((prevUrls) =>
@@ -118,13 +99,87 @@ export function QualityPage() {
       );
     };
 
+    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
     uxpContext.on("uxp-reload", uxpReload);
+
+    task("loading previews", async () => {
+      Array.from({ length: 25 })
+        .map((_, i) =>
+          (async () => {
+            if (index + i >= collection.length) return null;
+            const buffer = await factoryGetImage(
+              id,
+              collection[index + i],
+              500
+            );
+            const url = URL.createObjectURL(
+              new Blob([buffer as BlobPart], { type: "image/png" })
+            );
+            return url;
+          })()
+        )
+        .forEach((f, i) =>
+          f.then((url) => {
+            if (url) setImagesUrls((imagesUrls) => [...imagesUrls, [url, i]]);
+          })
+        );
+    })();
 
     return () => {
       toolbarContext.removeButton("close");
       uxpContext.off("uxp-reload", uxpReload);
     };
-  }, [index, collection.length, genericDialogContext, id]);
+  }, [index, collection.length, id]);
+
+  const onShowEditor = () => {
+    setEditorShown(true);
+  };
+
+  const onSetEditor = (i: number, traits: any, show: boolean) => {
+    setEditorI(i);
+    setEditorTraits(traits);
+    if (show) onShowEditor();
+  };
+
+  const onHideEditor = () => {
+    setEditorShown(false);
+  };
+
+  const onEdit = (i: number) => {
+    if (photoshop) {
+      uxpContext.hostEdit({
+        photoshopId,
+        ...collection[i],
+      });
+    } else {
+      onSetEditor(i, collection[i].traits, true);
+    }
+  };
+
+  const onSave = task("saving", async (i: number, dataURL: string) => {
+    await factoryRewriteImage(id, collection[i], dataURL);
+    setImagesUrls((prevUrls) => {
+      const urls = [...prevUrls];
+      urls[i % 25] = [dataURL, i];
+      return urls;
+    });
+  });
+
+  const onAction = (action: string) => {
+    switch (action) {
+      case "back":
+        onBack();
+        break;
+      case "forward":
+        onForward();
+        break;
+      case "fastForward":
+        onFastForward();
+        break;
+      default:
+        break;
+    }
+  };
 
   const onBack = () => {
     if (index === 0) return;
@@ -148,56 +203,6 @@ export function QualityPage() {
         configuration,
       },
     });
-  };
-
-  const onEdit = (i: number) => {
-    if (photoshop) {
-      uxpContext.hostEdit({
-        photoshopId,
-        ...collection[i],
-      });
-    } else {
-      onSetEditor(i, collection[i].traits, true);
-    }
-  };
-
-  const onSave = async (i: number, dataURL: string) => {
-    await factoryRewriteImage(id, collection[i], dataURL);
-    setImagesUrls((prevUrls) => {
-      const urls = [...prevUrls];
-      urls[i % 25] = [dataURL, i];
-      return urls;
-    });
-  };
-
-  const onAction = (action: string) => {
-    switch (action) {
-      case "back":
-        onBack();
-        break;
-      case "forward":
-        onForward();
-        break;
-      case "fastForward":
-        onFastForward();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const onShowEditor = () => {
-    setEditorShown(true);
-  };
-
-  const onSetEditor = (i: number, traits: any, show: boolean) => {
-    setEditorI(i);
-    setEditorTraits(traits);
-    if (show) onShowEditor();
-  };
-
-  const onHideEditor = () => {
-    setEditorShown(false);
   };
 
   return (

@@ -24,7 +24,6 @@ export function HomePage() {
   const genericDialogContext = useContext(GenericDialogContext);
   const { task } = useErrorHandler(genericDialogContext);
 
-  // ! TODO
   useEffect(() => {
     const uxpGenerate = async ({
       photoshopId,
@@ -124,7 +123,7 @@ export function HomePage() {
               width: 500,
               height: 500,
               generateBackground: true,
-              defaultBackground: "#1e1e1e",
+              defaultBackground: "#ffffff",
               contractType: "721",
               cost: 0.05,
               maxMintAmount: 20,

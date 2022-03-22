@@ -72,7 +72,6 @@ export function NodesPage() {
           position: { x: 0, y: 0 },
         },
       ]);
-
       setBuffers(buffers);
       setUrls(urls);
     })();
@@ -105,13 +104,11 @@ export function NodesPage() {
       onProgress
     );
 
-    console.log(collection);
-
     setCollection(collection);
     setGenerationDone(true);
   });
 
-  const onContinue = () => {
+  const onContinue = task("continue", async () => {
     navigate("/quality", {
       state: {
         id,
@@ -123,7 +120,7 @@ export function NodesPage() {
         configuration,
       },
     });
-  };
+  });
 
   return (
     <NodesContextProvider

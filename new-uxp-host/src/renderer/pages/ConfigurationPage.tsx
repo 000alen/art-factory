@@ -42,7 +42,7 @@ export function ConfigurationPage() {
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
-  const [defaultBackground, _setDefaultBackground] = useState("#1e1e1e");
+  const [defaultBackground, _setDefaultBackground] = useState("#ffffff");
   const [contractType, setContractType] = useState("721");
 
   // Configuration721
@@ -162,7 +162,6 @@ export function ConfigurationPage() {
       layers,
     } as Partial<Configuration>;
 
-    // ! TODO: Proper error handling
     const { id } = await initializeFactory(
       partialConfiguration,
       inputDir,
