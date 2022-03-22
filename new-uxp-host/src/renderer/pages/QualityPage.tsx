@@ -11,14 +11,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Back from "@spectrum-icons/workflow/Back";
 import Forward from "@spectrum-icons/workflow/Forward";
 import FastForward from "@spectrum-icons/workflow/FastForward";
-import { factoryGetImage, factoryRewriteImage } from "../ipc";
+import {
+  factoryGetImage,
+  factoryRemoveCollectionItems,
+  factoryRewriteImage,
+} from "../ipc";
 import { EditorDialog } from "../components/EditorDialog";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { UXPContext } from "../components/UXPContext";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
-import { Collection, Configuration } from "../typings";
+import { Collection, CollectionItem, Configuration } from "../typings";
 import { useErrorHandler } from "../components/ErrorHandler";
+import { ImageItem } from "../components/ImageItem";
 
 interface QualityPageState {
   id: string;
@@ -28,32 +33,6 @@ interface QualityPageState {
   photoshopId: string;
   photoshop: boolean;
   configuration: Partial<Configuration>;
-}
-
-interface _ImageItemProps {
-  src: string;
-  onEdit?: () => void;
-}
-
-export function _ImageItem({ src, onEdit }: _ImageItemProps) {
-  return (
-    <div className="relative w-32 h-32 m-auto rounded">
-      {onEdit && (
-        <div className="absolute w-full h-full bg-gray-600 bg-opacity-75 flex justify-center items-center opacity-0 hover:opacity-100">
-          <Button variant="secondary" onPress={onEdit}>
-            Edit
-          </Button>
-        </div>
-      )}
-
-      <img
-        className="w-full h-full select-none rounded"
-        draggable="false"
-        src={src}
-        alt=""
-      />
-    </div>
-  );
 }
 
 export function QualityPage() {
@@ -78,7 +57,8 @@ export function QualityPage() {
   const [imagesUrls, setImagesUrls] = useState([]);
   const [editorShown, setEditorShown] = useState(false);
   const [editorI, setEditorI] = useState(null);
-  const [editorTraits, setEditorTraits] = useState(null);
+  const [collectionItem, setCollectionItem] = useState(null);
+  const [indexesToRemove, setIndexesToRemove] = useState([]);
 
   useEffect(() => {
     const uxpReload = async ({
@@ -103,9 +83,9 @@ export function QualityPage() {
     uxpContext.on("uxp-reload", uxpReload);
 
     task("loading previews", async () => {
-      Array.from({ length: 25 })
-        .map((_, i) =>
-          (async () => {
+      const urls = (
+        await Promise.all(
+          Array.from({ length: 25 }).map(async (_, i) => {
             if (index + i >= collection.length) return null;
             const buffer = await factoryGetImage(
               id,
@@ -116,28 +96,29 @@ export function QualityPage() {
               new Blob([buffer as BlobPart], { type: "image/png" })
             );
             return url;
-          })()
-        )
-        .forEach((f, i) =>
-          f.then((url) => {
-            if (url) setImagesUrls((imagesUrls) => [...imagesUrls, [url, i]]);
           })
-        );
+        )
+      ).filter((url) => url !== null);
+      setImagesUrls(urls);
     })();
 
     return () => {
       toolbarContext.removeButton("close");
       uxpContext.off("uxp-reload", uxpReload);
     };
-  }, [index, collection.length, id]);
+  }, [index, id]);
 
   const onShowEditor = () => {
     setEditorShown(true);
   };
 
-  const onSetEditor = (i: number, traits: any, show: boolean) => {
+  const onSetEditor = (
+    i: number,
+    collectionItem: CollectionItem,
+    show: boolean
+  ) => {
     setEditorI(i);
-    setEditorTraits(traits);
+    setCollectionItem(collectionItem);
     if (show) onShowEditor();
   };
 
@@ -152,7 +133,7 @@ export function QualityPage() {
         ...collection[i],
       });
     } else {
-      onSetEditor(i, collection[i].traits, true);
+      onSetEditor(i, collection[i], true);
     }
   };
 
@@ -193,17 +174,25 @@ export function QualityPage() {
     setIndex((prevIndex) => prevIndex + 25);
   };
 
-  const onFastForward = () => {
+  const onFastForward = task("filtering", async () => {
+    const collectionItemsToRemove: Collection = indexesToRemove.map(
+      (i) => collection[i]
+    );
+    const _collection = await factoryRemoveCollectionItems(
+      id,
+      collectionItemsToRemove
+    );
+
     navigate("/deploy", {
       state: {
         id,
-        collection,
+        collection: _collection,
         inputDir,
         outputDir,
         configuration,
       },
     });
-  };
+  });
 
   return (
     <Flex
@@ -221,7 +210,7 @@ export function QualityPage() {
           onHide={onHideEditor}
           onSave={onSave}
           i={editorI}
-          traits={editorTraits}
+          collectionItem={collectionItem}
         />
       </DialogTrigger>
 
@@ -230,11 +219,27 @@ export function QualityPage() {
       </Heading>
 
       <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">
-        {imagesUrls.map(([url, _i]) => {
-          return (
-            <_ImageItem key={_i} src={url} onEdit={() => onEdit(index + _i)} />
-          );
-        })}
+        {imagesUrls.map((url, i) =>
+          indexesToRemove.includes(index + i) ? (
+            <div className="w-32 h-32 m-auto rounded border-2 border-dashed border-white"></div>
+          ) : (
+            <ImageItem
+              key={`${url.slice(10)}-${index + i}`}
+              src={url}
+              actions={[
+                {
+                  label: "Edit",
+                  onClick: () => onEdit(index + i),
+                },
+                {
+                  label: "Remove",
+                  onClick: () =>
+                    setIndexesToRemove((prev) => [...prev, index + i]),
+                },
+              ]}
+            />
+          )
+        )}
       </div>
 
       <Flex direction="row-reverse">

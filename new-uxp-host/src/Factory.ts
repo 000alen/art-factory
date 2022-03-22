@@ -757,6 +757,47 @@ export class Factory {
       this.collection[Math.floor(Math.random() * this.collection.length)];
     return this.getMetadata(collectionItem);
   }
+
+  async removeCollectionItems(collectionItems: Collection) {
+    await Promise.all(
+      collectionItems.map((collectionItem) =>
+        fs.promises.rm(
+          path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+        )
+      )
+    );
+    const collection: Collection = [];
+    for (const collectionItem of this.collection) {
+      let flag = true;
+      for (const _collectionItem of collectionItems) {
+        if (collectionItem.name === _collectionItem.name) {
+          flag = false;
+          break;
+        }
+      }
+      if (flag) collection.push(collectionItem);
+    }
+
+    // !! TODO
+    for (let i = 0; i < collection.length; i++) {
+      await fs.promises.rename(
+        path.join(this.outputDir, "images", `${collection[i].name}.png`),
+        path.join(this.outputDir, "images", `_${i + 1}.png`)
+      );
+      collection[i].name = `${i + 1}`;
+    }
+
+    for (const collectionItem of collection) {
+      await fs.promises.rename(
+        path.join(this.outputDir, "images", `_${collectionItem.name}.png`),
+        path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+      );
+    }
+
+    this.collection = collection;
+
+    return collection;
+  }
 }
 
 export async function loadInstance(instancePath: string) {

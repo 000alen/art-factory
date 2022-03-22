@@ -2,7 +2,7 @@
   "name": "new-uxp-host",
   "productName": "new-uxp-host",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "POSTON Art Factory",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",

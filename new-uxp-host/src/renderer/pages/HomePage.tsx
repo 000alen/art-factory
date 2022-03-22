@@ -159,8 +159,8 @@ export function HomePage() {
                     basePath:
                       "C:\\Users\\alenk\\Desktop\\sample\\BoredApes\\Fur",
                     name: "Fur",
-                    blending: "normal",
-                    opacity: 1,
+                    blending: "overlay",
+                    opacity: 0.3,
                     fileName: "White .png",
                     value: "White ",
                     rarity: 1,
@@ -472,7 +472,7 @@ export function HomePage() {
               collection,
             });
 
-            navigate("/deploy", {
+            navigate("/quality", {
               state: {
                 id,
                 inputDir,

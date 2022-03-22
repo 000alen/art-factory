@@ -4,7 +4,8 @@ const plugins = require('./webpack.plugins');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
-const assets = ['lib']; // asset directories
+const rendererAssets = ['lib']; // asset directories
+const mainAssets = ["contracts"]
 
 rules.push({
   test: /\.css$/,
@@ -21,12 +22,23 @@ plugins.push(
   })
 )
 
-assets.forEach((asset) => plugins.push(
+rendererAssets.forEach((asset) => plugins.push(
   new CopyWebpackPlugin({
     patterns: [
       {
         from: path.resolve(__dirname, "src", asset),
         to: path.resolve(__dirname, ".webpack/renderer", asset),
+      }
+    ]
+  })
+))
+
+mainAssets.forEach((asset) => plugins.push(
+  new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: path.resolve(__dirname, "src", asset),
+        to: path.resolve(__dirname, ".webpack/main", asset),
       }
     ]
   })

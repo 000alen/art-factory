@@ -368,4 +368,10 @@ ipcAsyncTask(
   }
 );
 
+ipcAsyncTask(
+  "factoryRemoveCollectionItems",
+  async (id: string, collectionItems: Collection) =>
+    await factories[id].removeCollectionItems(collectionItems)
+);
+
 // #endregion

@@ -42,6 +42,7 @@ const sendWhitelist = [
   "factoryGetImage",
   "factoryGetRandomImage",
   "factoryRewriteImage",
+  "factoryRemoveCollectionItems",
 ];
 
 const onWhitelist = [
@@ -88,6 +89,7 @@ const onWhitelist = [
   "factoryGetImageResult",
   "factoryGetRandomImageResult",
   "factoryRewriteImageResult",
+  "factoryRemoveCollectionItemsResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

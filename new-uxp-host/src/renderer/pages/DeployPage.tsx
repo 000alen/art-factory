@@ -15,7 +15,7 @@ import {
   Content,
   Text,
 } from "@adobe/react-spectrum";
-import { factorySaveInstance } from "../ipc";
+import { factorySaveInstance, getContractSource } from "../ipc";
 import { providers } from "ethers";
 import More from "@spectrum-icons/workflow/More";
 import LogOut from "@spectrum-icons/workflow/LogOut";

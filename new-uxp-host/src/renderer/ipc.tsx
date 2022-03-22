@@ -176,6 +176,7 @@ export const isValidInputDir = (inputDir: string) =>
 
 // #endregion
 
+// #region Factory
 export const createFactory = (
   id: string,
   configuration: Partial<Configuration>,
@@ -266,3 +267,13 @@ export const factoryRewriteImage = (
   collectionItem: CollectionItem,
   dataUrl: string
 ) => ipcTask("factoryRewriteImage")(id, collectionItem, dataUrl);
+
+export const factoryRemoveCollectionItems = (
+  id: string,
+  collectionItems: Collection
+) =>
+  ipcTask("factoryRemoveCollectionItems")(
+    id,
+    collectionItems
+  ) as Promise<Collection>;
+// #endregion

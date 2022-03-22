@@ -1,24 +1,31 @@
 import { Button } from "@adobe/react-spectrum";
 import React from "react";
 
-interface ImageItemProps {
-  src: string;
-  onEdit?: () => void;
+interface ImageItemAction {
+  label: string;
+  onClick: () => void;
 }
 
-export const ImageItem: React.FC<ImageItemProps> = ({ src, onEdit }) => {
+interface ImageItemProps {
+  src: string;
+  actions?: ImageItemAction[];
+}
+
+export const ImageItem: React.FC<ImageItemProps> = ({ src, actions }) => {
   return (
-    <div className="relative w-32 m-auto rounded">
-      {onEdit && (
-        <div className="absolute w-full h-full bg-gray-600 bg-opacity-75 flex justify-center items-center opacity-0 hover:opacity-100">
-          <Button variant="secondary" onPress={onEdit}>
-            Edit
-          </Button>
+    <div className="relative w-32 h-32 m-auto rounded">
+      {actions && (
+        <div className="absolute w-full h-full space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
+          {actions.map((action, i) => (
+            <Button key={i} variant="secondary" onPress={action.onClick}>
+              {action.label}
+            </Button>
+          ))}
         </div>
       )}
 
       <img
-        className="w-full select-none rounded"
+        className="w-full h-full select-none rounded"
         draggable="false"
         src={src}
         alt=""
