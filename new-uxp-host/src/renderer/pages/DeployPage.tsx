@@ -96,11 +96,8 @@ export function DeployPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
-    toolbarContext.addButton(
-      "logOut",
-      "Log Out",
-      <LogOut UNSAFE_className="fix-icon-size" />,
-      () => localStorage.clear()
+    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
+      localStorage.clear()
     );
 
     const loadSecrets = async () => {
@@ -134,7 +131,6 @@ export function DeployPage() {
         _secrets = __secrets;
 
         _provider = new WalletConnectProvider({
-
           infuraId: _secrets.infuraId,
           // @ts-ignore
           chainId: Networks[networkKey].id as number,
@@ -152,44 +148,38 @@ export function DeployPage() {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("logOut");
     };
-  }, [networkKey, genericDialogContext, navigate, toolbarContext]);
+  }, [networkKey]);
 
   const onDeploy = task("deployment", async () => {
     await provider.enable();
-    const web3Provider = new providers.Web3Provider(provider);
-    const signer = await web3Provider.getSigner();
-
-    const { imagesCid, metadataCid } = await factoryDeployAssets(
-      id,
-      secrets,
-      collection,
-      partialDeploy
-    );
-
-    await factorySaveInstance(id);
-    setImagesCID(imagesCid);
-    setMetadataCID(metadataCid);
-
-    const { contractAddress, abi, transactionHash, wait } =
-      await factoryDeployContract(
-        id,
-        configuration,
-        networkKey,
-        signer,
-        metadataCid
-      );
-    setContractAddress(contractAddress);
-    setAbi(abi);
-    setTransactionHash(transactionHash);
-
-    const timerId = setTimeout(() => {
-      if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
-    }, 30 * 1000);
-    setTimerId(timerId);
-
-    await wait;
-
-    setDeployedDone(true);
+    // const web3Provider = new providers.Web3Provider(provider);
+    // const signer = await web3Provider.getSigner();
+    // const { imagesCid, metadataCid } = await factoryDeployAssets(
+    //   id,
+    //   secrets,
+    //   collection,
+    //   partialDeploy
+    // );
+    // await factorySaveInstance(id);
+    // setImagesCID(imagesCid);
+    // setMetadataCID(metadataCid);
+    // const { contractAddress, abi, transactionHash, wait } =
+    //   await factoryDeployContract(
+    //     id,
+    //     configuration,
+    //     networkKey,
+    //     signer,
+    //     metadataCid
+    //   );
+    // setContractAddress(contractAddress);
+    // setAbi(abi);
+    // setTransactionHash(transactionHash);
+    // const timerId = setTimeout(() => {
+    //   if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
+    // }, 30 * 1000);
+    // setTimerId(timerId);
+    // await wait;
+    // setDeployedDone(true);
   });
 
   const onContinue = () => {

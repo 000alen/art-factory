@@ -71,7 +71,7 @@ export const Toolbar: React.FC = ({ children }) => {
       <Flex direction="row-reverse" gap="size-100">
         <DialogTrigger>
           <ActionButton>
-            <Settings size="M" UNSAFE_className="fix-icon-size" />
+            <Settings size="M" />
           </ActionButton>
           {(close) => <SecretsDialog close={close} />}
         </DialogTrigger>

@@ -67,6 +67,11 @@ export function SecretsDialog({ close }) {
   }, [genericDialogContext]);
 
   const onSave = () => {
+    console.log("pinataApiKey", pinataApiKey);
+    console.log("pinataSecretApiKey", pinataSecretApiKey);
+    console.log("infuraId", infuraId);
+    console.log("etherscanApiKey", etherscanApiKey);
+
     // ! TODO: Proper error handling
     setPinataApiKey(pinataApiKey).catch((error) => {
       genericDialogContext.show("Error", error.message, null);

@@ -76,7 +76,7 @@ export function InstancePage() {
     toolbarContext.addButton(
       "logOut",
       "Log Out",
-      <LogOut UNSAFE_className="fix-icon-size" />,
+      <LogOut />,
       () => localStorage.clear()
     );
 

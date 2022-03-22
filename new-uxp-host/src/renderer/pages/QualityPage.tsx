@@ -238,7 +238,7 @@ export function QualityPage() {
             <Back />
           </Item>
           <Item key="forward">
-            <Forward UNSAFE_className="fix-icon-size" />
+            <Forward />
           </Item>
           <Item key="fastForward">
             <FastForward />

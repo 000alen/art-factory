@@ -101,7 +101,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
       <Heading>
         <Flex alignItems="center" gap="size-100">
           <Text>Secrets</Text>
-          <ContextualHelp variant="help" UNSAFE_className="fix-icon-size">
+          <ContextualHelp variant="help">
             <Heading>What are secrets?</Heading>
             <Content>
               <Text>

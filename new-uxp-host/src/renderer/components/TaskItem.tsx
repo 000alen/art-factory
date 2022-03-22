@@ -195,7 +195,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         <Flex direction="column" gap="size-100">
           <Flex alignItems="center" justifyContent="space-between">
             <Text>{task}</Text>
-            <ActionButton onPress={onPress} UNSAFE_className="fix-icon-size">
+            <ActionButton onPress={onPress}>
               {dialog ? <ShowMenu /> : <Play />}
             </ActionButton>
           </Flex>
