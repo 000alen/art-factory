@@ -795,6 +795,7 @@ export class Factory {
     }
 
     this.collection = collection;
+    this.configuration.n = collection.length;
 
     return collection;
   }

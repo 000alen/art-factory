@@ -150,33 +150,6 @@ export function HomePage() {
                     name: "Background",
                     blending: "normal",
                     opacity: 1,
-                    fileName: "Pink.png",
-                    value: "Pink",
-                    rarity: 1,
-                    type: "png",
-                  },
-                  {
-                    basePath:
-                      "C:\\Users\\alenk\\Desktop\\sample\\BoredApes\\Fur",
-                    name: "Fur",
-                    blending: "overlay",
-                    opacity: 0.3,
-                    fileName: "White .png",
-                    value: "White ",
-                    rarity: 1,
-                    type: "png",
-                  },
-                ],
-              },
-              {
-                name: "2",
-                traits: [
-                  {
-                    basePath:
-                      "C:\\Users\\alenk\\Desktop\\sample\\BoredApes\\Background",
-                    name: "Background",
-                    blending: "normal",
-                    opacity: 1,
                     fileName: "Orange.png",
                     value: "Orange",
                     rarity: 1,
@@ -196,7 +169,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "3",
+                name: "2",
                 traits: [
                   {
                     basePath:
@@ -223,7 +196,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "4",
+                name: "3",
                 traits: [
                   {
                     basePath:
@@ -250,7 +223,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "5",
+                name: "4",
                 traits: [
                   {
                     basePath:
@@ -277,7 +250,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "6",
+                name: "5",
                 traits: [
                   {
                     basePath:
@@ -315,7 +288,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "7",
+                name: "6",
                 traits: [
                   {
                     basePath:
@@ -353,7 +326,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "8",
+                name: "7",
                 traits: [
                   {
                     basePath:
@@ -391,7 +364,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "9",
+                name: "8",
                 traits: [
                   {
                     basePath:
@@ -429,7 +402,7 @@ export function HomePage() {
                 ],
               },
               {
-                name: "10",
+                name: "9",
                 traits: [
                   {
                     basePath:
