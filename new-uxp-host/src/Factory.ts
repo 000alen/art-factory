@@ -566,38 +566,39 @@ export class Factory {
     console.log("branchesCache", branchesCache);
     console.log("reducedBranches", reducedBranches);
 
-    // const traitsCache = new Map();
-    // for (const [name, branch] of branchesCache) {
-    //   console.log("name", name);
-    //   console.log("branch", branch);
+    const traitsCache = new Map();
+    for (const [name, branch] of branchesCache) {
+      const layers = (
+        expandBranch(branchesCache, branch) as unknown as (
+          | LayerNodeData
+          | CacheNodeData
+        )[]
+      ).map((data) => dataToLayer(data, this.layerByName));
 
-    //   const layers = (
-    //     expandBranch(branchesCache, branch) as unknown as (
-    //       | LayerNodeData
-    //       | CacheNodeData
-    //     )[]
-    //   ).map((data) => dataToLayer(data, this.layerByName));
-
-    //   traitsCache.set(
-    //     name,
-    //     this.generateNTraits(layers, ns.get(name), traitsCache)
-    //   );
-    // }
+      traitsCache.set(
+        name,
+        this.generateNTraits(layers, ns.get(name), traitsCache)
+      );
+    }
+    console.log("traitsCache", traitsCache);
 
     const collection: Collection = [];
-    // for (const branch of reducedBranches) {
-    //   const n = (branch.pop() as RenderNodeData).n;
-    //   const layers: Layer[] = branch.map((data) =>
-    //     dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
-    //   );
-    //   const nTraits = this.generateNTraits(layers, n, traitsCache);
-    //   nTraits.forEach((traits, i) =>
-    //     collection.push({
-    //       name: `${i + 1}`, // ! TODO
-    //       traits,
-    //     })
-    //   );
-    // }
+
+    let i = 1;
+    for (const branch of reducedBranches) {
+      const n = (branch.pop() as RenderNodeData).n;
+      const layers: Layer[] = branch.map((data) =>
+        dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
+      );
+      const nTraits = this.generateNTraits(layers, n, traitsCache);
+      nTraits.forEach((traits) => {
+        collection.push({
+          name: `${i}`, // ! TODO
+          traits,
+        });
+        i++;
+      });
+    }
 
     this.collection = collection;
 

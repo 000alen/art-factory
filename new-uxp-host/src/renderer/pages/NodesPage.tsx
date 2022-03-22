@@ -87,13 +87,12 @@ export function NodesPage() {
   };
 
   const onGenerate = task("generation", async () => {
-    const layersNodes = filterNodes(elements);
-    const n = computeN(layersNodes);
-
+    const nodesAndEdges = filterNodes(elements);
+    const n = computeN(nodesAndEdges);
     const configuration = {
       ...partialConfiguration,
       n,
-      layersNodes,
+      layersNodes: nodesAndEdges,
     };
 
     setN(n);
@@ -102,9 +101,11 @@ export function NodesPage() {
     const { collection } = await factoryGenerate(
       id,
       configuration,
-      layersNodes,
+      nodesAndEdges,
       onProgress
     );
+
+    console.log(collection);
 
     setCollection(collection);
     setGenerationDone(true);
