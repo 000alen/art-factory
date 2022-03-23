@@ -858,18 +858,33 @@ export class Factory {
     return this.getMetadata(collectionItem);
   }
 
-  async removeCollectionItems(collectionItems: Collection) {
+  // vector<int> a = {1, 5, 8, 10, 13};
+  // vector<int> b = {2, 8, 11, 13};
+  // vector<int> c;
+  // int i = 0, j = 0;
+  // bool inb = false;
+  // while (i < a.size() && j < b.size()) {
+  //   if (a[i] == b[j]) ++i;
+  //   else if (a[i]  > b[j]) ++j;
+  //   else { // a[i] < b[i]
+  //     c.push_back(a[i]);
+  //     ++i;
+  //   }
+  // }
+
+  async removeCollectionItems(collectionItemsToRemove: Collection) {
     await Promise.all(
-      collectionItems.map((collectionItem) =>
+      collectionItemsToRemove.map((collectionItem) =>
         fs.promises.rm(
           path.join(this.outputDir, "images", `${collectionItem.name}.png`)
         )
       )
     );
+
     const collection: Collection = [];
     for (const collectionItem of this.collection) {
       let flag = true;
-      for (const _collectionItem of collectionItems) {
+      for (const _collectionItem of collectionItemsToRemove) {
         if (collectionItem.name === _collectionItem.name) {
           flag = false;
           break;
@@ -878,23 +893,47 @@ export class Factory {
       if (flag) collection.push(collectionItem);
     }
 
+    const bundles: Map<string, string[]> = new Map();
+    for (const [bundle, names] of this.bundles) {
+      let flag = true;
+      for (const collectionItem of collectionItemsToRemove) {
+        if (names.includes(collectionItem.name)) {
+          flag = false;
+          break;
+        }
+      }
+      if (flag) bundles.set(bundle, names);
+    }
+
     // !! TODO
     for (let i = 0; i < collection.length; i++) {
       await fs.promises.rename(
         path.join(this.outputDir, "images", `${collection[i].name}.png`),
         path.join(this.outputDir, "images", `_${i + 1}.png`)
       );
+
+      for (const [bundle, names] of this.bundles) {
+        if (names.includes(collection[i].name)) {
+          this.bundles.set(
+            bundle,
+            names.map((name) =>
+              name === collection[i].name ? `${i + 1}` : name
+            )
+          );
+        }
+      }
+
       collection[i].name = `${i + 1}`;
     }
 
-    for (const collectionItem of collection) {
+    for (const collectionItem of collection)
       await fs.promises.rename(
         path.join(this.outputDir, "images", `_${collectionItem.name}.png`),
         path.join(this.outputDir, "images", `${collectionItem.name}.png`)
       );
-    }
 
     this.collection = collection;
+    this.bundles = bundles;
     this.configuration.n = collection.length;
 
     return collection;
