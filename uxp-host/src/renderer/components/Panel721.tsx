@@ -246,7 +246,7 @@ export const Panel721: React.FC<Panel721Props> = ({
 
         <TaskItem task="Withdraw" onRun={onWithdraw} />
 
-        <TaskItem task="Sell" onRun={onSell} />
+        {/* <TaskItem task="Sell" onRun={onSell} /> */}
       </Flex>
     </>
   );
