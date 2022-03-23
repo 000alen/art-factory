@@ -15,6 +15,7 @@ import {
   factoryGetImage,
   factoryRemoveCollectionItems,
   factoryRewriteImage,
+  factorySaveInstance,
 } from "../ipc";
 import { EditorDialog } from "../components/EditorDialog";
 import { GenericDialogContext } from "../components/GenericDialog";
@@ -36,12 +37,11 @@ interface QualityPageState {
 }
 
 export function QualityPage() {
-  const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { task } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
 
   const {
     id,
@@ -178,6 +178,7 @@ export function QualityPage() {
     const collectionItemsToRemove: Collection = indexesToRemove.map(
       (i) => collection[i]
     );
+    await factorySaveInstance(id);
     const _collection = await factoryRemoveCollectionItems(
       id,
       collectionItemsToRemove

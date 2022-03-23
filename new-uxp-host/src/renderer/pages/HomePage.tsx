@@ -21,8 +21,7 @@ import { v4 as uuid } from "uuid";
 export function HomePage() {
   const navigate = useNavigate();
   const uxpContext = useContext(UXPContext);
-  const genericDialogContext = useContext(GenericDialogContext);
-  const { task } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
 
   useEffect(() => {
     const uxpGenerate = async ({

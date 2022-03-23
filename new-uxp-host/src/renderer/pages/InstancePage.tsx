@@ -50,14 +50,14 @@ function resolveEtherscanUrl(network: string, contractAddress: string) {
 // https://testnets.opensea.io/assets/<asset_contract_address>/<token_id>
 
 export function InstancePage() {
-  const genericDialogContext = useContext(GenericDialogContext);
-  const { task, isWorking } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
   const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const { configuration, network, contractAddress, abi } =
     state as InstancePageState;
 
+  const [isWorking, setIsWorking] = useState(false);
   const [contract, setContract] = useState(null);
   const [outputs, setOutputs] = useState([]);
 
@@ -178,6 +178,7 @@ export function InstancePage() {
         <Text>Made with love by KODKOD ❤️</Text>
 
         <ProgressBar
+          // !! TODO
           UNSAFE_className={isWorking ? "opacity-100" : "opacity-0"}
           label="Loading…"
           isIndeterminate

@@ -59,9 +59,8 @@ function resolveEtherscanUrl(
 // ! TODO: Metadata for grouping in OpenSea
 // https://docs.opensea.io/docs/metadata-standards
 export function DeployPage() {
-  const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
-  const { task, isWorking } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
 
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -85,6 +84,7 @@ export function DeployPage() {
   const [deployedDone, setDeployedDone, deployedDoneRef] = useStateRef(false);
   const [networkKey, setNetworkKey] = useState("rinkeby");
 
+  const [isWorking, setIsWorking] = useState(false);
   const [timerId, setTimerId] = useState(null);
   const [contractAddressTooltipShown, setContractAddressTooltipShown] =
     useState(false);
@@ -116,6 +116,7 @@ export function DeployPage() {
   }, [networkKey]);
 
   const onDeploy = task("deployment", async () => {
+    setIsWorking(true);
     await provider.enable();
     const web3Provider = new providers.Web3Provider(provider);
     const signer = await web3Provider.getSigner();
@@ -145,6 +146,7 @@ export function DeployPage() {
     setTimerId(timerId);
     await wait;
     setDeployedDone(true);
+    setIsWorking(false);
   });
 
   const onContinue = task("continue", async () => {

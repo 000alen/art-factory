@@ -25,9 +25,8 @@ interface NodesPageState {
 }
 
 export function NodesPage() {
-  const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
-  const { task, isWorking } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
@@ -48,6 +47,7 @@ export function NodesPage() {
   const [generationDone, setGenerationDone] = useState(false);
   const [collection, setCollection] = useState([]);
   const [configuration, setConfiguration] = useState(null);
+  const [isWorking, setIsWorking] = useState(false);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -90,6 +90,7 @@ export function NodesPage() {
   };
 
   const onGenerate = task("generation", async () => {
+    setIsWorking(true);
     const nodesAndEdges = filterNodes(elements);
     const n = computeN(nodesAndEdges);
     const configuration = partialConfiguration;
@@ -106,6 +107,7 @@ export function NodesPage() {
 
     setCollection(collection);
     setGenerationDone(true);
+    setIsWorking(false);
   });
 
   const onContinue = task("continue", async () => {

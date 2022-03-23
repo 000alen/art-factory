@@ -38,8 +38,7 @@ export const EditorDialog: React.FC<EditorDialogProps> = ({
   i,
   collectionItem,
 }) => {
-  const genericDialogContext = useContext(GenericDialogContext);
-  const { task } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
   const { editor, onReady } = useFabricJSEditor();
 
   const onLoad = task("loading image", async (canvas: any) => {

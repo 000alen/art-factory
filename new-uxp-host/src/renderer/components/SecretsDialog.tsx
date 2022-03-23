@@ -33,12 +33,11 @@ interface SecretsDialogProps {
 }
 
 export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
-  const genericDialogContext = useContext(GenericDialogContext);
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
   const [infuraId, _setInfuraId] = useState("");
   const [etherscanApiKey, _setEtherscanApiKey] = useState("");
-  const { task } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
 
   useEffect(() => {
     task("loading secrets", async () => {

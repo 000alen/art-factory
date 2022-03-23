@@ -24,9 +24,8 @@ interface ConfigurationPageState {
 }
 
 export function ConfigurationPage() {
-  const genericDialogContext = useContext(GenericDialogContext);
   const toolbarContext = useContext(ToolbarContext);
-  const { task } = useErrorHandler(genericDialogContext);
+  const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
   const { inputDir, outputDir, photoshopId, photoshop, partialConfiguration } =
