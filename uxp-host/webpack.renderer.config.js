@@ -23,14 +23,22 @@ plugins.push(
 )
 
 rendererAssets.forEach((asset) => plugins.push(
+  ...[new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: path.resolve(__dirname, "src", asset),
+        to: path.resolve(__dirname, ".webpack/renderer/main_window", asset),
+      }
+    ]
+  }),
   new CopyWebpackPlugin({
     patterns: [
       {
         from: path.resolve(__dirname, "src", asset),
-        to: path.resolve(__dirname, ".webpack/renderer", asset),
+        to: path.resolve(__dirname, ".webpack/renderer/", asset),
       }
     ]
-  })
+  })]
 ))
 
 mainAssets.forEach((asset) => plugins.push(

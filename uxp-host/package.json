@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "POSTON Art Factory",
   "main": ".webpack/main",
+  "homepage": "./",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
