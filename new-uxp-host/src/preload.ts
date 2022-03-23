@@ -102,11 +102,9 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   },
   on: (channel: string, listener: (...args: any[]) => void) => {
     if (onWhitelist.includes(channel)) {
-      return ipcRenderer.on(channel, (event, ...args) => {
-        // console.log("ipcOn", args);
-
-        listener(...(args === undefined ? [] : args));
-      });
+      return ipcRenderer.on(channel, (event, ...args) =>
+        listener(...(args === undefined ? [] : args))
+      );
     } else {
       throw new Error(`${channel} is not on the whitelist`);
     }

@@ -927,8 +927,6 @@ export class Factory {
       item.name = `${i + 1}`;
     }
 
-    console.log("bundles", bundles);
-
     for (const [i, item] of collection.entries()) {
       await fs.promises.rename(
         path.join(this.outputDir, "images", `_${i + 1}.png`),
@@ -948,8 +946,6 @@ export class Factory {
         bundles.set(bundlesName, newNBundles);
       }
     }
-
-    console.log("bundles", bundles);
 
     this.collection = collection;
     this.bundles = bundles;

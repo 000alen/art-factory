@@ -87,9 +87,6 @@ export function NodesPage() {
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
     const nodesAndEdges = filterNodes(elements);
-
-    console.log(nodesAndEdges);
-
     const n = computeN(nodesAndEdges);
     const configuration = partialConfiguration;
 
