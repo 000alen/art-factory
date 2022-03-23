@@ -60,7 +60,7 @@ export function ConfigurationBase({
         </sp-textfield>
       </div>
 
-      <div className="w-full flex flex-col">
+      {/* <div className="w-full flex flex-col">
         <sp-label slot="label">Contract type</sp-label>
 
         <sp-radio
@@ -77,7 +77,7 @@ export function ConfigurationBase({
         >
           ERC1155
         </sp-radio>
-      </div>
+      </div> */}
     </>
   );
 }
