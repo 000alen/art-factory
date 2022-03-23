@@ -10,6 +10,7 @@ import ReactFlow, {
   Controls,
   Background,
   getOutgoers,
+  getIncomers,
   BackgroundVariant,
   Elements as FlowElements,
   Node as FlowNode,
@@ -20,9 +21,11 @@ import { BundleNode } from "./BundleNode";
 import {
   NodesAndEdges,
   Node,
-  RenderNode as IRenderNode,
   Configuration,
+  RenderNode as IRenderNode,
+  BundleNode as IBundleNode,
 } from "../typings";
+import { v4 as uuid } from "uuid";
 
 interface NodesContextProviderProps {
   autoPlace?: boolean;
@@ -70,18 +73,42 @@ export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
       nodesAndEdges as FlowElements
     ) as Node[];
 
-    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
+    if (actualNode.node.type === "renderNode") {
       savedPaths.push(actualNode.path);
-
-    for (const v of neighbors) {
-      stack.push({
-        node: v,
-        path: [...actualNode.path, v],
-      });
+    } else {
+      for (const v of neighbors) {
+        stack.push({
+          node: v,
+          path: [...actualNode.path, v],
+        });
+      }
     }
   }
 
   return savedPaths;
+}
+
+export function getBundles(
+  nodesAndEdges: NodesAndEdges
+): Map<string, string[]> {
+  const bundleNodes = nodesAndEdges.filter(
+    (node) => node.type === "bundleNode"
+  ) as IBundleNode[];
+
+  const bundles = new Map();
+  for (const bundleNode of bundleNodes) {
+    bundles.set(
+      bundleNode.data.bundle,
+      (
+        getIncomers(
+          bundleNode as FlowNode,
+          nodesAndEdges as FlowElements
+        ) as IRenderNode[]
+      ).map((node) => node.data.renderId)
+    );
+  }
+
+  return bundles;
 }
 
 const cleanRender = (element: any) =>
@@ -137,7 +164,8 @@ const makeNode = (
   partialConfiguration: Partial<Configuration>,
   onChangeOpacity: (id: string, value: number) => void,
   onChangeBlending: (id: string, value: string) => void,
-  onChangeN: (id: string, value: number) => void
+  onChangeN: (id: string, value: number) => void,
+  onChangeBundle: (id: string, value: string) => void
 ) => ({
   id,
   type,
@@ -162,7 +190,13 @@ const makeNode = (
       : type === "renderNode"
       ? {
           n: 1,
+          renderId: uuid(),
           onChangeN: (n: number) => onChangeN(id, n),
+        }
+      : type === "bundleNode"
+      ? {
+          bundle: "",
+          onChangeBundle: (bundle: string) => onChangeBundle(id, bundle),
         }
       : {}),
   },
@@ -178,6 +212,7 @@ export function useNodes(
   const reactFlowWrapperRef = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
+  const onChangeBundle = property("bundle", setElements);
   const onChangeN = property("n", setElements);
   const onChangeOpacity = property("opacity", setElements);
   const onChangeBlending = property("blending", setElements);
@@ -253,7 +288,8 @@ export function useNodes(
       partialConfiguration,
       onChangeOpacity,
       onChangeBlending,
-      onChangeN
+      onChangeN,
+      onChangeBundle
     );
 
     setElements((prevElements) => prevElements.concat(newNode));
@@ -267,6 +303,7 @@ export function useNodes(
     onChangeN,
     onChangeOpacity,
     onChangeBlending,
+    onChangeBundle,
     updateRender,
     onConnect,
     onElementsRemove,
@@ -284,6 +321,7 @@ export const NodesContext = createContext({
   onChangeN: (id: string, n: number) => {},
   onChangeOpacity: (id: string, opacity: number) => {},
   onChangeBlending: (id: string, blending: string) => {},
+  onChangeBundle: (id: string, bundle: string) => {},
   updateRender: () => {},
   onConnect: (connection: FlowEdge | FlowConnection) => {},
   onElementsRemove: (elements: FlowElements) => {},

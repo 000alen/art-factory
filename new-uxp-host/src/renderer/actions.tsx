@@ -204,20 +204,29 @@ export const filterNodes = (nodes: NodesAndEdges) =>
   JSON.parse(
     JSON.stringify(
       nodes.map((node) =>
-        node.type === "layerNode" || node.type === "renderNode"
+        node.type === "layerNode" ||
+        node.type === "renderNode" ||
+        node.type === "bundleNode"
           ? {
               id: node.id,
               type: node.type,
               data: {
-                ...(node.type === "renderNode"
+                ...(node.type === "layerNode"
                   ? {
-                      n: node.data.n,
-                    }
-                  : {
                       name: node.data.name,
                       opacity: node.data.opacity,
                       blending: node.data.blending,
-                    }),
+                    }
+                  : node.type === "renderNode"
+                  ? {
+                      n: node.data.n,
+                      renderId: node.data.renderId,
+                    }
+                  : node.type === "bundleNode"
+                  ? {
+                      bundle: node.data.bundle,
+                    }
+                  : {}),
               },
             }
           : node

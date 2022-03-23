@@ -4,7 +4,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
 import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
-import { Nodes, NodesContextProvider } from "../components/NodesContext";
+import {
+  getBundles,
+  Nodes,
+  NodesContextProvider,
+} from "../components/NodesContext";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { ToolbarContext } from "../components/Toolbar";
@@ -88,11 +92,7 @@ export function NodesPage() {
   const onGenerate = task("generation", async () => {
     const nodesAndEdges = filterNodes(elements);
     const n = computeN(nodesAndEdges);
-    const configuration = {
-      ...partialConfiguration,
-      n,
-      layersNodes: nodesAndEdges,
-    };
+    const configuration = partialConfiguration;
 
     setN(n);
     setConfiguration(configuration);

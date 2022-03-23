@@ -20,12 +20,19 @@ import {
   Secrets,
   Trait,
   RenderNodeData,
+  RenderNode,
+  BundleNode,
 } from "./typings";
 import { append, rarity, removeRarity } from "./utils";
-import { getOutgoers } from "react-flow-renderer";
+import {
+  getOutgoers,
+  Elements as FlowElements,
+  Node as FlowNode,
+  getIncomers,
+} from "react-flow-renderer";
 
-const DEFAULT_BLENDING = "normal";
-const DEFAULT_OPACITY = 1;
+export const DEFAULT_BLENDING = "normal";
+export const DEFAULT_OPACITY = 1;
 export const DEFAULT_BACKGROUND = "#ffffff";
 
 // #region Utils
@@ -98,23 +105,77 @@ export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
   while (stack.length > 0) {
     const actualNode = stack.pop();
     const neighbors = getOutgoers(
-      // @ts-ignore
-      actualNode.node,
-      nodesAndEdges
+      actualNode.node as FlowNode,
+      nodesAndEdges as FlowElements
     ) as Node[];
 
-    if (neighbors.length === 0 && actualNode.node.type === "renderNode")
+    if (actualNode.node.type === "renderNode") {
       savedPaths.push(actualNode.path);
-
-    for (const v of neighbors) {
-      stack.push({
-        node: v,
-        path: [...actualNode.path, v],
-      });
+    } else {
+      for (const v of neighbors) {
+        stack.push({
+          node: v,
+          path: [...actualNode.path, v],
+        });
+      }
     }
   }
 
   return savedPaths;
+}
+
+export function getBundles(
+  nodesAndEdges: NodesAndEdges
+): Map<string, string[]> {
+  const bundleNodes = nodesAndEdges.filter(
+    (node) => node.type === "bundleNode"
+  ) as BundleNode[];
+
+  const bundles = new Map();
+  for (const bundleNode of bundleNodes) {
+    bundles.set(
+      bundleNode.data.bundle,
+      (
+        getIncomers(
+          bundleNode as FlowNode,
+          nodesAndEdges as FlowElements
+        ) as RenderNode[]
+      ).map((node) => node.data.renderId)
+    );
+  }
+
+  return bundles;
+}
+
+export function computeBundlesNs(
+  bundlesByRenderIds: Map<string, string[]>,
+  nodesAndEdges: NodesAndEdges
+) {
+  const ns = new Map();
+  for (const [bundle, renderIds] of bundlesByRenderIds) {
+    const renderNs = renderIds
+      .map((renderId) =>
+        nodesAndEdges.find(
+          (node) => "renderId" in node.data && node.data.renderId === renderId
+        )
+      )
+      .map((node) => node.data.n);
+    const n = Math.min(...renderNs);
+    ns.set(bundle, n);
+  }
+
+  return ns;
+}
+
+export function getBundle(
+  bundlesByRenderId: Map<string, string[]>,
+  renderId: string
+) {
+  for (const [bundle, renderIds] of bundlesByRenderId) {
+    if (renderIds.includes(renderId)) {
+      return bundle;
+    }
+  }
 }
 
 export function getBranchesDataPrefixes(
@@ -373,8 +434,11 @@ export class Factory {
   traitsByLayerName: Map<string, Trait[]>;
   traitsBuffer: Map<string, Buffer>;
 
-  secrets: Secrets;
+  nodes: NodesAndEdges;
   collection: Collection;
+  bundles: Map<string, string[]>;
+
+  secrets: Secrets;
   imagesGenerated: boolean;
   metadataGenerated: boolean;
   imagesCid: string;
@@ -470,6 +534,11 @@ export class Factory {
       outputDir: this.outputDir,
       configuration: this.configuration,
       collection: this.collection,
+      bundles:
+        this.bundles === undefined
+          ? undefined
+          : Object.fromEntries(this.bundles),
+      nodes: this.nodes,
       imagesGenerated: this.imagesGenerated,
       metadataGenerated: this.metadataGenerated,
       imagesCid: this.imagesCid,
@@ -487,6 +556,8 @@ export class Factory {
       outputDir,
       configuration,
       collection,
+      bundles,
+      nodes,
       imagesGenerated,
       metadataGenerated,
       imagesCid,
@@ -501,6 +572,8 @@ export class Factory {
     if (outputDir) this.outputDir = outputDir;
     if (configuration) this.configuration = configuration;
     if (collection) this.collection = collection;
+    if (bundles) this.bundles = new Map(Object.entries(bundles));
+    if (nodes) this.nodes = nodes;
     if (imagesGenerated) this.imagesGenerated = imagesGenerated;
     if (metadataGenerated) this.metadataGenerated = metadataGenerated;
     if (imagesCid) this.imagesCid = imagesCid;
@@ -562,10 +635,6 @@ export class Factory {
     const [branchesCache, reducedBranches] = reduceBranches(branchesData);
     const ns = computeNs(branchesCache, reducedBranches);
 
-    console.log("branchesData", branchesData);
-    console.log("branchesCache", branchesCache);
-    console.log("reducedBranches", reducedBranches);
-
     const traitsCache = new Map();
     for (const [name, branch] of branchesCache) {
       const layers = (
@@ -580,27 +649,58 @@ export class Factory {
         this.generateNTraits(layers, ns.get(name), traitsCache)
       );
     }
-    console.log("traitsCache", traitsCache);
+
+    const bundlesByRenderId = getBundles(nodesAndEdges);
+    const bundlesNs = computeBundlesNs(bundlesByRenderId, nodesAndEdges);
+    const bundles = new Map();
+    for (const [bundle, n] of bundlesNs)
+      bundles.set(
+        bundle,
+        Array.from({ length: n }, () => [])
+      );
 
     const collection: Collection = [];
 
     let i = 1;
     for (const branch of reducedBranches) {
-      const n = (branch.pop() as RenderNodeData).n;
+      const { n, renderId } = branch.pop() as RenderNodeData;
       const layers: Layer[] = branch.map((data) =>
         dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
       );
       const nTraits = this.generateNTraits(layers, n, traitsCache);
-      nTraits.forEach((traits) => {
-        collection.push({
-          name: `${i}`, // ! TODO
-          traits,
-        });
-        i++;
-      });
+      const collectionItems = nTraits.map((traits) => ({
+        name: `${i++}`, // ! TODO
+        traits,
+      }));
+      const nNames = collectionItems.map(
+        (collectionItem) => collectionItem.name
+      );
+
+      const bundle = getBundle(bundlesByRenderId, renderId);
+
+      console.log("bundle", bundle);
+      if (bundle !== undefined) {
+        console.log("n", bundlesNs.get(bundle));
+        console.log("prevBundle", bundles.get(bundle));
+        console.log("newBundle", nNames.slice(0, bundlesNs.get(bundle)));
+
+        const bundleValue = append(
+          bundles.get(bundle),
+          nNames.slice(0, bundlesNs.get(bundle)).map((name) => [name])
+        );
+
+        console.log("bundleValue", bundleValue);
+
+        bundles.set(bundle, bundleValue);
+      }
+
+      collection.push(...collectionItems);
     }
 
+    this.nodes = nodesAndEdges;
     this.collection = collection;
+    this.configuration.n = collection.length;
+    this.bundles = bundles;
 
     return collection;
   }

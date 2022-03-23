@@ -63,8 +63,13 @@ export interface Instance {
   compilerVersion: string;
 }
 
+export interface BundleNodeData {
+  bundle: string;
+}
+
 export interface RenderNodeData {
   n: number;
+  renderId: string;
 }
 
 export interface LayerNodeData {
@@ -112,7 +117,12 @@ export interface RenderNode extends BaseNode {
   data: RenderNodeData;
 }
 
-export type Node = RootNode | LayerNode | CacheNode | RenderNode;
+export interface BundleNode extends BaseNode {
+  type: "bundleNode";
+  data: BundleNodeData;
+}
+
+export type Node = RootNode | LayerNode | CacheNode | RenderNode | BundleNode;
 
 export type NodesAndEdges = (Node | Edge)[];
 
@@ -121,6 +131,8 @@ export interface Instance {
   outputDir: string;
   configuration: Partial<Configuration>;
   collection: Collection;
+  bundles: Record<string, string[]>;
+  nodes: NodesAndEdges;
   imagesGenerated: boolean;
   metadataGenerated: boolean;
   imagesCid: string;
