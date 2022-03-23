@@ -436,7 +436,7 @@ export class Factory {
 
   nodes: NodesAndEdges;
   collection: Collection;
-  bundles: Map<string, string[]>;
+  bundles: Map<string, string[][]>;
 
   secrets: Secrets;
   imagesGenerated: boolean;
@@ -678,18 +678,11 @@ export class Factory {
 
       const bundle = getBundle(bundlesByRenderId, renderId);
 
-      console.log("bundle", bundle);
       if (bundle !== undefined) {
-        console.log("n", bundlesNs.get(bundle));
-        console.log("prevBundle", bundles.get(bundle));
-        console.log("newBundle", nNames.slice(0, bundlesNs.get(bundle)));
-
         const bundleValue = append(
           bundles.get(bundle),
           nNames.slice(0, bundlesNs.get(bundle)).map((name) => [name])
         );
-
-        console.log("bundleValue", bundleValue);
 
         bundles.set(bundle, bundleValue);
       }
@@ -858,6 +851,7 @@ export class Factory {
     return this.getMetadata(collectionItem);
   }
 
+  // ! TODO
   // vector<int> a = {1, 5, 8, 10, 13};
   // vector<int> b = {2, 8, 11, 13};
   // vector<int> c;
@@ -871,66 +865,91 @@ export class Factory {
   //     ++i;
   //   }
   // }
-
   async removeCollectionItems(collectionItemsToRemove: Collection) {
     await Promise.all(
-      collectionItemsToRemove.map((collectionItem) =>
+      collectionItemsToRemove.map((itemToRemove) =>
         fs.promises.rm(
-          path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+          path.join(this.outputDir, "images", `${itemToRemove.name}.png`)
         )
       )
     );
 
-    const collection: Collection = [];
-    for (const collectionItem of this.collection) {
-      let flag = true;
-      for (const _collectionItem of collectionItemsToRemove) {
-        if (collectionItem.name === _collectionItem.name) {
-          flag = false;
-          break;
-        }
-      }
-      if (flag) collection.push(collectionItem);
-    }
+    const collection = this.collection.filter(
+      (item) =>
+        !collectionItemsToRemove.some((itemToRemove) => {
+          return item.name === itemToRemove.name;
+        })
+    );
 
-    const bundles: Map<string, string[]> = new Map();
-    for (const [bundle, names] of this.bundles) {
-      let flag = true;
-      for (const collectionItem of collectionItemsToRemove) {
-        if (names.includes(collectionItem.name)) {
-          flag = false;
-          break;
-        }
-      }
-      if (flag) bundles.set(bundle, names);
-    }
+    // const bundles = new Map(
+    //   [...this.bundles.entries()].filter(
+    //     ([bundleName, nBundles]) =>
+    //       !nBundles.some((bundle) =>
+    //         collectionItemsToRemove.some((itemToRemove) =>
+    //           bundle.includes(itemToRemove.name)
+    //         )
+    //       )
+    //   )
+    // );
+
+    const bundles = new Map(
+      [...this.bundles.entries()].map(([bundleName, nBundles]) => [
+        bundleName,
+        nBundles.filter(
+          (bundle) =>
+            !collectionItemsToRemove.some((itemToRemove) =>
+              bundle.includes(itemToRemove.name)
+            )
+        ),
+      ])
+    );
 
     // !! TODO
-    for (let i = 0; i < collection.length; i++) {
+    for (const [i, item] of collection.entries()) {
       await fs.promises.rename(
-        path.join(this.outputDir, "images", `${collection[i].name}.png`),
+        path.join(this.outputDir, "images", `${item.name}.png`),
         path.join(this.outputDir, "images", `_${i + 1}.png`)
       );
 
-      for (const [bundle, names] of this.bundles) {
-        if (names.includes(collection[i].name)) {
-          this.bundles.set(
-            bundle,
-            names.map((name) =>
-              name === collection[i].name ? `${i + 1}` : name
-            )
+      const _bundles = new Map(bundles);
+      for (const [bundlesName, nBundles] of _bundles) {
+        const newNBundles = [];
+        for (const bundle of nBundles) {
+          newNBundles.push(
+            bundle.includes(item.name)
+              ? bundle.map((name) => (name === item.name ? `_${i + 1}` : name))
+              : bundle
           );
         }
+        bundles.set(bundlesName, newNBundles);
       }
 
-      collection[i].name = `${i + 1}`;
+      item.name = `${i + 1}`;
     }
 
-    for (const collectionItem of collection)
+    console.log("bundles", bundles);
+
+    for (const [i, item] of collection.entries()) {
       await fs.promises.rename(
-        path.join(this.outputDir, "images", `_${collectionItem.name}.png`),
-        path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+        path.join(this.outputDir, "images", `_${i + 1}.png`),
+        path.join(this.outputDir, "images", `${i + 1}.png`)
       );
+
+      const _bundles = new Map(bundles);
+      for (const [bundlesName, nBundles] of _bundles) {
+        const newNBundles = [];
+        for (const bundle of nBundles) {
+          newNBundles.push(
+            bundle.includes(`_${i + 1}`)
+              ? bundle.map((name) => (name === `_${i + 1}` ? `${i + 1}` : name))
+              : bundle
+          );
+        }
+        bundles.set(bundlesName, newNBundles);
+      }
+    }
+
+    console.log("bundles", bundles);
 
     this.collection = collection;
     this.bundles = bundles;

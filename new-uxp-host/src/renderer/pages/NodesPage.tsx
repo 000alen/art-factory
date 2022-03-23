@@ -2,13 +2,8 @@ import React, { useState, useContext, useEffect } from "react";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { useLocation, useNavigate } from "react-router-dom";
 import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
-import { GenericDialogContext } from "../components/GenericDialog";
 import { computeN, factoryGenerate, filterNodes } from "../actions";
-import {
-  getBundles,
-  Nodes,
-  NodesContextProvider,
-} from "../components/NodesContext";
+import { Nodes, NodesContextProvider } from "../components/NodesContext";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { ToolbarContext } from "../components/Toolbar";
@@ -92,6 +87,9 @@ export function NodesPage() {
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
     const nodesAndEdges = filterNodes(elements);
+
+    console.log(nodesAndEdges);
+
     const n = computeN(nodesAndEdges);
     const configuration = partialConfiguration;
 

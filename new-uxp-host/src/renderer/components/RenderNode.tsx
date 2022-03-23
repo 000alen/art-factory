@@ -3,6 +3,7 @@ import { NumberField } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
 import { compose } from "../ipc";
 import { ImageItem } from "./ImageItem";
+import { useErrorHandler } from "./ErrorHandler";
 
 interface RenderNodeProps {
   sidebar: boolean;
@@ -10,23 +11,26 @@ interface RenderNodeProps {
 }
 
 export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
+  const task = useErrorHandler();
   const [url, setUrl] = useState(null);
 
   const { connected, buffers } = data;
 
   useEffect(() => {
-    if (data.buffers) {
-      compose(
+    task("preview", async () => {
+      if (data.buffers === undefined || data.buffers.length === 0) return;
+
+      const composedBuffer = await compose(
         buffers.map((buffer: Buffer) => buffer.buffer),
         { width: 200, height: 200 }
-      ).then((buffer: Buffer) => {
-        const url = URL.createObjectURL(
-          new Blob([buffer], { type: "image/png" })
-        );
-        setUrl(url);
-      });
-    }
-  }, [data]);
+      );
+      const url = URL.createObjectURL(
+        new Blob([composedBuffer as BlobPart], { type: "image/png" })
+      );
+
+      setUrl(url);
+    })();
+  }, [data.buffers]);
 
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">

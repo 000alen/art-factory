@@ -77,6 +77,8 @@ export function sizeOf(inputDir: string) {
 }
 
 export async function compose(buffers: Buffer[], configuration: Configuration) {
+  if (buffers.length === 0) return;
+
   const height = configuration.height;
   const width = configuration.width;
 

@@ -178,7 +178,6 @@ export function QualityPage() {
     const collectionItemsToRemove: Collection = indexesToRemove.map(
       (i) => collection[i]
     );
-    await factorySaveInstance(id);
     const _collection = await factoryRemoveCollectionItems(
       id,
       collectionItemsToRemove
@@ -187,6 +186,7 @@ export function QualityPage() {
       ...configuration,
       n: _collection.length,
     };
+    await factorySaveInstance(id);
 
     navigate("/deploy", {
       state: {
@@ -226,7 +226,10 @@ export function QualityPage() {
       <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">
         {imagesUrls.map((url, i) =>
           indexesToRemove.includes(index + i) ? (
-            <div className="w-32 h-32 m-auto rounded border-2 border-dashed border-white flex justify-center items-center">
+            <div
+              key={`d-${url.slice(10)}-${index + i}`}
+              className="w-32 h-32 m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
+            >
               <Button
                 variant="secondary"
                 onPress={() =>
@@ -240,7 +243,7 @@ export function QualityPage() {
             </div>
           ) : (
             <ImageItem
-              key={`${url.slice(10)}-${index + i}`}
+              key={`i-${url.slice(10)}-${index + i}`}
               name={`${index + i + 1}`}
               src={url}
               actions={[

@@ -131,7 +131,7 @@ export interface Instance {
   outputDir: string;
   configuration: Partial<Configuration>;
   collection: Collection;
-  bundles: Record<string, string[]>;
+  bundles: Record<string, string[][]>;
   nodes: NodesAndEdges;
   imagesGenerated: boolean;
   metadataGenerated: boolean;

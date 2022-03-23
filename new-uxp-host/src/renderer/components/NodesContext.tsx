@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createContext, useState, useContext, useRef } from "react";
 import { RootNode } from "./RootNode";
 import { LayerNode } from "./LayerNode";
@@ -24,6 +24,7 @@ import {
   Configuration,
   RenderNode as IRenderNode,
   BundleNode as IBundleNode,
+  Edge,
 } from "../typings";
 import { v4 as uuid } from "uuid";
 
@@ -36,6 +37,7 @@ interface NodesContextProviderProps {
   partialConfiguration: Partial<Configuration>;
   buffers: Buffer[];
   urls: string[];
+  partialNodes?: any[];
 }
 
 let id = 0;

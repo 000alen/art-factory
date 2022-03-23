@@ -139,6 +139,134 @@ export function HomePage() {
             const outputDir =
               "C:\\Users\\alenk\\Desktop\\sample\\BoredApes\\.build";
 
+            const nodes = [
+              {
+                id: "root",
+                type: "rootNode",
+                sourcePosition: "right",
+                data: {
+                  label: "Root",
+                },
+                position: {
+                  x: 0,
+                  y: 0,
+                },
+              },
+              {
+                id: "0",
+                type: "layerNode",
+                data: {
+                  name: "Background",
+                  opacity: 1,
+                  blending: "normal",
+                },
+              },
+              {
+                id: "1",
+                type: "layerNode",
+                data: {
+                  name: "Clothes",
+                  opacity: 1,
+                  blending: "normal",
+                },
+              },
+              {
+                id: "2",
+                type: "layerNode",
+                data: {
+                  name: "Fur",
+                  opacity: 1,
+                  blending: "normal",
+                },
+              },
+              {
+                id: "3",
+                type: "renderNode",
+                data: {
+                  n: 1,
+                  renderId: "23d57c8b-139a-44a9-99a5-c98ca7127fd4",
+                },
+              },
+              {
+                id: "4",
+                type: "renderNode",
+                data: {
+                  n: 1,
+                  renderId: "d1eebee8-9466-47a8-98ec-29c5bf75b721",
+                },
+              },
+              {
+                id: "5",
+                type: "bundleNode",
+                data: {
+                  bundle: "OOO",
+                },
+              },
+              {
+                source: "root",
+                sourceHandle: "renderOut",
+                target: "0",
+                targetHandle: "layerIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-rootrenderOut-0layerIn",
+              },
+              {
+                source: "0",
+                sourceHandle: "layerOut",
+                target: "2",
+                targetHandle: "layerIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-0layerOut-2layerIn",
+              },
+              {
+                source: "2",
+                sourceHandle: "layerOut",
+                target: "1",
+                targetHandle: "layerIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-2layerOut-1layerIn",
+              },
+              {
+                source: "1",
+                sourceHandle: "layerOut",
+                target: "4",
+                targetHandle: "renderIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-1layerOut-4renderIn",
+              },
+              {
+                source: "2",
+                sourceHandle: "layerOut",
+                target: "3",
+                targetHandle: "renderIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-2layerOut-3renderIn",
+              },
+              {
+                source: "3",
+                sourceHandle: "renderOut",
+                target: "5",
+                targetHandle: "bundleIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-3renderOut-5bundleIn",
+              },
+              {
+                source: "4",
+                sourceHandle: "renderOut",
+                target: "5",
+                targetHandle: "bundleIn",
+                type: "customEdge",
+                data: {},
+                id: "reactflow__edge-4renderOut-5bundleIn",
+              },
+            ];
+
             const collection = [
               {
                 name: "1",
@@ -450,6 +578,7 @@ export function HomePage() {
                 inputDir,
                 outputDir,
                 configuration,
+                // partialNodes: nodes,
                 collection,
                 photoshopId: "",
                 photoshop: false,
