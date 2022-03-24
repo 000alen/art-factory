@@ -56,15 +56,15 @@ const ipcAsyncTask = (task: string, callback: (...args: any[]) => any) => {
 
 const ipcTaskWithProgress = (
   task: string,
-  callback: (...args: any[]) => any
+  callback: ((...args: any[]) => any) | undefined
 ) => {
   ipcMain.on(task, async (event, id, ...args) => {
     let error = null;
     let result = null;
     try {
       result = await callback(
-        (i: number) => {
-          event.reply(`${task}Progress`, { id, i });
+        (...progressArgs: any[]) => {
+          event.reply(`${task}Progress`, { id, args: progressArgs });
         },
         id,
         ...args

@@ -45,7 +45,7 @@ const ipcTask =
 const ipcTaskWithProgress =
   (task: string) =>
   (
-    onProgress: (...args: any[]) => void | undefined,
+    onProgress: ((...args: any[]) => void) | undefined,
     id: string,
     ...args: any[]
   ) =>
