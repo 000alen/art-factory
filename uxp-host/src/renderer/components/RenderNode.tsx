@@ -36,8 +36,18 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
     <div className="p-2 border-2 border-dashed border-white rounded">
       {!sidebar && (
         <>
-          <Handle id="renderIn" type="target" position={Position.Left} />
-          <Handle id="renderOut" type="source" position={Position.Right} />
+          <Handle
+            className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+            id="renderIn"
+            type="target"
+            position={Position.Left}
+          />
+          <Handle
+            className="w-4 h-4 right-0 translate-x-[50%] translate-y-[-50%]"
+            id="renderOut"
+            type="source"
+            position={Position.Right}
+          />
         </>
       )}
       <div>

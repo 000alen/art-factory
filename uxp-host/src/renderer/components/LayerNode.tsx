@@ -26,8 +26,14 @@ export const LayerNode: React.FC<LayerNodeProps> = ({ sidebar, data }) => {
     <div className="p-2 border-2 border-solid border-white rounded">
       {!sidebar && (
         <>
-          <Handle id="layerIn" type="target" position={Position.Left} />
           <Handle
+            className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+            id="layerIn"
+            type="target"
+            position={Position.Left}
+          />
+          <Handle
+            className="w-4 h-4 right-0 translate-x-[50%] translate-y-[-50%]"
             id="layerOut"
             type="source"
             position={Position.Right}

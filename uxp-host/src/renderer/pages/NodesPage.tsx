@@ -43,6 +43,7 @@ export function NodesPage() {
   const [collection, setCollection] = useState([]);
   const [configuration, setConfiguration] = useState(null);
   const [isWorking, setIsWorking] = useState(false);
+  const [workTime, setWorkTime] = useState(null);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -93,13 +94,16 @@ export function NodesPage() {
     setN(n);
     setConfiguration(configuration);
 
+    const a = performance.now();
     const { collection } = await factoryGenerate(
       id,
       configuration,
       nodesAndEdges,
       onProgress
     );
+    const b = performance.now();
 
+    setWorkTime(b - a);
     setCollection(collection);
     setGenerationDone(true);
     setIsWorking(false);
@@ -144,6 +148,7 @@ export function NodesPage() {
               loadingLabel="Generating…"
               loadingMaxValue={n}
               loadingValue={currentGeneration}
+              loadingTime={workTime}
               postLabel="Continue"
               postAction={onContinue}
             />

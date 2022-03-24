@@ -13,7 +13,12 @@ export const BundleNode: React.FC<BundleNodeProps> = ({ sidebar, data }) => {
     <div className="p-2 border-2 border-dashed border-white rounded">
       {!sidebar && (
         <>
-          <Handle id="bundleIn" type="target" position={Position.Left} />
+          <Handle
+            className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+            id="bundleIn"
+            type="target"
+            position={Position.Left}
+          />
         </>
       )}
       <div>
