@@ -110,7 +110,7 @@ export function HomePage() {
           Open Instance!
         </Button>
 
-        <Button
+        {/* <Button
           variant="secondary"
           onPress={async () => {
             const id = uuid();
@@ -587,7 +587,7 @@ export function HomePage() {
           }}
         >
           Test
-        </Button>
+        </Button> */}
       </ButtonGroup>
     </Flex>
   );

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import {
   Provider as SpectrumProvider,
   defaultTheme,
+  darkTheme,
 } from "@adobe/react-spectrum";
 
 import { App } from "./App";
@@ -13,7 +14,7 @@ import "./index.css";
 ReactDOM.render(
   <SocketContext.Provider value={socket}>
     <UXPContextProvider>
-      <SpectrumProvider theme={defaultTheme}>
+      <SpectrumProvider theme={darkTheme}>
         <App />
       </SpectrumProvider>
     </UXPContextProvider>
