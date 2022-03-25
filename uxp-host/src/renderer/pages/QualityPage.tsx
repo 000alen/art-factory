@@ -25,6 +25,7 @@ import Close from "@spectrum-icons/workflow/Close";
 import { Collection, CollectionItem, Configuration } from "../typings";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
+import { MAX_SIZE } from "../constants";
 
 interface QualityPageState {
   id: string;
@@ -69,10 +70,12 @@ export function QualityPage() {
       name: string;
     }) => {
       const i = Number(name) - index - 1;
-      const buffer = await factoryGetImage(id, collection[index + i], 500);
-      const url = URL.createObjectURL(
-        new Blob([buffer as BlobPart], { type: "image/png" })
+      const base64String = await factoryGetImage(
+        id,
+        collection[index + i],
+        MAX_SIZE
       );
+      const url = `data:image/png;base64,${base64String}`;
 
       setImagesUrls((prevUrls) =>
         prevUrls.map((prevUrl, j) => (j === i ? url : prevUrl))
@@ -87,14 +90,12 @@ export function QualityPage() {
         await Promise.all(
           Array.from({ length: 25 }).map(async (_, i) => {
             if (index + i >= collection.length) return null;
-            const buffer = await factoryGetImage(
+            const base64String = await factoryGetImage(
               id,
               collection[index + i],
-              500
+              MAX_SIZE
             );
-            const url = URL.createObjectURL(
-              new Blob([buffer as BlobPart], { type: "image/png" })
-            );
+            const url = `data:image/png;base64,${base64String}`;
             return url;
           })
         )

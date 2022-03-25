@@ -43,7 +43,13 @@ export const LayerNode: React.FC<LayerNodeProps> = ({ sidebar, data }) => {
       )}
 
       <Flex direction="column" gap="size-100">
-        <ImageItem src={data.url} />
+        <ImageItem
+          src={
+            data.base64String
+              ? `data:image/png;base64,${data.base64String}`
+              : null
+          }
+        />
         <Text>{data.name}</Text>
         <Flex justifyContent="space-between" alignItems="center" gap="size-100">
           <Slider

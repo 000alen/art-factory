@@ -4,6 +4,7 @@ import { Handle, Position } from "react-flow-renderer";
 import { compose } from "../ipc";
 import { ImageItem } from "./ImageItem";
 import { useErrorHandler } from "./ErrorHandler";
+import { MAX_SIZE } from "../constants";
 
 interface RenderNodeProps {
   sidebar: boolean;
@@ -14,23 +15,18 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
   const task = useErrorHandler();
   const [url, setUrl] = useState(null);
 
-  const { connected, buffers } = data;
+  const { base64Strings, connected } = data;
 
   useEffect(() => {
     task("preview", async () => {
-      if (data.buffers === undefined || data.buffers.length === 0) return;
+      if (base64Strings === undefined || base64Strings.length === 0) return;
 
-      const composedBuffer = await compose(
-        buffers.map((buffer: Buffer) => buffer.buffer),
-        { width: 200, height: 200 }
-      );
-      const url = URL.createObjectURL(
-        new Blob([composedBuffer as BlobPart], { type: "image/png" })
-      );
+      const composedBase64String = await compose(base64Strings, MAX_SIZE);
+      const url = `data:image/png;base64,${composedBase64String}`;
 
       setUrl(url);
     })();
-  }, [data.buffers]);
+  }, [data.base64Strings]);
 
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">

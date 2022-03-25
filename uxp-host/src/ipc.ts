@@ -239,7 +239,13 @@ ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
 ipcTaskWithRequestId(
   "compose",
-  async (buffers, configuration) => await compose(buffers, configuration)
+  async (base64Strings: string[], maxSize: number) => {
+    const buffers = base64Strings.map((base64String) =>
+      Buffer.from(base64String, "base64")
+    );
+    const buffer = (await compose(buffers, maxSize)) as Buffer;
+    return buffer.toString("base64");
+  }
 );
 
 ipcTask("layersNames", (inputDir) => layersNames(inputDir));
@@ -337,28 +343,34 @@ ipcAsyncTask(
 
 ipcTaskWithRequestId(
   "factoryGetTraitImage",
-  async (id: string, trait: Trait, maxSize?: number) =>
-    await factories[id].getTraitImage(trait, maxSize)
+  async (id: string, trait: Trait, maxSize?: number) => {
+    const buffer = await factories[id].getTraitImage(trait, maxSize);
+    return buffer.toString("base64");
+  }
 );
 
 ipcTaskWithRequestId(
   "factoryGetRandomTraitImage",
-  async (id: string, layer: Layer, maxSize?: number) =>
-    await factories[id].getRandomTraitImage(layer, maxSize)
+  async (id: string, layer: Layer, maxSize?: number) => {
+    const buffer = await factories[id].getRandomTraitImage(layer, maxSize);
+    return buffer.toString("base64");
+  }
 );
 
 ipcTaskWithRequestId(
   "factoryGetImage",
-  async (id: string, collectionItem: CollectionItem, maxSize?: number) =>
-    factories[id].getImage(collectionItem, maxSize)
+  async (id: string, collectionItem: CollectionItem, maxSize?: number) => {
+    const buffer = await factories[id].getImage(collectionItem, maxSize);
+    return buffer.toString("base64");
+  }
 );
 
-ipcAsyncTask(
-  "factoryGetRandomImage",
-  async (id: string, maxSize?: number) =>
-    await factories[id].getRandomImage(maxSize)
-);
+ipcAsyncTask("factoryGetRandomImage", async (id: string, maxSize?: number) => {
+  const buffer = await factories[id].getRandomImage(maxSize);
+  return buffer.toString("base64");
+});
 
+// ! TODO: Change to base64 string
 ipcAsyncTask(
   "factoryRewriteImage",
   async (id: string, collectionItem: CollectionItem, dataUrl: string) => {

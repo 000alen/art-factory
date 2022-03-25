@@ -35,9 +35,8 @@ interface NodesContextProviderProps {
     elements: FlowElements | ((prev: FlowElements) => FlowElements)
   ) => void;
   partialConfiguration: Partial<Configuration>;
-  buffers: Buffer[];
-  urls: string[];
   partialNodes?: any[];
+  base64Strings: string[];
 }
 
 let id = 0;
@@ -120,8 +119,7 @@ const cleanRender = (element: any) =>
         data: {
           ...element.data,
           connected: false,
-          buffers: undefined,
-          urls: undefined,
+          base64Strings: undefined,
         },
       }
     : element;
@@ -133,8 +131,7 @@ const populateRender = (element: any, toUpdate: any) =>
         data: {
           ...element.data,
           connected: true,
-          buffers: toUpdate[element.id][0],
-          urls: toUpdate[element.id][1],
+          base64Strings: toUpdate[element.id],
         },
       }
     : element;
@@ -161,8 +158,7 @@ const makeNode = (
   type: string,
   position: any,
   name: string,
-  buffers: Buffer[],
-  urls: string[],
+  base64Strings: string[],
   partialConfiguration: Partial<Configuration>,
   onChangeOpacity: (id: string, value: number) => void,
   onChangeBlending: (id: string, value: string) => void,
@@ -176,13 +172,10 @@ const makeNode = (
     ...(type === "layerNode"
       ? {
           name,
-          buffer:
-            buffers[
+          base64String:
+            base64Strings[
               partialConfiguration.layers.findIndex((e: string) => e === name)
             ],
-          url: urls[
-            partialConfiguration.layers.findIndex((e: string) => e === name)
-          ],
           opacity: 1,
           blending: "normal",
           onChangeOpacity: (opacity: number) => onChangeOpacity(id, opacity),
@@ -208,8 +201,7 @@ export function useNodes(
   elements: any[],
   setElements: (elements: any[] | ((prevElements: any[]) => any[])) => void,
   partialConfiguration: any,
-  buffers: any[],
-  urls: string[]
+  base64Strings: string[]
 ) {
   const reactFlowWrapperRef = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -221,16 +213,15 @@ export function useNodes(
 
   const updateRender = () => {
     setElements((prevElements) => {
-      const toUpdate: Record<string, [Buffer[], string[]]> = {};
+      const toUpdate: Record<string, string[]> = {};
 
       prevElements = prevElements.map(cleanRender);
 
       getBranches(prevElements).forEach((branch) => {
         branch.shift();
         const render = branch.pop() as IRenderNode;
-        const buffers = branch.map((node) => node.data.buffer);
-        const urls = branch.map((node) => node.data.url);
-        toUpdate[render.id] = [buffers, urls];
+        const base64Strings = branch.map((node) => node.data.base64String);
+        toUpdate[render.id] = base64Strings;
       });
 
       prevElements = prevElements.map((prevElement) =>
@@ -285,8 +276,7 @@ export function useNodes(
         y: event.clientY - reactFlowBounds.top,
       }),
       name,
-      buffers,
-      urls,
+      base64Strings,
       partialConfiguration,
       onChangeOpacity,
       onChangeBlending,
@@ -369,9 +359,8 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   elements,
   setElements,
   partialConfiguration,
-  buffers,
-  urls,
   children,
+  base64Strings,
 }) => {
   const {
     reactFlowWrapperRef,
@@ -384,7 +373,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     onLoad,
     onDragOver,
     onDrop,
-  } = useNodes(elements, setElements, partialConfiguration, buffers, urls);
+  } = useNodes(elements, setElements, partialConfiguration, base64Strings);
 
   return (
     <NodesContext.Provider

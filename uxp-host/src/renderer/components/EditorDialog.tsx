@@ -15,6 +15,7 @@ import { factoryGetTraitImage } from "../ipc";
 import { CollectionItem, Trait } from "../typings";
 import { GenericDialogContext } from "./GenericDialog";
 import { useErrorHandler } from "./ErrorHandler";
+import { MAX_SIZE } from "../constants";
 
 interface EditorDialogProps {
   id: string;
@@ -44,10 +45,8 @@ export const EditorDialog: React.FC<EditorDialogProps> = ({
   const onLoad = task("loading image", async (canvas: any) => {
     await Promise.all(
       collectionItem.traits.map(async (trait) => {
-        const buffer = await factoryGetTraitImage(id, trait, 500);
-        const url = URL.createObjectURL(
-          new Blob([buffer as BlobPart], { type: "image/png" })
-        );
+        const base64String = await factoryGetTraitImage(id, trait, MAX_SIZE);
+        const url = `data:image/png;base64,${base64String}`;
         const image: any = await loadImage(url, canvas);
         image.perPixelTargetFind = true;
         image.targetFindTolerance = 4;

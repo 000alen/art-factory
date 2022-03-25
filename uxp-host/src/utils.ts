@@ -1,9 +1,10 @@
-import Jimp from "jimp";
 import path from "path";
 import axios from "axios";
 import fs from "fs";
 import imageSize from "image-size";
 import { Configuration } from "./typings";
+import sharp from "sharp";
+import { restrictImage } from "./Factory";
 
 export const RARITY_DELIMITER = "#";
 
@@ -76,26 +77,17 @@ export function sizeOf(inputDir: string) {
   return { width, height };
 }
 
-export async function compose(buffers: Buffer[], configuration: Configuration) {
-  if (buffers.length === 0) return;
+export async function compose(buffers: Buffer[], maxSize: number) {
+  const restrictedBuffers = await Promise.all(
+    buffers.map(async (buffer) => await restrictImage(buffer, maxSize))
+  );
 
-  const height = configuration.height;
-  const width = configuration.width;
-
-  const image = await Jimp.read(buffers[0]);
-
-  image.resize(width, height);
-
-  for (let i = 1; i < buffers.length; i++) {
-    const current = await Jimp.read(buffers[i]);
-    current.resize(width, height);
-    image.composite(current, 0, 0);
-  }
-
-  return new Promise((resolve, reject) => {
-    image.getBuffer(Jimp.MIME_PNG, (error, buffer) => {
-      if (error) reject(error);
-      resolve(buffer);
-    });
-  });
+  return await sharp(restrictedBuffers[0])
+    .composite(
+      restrictedBuffers
+        .slice(1)
+        .map((restrictedBuffer) => ({ input: restrictedBuffer }))
+    )
+    .png()
+    .toBuffer();
 }

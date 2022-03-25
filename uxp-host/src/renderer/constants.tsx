@@ -21,3 +21,5 @@ export const ContractTypes: Record<string, any> = {
     name: "ERC1155",
   },
 };
+
+export const MAX_SIZE = 500;

@@ -5,11 +5,10 @@ import { RenderNode } from "./RenderNode";
 
 interface SidebarProps {
   layers: string[];
-  buffers: any[];
-  urls: string[];
+  base64Strings: string[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ layers, base64Strings }) => {
   const onDragStart = (event: any, data: any) => {
     event.dataTransfer.setData("application/reactflow", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
@@ -35,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
           <RenderNode
             sidebar
             data={{
-              buffers,
+              base64Strings,
             }}
           />
         </div>
@@ -57,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, buffers, urls }) => {
               sidebar
               data={{
                 name,
-                url: urls[i],
+                base64String: base64Strings[i],
               }}
             />
           </div>

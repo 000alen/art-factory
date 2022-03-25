@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
-import Jimp from "jimp";
 import imageSize from "image-size";
 import { tuple } from "immutable-tuple";
 import { v4 as uuid } from "uuid";
 import FormData from "form-data";
 import axios from "axios";
+import sharp, { Blend } from "sharp";
 
 import {
   CacheNodeData,
@@ -320,39 +320,6 @@ export function dataToLayer(
       };
 }
 
-export function getRandomColor() {
-  return Jimp.rgbaToInt(
-    Math.floor(Math.random() * 256),
-    Math.floor(Math.random() * 256),
-    Math.floor(Math.random() * 256),
-    255
-  );
-}
-
-export function composeImages(
-  back: Jimp,
-  front: Jimp,
-  blending: string,
-  opacity: number
-) {
-  back.composite(front, 0, 0, {
-    mode:
-      blending === "normal"
-        ? Jimp.BLEND_SOURCE_OVER
-        : blending === "screen"
-        ? Jimp.BLEND_SCREEN
-        : blending === "multiply"
-        ? Jimp.BLEND_MULTIPLY
-        : blending === "darken"
-        ? Jimp.BLEND_DARKEN
-        : blending === "overlay"
-        ? Jimp.BLEND_OVERLAY
-        : Jimp.BLEND_SOURCE_OVER,
-    opacitySource: 1,
-    opacityDest: opacity,
-  });
-}
-
 export async function pinDirectoryToIPFS(
   pinataApiKey: string,
   pinataSecretApiKey: string,
@@ -421,9 +388,7 @@ export async function restrictImage(buffer: Buffer, maxSize?: number) {
     if (ratio > 1) {
       width = Math.floor(width / ratio);
       height = Math.floor(height / ratio);
-      const image = await Jimp.read(buffer);
-      image.resize(width, height);
-      buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+      buffer = await sharp(buffer).resize(width, height).png().toBuffer();
     }
   }
   return buffer;
@@ -520,9 +485,10 @@ export class Factory {
       (width !== this.configuration.width ||
         height !== this.configuration.height)
     ) {
-      const image = await Jimp.read(buffer);
-      image.resize(this.configuration.width, this.configuration.height);
-      buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+      buffer = await sharp(buffer)
+        .resize(this.configuration.width, this.configuration.height)
+        .png()
+        .toBuffer();
     }
 
     this.traitsBuffer.set(key, buffer);
@@ -698,23 +664,35 @@ export class Factory {
   }
 
   async generateImage(collectionItem: CollectionItem) {
-    const image = await Jimp.create(
-      this.configuration.width,
-      this.configuration.height,
-      this.configuration.generateBackground
-        ? getRandomColor()
-        : this.configuration.defaultBackground || DEFAULT_BACKGROUND
+    const keys = await Promise.all(
+      collectionItem.traits.map(
+        async (trait) => await this._ensureTraitBuffer(trait)
+      )
     );
 
-    for (const trait of collectionItem.traits) {
-      const key = await this._ensureTraitBuffer(trait);
-      const current = await Jimp.read(this.traitsBuffer.get(key));
-      composeImages(image, current, trait.blending, trait.opacity);
-    }
+    const buffers = keys.map((key) => this.traitsBuffer.get(key));
 
-    await image.writeAsync(
-      path.join(this.outputDir, "images", `${collectionItem.name}.png`)
-    );
+    await sharp({
+      create: {
+        width: this.configuration.width,
+        height: this.configuration.height,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 1 }, // ! TODO
+      },
+    })
+      .composite(
+        collectionItem.traits.map(
+          ({ blending }, i) => ({
+            input: buffers[i],
+            blend: (blending === "normal" ? "over" : blending) as Blend,
+          }),
+          this
+        )
+      )
+      .png()
+      .toFile(
+        path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+      );
   }
 
   async generateImages(

@@ -9,6 +9,7 @@ import Close from "@spectrum-icons/workflow/Close";
 import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
 import { Configuration } from "../typings";
+import { MAX_SIZE } from "../constants";
 
 interface NodesPageState {
   id: string;
@@ -35,8 +36,7 @@ export function NodesPage() {
 
   const [elements, setElements] = useState([]);
 
-  const [buffers, setBuffers] = useState([]);
-  const [urls, setUrls] = useState([]);
+  const [base64Strings, setBase64Strings] = useState([]);
   const [n, setN] = useState(0);
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [generationDone, setGenerationDone] = useState(false);
@@ -55,12 +55,8 @@ export function NodesPage() {
         )
       );
 
-      const buffers = await Promise.all(
-        layers.map((layer) => factoryGetRandomTraitImage(id, layer, 500))
-      );
-
-      const urls = buffers.map((buffer) =>
-        URL.createObjectURL(new Blob([buffer], { type: "image/png" }))
+      const base64Strings = await Promise.all(
+        layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
       );
 
       setElements([
@@ -72,8 +68,7 @@ export function NodesPage() {
           position: { x: 0, y: 0 },
         },
       ]);
-      setBuffers(buffers);
-      setUrls(urls);
+      setBase64Strings(base64Strings);
     })();
 
     return () => {
@@ -128,15 +123,13 @@ export function NodesPage() {
       autoPlace={false}
       elements={elements}
       setElements={setElements}
-      buffers={buffers}
-      urls={urls}
       partialConfiguration={partialConfiguration}
+      base64Strings={base64Strings}
     >
       <div className="w-full h-full flex overflow-hidden">
         <Sidebar
           layers={partialConfiguration.layers}
-          buffers={buffers}
-          urls={urls}
+          base64Strings={base64Strings}
         />
         <Nodes>
           <div className="absolute z-10 bottom-4 right-4">
