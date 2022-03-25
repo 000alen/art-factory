@@ -40,11 +40,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           draggable
         >
           <RenderNode
+            id="renderNode"
             sidebar
             data={{
               factoryId: id,
+              renderId: "<undefined>",
               traits,
               base64Strings,
+              n: 1,
             }}
           />
         </div>
@@ -52,7 +55,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onDragStart={(event) => onDragStart(event, { type: "bundleNode" })}
           draggable
         >
-          <BundleNode sidebar data={{ bundle: "Lorem ipsum" }} />
+          <BundleNode
+            id="bundleNode"
+            sidebar
+            data={{ bundle: "Lorem ipsum" }}
+          />
         </div>
         {layers.map((name, i) => (
           <div
@@ -63,9 +70,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             draggable
           >
             <LayerNode
+              id={`layerNode-${i}`}
               sidebar
               data={{
+                layerIds: [],
+                layerId: "Lorem ipsum",
                 name,
+                opacity: 1,
+                blending: "normal",
                 base64String: base64Strings[i],
               }}
             />

@@ -1,17 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { NumberField, Text } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
 import { factoryComposeTraits, factoryComputeMaxCombinations } from "../ipc";
 import { ImageItem } from "./ImageItem";
 import { useErrorHandler } from "./ErrorHandler";
 import { MAX_SIZE } from "../constants";
+import { LayerNodeData, RenderNodeData, Trait } from "../typings";
+import { NodesContext } from "./NodesContext";
+import { Handles } from "./Handles";
+
+interface RenderNodeComponentData extends RenderNodeData {
+  factoryId: string;
+  traits: Trait[];
+  base64Strings: string[];
+  connected?: boolean;
+}
 
 interface RenderNodeProps {
   sidebar: boolean;
-  data: any;
+  id: string;
+  data: RenderNodeComponentData;
 }
 
-export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
+export const RenderNode: React.FC<RenderNodeProps> = ({
+  sidebar,
+  id,
+  data,
+}) => {
+  const { onChangeN } = useContext(NodesContext);
+
   const task = useErrorHandler();
   const [maxN, setMaxN] = useState(null);
   const [url, setUrl] = useState(null);
@@ -39,22 +56,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
 
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">
-      {!sidebar && (
-        <>
-          <Handle
-            className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
-            id="renderIn"
-            type="target"
-            position={Position.Left}
-          />
-          <Handle
-            className="w-4 h-4 right-0 translate-x-[50%] translate-y-[-50%]"
-            id="renderOut"
-            type="source"
-            position={Position.Right}
-          />
-        </>
-      )}
+      {!sidebar && <Handles name="render" />}
       <div>
         <ImageItem src={connected || sidebar ? url : null} />
         <NumberField
@@ -62,7 +64,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
           {...{
             maxValue: maxN,
             value: sidebar ? null : Math.max(1, data.n),
-            onChange: sidebar ? null : data.onChangeN,
+            onChange: sidebar ? null : (value: number) => onChangeN(id, value),
             isDisabled: sidebar ? true : false,
           }}
         />

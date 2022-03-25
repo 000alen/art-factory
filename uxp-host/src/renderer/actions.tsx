@@ -213,14 +213,15 @@ export const filterNodes = (nodes: NodesAndEdges) =>
               data: {
                 ...(node.type === "layerNode"
                   ? {
+                      layerId: node.data.layerId,
                       name: node.data.name,
                       opacity: node.data.opacity,
                       blending: node.data.blending,
                     }
                   : node.type === "renderNode"
                   ? {
-                      n: node.data.n,
                       renderId: node.data.renderId,
+                      n: node.data.n,
                     }
                   : node.type === "bundleNode"
                   ? {

@@ -1,14 +1,24 @@
-import React from "react";
+import React, { useContext } from "react";
 import { TextField } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
 import { BundleNodeData } from "../typings";
+import { NodesContext } from "./NodesContext";
+
+interface BundleNodeComponentData extends BundleNodeData {}
 
 interface BundleNodeProps {
   sidebar: boolean;
-  data: any;
+  id: string;
+  data: BundleNodeComponentData;
 }
 
-export const BundleNode: React.FC<BundleNodeProps> = ({ sidebar, data }) => {
+export const BundleNode: React.FC<BundleNodeProps> = ({
+  sidebar,
+  id,
+  data,
+}) => {
+  const { onChangeBundle } = useContext(NodesContext);
+
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">
       {!sidebar && (
@@ -26,7 +36,9 @@ export const BundleNode: React.FC<BundleNodeProps> = ({ sidebar, data }) => {
           label="Bundle"
           {...{
             value: data.bundle,
-            onChange: sidebar ? null : data.onChangeBundle,
+            onChange: sidebar
+              ? null
+              : (value: string) => onChangeBundle(id, value),
             isDisabled: sidebar ? true : false,
           }}
         />

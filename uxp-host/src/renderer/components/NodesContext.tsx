@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { createContext, useState, useContext, useRef } from "react";
 import { RootNode } from "./RootNode";
 import { LayerNode } from "./LayerNode";
@@ -24,10 +24,16 @@ import {
   Configuration,
   RenderNode as IRenderNode,
   BundleNode as IBundleNode,
-  Edge,
   Trait,
 } from "../typings";
 import { v4 as uuid } from "uuid";
+
+import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  animals,
+} from "unique-names-generator";
 
 interface NodesContextProviderProps {
   id: string;
@@ -37,13 +43,45 @@ interface NodesContextProviderProps {
     elements: FlowElements | ((prev: FlowElements) => FlowElements)
   ) => void;
   partialConfiguration: Partial<Configuration>;
-  partialNodes?: any[];
   traits: Trait[];
   base64Strings: string[];
 }
 
+interface INodesContext {
+  reactFlowWrapperRef: React.RefObject<HTMLDivElement>;
+  reactFlowInstance: any;
+  elements: FlowElements;
+
+  onConnect: (connection: FlowEdge | FlowConnection) => void;
+  onElementsRemove: (elements: FlowElements) => void;
+  onEdgeRemove: (id: string) => void;
+  onLoad: (reactFlowInstance: any) => void;
+  onDragOver: (event: any) => void;
+  onDrop: (event: any) => void;
+
+  onChangeBundle: (id: string, value: string) => void;
+  onChangeN: (id: string, value: number) => void;
+  onChangeOpacity: (id: string, value: number) => void;
+  onChangeBlending: (id: string, value: string) => void;
+  onChangeLayerId: (id: string, value: string) => void;
+
+  getLayerIds: (name: string) => string[];
+}
+
 let id = 0;
 export const getId = () => `${id++}`;
+
+const spacedName = {
+  dictionaries: [colors, adjectives, animals],
+  separator: " ",
+  length: 2,
+};
+
+const dashedName = {
+  dictionaries: [colors, adjectives, animals],
+  separator: "-",
+  length: 2,
+};
 
 const nodeTypes = {
   rootNode: RootNode,
@@ -115,7 +153,7 @@ export function getBundles(
   return bundles;
 }
 
-const cleanRender = (element: any) =>
+const clean = (element: any) =>
   element.type === "renderNode"
     ? {
         ...element,
@@ -128,7 +166,7 @@ const cleanRender = (element: any) =>
       }
     : element;
 
-const populateRender = (element: any, toUpdate: any) =>
+const populate = (element: any, toUpdate: any) =>
   element.id in toUpdate
     ? {
         ...element,
@@ -141,100 +179,110 @@ const populateRender = (element: any, toUpdate: any) =>
       }
     : element;
 
-const property =
-  (
-    name: string,
-    setElements: (value: any | ((prevValue: any) => any)) => void
-  ) =>
-  (id: string, value: any) =>
-    setElements((prevElements: any) =>
-      prevElements.map((prevElement: any) =>
-        prevElement.id === id
-          ? {
-              ...prevElement,
-              data: { ...prevElement.data, [name]: value },
-            }
-          : prevElement
-      )
-    );
-
-const makeNode = (
-  factoryId: string,
-  id: string,
-  type: string,
-  position: any,
-  name: string,
-  traits: Trait[],
-  base64Strings: string[],
-  partialConfiguration: Partial<Configuration>,
-  onChangeOpacity: (id: string, value: number) => void,
-  onChangeBlending: (id: string, value: string) => void,
-  onChangeN: (id: string, value: number) => void,
-  onChangeBundle: (id: string, value: string) => void
-) => ({
-  id,
-  type,
-  position,
-  data: {
-    ...(type === "layerNode"
-      ? {
-          name,
-          trait:
-            traits[
-              partialConfiguration.layers.findIndex((e: string) => e === name)
-            ],
-          base64String:
-            base64Strings[
-              partialConfiguration.layers.findIndex((e: string) => e === name)
-            ],
-          opacity: 1,
-          blending: "normal",
-          onChangeOpacity: (opacity: number) => onChangeOpacity(id, opacity),
-          onChangeBlending: (blending: string) =>
-            onChangeBlending(id, blending),
-        }
-      : type === "renderNode"
-      ? {
-          factoryId,
-          n: 1,
-          renderId: uuid(),
-          onChangeN: (n: number) => onChangeN(id, n),
-        }
-      : type === "bundleNode"
-      ? {
-          bundle: "",
-          onChangeBundle: (bundle: string) => onChangeBundle(id, bundle),
-        }
-      : {}),
-  },
-});
-
 export function useNodes(
   id: string,
-  elements: any[],
-  setElements: (elements: any[] | ((prevElements: any[]) => any[])) => void,
-  partialConfiguration: any,
+  elements: FlowElements,
+  setElements: (
+    elements: FlowElements | ((prevElements: FlowElements) => FlowElements)
+  ) => void,
+  partialConfiguration: Partial<Configuration>,
   traits: Trait[],
   base64Strings: string[]
 ) {
   const reactFlowWrapperRef = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  const onChangeBundle = property("bundle", setElements);
-  const onChangeN = property("n", setElements);
-  const onChangeOpacity = property("opacity", setElements);
-  const onChangeBlending = property("blending", setElements);
+  const [layersIds, setLayersIds] = useState(new Map<string, string[]>());
+  const updateLayersIds = (k: string, v: string[]) =>
+    setLayersIds(new Map(layersIds.set(k, v)));
 
-  const updateRender = () => {
+  const onChange = (name: string) => (id: string, value: any) =>
+    setElements((ps: any) =>
+      ps.map((p: any) =>
+        p.id === id
+          ? {
+              ...p,
+              data: { ...p.data, [name]: value },
+            }
+          : p
+      )
+    );
+
+  const make = (
+    elementId: string,
+    type: string,
+    position: any,
+    name: string
+  ) => {
+    let data;
+    switch (type) {
+      case "layerNode":
+        const index = partialConfiguration.layers.findIndex(
+          (e: string) => e === name
+        );
+        const trait = traits[index];
+        const base64String = base64Strings[index];
+        const layerId = uniqueNamesGenerator(dashedName);
+        const opacity = 1;
+        const blending = "normal";
+
+        updateLayersIds(name, [...(layersIds.get(name) || []), layerId]);
+
+        data = {
+          name,
+          trait,
+          base64String,
+          layerId,
+          opacity,
+          blending,
+        };
+        break;
+      case "renderNode":
+        const factoryId = id;
+        const renderId = uuid();
+        const n = 1;
+
+        data = {
+          factoryId,
+          renderId,
+          n,
+        };
+        break;
+      case "bundleNode":
+        const bundle = uniqueNamesGenerator(spacedName);
+        data = {
+          bundle,
+        };
+        break;
+      default:
+        data = {};
+        break;
+    }
+
+    return {
+      id: elementId,
+      type,
+      position,
+      data,
+    };
+  };
+
+  const onChangeBundle = onChange("bundle");
+  const onChangeN = onChange("n");
+  const onChangeOpacity = onChange("opacity");
+  const onChangeBlending = onChange("blending");
+  const onChangeLayerId = onChange("layerId");
+
+  const update = () => {
     setElements((prevElements) => {
       const toUpdate: Record<
         string,
         { traits: Trait[]; base64Strings: string[] }
       > = {};
 
-      prevElements = prevElements.map(cleanRender);
+      prevElements = prevElements.map(clean);
 
-      getBranches(prevElements).forEach((branch) => {
+      getBranches(prevElements as NodesAndEdges).forEach((branch) => {
         branch.shift();
         const render = branch.pop() as IRenderNode;
         const traits: Trait[] = branch.map((node) => node.data.trait);
@@ -245,7 +293,7 @@ export function useNodes(
       });
 
       prevElements = prevElements.map((prevElement) =>
-        populateRender(prevElement, toUpdate)
+        populate(prevElement, toUpdate)
       );
 
       return prevElements;
@@ -259,12 +307,12 @@ export function useNodes(
         prevElements
       )
     );
-    updateRender();
+    update();
   };
 
   const onElementsRemove = (elements: FlowElements) => {
     setElements((prevElements) => removeElements(elements, prevElements));
-    updateRender();
+    update();
   };
 
   const onEdgeRemove = (id: string) => {
@@ -288,62 +336,44 @@ export function useNodes(
       event.dataTransfer.getData("application/reactflow")
     );
 
-    const newNode = makeNode(
-      id,
+    const newNode = make(
       getId(),
       type,
       reactFlowInstance.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       }),
-      name,
-      traits,
-      base64Strings,
-      partialConfiguration,
-      onChangeOpacity,
-      onChangeBlending,
-      onChangeN,
-      onChangeBundle
+      name
     );
 
     setElements((prevElements) => prevElements.concat(newNode));
-    updateRender();
+    update();
   };
+
+  const getLayerIds = (name: string) => layersIds.get(name) || [];
 
   return {
     reactFlowWrapperRef,
     reactFlowInstance,
     elements,
-    onChangeN,
-    onChangeOpacity,
-    onChangeBlending,
-    onChangeBundle,
-    updateRender,
+    update,
     onConnect,
     onElementsRemove,
     onEdgeRemove,
     onLoad,
     onDragOver,
     onDrop,
+    onChangeBundle,
+    onChangeN,
+    onChangeOpacity,
+    onChangeBlending,
+    onChangeLayerId,
+
+    getLayerIds,
   };
 }
 
-export const NodesContext = createContext({
-  reactFlowWrapperRef: null,
-  reactFlowInstance: null,
-  elements: [],
-  onChangeN: (id: string, n: number) => {},
-  onChangeOpacity: (id: string, opacity: number) => {},
-  onChangeBlending: (id: string, blending: string) => {},
-  onChangeBundle: (id: string, bundle: string) => {},
-  updateRender: () => {},
-  onConnect: (connection: FlowEdge | FlowConnection) => {},
-  onElementsRemove: (elements: FlowElements) => {},
-  onEdgeRemove: (id: string) => {},
-  onLoad: (reactFlowInstance: any) => {},
-  onDragOver: (event: any) => {},
-  onDrop: (event: any) => {},
-});
+export const NodesContext = createContext<INodesContext>(null);
 
 export const Nodes: React.FC = ({ children }) => {
   const {
@@ -359,14 +389,14 @@ export const Nodes: React.FC = ({ children }) => {
   return (
     <div className="w-full h-full" ref={reactFlowWrapperRef}>
       <ReactFlow
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
         elements={elements}
         onConnect={onConnect}
         onElementsRemove={onElementsRemove}
         onLoad={onLoad}
-        onDrop={onDrop}
         onDragOver={onDragOver}
+        onDrop={onDrop}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={50} />
@@ -386,18 +416,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   traits,
   base64Strings,
 }) => {
-  const {
-    reactFlowWrapperRef,
-    reactFlowInstance,
-    onChangeN,
-    updateRender,
-    onConnect,
-    onElementsRemove,
-    onEdgeRemove,
-    onLoad,
-    onDragOver,
-    onDrop,
-  } = useNodes(
+  const value = useNodes(
     id,
     elements,
     setElements,
@@ -407,22 +426,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   );
 
   return (
-    <NodesContext.Provider
-      // @ts-ignore
-      value={{
-        reactFlowWrapperRef,
-        reactFlowInstance,
-        elements,
-        onChangeN,
-        updateRender,
-        onConnect,
-        onElementsRemove,
-        onEdgeRemove,
-        onLoad,
-        onDragOver,
-        onDrop,
-      }}
-    >
+    <NodesContext.Provider value={value}>
       {autoPlace && <Nodes />}
       {children}
     </NodesContext.Provider>
