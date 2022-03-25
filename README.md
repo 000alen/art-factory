@@ -4,7 +4,7 @@
 
 - [x] **Fix**: Loading bars
 - [x] **Fix**: Donde dice Infura ID, en el plugin de ps cambienlo a Infura Project ID.
-- [ ] **Fix**: Arreglar el alpha channel de la generación de fondos.
+- [x] **Fix**: Arreglar el alpha channel de la generación de fondos.
 - [x] **Improvement**: Make nodes handle bigger.
 - [ ] **Feature request**: que salga el `n` maximo que puedes generar para cierta hoja del árbol.
 - [ ] **Feature request**: cuando borras uno, pedir que te genere uno nuevo.

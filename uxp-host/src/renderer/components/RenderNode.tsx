@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NumberField } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
-import { compose } from "../ipc";
+import { factoryComposeTraits } from "../ipc";
 import { ImageItem } from "./ImageItem";
 import { useErrorHandler } from "./ErrorHandler";
 import { MAX_SIZE } from "../constants";
@@ -15,18 +15,23 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
   const task = useErrorHandler();
   const [url, setUrl] = useState(null);
 
-  const { base64Strings, connected } = data;
+  const { factoryId, traits, base64Strings, connected } = data;
 
   useEffect(() => {
     task("preview", async () => {
       if (base64Strings === undefined || base64Strings.length === 0) return;
+      if (traits === undefined || traits.length === 0) return;
 
-      const composedBase64String = await compose(base64Strings, MAX_SIZE);
+      const composedBase64String = await factoryComposeTraits(
+        factoryId,
+        traits,
+        MAX_SIZE
+      );
       const url = `data:image/png;base64,${composedBase64String}`;
 
       setUrl(url);
     })();
-  }, [data.base64Strings]);
+  }, [data.base64Strings, data.traits]);
 
   return (
     <div className="p-2 border-2 border-dashed border-white rounded">

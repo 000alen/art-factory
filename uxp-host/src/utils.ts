@@ -76,18 +76,3 @@ export function sizeOf(inputDir: string) {
   const { width, height } = imageSize(path.join(inputDir, layer, layerElement));
   return { width, height };
 }
-
-export async function compose(buffers: Buffer[], maxSize: number) {
-  const restrictedBuffers = await Promise.all(
-    buffers.map(async (buffer) => await restrictImage(buffer, maxSize))
-  );
-
-  return await sharp(restrictedBuffers[0])
-    .composite(
-      restrictedBuffers
-        .slice(1)
-        .map((restrictedBuffer) => ({ input: restrictedBuffer }))
-    )
-    .png()
-    .toBuffer();
-}

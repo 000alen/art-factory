@@ -8,12 +8,12 @@ import { Configuration721 } from "../components/Configuration721";
 import { Configuration1155 } from "../components/Configuration1155";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
-import { GenericDialogContext } from "../components/GenericDialog";
 import { initializeFactory } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
 import { Configuration } from "../typings";
+import { parseColor } from "@react-stately/color";
 
 interface ConfigurationPageState {
   inputDir: string;
@@ -41,7 +41,10 @@ export function ConfigurationPage() {
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [generateBackground, setGenerateBackground] = useState(true);
-  const [defaultBackground, _setDefaultBackground] = useState("#ffffff");
+  // const [defaultBackground, _setDefaultBackground] = useState("#ffffff");
+  const [defaultBackground, _setDefaultBackground] = useState(
+    parseColor("#ffffff")
+  );
   const [contractType, setContractType] = useState("721");
 
   // Configuration721
@@ -132,7 +135,7 @@ export function ConfigurationPage() {
   );
 
   const setDefaultBackground = (color: any) => {
-    _setDefaultBackground(color.toString("hex"));
+    _setDefaultBackground(color);
   };
 
   const onContinue = task("initializing factory", async () => {
@@ -140,10 +143,15 @@ export function ConfigurationPage() {
       name,
       description,
       symbol,
-      width: width,
-      height: height,
+      width,
+      height,
       generateBackground,
-      defaultBackground,
+      defaultBackground: {
+        r: defaultBackground.getChannelValue("red"),
+        g: defaultBackground.getChannelValue("green"),
+        b: defaultBackground.getChannelValue("blue"),
+        a: defaultBackground.getChannelValue("alpha"),
+      },
       contractType,
 
       ...(contractType === "721"

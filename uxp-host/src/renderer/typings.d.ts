@@ -5,13 +5,20 @@ export interface Secrets {
   etherscanApiKey: string;
 }
 
+export interface Color {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
 export interface BaseConfiguration {
   n: number;
   layers: string[];
   width: number;
   height: number;
   generateBackground: boolean;
-  defaultBackground: string;
+  defaultBackground: Color;
   name: string;
   description: string;
   symbol: string;

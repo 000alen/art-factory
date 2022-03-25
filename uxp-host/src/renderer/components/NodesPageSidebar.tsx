@@ -1,14 +1,22 @@
 import React from "react";
+import { Trait } from "../typings";
 import { BundleNode } from "./BundleNode";
 import { LayerNode } from "./LayerNode";
 import { RenderNode } from "./RenderNode";
 
 interface SidebarProps {
+  id: string;
   layers: string[];
+  traits: Trait[];
   base64Strings: string[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ layers, base64Strings }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  id,
+  layers,
+  traits,
+  base64Strings,
+}) => {
   const onDragStart = (event: any, data: any) => {
     event.dataTransfer.setData("application/reactflow", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
@@ -34,6 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, base64Strings }) => {
           <RenderNode
             sidebar
             data={{
+              factoryId: id,
+              traits,
               base64Strings,
             }}
           />

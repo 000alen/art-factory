@@ -663,6 +663,44 @@ export class Factory {
     return collection;
   }
 
+  async composeTraits(traits: Trait[], maxSize?: number) {
+    const keys = await Promise.all(
+      traits.map(async (trait) => await this._ensureTraitBuffer(trait))
+    );
+
+    const buffers = keys.map((key) => this.traitsBuffer.get(key));
+
+    return await restrictImage(
+      await sharp({
+        create: {
+          width: this.configuration.width,
+          height: this.configuration.height,
+          channels: 4,
+          background: this.configuration.generateBackground
+            ? {
+                r: Math.floor(Math.random() * 255),
+                g: Math.floor(Math.random() * 255),
+                b: Math.floor(Math.random() * 255),
+                alpha: 1,
+              }
+            : this.configuration.defaultBackground,
+        },
+      })
+        .composite(
+          traits.map(
+            ({ blending }, i) => ({
+              input: buffers[i],
+              blend: (blending === "normal" ? "over" : blending) as Blend,
+            }),
+            this
+          )
+        )
+        .png()
+        .toBuffer(),
+      maxSize
+    );
+  }
+
   async generateImage(collectionItem: CollectionItem) {
     const keys = await Promise.all(
       collectionItem.traits.map(
@@ -677,7 +715,14 @@ export class Factory {
         width: this.configuration.width,
         height: this.configuration.height,
         channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 1 }, // ! TODO
+        background: this.configuration.generateBackground
+          ? {
+              r: Math.floor(Math.random() * 255),
+              g: Math.floor(Math.random() * 255),
+              b: Math.floor(Math.random() * 255),
+              alpha: 1,
+            }
+          : this.configuration.defaultBackground,
       },
     })
       .composite(
@@ -782,7 +827,7 @@ export class Factory {
   async getRandomTraitImage(layer: Layer, maxSize?: number) {
     const traits = this.traitsByLayerName.get(layer.name);
     const trait = choose(traits);
-    return await this.getTraitImage(trait, maxSize);
+    return [trait, await this.getTraitImage(trait, maxSize)];
   }
 
   async rewriteTraitImage(trait: Trait, dataUrl: string) {
@@ -805,7 +850,7 @@ export class Factory {
   async getRandomImage(maxSize?: number) {
     const collectionItem =
       this.collection[Math.floor(Math.random() * this.collection.length)];
-    return await this.getImage(collectionItem, maxSize);
+    return [collectionItem, await this.getImage(collectionItem, maxSize)];
   }
 
   async rewriteImage(collectionItem: CollectionItem, dataUrl: string) {
@@ -825,7 +870,7 @@ export class Factory {
   async getRandomMetadata() {
     const collectionItem =
       this.collection[Math.floor(Math.random() * this.collection.length)];
-    return this.getMetadata(collectionItem);
+    return [collectionItem, await this.getMetadata(collectionItem)];
   }
 
   // ! TODO

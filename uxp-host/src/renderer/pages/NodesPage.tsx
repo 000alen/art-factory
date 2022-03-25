@@ -8,7 +8,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import { Configuration } from "../typings";
+import { Configuration, Trait } from "../typings";
 import { MAX_SIZE } from "../constants";
 
 interface NodesPageState {
@@ -36,6 +36,7 @@ export function NodesPage() {
 
   const [elements, setElements] = useState([]);
 
+  const [traits, setTraits] = useState([]);
   const [base64Strings, setBase64Strings] = useState([]);
   const [n, setN] = useState(0);
   const [currentGeneration, setCurrentGeneration] = useState(0);
@@ -55,9 +56,15 @@ export function NodesPage() {
         )
       );
 
-      const base64Strings = await Promise.all(
+      const traitsAndBase64Strings = await Promise.all(
         layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
       );
+      const traits: Trait[] = [];
+      const base64Strings: string[] = [];
+      traitsAndBase64Strings.forEach(([trait, base64String]) => {
+        traits.push(trait);
+        base64Strings.push(base64String);
+      });
 
       setElements([
         {
@@ -68,6 +75,7 @@ export function NodesPage() {
           position: { x: 0, y: 0 },
         },
       ]);
+      setTraits(traits);
       setBase64Strings(base64Strings);
     })();
 
@@ -120,15 +128,19 @@ export function NodesPage() {
 
   return (
     <NodesContextProvider
+      id={id}
       autoPlace={false}
       elements={elements}
       setElements={setElements}
       partialConfiguration={partialConfiguration}
+      traits={traits}
       base64Strings={base64Strings}
     >
       <div className="w-full h-full flex overflow-hidden">
         <Sidebar
+          id={id}
           layers={partialConfiguration.layers}
+          traits={traits}
           base64Strings={base64Strings}
         />
         <Nodes>

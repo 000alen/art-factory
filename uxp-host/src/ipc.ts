@@ -2,7 +2,7 @@ import { ipcMain, dialog } from "electron";
 import path from "path";
 import solc from "solc";
 import { Factory, loadInstance } from "./Factory";
-import { layersNames, name, sizeOf, compose, verifyContract } from "./utils";
+import { layersNames, name, sizeOf, verifyContract } from "./utils";
 import fs from "fs";
 import {
   setPinataApiKey,
@@ -237,17 +237,6 @@ ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
 
 ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
-ipcTaskWithRequestId(
-  "compose",
-  async (base64Strings: string[], maxSize: number) => {
-    const buffers = base64Strings.map((base64String) =>
-      Buffer.from(base64String, "base64")
-    );
-    const buffer = (await compose(buffers, maxSize)) as Buffer;
-    return buffer.toString("base64");
-  }
-);
-
 ipcTask("layersNames", (inputDir) => layersNames(inputDir));
 // #endregion
 
@@ -311,6 +300,14 @@ ipcTask(
     factories[id].generateCollection(nodesAndEdges)
 );
 
+ipcTaskWithRequestId(
+  "factoryComposeTraits",
+  async (id: string, traits: Trait[], maxSize?: number) => {
+    const buffer = await factories[id].composeTraits(traits, maxSize);
+    return buffer.toString("base64");
+  }
+);
+
 ipcTaskWithProgress(
   "factoryGenerateImages",
   async (
@@ -352,8 +349,11 @@ ipcTaskWithRequestId(
 ipcTaskWithRequestId(
   "factoryGetRandomTraitImage",
   async (id: string, layer: Layer, maxSize?: number) => {
-    const buffer = await factories[id].getRandomTraitImage(layer, maxSize);
-    return buffer.toString("base64");
+    const [trait, buffer] = await factories[id].getRandomTraitImage(
+      layer,
+      maxSize
+    );
+    return [trait, buffer.toString("base64")];
   }
 );
 
@@ -366,8 +366,8 @@ ipcTaskWithRequestId(
 );
 
 ipcAsyncTask("factoryGetRandomImage", async (id: string, maxSize?: number) => {
-  const buffer = await factories[id].getRandomImage(maxSize);
-  return buffer.toString("base64");
+  const [collectionItem, buffer] = await factories[id].getRandomImage(maxSize);
+  return [collectionItem, buffer.toString("base64")];
 });
 
 // ! TODO: Change to base64 string

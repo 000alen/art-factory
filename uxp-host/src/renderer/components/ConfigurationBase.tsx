@@ -26,8 +26,8 @@ interface ConfigurationBaseProps {
   setHeight: (height: number) => void;
   generateBackground: boolean;
   setGenerateBackground: (generateBackground: boolean) => void;
-  defaultBackground: string;
-  setDefaultBackground: (defaultBackground: string) => void;
+  defaultBackground: any;
+  setDefaultBackground: (defaultBackground: any) => void;
   contractType: string;
   setContractType: (contractType: string) => void;
 }

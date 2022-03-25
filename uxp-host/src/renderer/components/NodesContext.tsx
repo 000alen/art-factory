@@ -25,10 +25,12 @@ import {
   RenderNode as IRenderNode,
   BundleNode as IBundleNode,
   Edge,
+  Trait,
 } from "../typings";
 import { v4 as uuid } from "uuid";
 
 interface NodesContextProviderProps {
+  id: string;
   autoPlace?: boolean;
   elements: FlowElements;
   setElements: (
@@ -36,6 +38,7 @@ interface NodesContextProviderProps {
   ) => void;
   partialConfiguration: Partial<Configuration>;
   partialNodes?: any[];
+  traits: Trait[];
   base64Strings: string[];
 }
 
@@ -119,6 +122,7 @@ const cleanRender = (element: any) =>
         data: {
           ...element.data,
           connected: false,
+          traits: undefined,
           base64Strings: undefined,
         },
       }
@@ -131,7 +135,8 @@ const populateRender = (element: any, toUpdate: any) =>
         data: {
           ...element.data,
           connected: true,
-          base64Strings: toUpdate[element.id],
+          traits: toUpdate[element.id].traits,
+          base64Strings: toUpdate[element.id].base64Strings,
         },
       }
     : element;
@@ -154,10 +159,12 @@ const property =
     );
 
 const makeNode = (
+  factoryId: string,
   id: string,
   type: string,
   position: any,
   name: string,
+  traits: Trait[],
   base64Strings: string[],
   partialConfiguration: Partial<Configuration>,
   onChangeOpacity: (id: string, value: number) => void,
@@ -172,6 +179,10 @@ const makeNode = (
     ...(type === "layerNode"
       ? {
           name,
+          trait:
+            traits[
+              partialConfiguration.layers.findIndex((e: string) => e === name)
+            ],
           base64String:
             base64Strings[
               partialConfiguration.layers.findIndex((e: string) => e === name)
@@ -184,6 +195,7 @@ const makeNode = (
         }
       : type === "renderNode"
       ? {
+          factoryId,
           n: 1,
           renderId: uuid(),
           onChangeN: (n: number) => onChangeN(id, n),
@@ -198,9 +210,11 @@ const makeNode = (
 });
 
 export function useNodes(
+  id: string,
   elements: any[],
   setElements: (elements: any[] | ((prevElements: any[]) => any[])) => void,
   partialConfiguration: any,
+  traits: Trait[],
   base64Strings: string[]
 ) {
   const reactFlowWrapperRef = useRef(null);
@@ -213,15 +227,21 @@ export function useNodes(
 
   const updateRender = () => {
     setElements((prevElements) => {
-      const toUpdate: Record<string, string[]> = {};
+      const toUpdate: Record<
+        string,
+        { traits: Trait[]; base64Strings: string[] }
+      > = {};
 
       prevElements = prevElements.map(cleanRender);
 
       getBranches(prevElements).forEach((branch) => {
         branch.shift();
         const render = branch.pop() as IRenderNode;
-        const base64Strings = branch.map((node) => node.data.base64String);
-        toUpdate[render.id] = base64Strings;
+        const traits: Trait[] = branch.map((node) => node.data.trait);
+        const base64Strings: string[] = branch.map(
+          (node) => node.data.base64String
+        );
+        toUpdate[render.id] = { traits, base64Strings };
       });
 
       prevElements = prevElements.map((prevElement) =>
@@ -269,6 +289,7 @@ export function useNodes(
     );
 
     const newNode = makeNode(
+      id,
       getId(),
       type,
       reactFlowInstance.project({
@@ -276,6 +297,7 @@ export function useNodes(
         y: event.clientY - reactFlowBounds.top,
       }),
       name,
+      traits,
       base64Strings,
       partialConfiguration,
       onChangeOpacity,
@@ -355,11 +377,13 @@ export const Nodes: React.FC = ({ children }) => {
 };
 
 export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
+  id,
   autoPlace = true,
   elements,
   setElements,
   partialConfiguration,
   children,
+  traits,
   base64Strings,
 }) => {
   const {
@@ -373,7 +397,14 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     onLoad,
     onDragOver,
     onDrop,
-  } = useNodes(elements, setElements, partialConfiguration, base64Strings);
+  } = useNodes(
+    id,
+    elements,
+    setElements,
+    partialConfiguration,
+    traits,
+    base64Strings
+  );
 
   return (
     <NodesContext.Provider

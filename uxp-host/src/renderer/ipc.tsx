@@ -143,9 +143,6 @@ export const getContractSource = (name: string) =>
 export const getOutputDir = (inputDir: string) =>
   ipcTask("getOutputDir")(inputDir);
 
-export const compose = (base64Strings: string[], maxSize: number) =>
-  ipcTaskWithRequestId("compose")(base64Strings, maxSize) as Promise<string>;
-
 export const name = (inputDir: string) => ipcTask("name")(inputDir);
 
 export const sizeOf = (inputDir: string) => ipcTask("sizeOf")(inputDir);
@@ -219,6 +216,17 @@ export const factoryGenerateCollection = (
     nodesAndEdges
   ) as Promise<Collection>;
 
+export const factoryComposeTraits = (
+  id: string,
+  traits: Trait[],
+  maxSize?: number
+) =>
+  ipcTaskWithRequestId("factoryComposeTraits")(
+    id,
+    traits,
+    maxSize
+  ) as Promise<string>;
+
 export const factoryGenerateImages = (
   id: string,
   collection: Collection,
@@ -256,7 +264,7 @@ export const factoryGetRandomTraitImage = (
     id,
     layer,
     maxSize
-  ) as Promise<string>;
+  ) as Promise<[Trait, string]>;
 
 export const factoryGetImage = (
   id: string,
@@ -270,7 +278,9 @@ export const factoryGetImage = (
   ) as Promise<string>;
 
 export const factoryGetRandomImage = (id: string, maxSize?: number) =>
-  ipcTask("factoryGetRandomImage")(id, maxSize);
+  ipcTask("factoryGetRandomImage")(id, maxSize) as Promise<
+    [CollectionItem, string]
+  >;
 
 export const factoryRewriteImage = (
   id: string,
