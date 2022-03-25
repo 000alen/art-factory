@@ -663,6 +663,14 @@ export class Factory {
     return collection;
   }
 
+  computeMaxCombinations(layers: Layer[]) {
+    return layers.reduce(
+      (combinations, layer) =>
+        combinations * this.traitsByLayerName.get(layer.name).length,
+      1
+    );
+  }
+
   async composeTraits(traits: Trait[], maxSize?: number) {
     const keys = await Promise.all(
       traits.map(async (trait) => await this._ensureTraitBuffer(trait))

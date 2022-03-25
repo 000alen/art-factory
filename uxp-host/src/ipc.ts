@@ -301,6 +301,11 @@ ipcTask(
 );
 
 ipcTaskWithRequestId(
+  "factoryComputeMaxCombinations",
+  (id: string, layers: Layer[]) => factories[id].computeMaxCombinations(layers)
+);
+
+ipcTaskWithRequestId(
   "factoryComposeTraits",
   async (id: string, traits: Trait[], maxSize?: number) => {
     const buffer = await factories[id].composeTraits(traits, maxSize);

@@ -6,7 +6,7 @@
 - [x] **Fix**: Donde dice Infura ID, en el plugin de ps cambienlo a Infura Project ID.
 - [x] **Fix**: Arreglar el alpha channel de la generación de fondos.
 - [x] **Improvement**: Make nodes handle bigger.
-- [ ] **Feature request**: que salga el `n` maximo que puedes generar para cierta hoja del árbol.
+- [x] **Feature request**: que salga el `n` maximo que puedes generar para cierta hoja del árbol.
 - [ ] **Feature request**: cuando borras uno, pedir que te genere uno nuevo.
 - [ ] **Feature request** (no se que tan factible sea ahora mismo): poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.
 - [ ] **Feature request**: poder ver las imágenes 1 por 1 e ir pasando con flechitas. Alternativamente, un botón de 'abrir en explorador'.

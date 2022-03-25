@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { NumberField } from "@adobe/react-spectrum";
+import { NumberField, Text } from "@adobe/react-spectrum";
 import { Handle, Position } from "react-flow-renderer";
-import { factoryComposeTraits } from "../ipc";
+import { factoryComposeTraits, factoryComputeMaxCombinations } from "../ipc";
 import { ImageItem } from "./ImageItem";
 import { useErrorHandler } from "./ErrorHandler";
 import { MAX_SIZE } from "../constants";
@@ -13,6 +13,7 @@ interface RenderNodeProps {
 
 export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
   const task = useErrorHandler();
+  const [maxN, setMaxN] = useState(null);
   const [url, setUrl] = useState(null);
 
   const { factoryId, traits, base64Strings, connected } = data;
@@ -22,6 +23,8 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
       if (base64Strings === undefined || base64Strings.length === 0) return;
       if (traits === undefined || traits.length === 0) return;
 
+      const maxN = await factoryComputeMaxCombinations(factoryId, traits);
+
       const composedBase64String = await factoryComposeTraits(
         factoryId,
         traits,
@@ -29,6 +32,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
       );
       const url = `data:image/png;base64,${composedBase64String}`;
 
+      setMaxN(maxN);
       setUrl(url);
     })();
   }, [data.base64Strings, data.traits]);
@@ -54,8 +58,9 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ sidebar, data }) => {
       <div>
         <ImageItem src={connected || sidebar ? url : null} />
         <NumberField
-          label="n"
+          label={`N ${maxN ? `(max: ${maxN})` : ``}`}
           {...{
+            maxValue: maxN,
             value: sidebar ? null : Math.max(1, data.n),
             onChange: sidebar ? null : data.onChangeN,
             isDisabled: sidebar ? true : false,

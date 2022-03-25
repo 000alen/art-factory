@@ -216,6 +216,15 @@ export const factoryGenerateCollection = (
     nodesAndEdges
   ) as Promise<Collection>;
 
+export const factoryComputeMaxCombinations = (
+  id: string,
+  layers: Layer[],
+) =>
+  ipcTaskWithRequestId("factoryComputeMaxCombinations")(
+    id,
+    layers
+  ) as Promise<number>;
+
 export const factoryComposeTraits = (
   id: string,
   traits: Trait[],
