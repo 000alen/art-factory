@@ -20,12 +20,14 @@ export function getPinataSecretApiKey() {
     : undefined;
 }
 
-export function setInfuraId(infuraId: string) {
-  store.set("infuraId", infuraId);
+export function setInfuraProjectId(infuraProjectId: string) {
+  store.set("infuraProjectId", infuraProjectId);
 }
 
-export function getInfuraId() {
-  return store.has("infuraId") ? store.get("infuraId") : undefined;
+export function getInfuraProjectId() {
+  return store.has("infuraProjectId")
+    ? store.get("infuraProjectId")
+    : undefined;
 }
 
 export function setEtherscanApiKey(etherscanApiKey: string) {

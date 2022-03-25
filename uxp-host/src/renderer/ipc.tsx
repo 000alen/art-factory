@@ -114,7 +114,8 @@ export const [setPinataApiKey, getPinataApiKey] =
 export const [setPinataSecretApiKey, getPinataSecretApiKey] =
   ipcSetterAndGetter("pinataSecretApiKey");
 
-export const [setInfuraId, getInfuraId] = ipcSetterAndGetter("infuraId");
+export const [setInfuraProjectId, getInfuraProjectId] =
+  ipcSetterAndGetter("infuraProjectId");
 
 export const [setEtherscanApiKey, getEtherscanApiKey] =
   ipcSetterAndGetter("etherscanApiKey");

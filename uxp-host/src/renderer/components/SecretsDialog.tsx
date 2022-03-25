@@ -16,12 +16,12 @@ import {
   TextField,
 } from "@adobe/react-spectrum";
 import {
-  getInfuraId,
+  getInfuraProjectId,
   getPinataApiKey,
   getPinataSecretApiKey,
   setPinataApiKey,
   setPinataSecretApiKey,
-  setInfuraId,
+  setInfuraProjectId,
   getEtherscanApiKey,
   setEtherscanApiKey,
 } from "../ipc";
@@ -35,7 +35,7 @@ interface SecretsDialogProps {
 export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
-  const [infuraId, _setInfuraId] = useState("");
+  const [infuraProjectId, _setInfuraProjectId] = useState("");
   const [etherscanApiKey, _setEtherscanApiKey] = useState("");
   const task = useErrorHandler();
 
@@ -45,12 +45,13 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
         ((await getPinataApiKey()) as unknown as string) || "";
       const pinataSecretApiKey =
         ((await getPinataSecretApiKey()) as unknown as string) || "";
-      const infuraId = ((await getInfuraId()) as unknown as string) || "";
+      const infuraProjectId =
+        ((await getInfuraProjectId()) as unknown as string) || "";
       const etherscanApiKey =
         ((await getEtherscanApiKey()) as unknown as string) || "";
       _setPinataApiKey(pinataApiKey);
       _setPinataSecretApiKey(pinataSecretApiKey);
-      _setInfuraId(infuraId);
+      _setInfuraProjectId(infuraProjectId);
       _setEtherscanApiKey(etherscanApiKey);
     })();
   }, []);
@@ -58,7 +59,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const onSave = task("save", async () => {
     await setPinataApiKey(pinataApiKey);
     await setPinataSecretApiKey(pinataSecretApiKey);
-    await setInfuraId(infuraId);
+    await setInfuraProjectId(infuraProjectId);
     await setEtherscanApiKey(etherscanApiKey);
     close();
   });
@@ -116,8 +117,8 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
             label="Pinata Secret API Key"
           />
           <TextField
-            value={infuraId}
-            onChange={_setInfuraId}
+            value={infuraProjectId}
+            onChange={_setInfuraProjectId}
             type="password"
             label="Infura ID"
           />

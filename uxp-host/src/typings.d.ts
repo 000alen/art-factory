@@ -1,7 +1,7 @@
 export interface Secrets {
   pinataApiKey: string;
   pinataSecretApiKey: string;
-  infuraId: string;
+  infuraProjectId: string;
   etherscanApiKey: string;
 }
 

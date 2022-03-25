@@ -70,7 +70,7 @@ export function InstancePage() {
     task("loading secrets", async () => {
       const secrets = await loadSecrets();
       const provider = new WalletConnectProvider({
-        infuraId: secrets.infuraId,
+        infuraId: secrets.infuraProjectId,
         chainId: Networks[network].id,
       });
       await provider.enable();

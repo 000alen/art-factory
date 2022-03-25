@@ -16,7 +16,7 @@ import {
   factoryGenerateCollection,
   getPinataApiKey,
   getPinataSecretApiKey,
-  getInfuraId,
+  getInfuraProjectId,
   getEtherscanApiKey,
 } from "./ipc";
 import { v4 as uuid } from "uuid";
@@ -37,7 +37,7 @@ export const loadSecrets = async () =>
     pinataApiKey: ((await getPinataApiKey()) as unknown as string) || "",
     pinataSecretApiKey:
       ((await getPinataSecretApiKey()) as unknown as string) || "",
-    infuraId: ((await getInfuraId()) as unknown as string) || "",
+    infuraProjectId: ((await getInfuraProjectId()) as unknown as string) || "",
     etherscanApiKey: ((await getEtherscanApiKey()) as unknown as string) || "",
   } as Secrets);
 

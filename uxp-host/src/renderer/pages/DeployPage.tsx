@@ -99,7 +99,7 @@ export function DeployPage() {
     task("loading secrets", async () => {
       const secrets = await loadSecrets();
       const provider = new WalletConnectProvider({
-        infuraId: secrets.infuraId,
+        infuraId: secrets.infuraProjectId,
         chainId: Networks[networkKey].id as number,
       });
 

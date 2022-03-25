@@ -9,8 +9,8 @@ import {
   getPinataApiKey,
   setPinataSecretApiKey,
   getPinataSecretApiKey,
-  setInfuraId,
-  getInfuraId,
+  setInfuraProjectId,
+  getInfuraProjectId,
   setEtherscanApiKey,
   getEtherscanApiKey,
 } from "./store";
@@ -233,7 +233,7 @@ ipcSetterAndGetter(
   getPinataSecretApiKey
 );
 
-ipcSetterAndGetter("infuraId", setInfuraId, getInfuraId);
+ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
 
 ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
