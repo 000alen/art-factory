@@ -16,10 +16,10 @@ import { v4 as uuid } from "uuid";
 import { LayerNodeData } from "../typings";
 import { NodesContext } from "./NodesContext";
 import { Handles } from "./Handles";
+import { capitalize } from "../utils";
 
 interface LayerNodeComponentData extends LayerNodeData {
   layerIds: string[];
-  layerId: string; // TODO: Move to LayerNodeData
   base64String: string;
 }
 
@@ -60,7 +60,7 @@ export const LayerNode: React.FC<LayerNodeProps> = ({ sidebar, id, data }) => {
           }}
         />
         <MenuTrigger>
-          <ActionButton>{data.blending}</ActionButton>
+          <ActionButton>{capitalize(data.blending)}</ActionButton>
           <Menu
             selectionMode="single"
             disallowEmptySelection={true}

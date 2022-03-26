@@ -75,11 +75,12 @@ export interface BundleNodeData {
 }
 
 export interface RenderNodeData {
-  n: number;
   renderId: string;
+  n: number;
 }
 
 export interface LayerNodeData {
+  layerId: string;
   name: string;
   opacity: number;
   blending: string;

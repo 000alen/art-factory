@@ -70,8 +70,6 @@ export function NodesPage() {
         {
           id: "root",
           type: "rootNode",
-          sourcePosition: "right",
-          data: { label: "Root" },
           position: { x: 0, y: 0 },
         },
       ]);
@@ -91,7 +89,7 @@ export function NodesPage() {
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
     const nodesAndEdges = filterNodes(elements);
-    const n = computeN(nodesAndEdges);
+    const n = computeN(nodesAndEdges); // ! TODO: This is not the correct way to compute n
     const configuration = partialConfiguration;
 
     setN(n);
