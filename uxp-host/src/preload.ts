@@ -22,6 +22,7 @@ const sendWhitelist = [
   "sizeOf",
   "verifyContract",
   "isValidInputDir",
+  "openFolder",
 
   // Factory
   "createFactory",
@@ -46,6 +47,8 @@ const sendWhitelist = [
 ];
 
 const onWhitelist = [
+  "openFolderResult",
+
   "writeFileResult",
   "mkDirResult",
   "showOpenDialogResult",

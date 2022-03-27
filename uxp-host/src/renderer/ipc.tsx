@@ -139,6 +139,9 @@ export const getContract = (name: string) => ipcTask("getContract")(name);
 export const getContractSource = (name: string) =>
   ipcTask("getContractSource")(name);
 
+export const openFolder = (path: string) =>
+  ipcTask("openFolder")(path);
+
 export const getOutputDir = (inputDir: string) =>
   ipcTask("getOutputDir")(inputDir);
 
