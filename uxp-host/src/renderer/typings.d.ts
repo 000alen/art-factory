@@ -76,7 +76,8 @@ export interface BundleNodeData {
 
 export interface RenderNodeData {
   renderId: string;
-  n: number;
+  nTraits: Trait[][];
+  ns: number[];
 }
 
 export interface LayerNodeData {

@@ -1,19 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
-import { NumberField, Text } from "@adobe/react-spectrum";
-import { Handle, Position } from "react-flow-renderer";
+import React, { memo, useEffect, useState } from "react";
+import { NumberField, Divider, Text } from "@adobe/react-spectrum";
 import { factoryComposeTraits, factoryComputeMaxCombinations } from "../ipc";
 import { ImageItem } from "./ImageItem";
 import { useErrorHandler } from "./ErrorHandler";
-import { MAX_SIZE } from "../constants";
-import { LayerNodeData, RenderNodeData, Trait } from "../typings";
-import { NodesContext } from "./NodesContext";
+import { DEFAULT_N, MAX_SIZE } from "../constants";
+import { RenderNodeData, Trait } from "../typings";
 import { Handles } from "./Handles";
+import { getId, hash } from "../utils";
 
 interface RenderNodeComponentData extends RenderNodeData {
-  factoryId: string;
-  traits: Trait[];
-  base64Strings: string[];
-  connected?: boolean;
+  readonly factoryId: string;
 }
 
 interface RenderNodeProps {
@@ -22,53 +18,89 @@ interface RenderNodeProps {
   data: RenderNodeComponentData;
 }
 
-export const RenderNode: React.FC<RenderNodeProps> = ({
-  sidebar,
-  id,
-  data,
-}) => {
-  const { onChangeN } = useContext(NodesContext);
+interface CachedItem {
+  id: string;
+  traits: Trait[];
+  n: number;
+  url: string;
+}
 
-  const task = useErrorHandler();
-  const [maxN, setMaxN] = useState(null);
-  const [url, setUrl] = useState(null);
+export const RenderNode: React.FC<RenderNodeProps> = memo(
+  ({ sidebar, data }) => {
+    const task = useErrorHandler();
 
-  const { factoryId, traits, base64Strings, connected } = data;
+    const [map, setMap] = useState(new Map<string, CachedItem>());
+    const updateMap = (k: string, v: CachedItem) =>
+      setMap(new Map(map.set(k, v)));
 
-  useEffect(() => {
-    task("preview", async () => {
-      if (base64Strings === undefined || base64Strings.length === 0) return;
-      if (traits === undefined || traits.length === 0) return;
+    useEffect(() => {
+      task("render node preview", async () => {
+        if (data.nTraits === undefined || data.nTraits.length === 0) return;
 
-      const maxN = await factoryComputeMaxCombinations(factoryId, traits);
+        const hashes = data.nTraits.map(hash);
+        const hashedTraits = new Map<string, Trait[]>(
+          data.nTraits.map((traits, i) => [hashes[i], traits])
+        );
 
-      const composedBase64String = await factoryComposeTraits(
-        factoryId,
-        traits,
-        MAX_SIZE
-      );
-      const url = `data:image/png;base64,${composedBase64String}`;
+        const keys = new Set(map.keys());
+        const currentKeys = new Set(hashes);
+        const keysToRemove = new Set(
+          [...keys].filter((k) => !currentKeys.has(k))
+        );
+        const keysToAdd = new Set([...currentKeys].filter((k) => !keys.has(k)));
 
-      setMaxN(maxN);
-      setUrl(url);
-    })();
-  }, [data.base64Strings, data.traits]);
+        for (const key of keysToRemove) map.delete(key);
 
-  return (
-    <div className="p-2 border-2 border-dashed border-white rounded">
-      {!sidebar && <Handles name="render" />}
-      <div>
-        <ImageItem src={connected || sidebar ? url : null} />
-        <NumberField
-          label={`N ${maxN ? `(max: ${maxN})` : ``}`}
-          {...{
-            maxValue: maxN,
-            value: sidebar ? null : Math.max(1, data.n),
-            onChange: sidebar ? null : (value: number) => onChangeN(id, value),
-            isDisabled: sidebar ? true : false,
-          }}
-        />
+        for (const key of keysToAdd) {
+          const id = getId();
+          const traits = hashedTraits.get(key);
+          const n = DEFAULT_N;
+          const url = `data:image/png;base64,${await factoryComposeTraits(
+            data.factoryId,
+            traits,
+            MAX_SIZE
+          )}`;
+
+          map.set(key, { id, traits, n, url });
+        }
+
+        setMap(new Map(map));
+      })();
+    }, [data.factoryId, data.nTraits]);
+
+    return (
+      <div className="w-48 p-3 border-1 border-solid border-white rounded">
+        {!sidebar && <Handles name="render" />}
+
+        <div className="space-y-3">
+          {map.size > 0 ? (
+            [...map.entries()].map(([id, { n, url }], i) => (
+              <>
+                <ImageItem key={`image-${id}`} src={url} />
+                <NumberField
+                  key={`n-${id}`}
+                  label="N"
+                  {...{
+                    value: n,
+                    onChange: sidebar
+                      ? null
+                      : (value: number) =>
+                          updateMap(id, { ...map.get(id), n: value }),
+                    isDisabled: sidebar ? true : false,
+                  }}
+                />
+                {i !== map.size - 1 && <Divider key={`divider-${id}`} />}
+              </>
+            ))
+          ) : (
+            <>
+              <div className="h-48 flex justify-center items-center">
+                <Text>Nothing to render yet</Text>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);

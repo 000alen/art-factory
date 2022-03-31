@@ -14,7 +14,8 @@ interface ImageItemProps {
 
 export const ImageItem: React.FC<ImageItemProps> = ({ name, src, actions }) => {
   return (
-    <div className="relative w-32 h-32 m-auto rounded">
+    // <div className="relative w-32 h-32 m-auto rounded">
+    <div className="relative w-full h-full m-auto rounded">
       {actions && (
         <div className="absolute w-full h-full space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
           <Text>{name}</Text>

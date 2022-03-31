@@ -4,10 +4,15 @@ import {
   getEdgeCenter,
   getMarkerEnd,
   Position,
-  ArrowHeadType,
+  MarkerType,
 } from "react-flow-renderer";
+import { EdgeChange as FlowEdgeChange } from "react-flow-renderer";
 
 const foreignObjectSize = 20;
+
+interface CustomEdgeComponentData {
+  onEdgeRemove: (id: string) => void;
+}
 
 interface CustomEdgeProps {
   id: string;
@@ -18,8 +23,8 @@ interface CustomEdgeProps {
   sourcePosition: Position;
   targetPosition: Position;
   style: CSSProperties;
-  data: any;
-  arrowHeadType: ArrowHeadType;
+  data: CustomEdgeComponentData;
+  arrowHeadType: MarkerType;
   markerEndId: string;
 }
 
@@ -55,7 +60,6 @@ export const CustomEdge: React.FC<CustomEdgeProps> = ({
   const onEdgeClick = (event: MouseEvent) => {
     event.stopPropagation();
     data.onEdgeRemove(id);
-    // alert(`remove ${id}`);
   };
 
   return (

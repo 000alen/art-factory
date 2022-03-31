@@ -1,6 +1,7 @@
 {
     "conventionalCommits.scopes": [
-        "TODO"
+        "TODO",
+        "WIP"
     ],
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#ab307e",

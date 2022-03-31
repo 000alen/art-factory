@@ -2,21 +2,16 @@ import React from "react";
 import { Trait } from "../typings";
 import { BundleNode } from "./BundleNode";
 import { LayerNode } from "./LayerNode";
+import { RenderGroupNode } from "./RenderGroupNode";
 import { RenderNode } from "./RenderNode";
 
 interface SidebarProps {
   id: string;
   layers: string[];
   traits: Trait[];
-  base64Strings: string[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  id,
-  layers,
-  traits,
-  base64Strings,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
   const onDragStart = (event: any, data: any) => {
     event.dataTransfer.setData("application/reactflow", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
@@ -36,6 +31,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
       >
         <div
+          onDragStart={(event) => onDragStart(event, { type: "bundleNode" })}
+          draggable
+        >
+          <BundleNode
+            id="bundleNode"
+            sidebar
+            data={{
+              factoryId: id,
+              bundleId: "<undefined>",
+              bundle: "Lorem ipsum",
+            }}
+          />
+        </div>
+        <div
           onDragStart={(event) => onDragStart(event, { type: "renderNode" })}
           draggable
         >
@@ -45,20 +54,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             data={{
               factoryId: id,
               renderId: "<undefined>",
-              traits,
-              base64Strings,
-              n: 1,
+              nTraits: [traits],
+              ns: [1],
             }}
-          />
-        </div>
-        <div
-          onDragStart={(event) => onDragStart(event, { type: "bundleNode" })}
-          draggable
-        >
-          <BundleNode
-            id="bundleNode"
-            sidebar
-            data={{ bundle: "Lorem ipsum" }}
           />
         </div>
         {layers.map((name, i) => (
@@ -73,12 +71,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               id={`layerNode-${i}`}
               sidebar
               data={{
-                layerIds: [],
+                factoryId: id,
                 layerId: "Lorem ipsum",
                 name,
                 opacity: 1,
                 blending: "normal",
-                base64String: base64Strings[i],
+                trait: traits[i],
               }}
             />
           </div>

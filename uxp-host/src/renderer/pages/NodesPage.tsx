@@ -34,10 +34,7 @@ export function NodesPage() {
     partialConfiguration,
   } = state as NodesPageState;
 
-  const [elements, setElements] = useState([]);
-
   const [traits, setTraits] = useState([]);
-  const [base64Strings, setBase64Strings] = useState([]);
   const [n, setN] = useState(0);
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [generationDone, setGenerationDone] = useState(false);
@@ -59,22 +56,9 @@ export function NodesPage() {
       const traitsAndBase64Strings = await Promise.all(
         layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
       );
-      const traits: Trait[] = [];
-      const base64Strings: string[] = [];
-      traitsAndBase64Strings.forEach(([trait, base64String]) => {
-        traits.push(trait);
-        base64Strings.push(base64String);
-      });
 
-      setElements([
-        {
-          id: "root",
-          type: "rootNode",
-          position: { x: 0, y: 0 },
-        },
-      ]);
+      const traits: Trait[] = traitsAndBase64Strings.map(([trait]) => trait);
       setTraits(traits);
-      setBase64Strings(base64Strings);
     })();
 
     return () => {
@@ -87,27 +71,24 @@ export function NodesPage() {
   };
 
   const onGenerate = task("generation", async () => {
-    setIsWorking(true);
-    const nodesAndEdges = filterNodes(elements);
-    const n = computeN(nodesAndEdges); // ! TODO: This is not the correct way to compute n
-    const configuration = partialConfiguration;
-
-    setN(n);
-    setConfiguration(configuration);
-
-    const a = performance.now();
-    const { collection } = await factoryGenerate(
-      id,
-      configuration,
-      nodesAndEdges,
-      onProgress
-    );
-    const b = performance.now();
-
-    setWorkTime(b - a);
-    setCollection(collection);
-    setGenerationDone(true);
-    setIsWorking(false);
+    // setIsWorking(true);
+    // const nodesAndEdges = filterNodes(elements);
+    // const n = computeN(nodesAndEdges); // ! TODO: This is not the correct way to compute n
+    // const configuration = partialConfiguration;
+    // setN(n);
+    // setConfiguration(configuration);
+    // const a = performance.now();
+    // const { collection } = await factoryGenerate(
+    //   id,
+    //   configuration,
+    //   nodesAndEdges,
+    //   onProgress
+    // );
+    // const b = performance.now();
+    // setWorkTime(b - a);
+    // setCollection(collection);
+    // setGenerationDone(true);
+    // setIsWorking(false);
   });
 
   const onContinue = task("continue", async () => {
@@ -128,19 +109,11 @@ export function NodesPage() {
     <NodesContextProvider
       id={id}
       autoPlace={false}
-      elements={elements}
-      setElements={setElements}
       partialConfiguration={partialConfiguration}
       traits={traits}
-      base64Strings={base64Strings}
     >
       <div className="w-full h-full flex overflow-hidden">
-        <Sidebar
-          id={id}
-          layers={partialConfiguration.layers}
-          traits={traits}
-          base64Strings={base64Strings}
-        />
+        <Sidebar id={id} layers={partialConfiguration.layers} traits={traits} />
         <Nodes>
           <div className="absolute z-10 bottom-4 right-4">
             <TriStateButton

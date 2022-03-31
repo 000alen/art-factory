@@ -1,26 +1,28 @@
-import React, { useContext } from "react";
+import React, { memo, useEffect, useState } from "react";
 import {
   MenuTrigger,
   ActionButton,
   Menu,
   Item,
   Flex,
-  Text,
   Slider,
   Heading,
 } from "@adobe/react-spectrum";
-import { Handle, Position } from "react-flow-renderer";
 import { ImageItem } from "./ImageItem";
-import More from "@spectrum-icons/workflow/More";
-import { v4 as uuid } from "uuid";
-import { LayerNodeData } from "../typings";
-import { NodesContext } from "./NodesContext";
+import { LayerNodeData, Trait } from "../typings";
 import { Handles } from "./Handles";
 import { capitalize } from "../utils";
+import { useErrorHandler } from "./ErrorHandler";
+import { factoryGetTraitImage } from "../ipc";
 
 interface LayerNodeComponentData extends LayerNodeData {
-  layerIds: string[];
-  base64String: string;
+  readonly factoryId: string;
+  readonly trait: Trait;
+
+  onChangeLayerId?: (id: string, value: string) => void;
+  getLayerIds?: (name: string) => string[];
+  onChangeOpacity?: (id: string, value: number) => void;
+  onChangeBlending?: (id: string, value: string) => void;
 }
 
 interface LayerNodeProps {
@@ -29,73 +31,89 @@ interface LayerNodeProps {
   data: LayerNodeComponentData;
 }
 
-export const LayerNode: React.FC<LayerNodeProps> = ({ sidebar, id, data }) => {
-  const { onChangeLayerId, getLayerIds, onChangeOpacity, onChangeBlending } =
-    useContext(NodesContext);
+export const LayerNode: React.FC<LayerNodeProps> = memo(
+  ({ sidebar, id, data }) => {
+    const task = useErrorHandler();
+    const [url, setUrl] = useState(null);
 
-  return (
-    <div className="p-3 border-2 border-solid border-white rounded">
-      {!sidebar && <Handles name="layer" />}
+    useEffect(() => {
+      task("layer node preview", async () => {
+        if (data.factoryId === undefined || data.trait === undefined) return;
 
-      <Flex direction="column" gap="size-100">
-        <ImageItem
-          src={
-            data.base64String
-              ? `data:image/png;base64,${data.base64String}`
-              : null
-          }
-        />
-        <Heading>{data.name}</Heading>
-        <Slider
-          label="Opacity"
-          step={0.01}
-          maxValue={1}
-          formatOptions={{ style: "percent" }}
-          {...{
-            value: sidebar ? 1 : data.opacity,
-            onChange: sidebar
-              ? null
-              : (value: number) => onChangeOpacity(id, value),
-            isDisabled: sidebar ? true : false,
-          }}
-        />
-        <MenuTrigger>
-          <ActionButton>{capitalize(data.blending)}</ActionButton>
-          <Menu
-            selectionMode="single"
-            disallowEmptySelection={true}
-            selectedKeys={sidebar ? ["normal"] : [data.blending]}
-            onSelectionChange={(selectedKeys) =>
-              sidebar
+        const composedBase64String = await factoryGetTraitImage(
+          data.factoryId,
+          data.trait
+        );
+        const url = `data:image/png;base64,${composedBase64String}`;
+        setUrl(url);
+      })();
+    }, [data.factoryId, data.trait]);
+
+    return (
+      <div className="w-48 p-3 border-1 border-solid border-white rounded">
+        {!sidebar && <Handles name="layer" />}
+
+        <Flex direction="column" gap="size-100">
+          <ImageItem src={url} />
+          <Heading>{data.name}</Heading>
+          <Slider
+            label="Opacity"
+            step={0.01}
+            maxValue={1}
+            formatOptions={{ style: "percent" }}
+            {...{
+              value: sidebar ? 1 : data.opacity,
+              onChange: sidebar
                 ? null
-                : onChangeBlending(id, [...selectedKeys].shift() as string)
-            }
-          >
-            <Item key="normal">Normal</Item>
-            <Item key="screen">Screen</Item>
-            <Item key="multiply">Multiply</Item>
-            <Item key="darken">Darken</Item>
-            <Item key="overlay">Overlay</Item>
-          </Menu>
-        </MenuTrigger>
-        <MenuTrigger>
-          <ActionButton>{data.layerId}</ActionButton>
-          <Menu
-            selectionMode="single"
-            disallowEmptySelection={true}
-            selectedKeys={sidebar ? null : [data.layerId]}
-            onSelectionChange={(selectedKeys) =>
-              sidebar
-                ? null
-                : onChangeLayerId(id, [...selectedKeys].shift() as string)
-            }
-          >
-            {getLayerIds(data.name).map((layerId) => (
-              <Item key={layerId}>{layerId}</Item>
-            ))}
-          </Menu>
-        </MenuTrigger>
-      </Flex>
-    </div>
-  );
-};
+                : (value: number) => data.onChangeOpacity(id, value),
+              isDisabled: sidebar ? true : false,
+            }}
+          />
+          <MenuTrigger>
+            <ActionButton>{capitalize(data.blending)}</ActionButton>
+            <Menu
+              selectionMode="single"
+              disallowEmptySelection={true}
+              selectedKeys={sidebar ? ["normal"] : [data.blending]}
+              onSelectionChange={(selectedKeys) =>
+                sidebar
+                  ? null
+                  : data.onChangeBlending(
+                      id,
+                      [...selectedKeys].shift() as string
+                    )
+              }
+            >
+              <Item key="normal">Normal</Item>
+              <Item key="screen">Screen</Item>
+              <Item key="multiply">Multiply</Item>
+              <Item key="darken">Darken</Item>
+              <Item key="overlay">Overlay</Item>
+            </Menu>
+          </MenuTrigger>
+          <MenuTrigger>
+            <ActionButton>{data.layerId}</ActionButton>
+            <Menu
+              selectionMode="single"
+              disallowEmptySelection={true}
+              selectedKeys={sidebar ? null : [data.layerId]}
+              onSelectionChange={(selectedKeys) =>
+                sidebar
+                  ? null
+                  : data.onChangeLayerId(
+                      id,
+                      [...selectedKeys].shift() as string
+                    )
+              }
+            >
+              {!sidebar &&
+                data
+                  .getLayerIds(data.name)
+                  .map((layerId) => <Item key={layerId}>{layerId}</Item>)}
+            </Menu>
+          </MenuTrigger>
+        </Flex>
+      </div>
+    );
+  }
+);
