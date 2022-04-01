@@ -1,15 +1,28 @@
 import React, { memo, useEffect, useState } from "react";
-import { NumberField, Divider, Text } from "@adobe/react-spectrum";
-import { factoryComposeTraits, factoryComputeMaxCombinations } from "../ipc";
+import {
+  NumberField,
+  Divider,
+  Text,
+  Flex,
+  Heading,
+} from "@adobe/react-spectrum";
 import { ImageItem } from "./ImageItem";
-import { useErrorHandler } from "./ErrorHandler";
 import { DEFAULT_N, MAX_SIZE } from "../constants";
 import { RenderNodeData, Trait } from "../typings";
-import { Handles } from "./Handles";
-import { getId, hash } from "../utils";
+import { difference, hash } from "../utils";
+import { Handle, Position } from "react-flow-renderer";
 
-interface RenderNodeComponentData extends RenderNodeData {
-  readonly factoryId: string;
+export interface RenderNodeComponentData extends RenderNodeData {
+  readonly factoryId?: string;
+  readonly composedUrls?: Map<string, string>;
+  readonly renderIds?: Map<string, string>;
+  readonly hashes?: Set<string>;
+  readonly ns?: Map<string, number>;
+
+  requestComposedUrl?: (traits: Trait[]) => void;
+  requestRenderId?: (traits: Trait[]) => void;
+  updateHashes?: (hashes: Set<string>) => void;
+  updateNs?: (k: string, v: number) => void;
 }
 
 interface RenderNodeProps {
@@ -18,88 +31,84 @@ interface RenderNodeProps {
   data: RenderNodeComponentData;
 }
 
-interface CachedItem {
-  id: string;
-  traits: Trait[];
-  n: number;
-  url: string;
-}
-
 export const RenderNode: React.FC<RenderNodeProps> = memo(
   ({ sidebar, data }) => {
-    const task = useErrorHandler();
-
-    const [map, setMap] = useState(new Map<string, CachedItem>());
-    const updateMap = (k: string, v: CachedItem) =>
-      setMap(new Map(map.set(k, v)));
+    const [items, setItems] = useState([]);
 
     useEffect(() => {
-      task("render node preview", async () => {
-        if (data.nTraits === undefined || data.nTraits.length === 0) return;
+      if (data.nTraits.length === 0) return;
 
-        const hashes = data.nTraits.map(hash);
-        const hashedTraits = new Map<string, Trait[]>(
-          data.nTraits.map((traits, i) => [hashes[i], traits])
-        );
+      const currentHashes = data.nTraits.map(hash);
+      const currentKeys = new Set(currentHashes);
+      const traitsByKey = new Map(
+        data.nTraits.map((traits, i) => [currentHashes[i], traits])
+      );
 
-        const keys = new Set(map.keys());
-        const currentKeys = new Set(hashes);
-        const keysToRemove = new Set(
-          [...keys].filter((k) => !currentKeys.has(k))
-        );
-        const keysToAdd = new Set([...currentKeys].filter((k) => !keys.has(k)));
+      const keys = data.hashes;
 
-        for (const key of keysToRemove) map.delete(key);
+      const keysToRemove = difference(keys, currentKeys);
+      const keysToAdd = difference(currentKeys, keys);
 
-        for (const key of keysToAdd) {
-          const id = getId();
-          const traits = hashedTraits.get(key);
-          const n = DEFAULT_N;
-          const url = `data:image/png;base64,${await factoryComposeTraits(
-            data.factoryId,
-            traits,
-            MAX_SIZE
-          )}`;
+      if (keysToRemove.size === 0 && keysToAdd.size === 0) return;
 
-          map.set(key, { id, traits, n, url });
-        }
+      const newKeys = difference(keys, keysToRemove);
 
-        setMap(new Map(map));
-      })();
+      for (const key of keysToAdd) {
+        const traits = traitsByKey.get(key);
+        if (!data.renderIds.has(key)) data.requestRenderId(traits);
+        if (!data.composedUrls.has(key)) data.requestComposedUrl(traits);
+        if (!data.ns.has(key)) data.updateNs(key, DEFAULT_N);
+        newKeys.add(key);
+      }
+
+      data.updateHashes(newKeys);
+      setItems([...newKeys]);
     }, [data.factoryId, data.nTraits]);
+
+    const renderItem = (item: string, i: number) => {
+      const renderId = data.renderIds.get(item);
+      const composedUrl = data.composedUrls.get(item);
+      const n = data.ns.get(item);
+
+      return (
+        <>
+          <ImageItem src={composedUrl} />
+          <Heading>{renderId}</Heading>
+          <NumberField
+            label="N"
+            {...{
+              value: n,
+              //   onChange: sidebar
+              //     ? null
+              //     : (value: number) =>
+              //         updateMap(id, { ...map.get(id), n: value }),
+              //   isDisabled: sidebar ? true : false,
+            }}
+          />
+          {i !== items.length - 1 && <Divider />}
+        </>
+      );
+    };
 
     return (
       <div className="w-48 p-3 border-1 border-solid border-white rounded">
-        {!sidebar && <Handles name="render" />}
-
-        <div className="space-y-3">
-          {map.size > 0 ? (
-            [...map.entries()].map(([id, { n, url }], i) => (
-              <>
-                <ImageItem key={`image-${id}`} src={url} />
-                <NumberField
-                  key={`n-${id}`}
-                  label="N"
-                  {...{
-                    value: n,
-                    onChange: sidebar
-                      ? null
-                      : (value: number) =>
-                          updateMap(id, { ...map.get(id), n: value }),
-                    isDisabled: sidebar ? true : false,
-                  }}
-                />
-                {i !== map.size - 1 && <Divider key={`divider-${id}`} />}
-              </>
-            ))
+        {!sidebar && (
+          <Handle
+            className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+            id="renderIn"
+            type="target"
+            position={Position.Left}
+          />
+        )}
+        <Flex direction="column" gap="size-100">
+          {items.length > 0 ? (
+            items.map(renderItem)
           ) : (
-            <>
-              <div className="h-48 flex justify-center items-center">
-                <Text>Nothing to render yet</Text>
-              </div>
-            </>
+            <div className="h-48 flex justify-center items-center">
+              <Text>Nothing to render yet</Text>
+            </div>
           )}
-        </div>
+        </Flex>
       </div>
     );
   }

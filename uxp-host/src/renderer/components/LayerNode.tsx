@@ -11,16 +11,17 @@ import {
 import { ImageItem } from "./ImageItem";
 import { LayerNodeData, Trait } from "../typings";
 import { Handles } from "./Handles";
-import { capitalize } from "../utils";
-import { useErrorHandler } from "./ErrorHandler";
-import { factoryGetTraitImage } from "../ipc";
+import { capitalize, hash } from "../utils";
 
-interface LayerNodeComponentData extends LayerNodeData {
-  readonly factoryId: string;
+export interface LayerNodeComponentData extends LayerNodeData {
+  readonly factoryId?: string;
   readonly trait: Trait;
+  readonly layerIds?: string[];
+  readonly urls?: Map<string, string>;
+
+  requestUrl?: (trait: Trait) => void;
 
   onChangeLayerId?: (id: string, value: string) => void;
-  getLayerIds?: (name: string) => string[];
   onChangeOpacity?: (id: string, value: number) => void;
   onChangeBlending?: (id: string, value: string) => void;
 }
@@ -33,21 +34,14 @@ interface LayerNodeProps {
 
 export const LayerNode: React.FC<LayerNodeProps> = memo(
   ({ sidebar, id, data }) => {
-    const task = useErrorHandler();
-    const [url, setUrl] = useState(null);
+    const [url, setUrl] = useState<string | null>(null);
 
     useEffect(() => {
-      task("layer node preview", async () => {
-        if (data.factoryId === undefined || data.trait === undefined) return;
+      const { urls, trait, requestUrl, layerIds } = data;
 
-        const composedBase64String = await factoryGetTraitImage(
-          data.factoryId,
-          data.trait
-        );
-        const url = `data:image/png;base64,${composedBase64String}`;
-        setUrl(url);
-      })();
-    }, [data.factoryId, data.trait]);
+      if (urls.has(hash(trait))) setUrl(urls.get(hash(trait)));
+      else requestUrl(trait);
+    });
 
     return (
       <div className="w-48 p-3 border-1 border-solid border-white rounded">
@@ -94,6 +88,10 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(
           <MenuTrigger>
             <ActionButton>{data.layerId}</ActionButton>
             <Menu
+              items={data.layerIds.map((layerId) => ({
+                id: layerId,
+                name: layerId,
+              }))}
               selectionMode="single"
               disallowEmptySelection={true}
               selectedKeys={sidebar ? null : [data.layerId]}
@@ -106,10 +104,7 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(
                     )
               }
             >
-              {!sidebar &&
-                data
-                  .getLayerIds(data.name)
-                  .map((layerId) => <Item key={layerId}>{layerId}</Item>)}
+              {({ id, name }) => <Item key={id}>{name}</Item>}
             </Menu>
           </MenuTrigger>
         </Flex>

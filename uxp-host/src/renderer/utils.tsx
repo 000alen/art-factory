@@ -35,3 +35,6 @@ export const chopAddress = (address: string) =>
 
 export const hash = (object: any): string =>
   uuidv5(JSON.stringify(object), NAMESPACE);
+
+export const difference = <T,>(a: Set<T>, b: Set<T>): Set<T> =>
+  new Set([...a].filter((x) => !b.has(x)));

@@ -1,8 +1,9 @@
+import { Heading } from "@adobe/react-spectrum";
 import React from "react";
+// import { DEFAULT_BLENDING, DEFAULT_OPACITY } from "../constants";
 import { Trait } from "../typings";
 import { BundleNode } from "./BundleNode";
-import { LayerNode } from "./LayerNode";
-import { RenderGroupNode } from "./RenderGroupNode";
+// import { LayerNode } from "./LayerNode";
 import { RenderNode } from "./RenderNode";
 
 interface SidebarProps {
@@ -52,10 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
             id="renderNode"
             sidebar
             data={{
-              factoryId: id,
-              renderId: "<undefined>",
-              nTraits: [traits],
-              ns: [1],
+              nTraits: [],
             }}
           />
         </div>
@@ -67,18 +65,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
             }
             draggable
           >
-            <LayerNode
+            <div className="w-48 p-3 border-1 border-solid border-white rounded">
+              <Heading>{name}</Heading>
+            </div>
+            {/* <LayerNode
               id={`layerNode-${i}`}
               sidebar
               data={{
-                factoryId: id,
                 layerId: "Lorem ipsum",
                 name,
-                opacity: 1,
-                blending: "normal",
+                opacity: DEFAULT_OPACITY,
+                blending: DEFAULT_BLENDING,
                 trait: traits[i],
               }}
-            />
+            /> */}
           </div>
         ))}
       </div>

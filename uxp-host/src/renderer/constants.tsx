@@ -46,3 +46,12 @@ export const EDGE_TYPES = {
 };
 
 export const NAMESPACE = "84002a51-4399-4405-bf15-05decc67081e";
+
+export const DEFAULT_NODES = [
+  {
+    id: "root",
+    type: "rootNode",
+    position: { x: 0, y: 0 },
+    data: {},
+  },
+];

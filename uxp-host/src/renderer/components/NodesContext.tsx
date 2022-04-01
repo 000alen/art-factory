@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { createContext, useState, useContext, useRef } from "react";
 import ReactFlow, {
   addEdge,
@@ -12,24 +12,25 @@ import ReactFlow, {
   Connection as FlowConnection,
   NodeChange as FlowNodeChange,
   EdgeChange as FlowEdgeChange,
+  ReactFlowInstance,
 } from "react-flow-renderer";
-import {
-  BundleNodeData,
-  Configuration,
-  LayerNodeData,
-  RenderNodeData,
-  Trait,
-} from "../typings";
+import { Configuration, Trait } from "../typings";
 import { v4 as uuid } from "uuid";
 import { dashedName, getId, hash, spacedName } from "../utils";
-import { getBranches, getChildren } from "../nodesUtils";
+import { getBranches } from "../nodesUtils";
 import {
   DEFAULT_BLENDING,
-  DEFAULT_N,
+  DEFAULT_NODES,
   DEFAULT_OPACITY,
   EDGE_TYPES,
+  MAX_SIZE,
   NODE_TYPES,
 } from "../constants";
+import { useErrorHandler } from "./ErrorHandler";
+import { factoryComposeTraits, factoryGetTraitImage } from "../ipc";
+import { LayerNodeComponentData } from "./LayerNode";
+import { RenderNodeComponentData } from "./RenderNode";
+import { BundleNodeComponentData } from "./BundleNode";
 
 interface NodesContextProviderProps {
   id: string;
@@ -60,19 +61,63 @@ export function useNodes(
   partialConfiguration: Partial<Configuration>,
   traits: Trait[]
 ) {
-  const reactFlowWrapperRef = useRef(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const task = useErrorHandler();
 
-  const [nodes, setNodes] = useState<FlowNode[]>([
-    {
-      id: "root",
-      type: "rootNode",
-      position: { x: 0, y: 0 },
-      data: {},
-    },
-  ]);
+  const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
+  const [nodes, setNodes] = useState<FlowNode[]>(DEFAULT_NODES);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
-  const [prevKey, setPrevKey] = useState(null);
+  const [prevKey, setPrevKey] = useState<string | null>(null);
+
+  // ? hash(trait) -> url
+  const [urls, setUrls] = useState(new Map<string, string>());
+  const updateUrls = (k: string, v: string) => setUrls(new Map(urls.set(k, v)));
+
+  // ? name -> dashedName[]
+  const [layersIds, setLayersIds] = useState(new Map<string, string[]>());
+  const updateLayersIds = (k: string, v: string[]) =>
+    setLayersIds(new Map(layersIds.set(k, v)));
+
+  // ? hash(trait[]) -> url
+  const [composedUrls, setComposedUrls] = useState(new Map<string, string>());
+  const updateComposedUrls = (k: string, v: string) =>
+    setComposedUrls(new Map(composedUrls.set(k, v)));
+
+  // ? hash(trait[]) -> dashedName
+  const [renderIds, setRenderIds] = useState(new Map<string, string>());
+  const updateRenderIds = (k: string, v: string) =>
+    setRenderIds(new Map(renderIds.set(k, v)));
+
+  // ? nodeId -> hash(trait[])
+  const [renderNodesHashes, setRenderNodesHashes] = useState(
+    new Map<string, Set<string>>()
+  );
+  const updateRenderNodesHashes = (k: string, v: Set<string>) =>
+    setRenderNodesHashes(new Map(renderNodesHashes.set(k, v)));
+
+  // ? dashedName -> number
+  const [ns, setNs] = useState(new Map<string, number>());
+  const updateNs = (k: string, v: number) => setNs(new Map(ns.set(k, v)));
+
+  const requestUrl = async (trait: Trait) =>
+    updateUrls(
+      hash(trait),
+      `data:image/png;base64,${await factoryGetTraitImage(id, trait, MAX_SIZE)}`
+    );
+
+  const requestComposedUrl = async (traits: Trait[]) =>
+    updateComposedUrls(
+      hash(traits),
+      `data:image/png;base64,${await factoryComposeTraits(
+        id,
+        traits,
+        MAX_SIZE
+      )}`
+    );
+
+  const requestRenderId = (traits: Trait[]) =>
+    updateRenderIds(hash(traits), dashedName());
 
   const shouldUpdate = (nodes: FlowNode[], edges: FlowEdge[]): boolean => {
     const clean = (nodes: FlowNode[]) =>
@@ -90,7 +135,7 @@ export function useNodes(
   };
 
   const onUpdate = (nodes: FlowNode[], edges: FlowEdge[]) => {
-    if (!shouldUpdate(nodes, edges)) return { nodes, edges };
+    // if (!shouldUpdate(nodes, edges)) return { nodes, edges };
 
     const toUpdate: Map<string, Trait[][]> = new Map();
 
@@ -100,21 +145,59 @@ export function useNodes(
             ...node,
             data: {
               ...node.data,
-              nTraits: undefined,
+              nTraits: [],
             },
           }
         : node;
 
-    const populate = (node: FlowNode) =>
-      toUpdate.has(node.id)
-        ? {
-            ...node,
-            data: {
-              ...node.data,
-              nTraits: toUpdate.get(node.id),
-            },
-          }
-        : node;
+    const populate = (node: FlowNode) => {
+      if (toUpdate.has(node.id))
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            composedUrls,
+            renderIds,
+            hashes: renderNodesHashes.get(node.id),
+            ns,
+            nTraits: toUpdate.get(node.id),
+          },
+        };
+      else if (node.type === "renderNode") {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            composedUrls,
+            renderIds,
+            hashes: renderNodesHashes.get(node.id),
+            ns,
+          },
+        };
+      } else if (node.type === "layerNode") {
+        const layerIds = layersIds.get(node.data.name);
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            layerIds,
+            urls,
+          },
+        };
+      } else if (node.type === "bundleNode")
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            composedUrls,
+            renderIds,
+            renderNodesHashes,
+            ns,
+          },
+        };
+      else return node;
+    };
 
     nodes = nodes.map(clean);
     const branches = getBranches(nodes, edges);
@@ -205,56 +288,62 @@ export function useNodes(
   const onChangeBlending = onChange<string>("blending");
   const onChangeBundle = onChange<string>("bundle");
 
-  const [layersIds, setLayersIds] = useState(new Map<string, string[]>());
-  const updateLayersIds = (k: string, v: string[]) =>
-    setLayersIds(new Map(layersIds.set(k, v)));
-
-  const getLayerIds = (name: string) =>
-    layersIds.has(name) ? layersIds.get(name) : [];
-
-
-  const renderIds = useState(new Set<string>());
-
-  const makeData = (type: string, name: string) => {
+  const makeData = (nodeId: string, type: string, name: string) => {
     const factoryId = id;
 
     switch (type) {
       case "layerNode":
-        const trait =
-          traits[
-            partialConfiguration.layers.findIndex((e: string) => e === name)
-          ];
+        const index = partialConfiguration.layers.findIndex(
+          (e: string) => e === name
+        );
+        const trait = traits[index];
         const layerId = dashedName();
         const opacity = DEFAULT_OPACITY;
         const blending = DEFAULT_BLENDING;
 
-        updateLayersIds(name, [...getLayerIds(name), layerId]);
+        const layerIds = [
+          ...(layersIds.has(name) ? layersIds.get(name) : []),
+          layerId,
+        ];
+        updateLayersIds(name, layerIds);
 
         return {
           factoryId,
-          layerId,
-
-          name,
           trait,
+          layerIds,
+          urls,
 
-          opacity,
-          blending,
-
+          requestUrl,
           onChangeLayerId,
-          getLayerIds,
           onChangeOpacity,
           onChangeBlending,
-        } as LayerNodeData;
+
+          layerId,
+          name,
+          opacity,
+          blending,
+        } as LayerNodeComponentData;
       case "renderNode":
-        const renderId = uuid();
+        const hashes = new Set<string>();
+        const updateHashes = (hashes: Set<string>) =>
+          updateRenderNodesHashes(nodeId, hashes);
+
+        updateRenderNodesHashes(nodeId, hashes);
 
         return {
           factoryId,
-          renderId,
+          composedUrls,
+          renderIds,
+          hashes,
+          ns,
+
+          requestComposedUrl,
+          requestRenderId,
+          updateHashes,
+          updateNs,
 
           nTraits: [],
-          ns: [],
-        } as RenderNodeData;
+        } as RenderNodeComponentData;
       case "bundleNode":
         const bundleId = uuid();
 
@@ -262,18 +351,22 @@ export function useNodes(
         return {
           factoryId,
           bundleId,
+          composedUrls,
+          renderIds,
+          renderNodesHashes,
+          ns,
 
           bundle,
 
           onChangeBundle,
-        } as BundleNodeData;
+        } as BundleNodeComponentData;
       default:
         return {};
     }
   };
 
   const make = (id: string, type: string, position: any, name: string) => {
-    const data = makeData(type, name);
+    const data = makeData(id, type, name);
 
     return {
       id,

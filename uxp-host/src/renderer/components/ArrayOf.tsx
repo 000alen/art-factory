@@ -6,6 +6,7 @@ import {
   Flex,
   Item,
   ActionGroup,
+  Heading,
 } from "@adobe/react-spectrum";
 
 import Add from "@spectrum-icons/workflow/Add";
@@ -14,7 +15,7 @@ import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 
 interface ArrayItemProps {
-  Component: React.ComponentType;
+  Component: React.ComponentType<any> | Function;
   props: any;
   value: any;
   moveable: boolean;
@@ -47,8 +48,19 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
     }
   };
 
-  return (
+  return typeof Component === "function" ? (
+    (Component as Function)({
+      ...props,
+      value,
+      moveable,
+      onChange,
+      onMoveDown,
+      onMoveUp,
+      onRemove,
+    })
+  ) : (
     <Flex gap="size-100" justifyContent="space-between">
+      {/* @ts-ignore */}
       <Component
         {...props}
         width="100%"
@@ -58,15 +70,16 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
       />
       <ActionGroup overflowMode="collapse" onAction={onAction}>
         {moveable && (
-          <>
-            <Item key="moveDown">
-              <ChevronDown />
-            </Item>
-            <Item key="moveUp">
-              <ChevronUp />
-            </Item>
-          </>
+          <Item key="moveDown">
+            <ChevronDown />
+          </Item>
         )}
+        {moveable && (
+          <Item key="moveUp">
+            <ChevronUp />
+          </Item>
+        )}
+
         <Item key="remove">
           <Remove />
         </Item>
@@ -83,7 +96,10 @@ interface ArrayOfProps {
   items: any[];
   setItems: (items: any[]) => void;
   moveable?: boolean;
+  heading?: boolean;
+  border?: boolean;
   width?: string;
+  direction?: "row" | "column";
 }
 
 export const ArrayOf: React.FC<ArrayOfProps> = ({
@@ -94,7 +110,11 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
   items,
   setItems,
   moveable,
+  heading = false,
+  border = true,
   width = "30vw",
+  direction = "column",
+  children,
 }) => {
   const onAdd = () => {
     setItems([...items, emptyValue]);
@@ -126,18 +146,28 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
 
   return (
     <View>
-      <label className="spectrum-FieldLabel">{label}</label>
+      {heading ? (
+        <Heading>{label}</Heading>
+      ) : (
+        <label className="spectrum-FieldLabel">{label}</label>
+      )}
+
+      {children}
 
       <View
         width={width}
         height="100%"
         padding="size-100"
         overflow="auto"
-        borderWidth="thin"
-        borderColor="dark"
-        borderRadius="medium"
+        {...(border
+          ? {
+              borderWidth: "thin",
+              borderColor: "dark",
+              borderRadius: "medium",
+            }
+          : {})}
       >
-        <Flex direction="column" gap="size-100">
+        <Flex direction={direction} gap="size-100">
           {items.map((item, i) => (
             <ArrayItem
               key={i}
