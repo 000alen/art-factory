@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, RefObject, useEffect, useState } from "react";
 import {
   NumberField,
   Divider,
@@ -7,17 +7,17 @@ import {
   Heading,
 } from "@adobe/react-spectrum";
 import { ImageItem } from "./ImageItem";
-import { DEFAULT_N, MAX_SIZE } from "../constants";
+import { DEFAULT_N } from "../constants";
 import { RenderNodeData, Trait } from "../typings";
 import { difference, hash } from "../utils";
 import { Handle, Position } from "react-flow-renderer";
 
 export interface RenderNodeComponentData extends RenderNodeData {
   readonly factoryId?: string;
-  readonly composedUrls?: Map<string, string>;
-  readonly renderIds?: Map<string, string>;
-  readonly hashes?: Set<string>;
-  readonly ns?: Map<string, number>;
+  readonly composedUrls?: RefObject<Map<string, string>>;
+  readonly renderIds?: RefObject<Map<string, string>>;
+  readonly renderNodeHashes?: RefObject<Map<string, Set<string>>>;
+  readonly ns?: RefObject<Map<string, number>>;
 
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
@@ -31,8 +31,9 @@ interface RenderNodeProps {
   data: RenderNodeComponentData;
 }
 
-export const RenderNode: React.FC<RenderNodeProps> = memo(
-  ({ sidebar, data }) => {
+export const RenderNode: React.FC<RenderNodeProps> =
+  // memo(
+  ({ sidebar, id, data }) => {
     const [items, setItems] = useState([]);
 
     useEffect(() => {
@@ -44,7 +45,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(
         data.nTraits.map((traits, i) => [currentHashes[i], traits])
       );
 
-      const keys = data.hashes;
+      const keys = data.renderNodeHashes.current.get(id);
 
       const keysToRemove = difference(keys, currentKeys);
       const keysToAdd = difference(currentKeys, keys);
@@ -55,20 +56,21 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(
 
       for (const key of keysToAdd) {
         const traits = traitsByKey.get(key);
-        if (!data.renderIds.has(key)) data.requestRenderId(traits);
-        if (!data.composedUrls.has(key)) data.requestComposedUrl(traits);
-        if (!data.ns.has(key)) data.updateNs(key, DEFAULT_N);
+        if (!data.renderIds.current.has(key)) data.requestRenderId(traits);
+        if (!data.composedUrls.current.has(key))
+          data.requestComposedUrl(traits);
+        if (!data.ns.current.has(key)) data.updateNs(key, DEFAULT_N);
         newKeys.add(key);
       }
 
       data.updateHashes(newKeys);
       setItems([...newKeys]);
-    }, [data.factoryId, data.nTraits]);
+    });
 
     const renderItem = (item: string, i: number) => {
-      const renderId = data.renderIds.get(item);
-      const composedUrl = data.composedUrls.get(item);
-      const n = data.ns.get(item);
+      const renderId = data.renderIds.current.get(item);
+      const composedUrl = data.composedUrls.current.get(item);
+      const n = data.ns.current.get(item);
 
       return (
         <>
@@ -111,5 +113,5 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(
         </Flex>
       </div>
     );
-  }
-);
+  };
+// );

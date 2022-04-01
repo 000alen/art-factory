@@ -9,7 +9,7 @@ import {
   Text,
   TextField,
 } from "@adobe/react-spectrum";
-import React, { memo, useState } from "react";
+import React, { memo, RefObject, useState } from "react";
 import { BundleNodeData } from "../typings";
 import { ArrayOf } from "./ArrayOf";
 import { ImageItem } from "./ImageItem";
@@ -21,10 +21,10 @@ export interface BundleNodeComponentData extends BundleNodeData {
   readonly factoryId: string;
   readonly bundleId: string;
 
-  readonly composedUrls?: Map<string, string>;
-  readonly renderIds?: Map<string, string>;
-  readonly renderNodesHashes?: Map<string, Set<string>>;
-  readonly ns?: Map<string, number>;
+  readonly composedUrls?: RefObject<Map<string, string>>;
+  readonly renderIds?: RefObject<Map<string, string>>;
+  readonly renderNodesHashes?: RefObject<Map<string, Set<string>>>;
+  readonly ns?: RefObject<Map<string, number>>;
 
   onChangeBundle?: (id: string, value: string) => void;
 }
@@ -119,14 +119,15 @@ export const BundleItem: React.FC<BundleItemProps> = memo(
   }
 );
 
-export const BundleNode: React.FC<BundleNodeProps> = memo(
+export const BundleNode: React.FC<BundleNodeProps> =
+  // memo(
   ({ sidebar, id, data }) => {
     const [items, setItems] = useState([]);
 
     const { composedUrls, renderIds, renderNodesHashes, ns } = data;
 
-    const x = renderIds !== undefined && renderIds.size > 0;
-    const hashes = x ? [...renderIds.keys()] : null;
+    const x = renderIds !== undefined && renderIds.current.size > 0;
+    const hashes = x ? [...renderIds.current.keys()] : null;
     const emptyValue = x
       ? hashes[Math.floor(Math.random() * hashes.length)]
       : null;
@@ -156,5 +157,5 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(
         )}
       </div>
     );
-  }
-);
+  };
+// );

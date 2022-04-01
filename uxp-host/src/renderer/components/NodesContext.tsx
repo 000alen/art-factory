@@ -31,6 +31,7 @@ import { factoryComposeTraits, factoryGetTraitImage } from "../ipc";
 import { LayerNodeComponentData } from "./LayerNode";
 import { RenderNodeComponentData } from "./RenderNode";
 import { BundleNodeComponentData } from "./BundleNode";
+import { useMap } from "../hooks/useMap";
 
 interface NodesContextProviderProps {
   id: string;
@@ -71,55 +72,51 @@ export function useNodes(
   const [prevKey, setPrevKey] = useState<string | null>(null);
 
   // ? hash(trait) -> url
-  const [urls, setUrls] = useState(new Map<string, string>());
-  const updateUrls = (k: string, v: string) => setUrls(new Map(urls.set(k, v)));
+  const urls = useMap<string, string>();
 
   // ? name -> dashedName[]
-  const [layersIds, setLayersIds] = useState(new Map<string, string[]>());
-  const updateLayersIds = (k: string, v: string[]) =>
-    setLayersIds(new Map(layersIds.set(k, v)));
+  const layersIds = useMap<string, string[]>();
 
   // ? hash(trait[]) -> url
-  const [composedUrls, setComposedUrls] = useState(new Map<string, string>());
-  const updateComposedUrls = (k: string, v: string) =>
-    setComposedUrls(new Map(composedUrls.set(k, v)));
+  const composedUrls = useMap<string, string>();
 
   // ? hash(trait[]) -> dashedName
-  const [renderIds, setRenderIds] = useState(new Map<string, string>());
-  const updateRenderIds = (k: string, v: string) =>
-    setRenderIds(new Map(renderIds.set(k, v)));
+  const renderIds = useMap<string, string>();
 
   // ? nodeId -> hash(trait[])
-  const [renderNodesHashes, setRenderNodesHashes] = useState(
-    new Map<string, Set<string>>()
-  );
-  const updateRenderNodesHashes = (k: string, v: Set<string>) =>
-    setRenderNodesHashes(new Map(renderNodesHashes.set(k, v)));
+  const renderNodesHashes = useMap<string, Set<string>>();
 
   // ? dashedName -> number
-  const [ns, setNs] = useState(new Map<string, number>());
-  const updateNs = (k: string, v: number) => setNs(new Map(ns.set(k, v)));
+  const ns = useMap<string, number>();
 
-  const requestUrl = async (trait: Trait) =>
-    updateUrls(
-      hash(trait),
-      `data:image/png;base64,${await factoryGetTraitImage(id, trait, MAX_SIZE)}`
+  const requestUrl = async (trait: Trait) => {
+    const base64String = await factoryGetTraitImage(id, trait, MAX_SIZE);
+    await urls.set(hash(trait), `data:image/png;base64,${base64String}`);
+  };
+
+  const requestComposedUrl = async (traits: Trait[]) => {
+    const composedBase64String = await factoryComposeTraits(
+      id,
+      traits,
+      MAX_SIZE
     );
-
-  const requestComposedUrl = async (traits: Trait[]) =>
-    updateComposedUrls(
+    await composedUrls.set(
       hash(traits),
-      `data:image/png;base64,${await factoryComposeTraits(
-        id,
-        traits,
-        MAX_SIZE
-      )}`
+      `data:image/png;base64,${composedBase64String}`
     );
+  };
 
-  const requestRenderId = (traits: Trait[]) =>
-    updateRenderIds(hash(traits), dashedName());
+  const requestRenderId = async (traits: Trait[]) => {
+    const name = dashedName();
+    await renderIds.set(hash(traits), name);
+  };
 
-  const shouldUpdate = (nodes: FlowNode[], edges: FlowEdge[]): boolean => {
+  const updateNs = async (k: string, v: number) => await ns.set(k, v);
+
+  const shouldBranchesUpdate = (
+    nodes: FlowNode[],
+    edges: FlowEdge[]
+  ): boolean => {
     const clean = (nodes: FlowNode[]) =>
       nodes.map(({ id, type, data }) => ({
         id,
@@ -134,8 +131,8 @@ export function useNodes(
     return should;
   };
 
-  const onUpdate = (nodes: FlowNode[], edges: FlowEdge[]) => {
-    // if (!shouldUpdate(nodes, edges)) return { nodes, edges };
+  const onUpdateBranches = (nodes: FlowNode[], edges: FlowEdge[]) => {
+    if (!shouldBranchesUpdate(nodes, edges)) return { nodes, edges };
 
     const toUpdate: Map<string, Trait[][]> = new Map();
 
@@ -150,54 +147,16 @@ export function useNodes(
           }
         : node;
 
-    const populate = (node: FlowNode) => {
-      if (toUpdate.has(node.id))
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            composedUrls,
-            renderIds,
-            hashes: renderNodesHashes.get(node.id),
-            ns,
-            nTraits: toUpdate.get(node.id),
-          },
-        };
-      else if (node.type === "renderNode") {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            composedUrls,
-            renderIds,
-            hashes: renderNodesHashes.get(node.id),
-            ns,
-          },
-        };
-      } else if (node.type === "layerNode") {
-        const layerIds = layersIds.get(node.data.name);
-
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            layerIds,
-            urls,
-          },
-        };
-      } else if (node.type === "bundleNode")
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            composedUrls,
-            renderIds,
-            renderNodesHashes,
-            ns,
-          },
-        };
-      else return node;
-    };
+    const update = (node: FlowNode) =>
+      toUpdate.has(node.id)
+        ? {
+            ...node,
+            data: {
+              ...node.data,
+              nTraits: toUpdate.get(node.id),
+            },
+          }
+        : node;
 
     nodes = nodes.map(clean);
     const branches = getBranches(nodes, edges);
@@ -212,30 +171,26 @@ export function useNodes(
         blending: node.data.blending,
       }));
 
-      if (toUpdate.has(render.id)) {
+      if (toUpdate.has(render.id))
         toUpdate.set(render.id, [...toUpdate.get(render.id), traits]);
-      } else {
-        toUpdate.set(render.id, [traits]);
-      }
+      else toUpdate.set(render.id, [traits]);
     });
-    nodes = nodes.map(populate);
 
-    return { nodes, edges };
+    return { nodes: nodes.map(update), edges };
   };
 
   const onNodesChange = (changes: FlowNodeChange[]) =>
     setNodes((ns) => {
-      const { nodes, edges: _edges } = onUpdate(
+      let { nodes, edges: _edges } = onUpdateBranches(
         applyNodeChanges(changes, ns),
         edges
       );
-      setEdges(_edges);
       return nodes;
     });
 
   const onEdgesChange = (changes: FlowEdgeChange[]) =>
     setEdges((es) => {
-      const { nodes: _nodes, edges } = onUpdate(
+      let { nodes: _nodes, edges } = onUpdateBranches(
         nodes,
         applyEdgeChanges(changes, es)
       );
@@ -245,7 +200,7 @@ export function useNodes(
 
   const onEdgeRemove = (id: string) =>
     setEdges((es) => {
-      const { nodes: _nodes, edges } = onUpdate(
+      let { nodes: _nodes, edges } = onUpdateBranches(
         nodes,
         es.filter((e) => e.id !== id)
       );
@@ -255,7 +210,7 @@ export function useNodes(
 
   const onConnect = (connection: FlowConnection) =>
     setEdges((eds) => {
-      const { nodes: _nodes, edges } = onUpdate(
+      let { nodes: _nodes, edges } = onUpdateBranches(
         nodes,
         addEdge(
           { ...connection, type: "customEdge", data: { onEdgeRemove } },
@@ -266,13 +221,13 @@ export function useNodes(
       return edges;
     });
 
-  const onInit = (reactFlowInstance: any) =>
-    setReactFlowInstance(reactFlowInstance);
-
   const onDragOver = (event: any) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   };
+
+  const onInit = (reactFlowInstance: any) =>
+    setReactFlowInstance(reactFlowInstance);
 
   const onChange =
     <T,>(name: string) =>
@@ -288,7 +243,7 @@ export function useNodes(
   const onChangeBlending = onChange<string>("blending");
   const onChangeBundle = onChange<string>("bundle");
 
-  const makeData = (nodeId: string, type: string, name: string) => {
+  const makeData = async (nodeId: string, type: string, name: string) => {
     const factoryId = id;
 
     switch (type) {
@@ -301,17 +256,17 @@ export function useNodes(
         const opacity = DEFAULT_OPACITY;
         const blending = DEFAULT_BLENDING;
 
-        const layerIds = [
+        await layersIds.set(name, [
           ...(layersIds.has(name) ? layersIds.get(name) : []),
           layerId,
-        ];
-        updateLayersIds(name, layerIds);
+        ]);
+        await requestUrl(trait);
 
         return {
           factoryId,
           trait,
-          layerIds,
-          urls,
+          layersIds: layersIds.mapRef,
+          urls: urls.mapRef,
 
           requestUrl,
           onChangeLayerId,
@@ -324,18 +279,17 @@ export function useNodes(
           blending,
         } as LayerNodeComponentData;
       case "renderNode":
-        const hashes = new Set<string>();
         const updateHashes = (hashes: Set<string>) =>
-          updateRenderNodesHashes(nodeId, hashes);
+          renderNodesHashes.set(nodeId, hashes);
 
-        updateRenderNodesHashes(nodeId, hashes);
+        await renderNodesHashes.set(nodeId, new Set<string>());
 
         return {
           factoryId,
-          composedUrls,
-          renderIds,
-          hashes,
-          ns,
+          composedUrls: composedUrls.mapRef,
+          renderIds: renderIds.mapRef,
+          renderNodeHashes: renderNodesHashes.mapRef,
+          ns: ns.mapRef,
 
           requestComposedUrl,
           requestRenderId,
@@ -351,10 +305,10 @@ export function useNodes(
         return {
           factoryId,
           bundleId,
-          composedUrls,
-          renderIds,
-          renderNodesHashes,
-          ns,
+          composedUrls: composedUrls.mapRef,
+          renderIds: renderIds.mapRef,
+          renderNodesHashes: renderNodesHashes.mapRef,
+          ns: ns.mapRef,
 
           bundle,
 
@@ -365,8 +319,13 @@ export function useNodes(
     }
   };
 
-  const make = (id: string, type: string, position: any, name: string) => {
-    const data = makeData(id, type, name);
+  const make = async (
+    id: string,
+    type: string,
+    position: any,
+    name: string
+  ) => {
+    const data = await makeData(id, type, name);
 
     return {
       id,
@@ -376,7 +335,7 @@ export function useNodes(
     };
   };
 
-  const onDrop = (event: any) => {
+  const onDrop = async (event: any) => {
     event.preventDefault();
 
     const reactFlowBounds = reactFlowWrapperRef.current.getBoundingClientRect();
@@ -384,7 +343,7 @@ export function useNodes(
       event.dataTransfer.getData("application/reactflow")
     );
 
-    const newNode = make(
+    const newNode = await make(
       getId(),
       type,
       reactFlowInstance.project({

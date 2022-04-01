@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, RefObject, useEffect, useState } from "react";
 import {
   MenuTrigger,
   ActionButton,
@@ -16,8 +16,8 @@ import { capitalize, hash } from "../utils";
 export interface LayerNodeComponentData extends LayerNodeData {
   readonly factoryId?: string;
   readonly trait: Trait;
-  readonly layerIds?: string[];
-  readonly urls?: Map<string, string>;
+  readonly layersIds?: RefObject<Map<string, string[]>>;
+  readonly urls?: RefObject<Map<string, string>>;
 
   requestUrl?: (trait: Trait) => void;
 
@@ -34,14 +34,22 @@ interface LayerNodeProps {
 
 export const LayerNode: React.FC<LayerNodeProps> = memo(
   ({ sidebar, id, data }) => {
-    const [url, setUrl] = useState<string | null>(null);
+    const { urls, trait, requestUrl } = data;
 
-    useEffect(() => {
-      const { urls, trait, requestUrl, layerIds } = data;
+    let url;
+    if (urls.current.has(hash(trait))) url = urls.current.get(hash(trait));
+    else {
+      url = null;
+      requestUrl(trait);
+    }
 
-      if (urls.has(hash(trait))) setUrl(urls.get(hash(trait)));
-      else requestUrl(trait);
-    });
+    // ! TODO NOT UPDATED UNTIL MOVED
+    const items = data.layersIds
+      ? data.layersIds.current.get(data.name).map((layerId) => ({
+          id: layerId,
+          name: layerId,
+        }))
+      : [];
 
     return (
       <div className="w-48 p-3 border-1 border-solid border-white rounded">
@@ -88,10 +96,7 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(
           <MenuTrigger>
             <ActionButton>{data.layerId}</ActionButton>
             <Menu
-              items={data.layerIds.map((layerId) => ({
-                id: layerId,
-                name: layerId,
-              }))}
+              items={items}
               selectionMode="single"
               disallowEmptySelection={true}
               selectedKeys={sidebar ? null : [data.layerId]}
