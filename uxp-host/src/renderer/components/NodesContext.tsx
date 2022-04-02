@@ -176,6 +176,9 @@ export function useNodes(
       else toUpdate.set(render.id, [traits]);
     });
 
+    // for (const nTraits of toUpdate.values())
+    //   for (const traits of nTraits) await requestComposedUrl(traits);
+
     return { nodes: nodes.map(update), edges };
   };
 

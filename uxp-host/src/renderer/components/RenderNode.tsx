@@ -5,12 +5,15 @@ import {
   Text,
   Flex,
   Heading,
+  ActionButton,
 } from "@adobe/react-spectrum";
 import { ImageItem } from "./ImageItem";
 import { DEFAULT_N } from "../constants";
 import { RenderNodeData, Trait } from "../typings";
 import { difference, hash } from "../utils";
 import { Handle, Position } from "react-flow-renderer";
+import Refresh from "@spectrum-icons/workflow/Refresh";
+import { useForceUpdate } from "../hooks/useForceUpdate";
 
 export interface RenderNodeComponentData extends RenderNodeData {
   readonly factoryId?: string;
@@ -31,9 +34,9 @@ interface RenderNodeProps {
   data: RenderNodeComponentData;
 }
 
-export const RenderNode: React.FC<RenderNodeProps> =
-  // memo(
+export const RenderNode: React.FC<RenderNodeProps> = memo(
   ({ sidebar, id, data }) => {
+    const forceUpdate = useForceUpdate();
     const [items, setItems] = useState([]);
 
     useEffect(() => {
@@ -93,25 +96,37 @@ export const RenderNode: React.FC<RenderNodeProps> =
     };
 
     return (
-      <div className="w-48 p-3 border-1 border-solid border-white rounded">
+      <Flex direction="column" gap="size-100">
         {!sidebar && (
-          <Handle
-            className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
-            id="renderIn"
-            type="target"
-            position={Position.Left}
-          />
+          <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
+            <Flex gap="size-100">
+              <ActionButton onPress={() => forceUpdate()}>
+                <Refresh />
+              </ActionButton>
+            </Flex>
+          </div>
         )}
-        <Flex direction="column" gap="size-100">
-          {items.length > 0 ? (
-            items.map(renderItem)
-          ) : (
-            <div className="h-48 flex justify-center items-center">
-              <Text>Nothing to render yet</Text>
-            </div>
+
+        <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+          {!sidebar && (
+            <Handle
+              className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+              id="renderIn"
+              type="target"
+              position={Position.Left}
+            />
           )}
-        </Flex>
-      </div>
+          <Flex direction="column" gap="size-100">
+            {items.length > 0 ? (
+              items.map(renderItem)
+            ) : (
+              <div className="h-48 flex justify-center items-center">
+                <Text>Nothing to render yet</Text>
+              </div>
+            )}
+          </Flex>
+        </div>
+      </Flex>
     );
-  };
-// );
+  }
+);

@@ -16,6 +16,8 @@ import { ImageItem } from "./ImageItem";
 import Remove from "@spectrum-icons/workflow/Remove";
 import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
 import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
+import Refresh from "@spectrum-icons/workflow/Refresh";
+import { useForceUpdate } from "../hooks/useForceUpdate";
 
 export interface BundleNodeComponentData extends BundleNodeData {
   readonly factoryId: string;
@@ -119,9 +121,9 @@ export const BundleItem: React.FC<BundleItemProps> = memo(
   }
 );
 
-export const BundleNode: React.FC<BundleNodeProps> =
-  // memo(
+export const BundleNode: React.FC<BundleNodeProps> = memo(
   ({ sidebar, id, data }) => {
+    const forceUpdate = useForceUpdate();
     const [items, setItems] = useState([]);
 
     const { composedUrls, renderIds, renderNodesHashes, ns } = data;
@@ -133,29 +135,43 @@ export const BundleNode: React.FC<BundleNodeProps> =
       : null;
 
     return (
-      <div className="w-48 min-w-max p-3 border-1 border-dashed border-white rounded">
-        {x ? (
-          <ArrayOf
-            width="100%"
-            Component={(props) => <BundleItem {...props} />}
-            props={{ composedUrls, renderIds, renderNodesHashes, ns }}
-            label="Bundle"
-            emptyValue={emptyValue}
-            items={items}
-            setItems={setItems}
-            moveable={true}
-            heading={true}
-            border={false}
-            direction="row"
-          >
-            <TextField label="Name" />
-          </ArrayOf>
-        ) : (
-          <div className="h-48 flex justify-center items-center">
-            <Text>Nothing to bundle yet</Text>
+      <Flex direction="column" gap="size-100">
+        {!sidebar && (
+          <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
+            <Flex gap="size-100">
+              <ActionButton onPress={() => forceUpdate()}>
+                <Refresh />
+              </ActionButton>
+            </Flex>
           </div>
         )}
-      </div>
+
+        <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+          <Flex>
+            {x ? (
+              <ArrayOf
+                width="100%"
+                Component={(props) => <BundleItem {...props} />}
+                props={{ composedUrls, renderIds, renderNodesHashes, ns }}
+                label="Bundle"
+                emptyValue={emptyValue}
+                items={items}
+                setItems={setItems}
+                moveable={true}
+                heading={true}
+                border={false}
+                direction="row"
+              >
+                <TextField label="Name" />
+              </ArrayOf>
+            ) : (
+              <div className="h-48 flex justify-center items-center">
+                <Text>Nothing to bundle yet</Text>
+              </div>
+            )}
+          </Flex>
+        </div>
+      </Flex>
     );
-  };
-// );
+  }
+);
