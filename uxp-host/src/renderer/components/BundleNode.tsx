@@ -9,169 +9,166 @@ import {
   Text,
   TextField,
 } from "@adobe/react-spectrum";
-import React, { memo, RefObject, useState } from "react";
-import { BundleNodeData } from "../typings";
-import { ArrayOf } from "./ArrayOf";
+import React, { memo, useEffect, useState } from "react";
 import { ImageItem } from "./ImageItem";
 import Remove from "@spectrum-icons/workflow/Remove";
-import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
-import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import { useForceUpdate } from "../hooks/useForceUpdate";
+import { useEdges, useNodes, Node as FlowNode } from "react-flow-renderer";
+import { getBranches } from "../nodesUtils";
+import { LayerNodeComponentData } from "./LayerNode";
+import { arrayDifference, chooseN, hash } from "../utils";
+import Add from "@spectrum-icons/workflow/Add";
 
-export interface BundleNodeComponentData extends BundleNodeData {
-  readonly factoryId: string;
-  readonly bundleId: string;
+export interface BundleNodeComponentData {
+  composedUrls?: Record<string, string>;
+  renderIds?: Record<string, string>;
+  ns?: Record<string, number>;
+  onChangeBundleName?: (id: string, value: string) => void;
+  onChangeBundleIds?: (id: string, value: string[]) => void;
 
-  readonly composedUrls?: RefObject<Map<string, string>>;
-  readonly renderIds?: RefObject<Map<string, string>>;
-  readonly renderNodesHashes?: RefObject<Map<string, Set<string>>>;
-  readonly ns?: RefObject<Map<string, number>>;
-
-  onChangeBundle?: (id: string, value: string) => void;
+  name: string;
+  ids: string[];
 }
 
 interface BundleNodeProps {
-  sidebar: boolean;
   id: string;
   data: BundleNodeComponentData;
 }
 
-interface BundleItemProps {
-  value: string;
-  composedUrls: Map<string, string>;
-  renderIds: Map<string, string>;
-  renderNodesHashes: Map<string, Set<string>>;
-  ns: Map<string, number>;
+export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
+  const [forceUpdate, x] = useForceUpdate();
+  const [nodes, edges] = [useNodes(), useEdges()];
 
-  moveable: boolean;
-  onChange: (value: string) => void;
-  onMoveDown: () => void;
-  onMoveUp: () => void;
-  onRemove: () => void;
-}
+  const [cacheKey, setCacheKey] = useState<string>(null);
+  const [emptyValue, setEmptyValue] = useState<string>(null);
 
-export const BundleItem: React.FC<BundleItemProps> = memo(
-  ({
-    value,
-    composedUrls,
-    renderIds,
-    onMoveDown,
-    onMoveUp,
-    onRemove,
-    moveable,
-  }) => {
-    const onAction = (action: string) => {
-      switch (action) {
-        case "moveDown":
-          return onMoveDown();
-        case "moveUp":
-          return onMoveUp();
-        case "remove":
-          return onRemove();
-        default:
-          break;
+  useEffect(() => {
+    const nTraits = (
+      getBranches(nodes, edges).map((branch) =>
+        branch.slice(1, -1)
+      ) as FlowNode<LayerNodeComponentData>[][]
+    )
+      .map((branch) => branch.map((node) => node.data))
+      .map((branch) =>
+        branch.map((data) => ({
+          ...data.trait,
+          id: data.id,
+        }))
+      );
+    const currentCacheKey = hash(nTraits);
+
+    if (currentCacheKey === cacheKey) return;
+
+    if (nTraits.length > 0) {
+      const keys = nTraits.map(hash);
+
+      if (emptyValue === null)
+        setEmptyValue(() => keys[Math.floor(Math.random() * keys.length)]);
+
+      if (data.ids === null && keys.length > 1)
+        data.onChangeBundleIds(id, chooseN(keys, 2));
+      else if (data.ids !== null) {
+        const itemsToRemove = arrayDifference(data.ids, keys);
+        if (itemsToRemove.length > 0)
+          data.onChangeBundleIds(id, arrayDifference(data.ids, itemsToRemove));
+        if (itemsToRemove.includes(emptyValue))
+          setEmptyValue(() => keys[Math.floor(Math.random() * keys.length)]);
       }
-    };
+    }
+
+    setCacheKey(currentCacheKey);
+  }, [nodes, edges, x]);
+
+  const renderItem = (key: string, i: number) => {
+    const renderId = data.renderIds[key];
+    const composedUrl = data.composedUrls[key];
+
+    const items = Object.values(data.renderIds).map((renderId) => ({
+      id: renderId,
+      name: renderId,
+    }));
 
     return (
-      <div className="w-48 p-3">
-        <Flex direction="column" gap="size-100">
-          <ImageItem src={composedUrls.get(value)} />
+      <Flex direction="column" gap="size-100">
+        <ImageItem src={composedUrl} />
+        <Flex gap="size-100">
           <MenuTrigger>
-            <ActionButton>{renderIds.get(value)}</ActionButton>
+            <ActionButton width="100%">{renderId}</ActionButton>
             <Menu
-              items={[...renderIds.values()].map((renderId) => ({
-                id: renderId,
-                name: renderId,
-              }))}
+              items={items}
               selectionMode="single"
               disallowEmptySelection={true}
-              selectedKeys={[composedUrls.get(value)]}
-              // onSelectionChange={(selectedKeys) =>
-              //   sidebar
-              //     ? null
-              //     : data.onChangeLayerId(
-              //         id,
-              //         [...selectedKeys].shift() as string
-              //       )
-              // }
+              selectedKeys={[renderId]}
+              onSelectionChange={(selectedKeys) => {
+                const selectedKey = [...selectedKeys].shift() as string;
+                const [nId] = Object.entries(data.renderIds).find(
+                  ([, _id]) => _id === selectedKey
+                );
+
+                data.onChangeBundleIds(
+                  id,
+                  data.ids.map((cId, j) => (i === j ? nId : cId))
+                );
+              }}
             >
               {({ id, name }) => <Item key={id}>{name}</Item>}
             </Menu>
           </MenuTrigger>
-          <ActionGroup overflowMode="collapse" onAction={onAction}>
-            {moveable && (
-              <Item key="moveUp">
-                <ChevronLeft />
-              </Item>
-            )}
-            {moveable && (
-              <Item key="moveDown">
-                <ChevronRight />
-              </Item>
-            )}
-            <Item key="remove">
-              <Remove />
-            </Item>
-          </ActionGroup>
+          <ActionButton
+            onPress={() =>
+              data.onChangeBundleIds(
+                id,
+                data.ids.filter((_, j) => j !== i)
+              )
+            }
+          >
+            <Remove />
+          </ActionButton>
         </Flex>
-      </div>
-    );
-  }
-);
-
-export const BundleNode: React.FC<BundleNodeProps> = memo(
-  ({ sidebar, id, data }) => {
-    const forceUpdate = useForceUpdate();
-    const [items, setItems] = useState([]);
-
-    const { composedUrls, renderIds, renderNodesHashes, ns } = data;
-
-    const x = renderIds !== undefined && renderIds.current.size > 0;
-    const hashes = x ? [...renderIds.current.keys()] : null;
-    const emptyValue = x
-      ? hashes[Math.floor(Math.random() * hashes.length)]
-      : null;
-
-    return (
-      <Flex direction="column" gap="size-100">
-        {!sidebar && (
-          <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
-            <Flex gap="size-100">
-              <ActionButton onPress={() => forceUpdate()}>
-                <Refresh />
-              </ActionButton>
-            </Flex>
-          </div>
-        )}
-
-        <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
-          <Flex>
-            {x ? (
-              <ArrayOf
-                width="100%"
-                Component={(props) => <BundleItem {...props} />}
-                props={{ composedUrls, renderIds, renderNodesHashes, ns }}
-                label="Bundle"
-                emptyValue={emptyValue}
-                items={items}
-                setItems={setItems}
-                moveable={true}
-                heading={true}
-                border={false}
-                direction="row"
-              >
-                <TextField label="Name" />
-              </ArrayOf>
-            ) : (
-              <div className="h-48 flex justify-center items-center">
-                <Text>Nothing to bundle yet</Text>
-              </div>
-            )}
-          </Flex>
-        </div>
       </Flex>
     );
-  }
-);
+  };
+
+  return (
+    <Flex direction="column" gap="size-100">
+      <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all">
+        <Flex gap="size-100">
+          <TextField
+            width="100%"
+            aria-label="Name"
+            value={data.name}
+            onChange={(value: string) => data.onChangeBundleName(id, value)}
+          />
+          <ActionButton onPress={() => forceUpdate()}>
+            <Refresh />
+          </ActionButton>
+        </Flex>
+      </div>
+
+      <div className="w-48 p-3 border-1 border-solid border-white rounded">
+        <Heading>{data.name}</Heading>
+        <Flex direction="column" gap="size-300">
+          {data.ids === null ? (
+            <div className="h-48 flex justify-center items-center">
+              <Text>Nothing to bundle yet</Text>
+            </div>
+          ) : (
+            <>
+              {data.ids.map(renderItem)}
+              <Flex direction="row-reverse">
+                <ActionButton
+                  onPress={() =>
+                    data.onChangeBundleIds(id, [...data.ids, emptyValue])
+                  }
+                >
+                  <Add />
+                </ActionButton>
+              </Flex>
+            </>
+          )}
+        </Flex>
+      </div>
+    </Flex>
+  );
+});

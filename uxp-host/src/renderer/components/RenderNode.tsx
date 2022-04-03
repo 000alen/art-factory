@@ -1,7 +1,6 @@
-import React, { memo, RefObject, useEffect, useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import {
   NumberField,
-  Divider,
   Text,
   Flex,
   Heading,
@@ -9,124 +8,127 @@ import {
 } from "@adobe/react-spectrum";
 import { ImageItem } from "./ImageItem";
 import { DEFAULT_N } from "../constants";
-import { RenderNodeData, Trait } from "../typings";
-import { difference, hash } from "../utils";
-import { Handle, Position } from "react-flow-renderer";
+import { Trait } from "../typings";
+import { hash } from "../utils";
+import {
+  Handle,
+  Position,
+  useEdges,
+  useNodes,
+  Node as FlowNode,
+} from "react-flow-renderer";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import { useForceUpdate } from "../hooks/useForceUpdate";
+import { getBranches } from "../nodesUtils";
+import { LayerNodeComponentData } from "./LayerNode";
 
-export interface RenderNodeComponentData extends RenderNodeData {
-  readonly factoryId?: string;
-  readonly composedUrls?: RefObject<Map<string, string>>;
-  readonly renderIds?: RefObject<Map<string, string>>;
-  readonly renderNodeHashes?: RefObject<Map<string, Set<string>>>;
-  readonly ns?: RefObject<Map<string, number>>;
-
+export interface RenderNodeComponentData {
+  composedUrls?: Record<string, string>;
+  renderIds?: Record<string, string>;
+  ns?: Record<string, number>;
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
-  updateHashes?: (hashes: Set<string>) => void;
-  updateNs?: (k: string, v: number) => void;
+  updateNs?: (traits: Trait[], n: number) => void;
 }
 
 interface RenderNodeProps {
-  sidebar: boolean;
   id: string;
   data: RenderNodeComponentData;
 }
 
-export const RenderNode: React.FC<RenderNodeProps> = memo(
-  ({ sidebar, id, data }) => {
-    const forceUpdate = useForceUpdate();
-    const [items, setItems] = useState([]);
+export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
+  const [forceUpdate, x] = useForceUpdate();
+  const [nodes, edges] = [useNodes(), useEdges()];
 
-    useEffect(() => {
-      if (data.nTraits.length === 0) return;
+  const [cacheKey, setCacheKey] = useState<string>(null);
+  const [keys, setKeys] = useState<string[]>([]);
+  const [nTraits, setNTraits] = useState<Trait[][]>([]);
 
-      const currentHashes = data.nTraits.map(hash);
-      const currentKeys = new Set(currentHashes);
-      const traitsByKey = new Map(
-        data.nTraits.map((traits, i) => [currentHashes[i], traits])
+  useEffect(() => {
+    const nTraits: Trait[][] = (
+      getBranches(nodes, edges)
+        .filter((branch) => branch[branch.length - 1].id === id)
+        .map((branch) =>
+          branch.slice(1, -1)
+        ) as FlowNode<LayerNodeComponentData>[][]
+    )
+      .map((branch) => branch.map((node) => node.data))
+      .map((branch) =>
+        branch.map((data) => ({
+          ...data.trait,
+          id: data.id,
+        }))
       );
+    const currentCacheKey = hash(nTraits);
 
-      const keys = data.renderNodeHashes.current.get(id);
+    if (currentCacheKey === cacheKey) return;
 
-      const keysToRemove = difference(keys, currentKeys);
-      const keysToAdd = difference(currentKeys, keys);
+    setCacheKey(currentCacheKey);
+    setNTraits(nTraits);
+  }, [nodes, edges]);
 
-      if (keysToRemove.size === 0 && keysToAdd.size === 0) return;
+  useEffect(() => {
+    if (nTraits.length === 0) return;
 
-      const newKeys = difference(keys, keysToRemove);
+    const keys = nTraits.map(hash);
 
-      for (const key of keysToAdd) {
-        const traits = traitsByKey.get(key);
-        if (!data.renderIds.current.has(key)) data.requestRenderId(traits);
-        if (!data.composedUrls.current.has(key))
-          data.requestComposedUrl(traits);
-        if (!data.ns.current.has(key)) data.updateNs(key, DEFAULT_N);
-        newKeys.add(key);
-      }
+    for (const [i, key] of keys.entries()) {
+      if (!(key in data.composedUrls)) data.requestComposedUrl(nTraits[i]);
+      if (!(key in data.renderIds)) data.requestRenderId(nTraits[i]);
+      if (!(key in data.ns)) data.updateNs(nTraits[i], DEFAULT_N);
+    }
 
-      data.updateHashes(newKeys);
-      setItems([...newKeys]);
-    });
+    setKeys(keys);
+  }, [nTraits]);
 
-    const renderItem = (item: string, i: number) => {
-      const renderId = data.renderIds.current.get(item);
-      const composedUrl = data.composedUrls.current.get(item);
-      const n = data.ns.current.get(item);
-
-      return (
-        <>
-          <ImageItem src={composedUrl} />
-          <Heading>{renderId}</Heading>
-          <NumberField
-            label="N"
-            {...{
-              value: n,
-              //   onChange: sidebar
-              //     ? null
-              //     : (value: number) =>
-              //         updateMap(id, { ...map.get(id), n: value }),
-              //   isDisabled: sidebar ? true : false,
-            }}
-          />
-          {i !== items.length - 1 && <Divider />}
-        </>
-      );
-    };
+  const renderItem = (key: string, i: number) => {
+    const renderId = data.renderIds[key];
+    const composedUrl = data.composedUrls[key];
+    const n = data.ns[key];
 
     return (
       <Flex direction="column" gap="size-100">
-        {!sidebar && (
-          <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
-            <Flex gap="size-100">
-              <ActionButton onPress={() => forceUpdate()}>
-                <Refresh />
-              </ActionButton>
-            </Flex>
-          </div>
-        )}
-
-        <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
-          {!sidebar && (
-            <Handle
-              className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
-              id="renderIn"
-              type="target"
-              position={Position.Left}
-            />
-          )}
-          <Flex direction="column" gap="size-100">
-            {items.length > 0 ? (
-              items.map(renderItem)
-            ) : (
-              <div className="h-48 flex justify-center items-center">
-                <Text>Nothing to render yet</Text>
-              </div>
-            )}
-          </Flex>
-        </div>
+        <ImageItem src={composedUrl} />
+        <Heading>{renderId}</Heading>
+        <NumberField
+          label="N"
+          {...{
+            value: n,
+            onChange: (value: number) => data.updateNs(nTraits[i], value),
+          }}
+        />
       </Flex>
     );
-  }
-);
+  };
+
+  return (
+    <Flex direction="column" gap="size-100">
+      <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
+        <Flex gap="size-100">
+          <ActionButton onPress={() => forceUpdate()}>
+            <Refresh />
+          </ActionButton>
+        </Flex>
+      </div>
+
+      <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+        <Handle
+          className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+          id="renderIn"
+          type="target"
+          position={Position.Left}
+        />
+
+        <Flex direction="column" gap="size-300">
+          {keys.length > 0 ? (
+            keys.map(renderItem)
+          ) : (
+            <div className="h-48 flex justify-center items-center">
+              <Text>Nothing to render yet</Text>
+            </div>
+          )}
+        </Flex>
+      </div>
+    </Flex>
+  );
+});

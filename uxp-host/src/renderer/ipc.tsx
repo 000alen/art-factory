@@ -21,7 +21,6 @@ import {
   Configuration,
   Instance,
   Layer,
-  NodesAndEdges,
   Secrets,
   Trait,
 } from "./typings";
@@ -209,17 +208,20 @@ export const factoryGetTraitsByLayerName = (id: string, layerName: string) =>
 
 export const factoryGenerateCollection = (
   id: string,
-  nodesAndEdges: NodesAndEdges
+  keys: string[],
+  nTraits: Trait[][],
+  ns: Record<string, number>,
+  bundles: { name: string; ids: string[] }[]
 ) =>
   ipcTask("factoryGenerateCollection")(
     id,
-    nodesAndEdges
+    keys,
+    nTraits,
+    ns,
+    bundles
   ) as Promise<Collection>;
 
-export const factoryComputeMaxCombinations = (
-  id: string,
-  layers: Layer[],
-) =>
+export const factoryComputeMaxCombinations = (id: string, layers: Layer[]) =>
   ipcTaskWithRequestId("factoryComputeMaxCombinations")(
     id,
     layers

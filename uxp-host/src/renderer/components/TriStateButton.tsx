@@ -13,6 +13,7 @@ import {
 interface TriStateButtonProps {
   preLabel: string;
   preAction: () => void;
+  preDisabled?: boolean;
 
   loadingLabel: string;
   loadingMaxValue?: number;
@@ -23,11 +24,13 @@ interface TriStateButtonProps {
 
   postLabel: string;
   postAction: () => void;
+  postDisabled?: boolean;
 }
 
 export const TriStateButton: React.FC<TriStateButtonProps> = ({
   preLabel,
   preAction,
+  preDisabled,
 
   loadingLabel,
   loadingMaxValue,
@@ -38,6 +41,7 @@ export const TriStateButton: React.FC<TriStateButtonProps> = ({
 
   postLabel,
   postAction,
+  postDisabled,
 }) => {
   return loading ? (
     <Flex marginBottom={8} marginX={8} justifyContent="end">
@@ -67,12 +71,16 @@ export const TriStateButton: React.FC<TriStateButtonProps> = ({
               </Content>
             </ContextualHelp>
           )}
-          <Button variant="cta" onPress={postAction}>
+          <Button
+            variant="cta"
+            onPress={postAction}
+            isDisabled={!!postDisabled}
+          >
             {postLabel}
           </Button>
         </Flex>
       ) : (
-        <Button variant="cta" onPress={preAction}>
+        <Button variant="cta" onPress={preAction} isDisabled={!!preDisabled}>
           {preLabel}
         </Button>
       )}

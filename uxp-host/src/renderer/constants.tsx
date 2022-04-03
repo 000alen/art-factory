@@ -1,7 +1,6 @@
 import { BundleNode } from "./components/BundleNode";
 import { CustomEdge } from "./components/CustomEdge";
 import { LayerNode } from "./components/LayerNode";
-import { RenderGroupNode } from "./components/RenderGroupNode";
 import { RenderNode } from "./components/RenderNode";
 import { RootNode } from "./components/RootNode";
 

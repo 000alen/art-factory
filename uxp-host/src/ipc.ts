@@ -20,7 +20,6 @@ import {
   Configuration,
   Instance,
   Layer,
-  NodesAndEdges,
   Secrets,
   Trait,
 } from "./typings";
@@ -296,8 +295,13 @@ ipcTaskWithRequestId(
 
 ipcTask(
   "factoryGenerateCollection",
-  (id: string, nodesAndEdges: NodesAndEdges) =>
-    factories[id].generateCollection(nodesAndEdges)
+  (
+    id: string,
+    keys: string[],
+    nTraits: Trait[][],
+    ns: Record<string, number>,
+    bundles: { name: string; ids: string[] }[]
+  ) => factories[id].generateCollection(keys, nTraits, ns, bundles)
 );
 
 ipcTaskWithRequestId(

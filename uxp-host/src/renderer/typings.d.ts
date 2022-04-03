@@ -42,6 +42,7 @@ export interface Layer {
 }
 
 export interface Trait extends Layer {
+  id?: string;
   fileName: string;
   value: string;
   rarity: number;
@@ -70,77 +71,12 @@ export interface Instance {
   compilerVersion: string;
 }
 
-export interface BundleNodeData {
-  bundle: string;
-}
-
-export interface RenderNodeData {
-  nTraits: Trait[][];
-  // ns: number[];
-}
-
-export interface LayerNodeData {
-  layerId: string;
-  name: string;
-  opacity: number;
-  blending: string;
-}
-
-export interface CacheNodeData {
-  name: string;
-}
-
-export interface BaseNode {
-  id: string;
-  type: string;
-  data: any;
-}
-
-export interface Edge {
-  id: string;
-  type: string;
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-  data?: any;
-}
-
-export interface RootNode extends BaseNode {
-  type: "rootNode";
-}
-
-export interface LayerNode extends BaseNode {
-  type: "layerNode";
-  data: LayerNodeData;
-}
-
-export interface CacheNode extends BaseNode {
-  type: "cacheNode";
-  data: CacheNodeData;
-}
-
-export interface RenderNode extends BaseNode {
-  type: "renderNode";
-  data: RenderNodeData;
-}
-
-export interface BundleNode extends BaseNode {
-  type: "bundleNode";
-  data: BundleNodeData;
-}
-
-export type Node = RootNode | LayerNode | CacheNode | RenderNode | BundleNode;
-
-export type NodesAndEdges = (Node | Edge)[];
-
 export interface Instance {
   inputDir: string;
   outputDir: string;
   configuration: Partial<Configuration>;
   collection: Collection;
   bundles: Record<string, string[][]>;
-  nodes: NodesAndEdges;
   imagesGenerated: boolean;
   metadataGenerated: boolean;
   imagesCid: string;

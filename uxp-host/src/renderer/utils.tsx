@@ -38,3 +38,9 @@ export const hash = (object: any): string =>
 
 export const difference = <T,>(a: Set<T>, b: Set<T>): Set<T> =>
   new Set([...a].filter((x) => !b.has(x)));
+
+export const arrayDifference = <T,>(a: T[], b: T[]): T[] =>
+  a.filter((x) => !b.includes(x));
+
+export const chooseN = <T,>(a: T[], n: number): T[] =>
+  [...a].sort(() => 0.5 - Math.random()).slice(0, n);

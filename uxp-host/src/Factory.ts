@@ -6,28 +6,15 @@ import axios from "axios";
 import sharp, { Blend } from "sharp";
 
 import {
-  CacheNodeData,
   Collection,
   CollectionItem,
   Configuration,
   Instance,
   Layer,
-  LayerNodeData,
-  Node,
-  NodesAndEdges,
   Secrets,
   Trait,
-  RenderNodeData,
-  RenderNode,
-  BundleNode,
 } from "./typings";
-import { append, rarity, removeRarity } from "./utils";
-// import {
-//   getOutgoers,
-//   Elements as FlowElements,
-//   Node as FlowNode,
-//   getIncomers,
-// } from "react-flow-renderer";
+import { rarity, removeRarity } from "./utils";
 
 export const DEFAULT_BLENDING = "normal";
 export const DEFAULT_OPACITY = 1;
@@ -84,85 +71,6 @@ export function choose(
       return traits.find((trait) => trait.value === value);
     }
   }
-}
-
-// export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
-//   const root = nodesAndEdges.find((node) => node.type === "rootNode") as Node;
-
-//   const stack: {
-//     node: Node;
-//     path: Node[];
-//   }[] = [
-//     {
-//       node: root,
-//       path: [root],
-//     },
-//   ];
-
-//   const savedPaths = [];
-//   while (stack.length > 0) {
-//     const actualNode = stack.pop();
-//     const neighbors = getOutgoers(
-//       actualNode.node as FlowNode,
-//       nodesAndEdges as FlowElements
-//     ) as Node[];
-
-//     if (actualNode.node.type === "renderNode") {
-//       savedPaths.push(actualNode.path);
-//     } else {
-//       for (const v of neighbors) {
-//         stack.push({
-//           node: v,
-//           path: [...actualNode.path, v],
-//         });
-//       }
-//     }
-//   }
-
-//   return savedPaths;
-// }
-
-// export function getBundles(
-//   nodesAndEdges: NodesAndEdges
-// ): Map<string, string[]> {
-//   const bundleNodes = nodesAndEdges.filter(
-//     (node) => node.type === "bundleNode"
-//   ) as BundleNode[];
-
-//   const bundles = new Map();
-//   for (const bundleNode of bundleNodes) {
-//     bundles.set(
-//       bundleNode.data.bundle,
-//       (
-//         getIncomers(
-//           bundleNode as FlowNode,
-//           nodesAndEdges as FlowElements
-//         ) as RenderNode[]
-//       ).map((node) => node.data.renderId)
-//     );
-//   }
-
-//   return bundles;
-// }
-
-export function computeBundlesNs(
-  bundlesByRenderIds: Map<string, string[]>,
-  nodesAndEdges: NodesAndEdges
-) {
-  const ns = new Map();
-  for (const [bundle, renderIds] of bundlesByRenderIds) {
-    const renderNs = renderIds
-      .map((renderId) =>
-        nodesAndEdges.find(
-          (node) => "renderId" in node.data && node.data.renderId === renderId
-        )
-      )
-      .map((node) => node.data.n);
-    const n = Math.min(...renderNs);
-    ns.set(bundle, n);
-  }
-
-  return ns;
 }
 
 export function getBundle(
@@ -256,7 +164,6 @@ export class Factory {
   traitsByLayerName: Map<string, Trait[]>;
   traitsBuffer: Map<string, Buffer>;
 
-  nodes: NodesAndEdges;
   collection: Collection;
   bundles: Map<string, string[][]>;
 
@@ -359,7 +266,6 @@ export class Factory {
       collection: this.collection,
       bundles: this.bundles === undefined ? undefined : {},
       // Object.fromEntries(this.bundles),
-      nodes: this.nodes,
       imagesGenerated: this.imagesGenerated,
       metadataGenerated: this.metadataGenerated,
       imagesCid: this.imagesCid,
@@ -378,7 +284,6 @@ export class Factory {
       configuration,
       collection,
       bundles,
-      nodes,
       imagesGenerated,
       metadataGenerated,
       imagesCid,
@@ -394,7 +299,6 @@ export class Factory {
     if (configuration) this.configuration = configuration;
     if (collection) this.collection = collection;
     if (bundles) this.bundles = new Map(Object.entries(bundles));
-    if (nodes) this.nodes = nodes;
     if (imagesGenerated) this.imagesGenerated = imagesGenerated;
     if (metadataGenerated) this.metadataGenerated = metadataGenerated;
     if (imagesCid) this.imagesCid = imagesCid;
@@ -424,94 +328,81 @@ export class Factory {
     return this.traitsByLayerName.get(layerName);
   }
 
-  generateCollection(nodesAndEdges: NodesAndEdges) {
-    // const branchesData = getBranches(nodesAndEdges)
-    //   .map((path) => path.slice(1))
-    //   .map((path) => path.map((node) => node.data))
-    //   .sort((a, b) => a.length - b.length);
+  generateCollection(
+    keys: string[],
+    nTraits: Trait[][],
+    branchesNs: Record<string, number>,
+    bundles: { name: string; ids: string[] }[]
+  ) {
+    const computeTraitsNs = (
+      _nTraits: Trait[][],
+      _branchesNs: Record<string, number>
+    ): Record<string, number> => {
+      const maxNs: Record<string, number> = {};
 
-    // const computeNs = (
-    //   branchesData: (LayerNodeData | RenderNodeData)[][]
-    // ): Map<string, number> => {
-    //   const ns = new Map<string, number>();
+      _nTraits = [..._nTraits];
+      for (let [index, traits] of _nTraits.entries()) {
+        traits = [...traits];
+        const n = _branchesNs[keys[index]];
+        for (const { id } of traits)
+          if (!(id in maxNs) || n > maxNs[id]) maxNs[id] = n;
+      }
 
-    //   branchesData = [...branchesData];
-    //   for (let branchData of branchesData) {
-    //     branchData = [...branchData];
-    //     const { n } = branchData.pop() as RenderNodeData;
-    //     for (const { layerId } of branchData as LayerNodeData[])
-    //       if (!ns.has(layerId) || n > ns.get(layerId)) ns.set(layerId, n);
-    //   }
+      return maxNs;
+    };
 
-    //   return ns;
-    // };
+    const computeNTraits = (layer: Layer, n: number) => {
+      const nTraits: Trait[] = [];
 
-    // const ns = computeNs(branchesData);
+      const { name } = layer;
+      for (let i = 0; i < n; i++) {
+        const traits = this.traitsByLayerName.get(name);
+        const trait = choose(traits);
+        nTraits.push(trait);
+      }
 
-    // const computeNTraits = (layer: Layer, n: number) => {
-    //   const nTraits: Trait[] = [];
+      return nTraits;
+    };
 
-    //   const { name } = layer;
-    //   for (let i = 0; i < n; i++) {
-    //     const traits = this.traitsByLayerName.get(name);
-    //     const trait = choose(traits);
-    //     nTraits.push(trait);
-    //   }
+    const computeCache = (
+      _nTraits: Trait[][],
+      _traitsNs: Record<string, number>
+    ): Record<string, Trait[]> => {
+      const cache: Record<string, Trait[]> = {};
 
-    //   return nTraits;
-    // };
+      _nTraits = [..._nTraits];
+      for (let traits of _nTraits) {
+        traits = [...traits];
 
-    // const computeCache = (
-    //   branchesData: (LayerNodeData | RenderNodeData)[][],
-    //   ns: Map<string, number>
-    // ): Map<string, Trait[]> => {
-    //   const cache = new Map<string, Trait[]>();
+        for (const trait of traits)
+          cache[trait.id] = computeNTraits(trait, _traitsNs[trait.id]);
+      }
 
-    //   branchesData = [...branchesData];
-    //   for (let branchData of branchesData) {
-    //     branchData = [...branchData];
-    //     branchData.pop();
+      return cache;
+    };
 
-    //     for (const data of branchData as LayerNodeData[]) {
-    //       const layer = {
-    //         ...this.layerByName.get(data.name),
-    //         blending: data.blending,
-    //         opacity: data.opacity,
-    //       } as Layer;
-    //       cache.set(data.layerId, computeNTraits(layer, ns.get(data.layerId)));
-    //     }
-    //   }
-
-    //   return cache;
-    // };
-
-    // const cache = computeCache(branchesData, ns);
-
+    const traitsNs = computeTraitsNs(nTraits, branchesNs);
+    const cache = computeCache(nTraits, traitsNs);
     const collection: Collection = [];
 
-    // let i = 1;
-    // for (const branchData of branchesData) {
-    //   const { n } = branchData.pop() as RenderNodeData;
+    let i = 1;
+    for (const [index, traits] of nTraits.entries()) {
+      const n = branchesNs[keys[index]];
 
-    //   let nTraits = Array.from({ length: n }, () => []);
-    //   // nTraits = append(nTraits, cache.get(data.layerId).slice(0, n));
-    //   for (const data of branchData as LayerNodeData[])
-    //     nTraits = nTraits.map((traits, i) => [
-    //       ...traits,
-    //       cache.get(data.layerId)[i],
-    //     ]);
+      let nTraits = Array.from({ length: n }, () => []);
+      for (const trait of traits)
+        nTraits = nTraits.map((traits, i) => [...traits, cache[trait.id][i]]);
 
-    //   const collectionItems = nTraits.map((traits) => ({
-    //     name: `${i++}`,
-    //     traits,
-    //   }));
+      const collectionItems = nTraits.map((traits) => ({
+        name: `${i++}`,
+        traits,
+      }));
 
-    //   collection.push(...collectionItems);
-    // }
+      collection.push(...collectionItems);
+    }
 
-    // this.nodes = nodesAndEdges;
-    // this.collection = collection;
-    // this.configuration.n = collection.length;
+    this.collection = collection;
+    this.configuration.n = collection.length;
 
     return collection;
   }

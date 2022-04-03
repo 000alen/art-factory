@@ -225,42 +225,44 @@ export function QualityPage() {
       </Heading>
 
       <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">
-        {imagesUrls.map((url, i) =>
-          indexesToRemove.includes(index + i) ? (
-            <div
-              key={`d-${url.slice(10)}-${index + i}`}
-              className="w-32 h-32 m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
-            >
-              <Button
-                variant="secondary"
-                onPress={() =>
-                  setIndexesToRemove(
-                    indexesToRemove.filter((j) => j !== index + i)
-                  )
-                }
+        {imagesUrls.map((url, i) => (
+          <div className="w-32">
+            {indexesToRemove.includes(index + i) ? (
+              <div
+                key={`d-${url.slice(10)}-${index + i}`}
+                className="w-32 m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
               >
-                Undo
-              </Button>
-            </div>
-          ) : (
-            <ImageItem
-              key={`i-${url.slice(10)}-${index + i}`}
-              name={`${index + i + 1}`}
-              src={url}
-              actions={[
-                {
-                  label: "Edit",
-                  onClick: () => onEdit(index + i),
-                },
-                {
-                  label: "Remove",
-                  onClick: () =>
-                    setIndexesToRemove((prev) => [...prev, index + i]),
-                },
-              ]}
-            />
-          )
-        )}
+                <Button
+                  variant="secondary"
+                  onPress={() =>
+                    setIndexesToRemove(
+                      indexesToRemove.filter((j) => j !== index + i)
+                    )
+                  }
+                >
+                  Undo
+                </Button>
+              </div>
+            ) : (
+              <ImageItem
+                key={`i-${url.slice(10)}-${index + i}`}
+                name={`${index + i + 1}`}
+                src={url}
+                actions={[
+                  {
+                    label: "Edit",
+                    onClick: () => onEdit(index + i),
+                  },
+                  {
+                    label: "Remove",
+                    onClick: () =>
+                      setIndexesToRemove((prev) => [...prev, index + i]),
+                  },
+                ]}
+              />
+            )}
+          </div>
+        ))}
       </div>
 
       <Flex direction="row-reverse">

@@ -28,8 +28,8 @@ import {
   Configuration1155,
   Configuration721,
   Instance,
-  NodesAndEdges,
   Secrets,
+  Trait,
 } from "./typings";
 
 export const loadSecrets = async () =>
@@ -200,58 +200,26 @@ export const initializeFactory = async (
   };
 };
 
-export const filterNodes = (nodes: NodesAndEdges) =>
-  JSON.parse(
-    JSON.stringify(
-      nodes.map((node) =>
-        node.type === "layerNode" ||
-        node.type === "renderNode" ||
-        node.type === "bundleNode"
-          ? {
-              id: node.id,
-              type: node.type,
-              data: {
-                ...(node.type === "layerNode"
-                  ? {
-                      layerId: node.data.layerId,
-                      name: node.data.name,
-                      opacity: node.data.opacity,
-                      blending: node.data.blending,
-                    }
-                  : node.type === "renderNode"
-                  ? {
-                      renderId: node.data.renderId,
-                      n: node.data.n,
-                    }
-                  : node.type === "bundleNode"
-                  ? {
-                      bundle: node.data.bundle,
-                    }
-                  : {}),
-              },
-            }
-          : node
-      )
-    )
-  );
-
-export const computeN = (nodes: NodesAndEdges) =>
-  nodes.reduce(
-    (n, node) => n + (node.type === "renderNode" ? node.data.n : 0),
-    0
-  );
-
 export const factoryGenerate = async (
   id: string,
   configuration: Partial<Configuration>,
-  nodesAndEdges: NodesAndEdges,
+  keys: string[],
+  nTraits: Trait[][],
+  ns: Record<string, number>,
+  bundles: { name: string; ids: string[] }[],
   onProgress: (name: string) => void
 ) => {
   // @ts-ignore
   await factoryLoadInstance(id, { configuration });
   await factorySaveInstance(id);
 
-  const collection = await factoryGenerateCollection(id, nodesAndEdges);
+  const collection: Collection = await factoryGenerateCollection(
+    id,
+    keys,
+    nTraits,
+    ns,
+    bundles
+  );
 
   try {
     await factoryGenerateImages(id, collection, onProgress);

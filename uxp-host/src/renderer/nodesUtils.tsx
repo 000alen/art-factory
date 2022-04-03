@@ -40,14 +40,3 @@ export function getBranches(
 
   return savedPaths;
 }
-
-export const getChildren = (
-  node: FlowNode,
-  nodes: FlowNode[],
-  edges: FlowEdge[]
-) => {
-  if (!isNode(node)) {
-    return [];
-  }
-  return nodes.filter((n) => n.parentNode === node.id);
-};

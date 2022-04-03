@@ -76,4 +76,3 @@ export function sizeOf(inputDir: string) {
   const { width, height } = imageSize(path.join(inputDir, layer, layerElement));
   return { width, height };
 }
-
