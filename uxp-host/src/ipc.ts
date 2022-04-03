@@ -300,8 +300,8 @@ ipcTask(
     keys: string[],
     nTraits: Trait[][],
     ns: Record<string, number>,
-    bundles: { name: string; ids: string[] }[]
-  ) => factories[id].generateCollection(keys, nTraits, ns, bundles)
+    nBundles: { name: string; ids: string[] }[]
+  ) => factories[id].generateCollection(keys, nTraits, ns, nBundles)
 );
 
 ipcTaskWithRequestId(

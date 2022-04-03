@@ -211,15 +211,15 @@ export const factoryGenerateCollection = (
   keys: string[],
   nTraits: Trait[][],
   ns: Record<string, number>,
-  bundles: { name: string; ids: string[] }[]
+  nBundles: { name: string; ids: string[] }[]
 ) =>
   ipcTask("factoryGenerateCollection")(
     id,
     keys,
     nTraits,
     ns,
-    bundles
-  ) as Promise<Collection>;
+    nBundles
+  ) as Promise<{ collection: Collection; bundles: Record<string, string[][]> }>;
 
 export const factoryComputeMaxCombinations = (id: string, layers: Layer[]) =>
   ipcTaskWithRequestId("factoryComputeMaxCombinations")(

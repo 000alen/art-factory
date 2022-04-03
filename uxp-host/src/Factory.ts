@@ -14,7 +14,7 @@ import {
   Secrets,
   Trait,
 } from "./typings";
-import { rarity, removeRarity } from "./utils";
+import { append, rarity, removeRarity } from "./utils";
 
 export const DEFAULT_BLENDING = "normal";
 export const DEFAULT_OPACITY = 1;
@@ -264,8 +264,13 @@ export class Factory {
       outputDir: this.outputDir,
       configuration: this.configuration,
       collection: this.collection,
-      bundles: this.bundles === undefined ? undefined : {},
-      // Object.fromEntries(this.bundles),
+      bundles:
+        this.bundles === undefined
+          ? undefined
+          : Object.assign(
+              {},
+              ...[...this.bundles.entries()].map(([k, v]) => ({ [k]: v }))
+            ),
       imagesGenerated: this.imagesGenerated,
       metadataGenerated: this.metadataGenerated,
       imagesCid: this.imagesCid,
@@ -332,7 +337,7 @@ export class Factory {
     keys: string[],
     nTraits: Trait[][],
     branchesNs: Record<string, number>,
-    bundles: { name: string; ids: string[] }[]
+    nBundles: { name: string; ids: string[] }[]
   ) {
     const computeTraitsNs = (
       _nTraits: Trait[][],
@@ -349,6 +354,16 @@ export class Factory {
       }
 
       return maxNs;
+    };
+
+    const computeBundlesNs = (
+      _nBundles: { name: string; ids: string[] }[],
+      _branchesNs: Record<string, number>
+    ): Record<string, number> => {
+      const bundlesNs: Record<string, number> = {};
+      for (const { name, ids } of _nBundles)
+        bundlesNs[name] = Math.min(...ids.map((id) => _branchesNs[id]));
+      return bundlesNs;
     };
 
     const computeNTraits = (layer: Layer, n: number) => {
@@ -382,8 +397,10 @@ export class Factory {
     };
 
     const traitsNs = computeTraitsNs(nTraits, branchesNs);
+    const bundlesNs = computeBundlesNs(nBundles, branchesNs);
     const cache = computeCache(nTraits, traitsNs);
     const collection: Collection = [];
+    const bundles: Record<string, string[][]> = {};
 
     let i = 1;
     for (const [index, traits] of nTraits.entries()) {
@@ -398,13 +415,33 @@ export class Factory {
         traits,
       }));
 
+      const bundleName = nBundles.find(({ name, ids }) =>
+        ids.includes(keys[index])
+      ).name;
+
+      if (bundleName !== undefined) {
+        if (!(bundleName in bundles))
+          bundles[bundleName] = Array.from(
+            { length: bundlesNs[bundleName] },
+            () => []
+          );
+        bundles[bundleName] = append(
+          bundles[bundleName],
+          collectionItems
+            .map((collectionItem) => collectionItem.name)
+            .slice(0, bundlesNs[bundleName])
+            .map((name) => [name])
+        );
+      }
+
       collection.push(...collectionItems);
     }
 
     this.collection = collection;
+    this.bundles = new Map(Object.entries(bundles));
     this.configuration.n = collection.length;
 
-    return collection;
+    return { collection, bundles };
   }
 
   computeMaxCombinations(layers: Layer[]) {

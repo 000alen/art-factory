@@ -53,6 +53,7 @@ export function NodesPage() {
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [generationDone, setGenerationDone] = useState(false);
   const [collection, setCollection] = useState([]);
+  const [bundles, setBundles] = useState({});
   const [configuration, setConfiguration] = useState(null);
   const [isWorking, setIsWorking] = useState(false);
   const [workTime, setWorkTime] = useState(null);
@@ -114,7 +115,7 @@ export function NodesPage() {
       }))
     );
 
-    const bundles = nodes
+    const nBundles = nodes
       .filter((node) => node.type === "bundleNode")
       .map((node) => node.data)
       .map((data) => ({
@@ -130,22 +131,23 @@ export function NodesPage() {
 
     const a = performance.now();
 
-    const { collection } = await factoryGenerate(
+    const { collection, bundles } = await factoryGenerate(
       id,
       configuration,
       keys,
       nTraits,
       ns,
-      bundles,
+      nBundles,
       onProgress
     );
 
     const b = performance.now();
 
-    console.log(collection);
+    console.log(collection, bundles);
 
     setWorkTime(b - a);
     setCollection(collection);
+    setBundles(bundles);
     setGenerationDone(true);
     setIsWorking(false);
   });

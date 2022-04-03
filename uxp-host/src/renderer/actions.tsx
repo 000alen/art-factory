@@ -206,19 +206,19 @@ export const factoryGenerate = async (
   keys: string[],
   nTraits: Trait[][],
   ns: Record<string, number>,
-  bundles: { name: string; ids: string[] }[],
+  nBundles: { name: string; ids: string[] }[],
   onProgress: (name: string) => void
 ) => {
   // @ts-ignore
   await factoryLoadInstance(id, { configuration });
   await factorySaveInstance(id);
 
-  const collection: Collection = await factoryGenerateCollection(
+  const { collection, bundles } = await factoryGenerateCollection(
     id,
     keys,
     nTraits,
     ns,
-    bundles
+    nBundles
   );
 
   try {
@@ -233,6 +233,7 @@ export const factoryGenerate = async (
 
   return {
     collection,
+    bundles,
   };
 };
 
