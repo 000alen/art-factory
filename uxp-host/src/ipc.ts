@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from "electron";
+import { ipcMain, dialog, shell } from "electron";
 import path from "path";
 import solc from "solc";
 import { Factory, loadInstance } from "./Factory";
@@ -209,6 +209,15 @@ ipcAsyncTask("getContract", async (name) => {
   };
 
   return JSON.parse(solc.compile(JSON.stringify(input)));
+});
+
+ipcTask("openFolder", (path: string) => {
+  console.log("Opened file");
+  try {
+    shell.openPath(path);
+  } catch(err) {
+    console.log(err);
+  }
 });
 
 ipcAsyncTask(

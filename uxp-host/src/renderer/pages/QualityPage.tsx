@@ -22,10 +22,18 @@ import { GenericDialogContext } from "../components/GenericDialog";
 import { UXPContext } from "../components/UXPContext";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
+import Folder from "@spectrum-icons/workflow/Folder";
+
 import { Collection, CollectionItem, Configuration } from "../typings";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
 import { MAX_SIZE } from "../constants";
+
+import {
+  openFolder
+} from "../ipc"
+
+import path from "path";
 
 interface QualityPageState {
   id: string;
@@ -83,6 +91,10 @@ export function QualityPage() {
     };
 
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+    toolbarContext.addButton("open-explorer", "Open in explorer", <Folder />, () => {
+      openFolder(path.join(outputDir, "images"));
+    });
+
     uxpContext.on("uxp-reload", uxpReload);
 
     task("loading previews", async () => {
@@ -105,6 +117,8 @@ export function QualityPage() {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("open-explorer");
+
       uxpContext.off("uxp-reload", uxpReload);
     };
   }, [index, id]);
