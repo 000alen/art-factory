@@ -17,3 +17,5 @@
 - [ ] **Feature request**: Different smart contracts: pre-sale, not-revealed, pause, etc.
 - [ ] Remove editing in uxp-host
 - [ ] Show by bundle
+- [ ] Fix bundles
+- [ ] Add ignore list to renders

@@ -29,9 +29,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
 import { MAX_SIZE } from "../constants";
 
-import {
-  openFolder
-} from "../ipc"
+import { openFolder } from "../ipc";
 
 import path from "path";
 
@@ -91,9 +89,14 @@ export function QualityPage() {
     };
 
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("open-explorer", "Open in explorer", <Folder />, () => {
-      openFolder(path.join(outputDir, "images"));
-    });
+    toolbarContext.addButton(
+      "open-explorer",
+      "Open in Explorer",
+      <Folder />,
+      () => {
+        openFolder(path.join(outputDir, "images"));
+      }
+    );
 
     uxpContext.on("uxp-reload", uxpReload);
 

@@ -415,11 +415,12 @@ export class Factory {
         traits,
       }));
 
-      const bundleName = nBundles.find(({ name, ids }) =>
+      const bundle = nBundles.find(({ name, ids }) =>
         ids.includes(keys[index])
-      ).name;
+      );
 
-      if (bundleName !== undefined) {
+      if (bundle !== undefined) {
+        const bundleName = bundle.name;
         if (!(bundleName in bundles))
           bundles[bundleName] = Array.from(
             { length: bundlesNs[bundleName] },

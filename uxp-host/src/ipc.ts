@@ -211,14 +211,7 @@ ipcAsyncTask("getContract", async (name) => {
   return JSON.parse(solc.compile(JSON.stringify(input)));
 });
 
-ipcTask("openFolder", (path: string) => {
-  console.log("Opened file");
-  try {
-    shell.openPath(path);
-  } catch(err) {
-    console.log(err);
-  }
-});
+ipcTask("openFolder", (path: string) => shell.openPath(path));
 
 ipcAsyncTask(
   "getContractSource",
