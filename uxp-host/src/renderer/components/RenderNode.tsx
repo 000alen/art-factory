@@ -9,7 +9,6 @@ import {
   Menu,
   Item,
 } from "@adobe/react-spectrum";
-import { ImageItem } from "./ImageItem";
 import { DEFAULT_N } from "../constants";
 import { Trait } from "../typings";
 import { hash } from "../utils";
@@ -41,6 +40,34 @@ interface RenderNodeProps {
   id: string;
   data: RenderNodeComponentData;
 }
+
+interface ImageItemProps {
+  name?: string;
+  src: string;
+}
+
+export const ImageItem: React.FC<ImageItemProps> = ({
+  name,
+  src,
+  children,
+}) => {
+  return (
+    <div className="relative w-full h-full m-auto rounded">
+      {children && (
+        <div className="absolute w-full h-full space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
+          {children}
+        </div>
+      )}
+
+      <img
+        className="w-full h-full select-none rounded"
+        draggable="false"
+        src={src}
+        alt={name}
+      />
+    </div>
+  );
+};
 
 export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
   const [forceUpdate, x] = useForceUpdate();
@@ -96,7 +123,9 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
       <></>
     ) : (
       <Flex direction="column" gap="size-100">
-        <ImageItem src={composedUrl} />
+        <ImageItem src={composedUrl}>
+          <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
+        </ImageItem>
         <Heading>{renderId}</Heading>
         <Flex gap="size-100" alignItems="end">
           <NumberField
