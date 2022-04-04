@@ -61,6 +61,7 @@ export interface NodesInstance {
   composedUrls: Record<string, string>;
   renderIds: Record<string, string>;
   ns: Record<string, number>;
+  ignored: string[];
 }
 
 export function useNodes(
@@ -98,6 +99,8 @@ export function useNodes(
   // ? hash(trait[]) -> number
   const [ns, setNs] = useState<Record<string, number>>({});
 
+  const [ignored, setIgnored] = useState<string[]>([]);
+
   useEffect(() => {
     setter(() => ({
       nodes,
@@ -106,8 +109,9 @@ export function useNodes(
       composedUrls,
       renderIds,
       ns,
+      ignored,
     }));
-  }, [setter, nodes, edges, urls, composedUrls, renderIds, ns]);
+  }, [setter, nodes, edges, urls, composedUrls, renderIds, ns, ignored]);
 
   const onChange =
     <T,>(name: string) =>
@@ -147,6 +151,10 @@ export function useNodes(
   const onUpdateNs = onUpdate<Record<string, number>>(
     ["renderNode", "bundleNode"],
     "ns"
+  );
+  const onUpdateIgnored = onUpdate<string[]>(
+    ["renderNode", "bundleNode"],
+    "ignored"
   );
 
   const requestUrl = async (trait: Trait) => {
@@ -195,6 +203,17 @@ export function useNodes(
       const newNs = { ...prevNs, [key]: n };
       onUpdateNs(newNs);
       return newNs;
+    });
+  };
+
+  const updateIgnored = async (traits: Trait[], ignored: boolean) => {
+    const key = hash(traits);
+    setIgnored((prevIgnored) => {
+      const newIgnored = ignored
+        ? [...prevIgnored, key]
+        : prevIgnored.filter((k) => k !== key);
+      onUpdateIgnored(newIgnored);
+      return newIgnored;
     });
   };
 
@@ -269,16 +288,19 @@ export function useNodes(
           composedUrls,
           renderIds,
           ns,
+          ignored,
 
           requestComposedUrl,
           requestRenderId,
           updateNs,
+          updateIgnored,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
           composedUrls,
           renderIds,
           ns,
+          ignored,
           onChangeBundleName,
           onChangeBundleIds,
 

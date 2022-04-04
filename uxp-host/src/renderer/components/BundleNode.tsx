@@ -1,6 +1,5 @@
 import {
   ActionButton,
-  ActionGroup,
   Flex,
   Heading,
   Item,
@@ -24,6 +23,7 @@ export interface BundleNodeComponentData {
   composedUrls?: Record<string, string>;
   renderIds?: Record<string, string>;
   ns?: Record<string, number>;
+  ignored?: string[];
   onChangeBundleName?: (id: string, value: string) => void;
   onChangeBundleIds?: (id: string, value: string[]) => void;
 
@@ -60,9 +60,9 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
 
     if (currentCacheKey === cacheKey) return;
 
-    if (nTraits.length > 0) {
-      const keys = nTraits.map(hash);
+    const keys = nTraits.map(hash).filter((key) => !data.ignored.includes(key));
 
+    if (keys.length > 0) {
       if (emptyValue === null)
         setEmptyValue(() => keys[Math.floor(Math.random() * keys.length)]);
 
@@ -84,10 +84,13 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
     const renderId = data.renderIds[key];
     const composedUrl = data.composedUrls[key];
 
-    const items = Object.values(data.renderIds).map((renderId) => ({
-      id: renderId,
-      name: renderId,
-    }));
+    const items = Object.entries(data.renderIds)
+      .filter(([key]) => !data.ignored.includes(key))
+      .map(([, renderId]) => renderId)
+      .map((renderId) => ({
+        id: renderId,
+        name: renderId,
+      }));
 
     return (
       <Flex direction="column" gap="size-100">

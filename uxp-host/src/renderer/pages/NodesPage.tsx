@@ -89,7 +89,7 @@ export function NodesPage() {
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
 
-    const { nodes, edges, ns } = getterRef.current();
+    const { nodes, edges, ns, ignored } = getterRef.current();
 
     const nData = (
       getBranches(nodes, edges).map((branch) =>
@@ -97,7 +97,7 @@ export function NodesPage() {
       ) as FlowNode<LayerNodeComponentData>[][]
     ).map((branch) => branch.map((node) => node.data));
 
-    const keys = nData
+    let keys = nData
       .map((branch) =>
         branch.map((data) => ({
           ...data.trait,
@@ -106,14 +106,18 @@ export function NodesPage() {
       )
       .map(hash);
 
-    const nTraits: Trait[][] = nData.map((branch) =>
-      branch.map((data) => ({
-        ...data.trait,
-        id: data.id,
-        opacity: data.opacity,
-        blending: data.blending,
-      }))
-    );
+    const nTraits: Trait[][] = nData
+      .map((branch) =>
+        branch.map((data) => ({
+          ...data.trait,
+          id: data.id,
+          opacity: data.opacity,
+          blending: data.blending,
+        }))
+      )
+      .filter((_, i) => !ignored.includes(keys[i]));
+
+    keys = keys.filter((key) => !ignored.includes(key));
 
     const nBundles = nodes
       .filter((node) => node.type === "bundleNode")

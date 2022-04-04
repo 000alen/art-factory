@@ -94,7 +94,7 @@ export function HomePage() {
       justifyContent="center"
     >
       <Heading level={1} marginBottom={-2}>
-        Welcome to the NFT Factory App
+        Welcome to the Art Factory!
       </Heading>
 
       <Text marginBottom={8}>

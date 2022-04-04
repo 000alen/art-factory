@@ -5,6 +5,9 @@ import {
   Flex,
   Heading,
   ActionButton,
+  MenuTrigger,
+  Menu,
+  Item,
 } from "@adobe/react-spectrum";
 import { ImageItem } from "./ImageItem";
 import { DEFAULT_N } from "../constants";
@@ -21,14 +24,17 @@ import Refresh from "@spectrum-icons/workflow/Refresh";
 import { useForceUpdate } from "../hooks/useForceUpdate";
 import { getBranches } from "../nodesUtils";
 import { LayerNodeComponentData } from "./LayerNode";
+import Remove from "@spectrum-icons/workflow/Remove";
 
 export interface RenderNodeComponentData {
   composedUrls?: Record<string, string>;
   renderIds?: Record<string, string>;
   ns?: Record<string, number>;
+  ignored?: string[];
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
   updateNs?: (traits: Trait[], n: number) => void;
+  updateIgnored?: (traits: Trait[], ignored: boolean) => void;
 }
 
 interface RenderNodeProps {
@@ -86,25 +92,55 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     const composedUrl = data.composedUrls[key];
     const n = data.ns[key];
 
-    return (
+    return data.ignored.includes(key) ? (
+      <></>
+    ) : (
       <Flex direction="column" gap="size-100">
         <ImageItem src={composedUrl} />
         <Heading>{renderId}</Heading>
-        <NumberField
-          label="N"
-          {...{
-            value: n,
-            onChange: (value: number) => data.updateNs(nTraits[i], value),
-          }}
-        />
+        <Flex gap="size-100" alignItems="end">
+          <NumberField
+            width="100%"
+            label="N"
+            {...{
+              value: n,
+              onChange: (value: number) => data.updateNs(nTraits[i], value),
+            }}
+          />
+          <ActionButton onPress={() => data.updateIgnored(nTraits[i], true)}>
+            <Remove />
+          </ActionButton>
+        </Flex>
       </Flex>
     );
   };
+
+  const visibleKeys = keys.filter((key) => !data.ignored.includes(key));
+
+  const ignoredKeys = keys.filter((key) => data.ignored.includes(key));
+  const ignoredItems = ignoredKeys.map((key) => ({
+    id: key,
+    name: data.renderIds[key],
+  }));
 
   return (
     <Flex direction="column" gap="size-100">
       <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
         <Flex gap="size-100">
+          <MenuTrigger>
+            <ActionButton width="100%">Hidden</ActionButton>
+            <Menu
+              items={ignoredItems}
+              selectionMode="single"
+              onSelectionChange={(selectedKeys) => {
+                const selectedKey = [...selectedKeys].shift() as string;
+                data.updateIgnored(nTraits[keys.indexOf(selectedKey)], false);
+              }}
+            >
+              {({ id, name }) => <Item key={id}>{name}</Item>}
+            </Menu>
+          </MenuTrigger>
+
           <ActionButton onPress={() => forceUpdate()}>
             <Refresh />
           </ActionButton>
@@ -120,7 +156,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
         />
 
         <Flex direction="column" gap="size-300">
-          {keys.length > 0 ? (
+          {visibleKeys.length > 0 ? (
             keys.map(renderItem)
           ) : (
             <div className="h-48 flex justify-center items-center">
