@@ -1,16 +1,15 @@
 import React from "react";
-
 import { PanelController } from "./controllers/PanelController";
 import { CommandController } from "./controllers/CommandController";
 import { About } from "./components/About";
-import { ConfigurationPanel } from "./panels/ConfigurationPanel";
+import { FactoryPanel } from "./panels/FactoryPanel";
 import { socket, SocketContext } from "./components/SocketContext";
 import { entrypoints } from "uxp";
-import "./uxpActions";
-
-import "./css/index.css";
 import { UXPContextProvider } from "./components/UXPContext";
-import { EditionPanel } from "./panels/EditionPanel";
+import "./uxpActions";
+import "./css/index.css";
+
+localStorage.clear();
 
 export const aboutController = new CommandController(
   ({ dialog }) => <About dialog={dialog} />,
@@ -21,16 +20,16 @@ export const aboutController = new CommandController(
   }
 );
 
-export const configurationController = new PanelController(
+export const factoryController = new PanelController(
   () => (
     <SocketContext.Provider value={socket}>
       <UXPContextProvider>
-        <ConfigurationPanel />
+        <FactoryPanel />
       </UXPContextProvider>
     </SocketContext.Provider>
   ),
   {
-    id: "configuration",
+    id: "factory",
     menuItems: [
       {
         id: "reload1",
@@ -50,41 +49,11 @@ export const configurationController = new PanelController(
   }
 );
 
-export const editionController = new PanelController(
-  () => (
-    <SocketContext.Provider value={socket}>
-      <UXPContextProvider>
-        <EditionPanel />
-      </UXPContextProvider>
-    </SocketContext.Provider>
-  ),
-  {
-    id: "edition",
-    menuItems: [
-      {
-        id: "reload2",
-        label: "Reload Plugin",
-        enabled: true,
-        checked: false,
-        oninvoke: () => location.reload(),
-      },
-      {
-        id: "dialog2",
-        label: "About this Plugin",
-        enabled: true,
-        checked: false,
-        oninvoke: () => aboutController.run(),
-      },
-    ],
-  }
-);
-
 entrypoints.setup({
   commands: {
     showAbout: aboutController,
   },
   panels: {
-    configuration: configurationController,
-    edition: editionController,
+    factory: factoryController,
   },
 });

@@ -1,26 +1,35 @@
 import { socket } from "./components/SocketContext";
 import { edit } from "./jobs";
-import { getDocument, getId, setItem } from "./store";
-import { editionController } from "./index";
+import { getActiveDocument, setItem } from "./store";
+import { dashedName } from "./utils";
 
 const uxp = require("uxp");
 const photoshop = require("photoshop");
 const app = photoshop.app;
 const fs = uxp.storage.localFileSystem;
 
-socket.on("host-edit", async ({ photoshopId, name, traits }) => {
-  const doc = app.documents.getByName(getDocument(photoshopId));
+socket.on("host-edit", async ({ width, height, name, traits }) => {
+  const docName = getActiveDocument();
+  if (docName === null) {
+    await photoshop.app.showAlert("Active Document is not set.");
+    return;
+  }
 
-  const id = getId();
+  const doc = app.documents.find((doc) => doc.name === docName);
+  if (doc === undefined) {
+    await photoshop.app.showAlert("Invalid Active Document.");
+    return;
+  }
 
+  const id = dashedName();
   setItem(id, {
-    photoshopId,
+    width,
+    height,
     name,
     traits,
   });
 
-  await photoshop.core.executeAsModal(async (executionControl) => {
-    await edit(executionControl, doc, `EDIT-${id}`, traits);
-    editionController.show();
+  await photoshop.core.executeAsModal(async () => {
+    await edit(doc, id, traits);
   });
 });

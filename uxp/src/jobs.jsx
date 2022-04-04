@@ -3,7 +3,7 @@ const photoshop = require("photoshop");
 const app = photoshop.app;
 const fs = uxp.storage.localFileSystem;
 
-export async function hideAll(executionContext, doc) {
+export async function hideAll(doc) {
   for (const layer of doc.layers) {
     layer.visible = true;
     for (const layerElement of layer.layers) {
@@ -12,7 +12,7 @@ export async function hideAll(executionContext, doc) {
   }
 }
 
-export async function exportAll(executionContext, doc, folder) {
+export async function exportAll(doc, folder) {
   for (let i = 0; i < doc.layers.length; i++) {
     const layer = doc.layers[i];
     layer.visible = true;
@@ -33,7 +33,7 @@ export async function exportAll(executionContext, doc, folder) {
   }
 }
 
-export async function edit(executionContext, doc, name, traits) {
+export async function edit(doc, name, traits) {
   const newDoc = await app.createDocument({
     name,
     width: doc.width,

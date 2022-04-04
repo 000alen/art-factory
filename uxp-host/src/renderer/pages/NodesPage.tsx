@@ -29,8 +29,6 @@ interface NodesPageState {
   id: string;
   inputDir: string;
   outputDir: string;
-  photoshopId: string;
-  photoshop: boolean;
   partialConfiguration: Partial<Configuration>;
 }
 
@@ -43,8 +41,6 @@ export function NodesPage() {
     id,
     inputDir,
     outputDir,
-    photoshopId,
-    photoshop,
     partialConfiguration,
   } = state as NodesPageState;
 
@@ -163,8 +159,6 @@ export function NodesPage() {
         collection,
         inputDir,
         outputDir,
-        photoshopId,
-        photoshop,
         configuration,
       },
     });

@@ -18,8 +18,6 @@ import { parseColor } from "@react-stately/color";
 interface ConfigurationPageState {
   inputDir: string;
   outputDir: string;
-  photoshopId?: string;
-  photoshop: boolean;
   partialConfiguration: Partial<Configuration>;
 }
 
@@ -28,7 +26,7 @@ export function ConfigurationPage() {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir, photoshopId, photoshop, partialConfiguration } =
+  const { inputDir, outputDir, partialConfiguration } =
     state as ConfigurationPageState;
 
   // ConfigurationBase
@@ -177,8 +175,6 @@ export function ConfigurationPage() {
         id,
         inputDir,
         outputDir,
-        photoshopId,
-        photoshop,
         partialConfiguration,
       },
     });

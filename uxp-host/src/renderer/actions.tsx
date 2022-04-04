@@ -60,8 +60,6 @@ export const openDirectory = async () => {
   return {
     inputDir,
     outputDir,
-    photoshopId: "",
-    photoshop: false,
   };
 };
 
@@ -133,8 +131,6 @@ export const resolvePathFromInstance = (
           collection,
           inputDir,
           outputDir,
-          photoshopId: "",
-          photoshop: false,
           configuration,
         },
       ]
@@ -146,8 +142,6 @@ export const resolvePathFromInstance = (
           collection,
           inputDir,
           outputDir,
-          photoshopId: "",
-          photoshop: false,
           configuration,
           partialDeploy: {
             imagesCID: imagesCid,
@@ -163,8 +157,6 @@ export const resolvePathFromInstance = (
           collection,
           inputDir,
           outputDir,
-          photoshopId: "",
-          photoshop: false,
           configuration,
           imagesCID: imagesCid,
           metadataCID: metadataCid,

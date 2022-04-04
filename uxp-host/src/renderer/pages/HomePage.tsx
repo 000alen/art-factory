@@ -7,8 +7,7 @@ import {
   ButtonGroup,
 } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
-import { createFactory, getOutputDir } from "../ipc";
-import { GenericDialogContext } from "../components/GenericDialog";
+import { getOutputDir } from "../ipc";
 import {
   openDirectory,
   openInstance,
@@ -16,7 +15,6 @@ import {
 } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { UXPContext } from "../components/UXPContext";
-import { v4 as uuid } from "uuid";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -25,11 +23,9 @@ export function HomePage() {
 
   useEffect(() => {
     const uxpGenerate = async ({
-      photoshopId,
       inputDir,
       partialConfiguration,
     }: {
-      photoshopId: string;
       inputDir: string;
       partialConfiguration: any;
     }) => {
@@ -40,8 +36,6 @@ export function HomePage() {
           inputDir,
           outputDir,
           partialConfiguration,
-          photoshopId,
-          photoshop: true,
         },
       });
     };
@@ -56,13 +50,11 @@ export function HomePage() {
     const result = await openDirectory();
 
     if (result) {
-      const { inputDir, outputDir, photoshopId, photoshop } = result;
+      const { inputDir, outputDir } = result;
       navigate("/configuration", {
         state: {
           inputDir,
           outputDir,
-          photoshopId,
-          photoshop,
         },
       });
     }
@@ -98,7 +90,7 @@ export function HomePage() {
       </Heading>
 
       <Text marginBottom={8}>
-        To start, load the UXP plugin into Photoshop or open a directory
+        To start, load the plugin into Photoshop or open a directory
       </Text>
 
       <ButtonGroup>

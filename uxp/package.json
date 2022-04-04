@@ -35,7 +35,8 @@
     "path-browserify": "^1.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "socket.io-client": "^4.4.1"
+    "socket.io-client": "^4.4.1",
+    "unique-names-generator": "^4.7.1"
   },
   "resolutions": {
     "acorn": "npm:acorn-with-stage3"

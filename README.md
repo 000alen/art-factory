@@ -19,4 +19,5 @@
 - [ ] **Feature request**: Different smart contracts: pre-sale, not-revealed, pause, etc.
 - [ ] Remove editing in uxp-host
 - [ ] Show by bundle
+- [ ] Publish bundles
 - [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~

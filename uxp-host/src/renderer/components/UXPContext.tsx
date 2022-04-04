@@ -8,11 +8,13 @@ interface UXPContextValue {
   on: (channel: string, callback: (...args: any[]) => void) => void;
   off: (channel: string, callback: (...args: any[]) => void) => void;
   hostEdit: ({
-    photoshopId,
+    width,
+    height,
     name,
     traits,
   }: {
-    photoshopId: string;
+    width: number;
+    height: number;
     name: string;
     traits: Trait[];
   }) => void;
@@ -22,15 +24,7 @@ export const UXPContext = createContext<UXPContextValue>({
   connectionStatus: false,
   on: (channel: string, callback: (...args: any[]) => void) => {},
   off: (channel: string, callback: (...args: any[]) => void) => {},
-  hostEdit: ({
-    photoshopId,
-    name,
-    traits,
-  }: {
-    photoshopId: string;
-    name: string;
-    traits: Trait[];
-  }) => {},
+  hostEdit: ({ name, traits }: { name: string; traits: Trait[] }) => {},
 });
 
 export const UXPContextProvider: React.FC = ({ children }) => {
@@ -52,16 +46,19 @@ export const UXPContextProvider: React.FC = ({ children }) => {
   };
 
   const hostEdit = ({
-    photoshopId,
+    width,
+    height,
     name,
     traits,
   }: {
-    photoshopId: string;
+    width: number;
+    height: number;
     name: string;
     traits: Trait[];
   }) => {
     socket.emit("host-edit", {
-      photoshopId,
+      width,
+      height,
       name,
       traits,
     });

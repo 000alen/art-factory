@@ -2,7 +2,6 @@ import {
   Flex,
   Heading,
   ActionGroup,
-  DialogTrigger,
   Item,
   Button,
 } from "@adobe/react-spectrum";
@@ -17,14 +16,12 @@ import {
   factoryRewriteImage,
   factorySaveInstance,
 } from "../ipc";
-import { EditorDialog } from "../components/EditorDialog";
-import { GenericDialogContext } from "../components/GenericDialog";
 import { UXPContext } from "../components/UXPContext";
 import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
 import Folder from "@spectrum-icons/workflow/Folder";
 
-import { Collection, CollectionItem, Configuration } from "../typings";
+import { Collection, Configuration } from "../typings";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
 import { MAX_SIZE } from "../constants";
@@ -38,8 +35,6 @@ interface QualityPageState {
   collection: Collection;
   inputDir: string;
   outputDir: string;
-  photoshopId: string;
-  photoshop: boolean;
   configuration: Partial<Configuration>;
 }
 
@@ -50,31 +45,15 @@ export function QualityPage() {
   const { state } = useLocation();
   const task = useErrorHandler();
 
-  const {
-    id,
-    collection,
-    inputDir,
-    outputDir,
-    photoshopId,
-    photoshop,
-    configuration,
-  } = state as QualityPageState;
+  const { id, collection, inputDir, outputDir, configuration } =
+    state as QualityPageState;
 
   const [index, setIndex] = useState(0);
   const [imagesUrls, setImagesUrls] = useState([]);
-  const [editorShown, setEditorShown] = useState(false);
-  const [editorI, setEditorI] = useState(null);
-  const [collectionItem, setCollectionItem] = useState(null);
   const [indexesToRemove, setIndexesToRemove] = useState([]);
 
   useEffect(() => {
-    const uxpReload = async ({
-      photoshopId,
-      name,
-    }: {
-      photoshopId: string;
-      name: string;
-    }) => {
+    const uxpReload = async ({ name }: { name: string }) => {
       const i = Number(name) - index - 1;
       const base64String = await factoryGetImage(
         id,
@@ -126,43 +105,13 @@ export function QualityPage() {
     };
   }, [index, id]);
 
-  const onShowEditor = () => {
-    setEditorShown(true);
-  };
-
-  const onSetEditor = (
-    i: number,
-    collectionItem: CollectionItem,
-    show: boolean
-  ) => {
-    setEditorI(i);
-    setCollectionItem(collectionItem);
-    if (show) onShowEditor();
-  };
-
-  const onHideEditor = () => {
-    setEditorShown(false);
-  };
-
   const onEdit = (i: number) => {
-    if (photoshop) {
-      uxpContext.hostEdit({
-        photoshopId,
-        ...collection[i],
-      });
-    } else {
-      onSetEditor(i, collection[i], true);
-    }
-  };
-
-  const onSave = task("saving", async (i: number, dataURL: string) => {
-    await factoryRewriteImage(id, collection[i], dataURL);
-    setImagesUrls((prevUrls) => {
-      const urls = [...prevUrls];
-      urls[i % 25] = [dataURL, i];
-      return urls;
+    uxpContext.hostEdit({
+      width: configuration.width,
+      height: configuration.height,
+      ...collection[i],
     });
-  });
+  };
 
   const onAction = (action: string) => {
     switch (action) {
@@ -225,18 +174,6 @@ export function QualityPage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <DialogTrigger isOpen={editorShown}>
-        {null}
-        <EditorDialog
-          id={id}
-          configuration={configuration}
-          onHide={onHideEditor}
-          onSave={onSave}
-          i={editorI}
-          collectionItem={collectionItem}
-        />
-      </DialogTrigger>
-
       <Heading level={1} marginStart={16}>
         {Math.floor(index / 25) + 1} of {Math.ceil(collection.length / 25)}
       </Heading>

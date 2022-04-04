@@ -5,8 +5,8 @@ export const UXPContext = createContext({
   connectionStatus: false,
   on: (channel, callback) => {},
   off: (channel, callback) => {},
-  uxpGenerate: (photoshopId, inputDir, partialConfiguration) => {},
-  uxpReload: (photoshopId, name) => {},
+  uxpGenerate: (inputDir, partialConfiguration) => {},
+  uxpReload: (name) => {},
 });
 
 export function UXPContextProvider({ children }) {
@@ -33,17 +33,15 @@ export function UXPContextProvider({ children }) {
     socket.off(channel, callback);
   };
 
-  const uxpGenerate = (photoshopId, inputDir, partialConfiguration) => {
+  const uxpGenerate = (inputDir, partialConfiguration) => {
     socket.emit("uxp-generate", {
-      photoshopId,
       inputDir,
       partialConfiguration,
     });
   };
 
-  const uxpReload = (photoshopId, name) => {
+  const uxpReload = (name) => {
     socket.emit("uxp-reload", {
-      photoshopId,
       name,
     });
   };

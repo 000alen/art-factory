@@ -36,7 +36,6 @@ interface DeployPageState {
   collection: Collection;
   inputDir: string;
   outputDir: string;
-  photoshop: boolean;
   configuration: Configuration;
   partialDeploy: any;
 }
@@ -67,7 +66,6 @@ export function DeployPage() {
     collection,
     inputDir,
     outputDir,
-    photoshop,
     configuration,
     partialDeploy,
   } = state as DeployPageState;
@@ -154,7 +152,6 @@ export function DeployPage() {
         collection,
         inputDir,
         outputDir,
-        photoshop,
         configuration,
         imagesCID,
         metadataCID,
