@@ -81,13 +81,17 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
         >
           {items.map(({ name, url }, i) =>
             itemsToRemove.includes(name) ? (
-              <div className="w-full min-h-[175px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center">
+              <div
+                key={i}
+                className="w-full min-h-[175px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
+              >
                 <Button variant="secondary" onPress={() => onUndoRemove(name)}>
                   Undo
                 </Button>
               </div>
             ) : (
               <ImageItem
+                key={i}
                 name={name}
                 src={url}
                 actions={[

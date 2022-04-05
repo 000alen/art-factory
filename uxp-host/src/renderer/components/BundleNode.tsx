@@ -93,7 +93,7 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
       }));
 
     return (
-      <Flex direction="column" gap="size-100">
+      <Flex key={i} direction="column" gap="size-100">
         <ImageItem src={composedUrl} />
         <Flex gap="size-100">
           <MenuTrigger>

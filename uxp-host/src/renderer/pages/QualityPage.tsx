@@ -31,6 +31,7 @@ import { hash } from "../utils";
 import { Gallery } from "../components/Gallery";
 import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
 import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
+import { Filters } from "../components/Filters";
 
 interface QualityPageState {
   id: string;
@@ -83,6 +84,7 @@ export const QualityPage = () => {
   const [selectedItem, setSelectedItem] = useState(0);
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
   const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
+  const [stringFilter, setStringFilter] = useState<string>(null);
 
   const [bundles, setBundles] = useState<Record<string, string[][]>>(_bundles);
   const [filteredBundles, setFilteredBundles] = useState<
@@ -294,6 +296,26 @@ export const QualityPage = () => {
     computeRepeatedCollection().forEach(({ name }) => onRemove(name));
   };
 
+  const computeCollectionQuery = (query: string) => {
+    return collection.filter(({ name }) => name.includes(query));
+  };
+
+  const addStringFilter = (query: string) => {
+    const filteredCollection = computeCollectionQuery(query);
+
+    setStringFilter(query);
+    setCursor(0);
+    setPage(1);
+    setSelectedItem(0);
+    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setFilteredCollection(filteredCollection);
+  };
+
+  const removeStringFilter = () => {
+    setStringFilter(null);
+    setFilters((prevFilters) => ({ ...prevFilters }));
+  };
+
   const addBundlesFilter = (bundle: string) => setBundlesFilter(bundle);
 
   const removeBundlesFilter = () => setBundlesFilter(null);
@@ -367,81 +389,32 @@ export const QualityPage = () => {
 
   return (
     <Grid
-      areas={["left gallery viewer right"]}
+      areas={["filters gallery viewer right"]}
       columns={["1fr", "3fr", "4fr", "1fr"]}
       rows={["auto"]}
       height="100%"
       gap="size-100"
     >
-      <View
-        gridArea="left"
-        marginStart="size-100"
-        borderEndColor="static-white"
-        borderEndWidth="thin"
-      >
-        <View maxHeight="90vh" overflow="auto">
-          <details className="space-x-2 space-y-2">
-            <summary>
-              <Heading UNSAFE_className="inline-block">Repeated</Heading>
-            </summary>
-            <Checkbox
-              isSelected={repeatedFilter}
-              onChange={(isSelected) => {
-                if (isSelected) addRepeatedFilter();
-                else removeRepeatedFilter();
-              }}
-            >
-              Repeated
-            </Checkbox>
-            <Button variant="secondary" onPress={onRegenerateRepeated}>
-              Regenerate
-            </Button>
-            <Button variant="secondary" onPress={onRemoveRepeated}>
-              Remove
-            </Button>
-          </details>
-
-          <details>
-            <summary>
-              <Heading UNSAFE_className="inline-block">Bundles</Heading>
-            </summary>
-            <div className="ml-2 flex flex-col">
-              {Object.keys(bundles).map((bundle) => (
-                <Checkbox
-                  isSelected={bundle === bundlesFilter}
-                  onChange={(isSelected) => {
-                    if (isSelected) addBundlesFilter(bundle);
-                    else removeBundlesFilter();
-                  }}
-                >
-                  {bundle}
-                </Checkbox>
-              ))}
-            </div>
-          </details>
-
-          {Object.entries(filtersInfo).map(([name, values]) => (
-            <details>
-              <summary>
-                <Heading UNSAFE_className="inline-block">{name}</Heading>
-              </summary>
-              <div className="ml-2 flex flex-col">
-                {values.map((value) => (
-                  <Checkbox
-                    value={value}
-                    isSelected={hasFilter(name, value)}
-                    onChange={(isSelected) => {
-                      if (isSelected) addFilter(name, value);
-                      else removeFilter(name, value);
-                    }}
-                  >
-                    {value}
-                  </Checkbox>
-                ))}
-              </div>
-            </details>
-          ))}
-        </View>
+      <View gridArea="filters">
+        <Filters
+          {...{
+            addStringFilter,
+            removeStringFilter,
+            repeatedFilter,
+            addRepeatedFilter,
+            removeRepeatedFilter,
+            onRegenerateRepeated,
+            onRemoveRepeated,
+            bundles,
+            bundlesFilter,
+            addBundlesFilter,
+            removeBundlesFilter,
+            filtersInfo,
+            hasFilter,
+            addFilter,
+            removeFilter,
+          }}
+        />
       </View>
 
       <View gridArea="gallery">
@@ -512,14 +485,9 @@ export const QualityPage = () => {
         </Flex>
       </View>
 
-      <View
-        gridArea="right"
-        borderStartColor="static-white"
-        borderStartWidth="thin"
-      >
+      <View gridArea="right">
         <Flex
           height="100%"
-          marginStart="size-100"
           direction="column"
           justifyContent="space-between"
           alignItems="end"
@@ -529,8 +497,13 @@ export const QualityPage = () => {
               <>
                 <Heading>{items[selectedItem].name}</Heading>
                 {filteredCollection[selectedItem].traits.map(
-                  ({ name, value }) => (
-                    <TextField label={name} value={value} isReadOnly={true} />
+                  ({ name, value }, i) => (
+                    <TextField
+                      key={i}
+                      label={name}
+                      value={value}
+                      isReadOnly={true}
+                    />
                   )
                 )}
               </>

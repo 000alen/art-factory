@@ -75,8 +75,8 @@ export const Toolbar: React.FC = ({ children }) => {
           </ActionButton>
           {(close) => <SecretsDialog close={close} />}
         </DialogTrigger>
-        {buttons.map((button) => (
-          <ButtonItem {...button} />
+        {buttons.map((button, i) => (
+          <ButtonItem key={i} {...button} />
         ))}
       </Flex>
     </Flex>

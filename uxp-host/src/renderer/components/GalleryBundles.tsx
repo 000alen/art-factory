@@ -73,7 +73,7 @@ export const GalleryBundles: React.FC<GalleryBundlesProps> = ({
 
       <View maxHeight="85vh" overflow="auto">
         {bundlesItems.map(({ names, urls }, i) => (
-          <>
+          <div key={i}>
             <Heading>{`${bundlesFilter} ${bundlesCursor + i + 1}`}</Heading>
             <Grid
               columns={repeat("auto-fit", "175px")}
@@ -81,10 +81,10 @@ export const GalleryBundles: React.FC<GalleryBundlesProps> = ({
               justifyContent="center"
             >
               {names.map((name, j) => (
-                <ImageItem src={urls[j]} />
+                <ImageItem key={j} src={urls[j]} />
               ))}
             </Grid>
-          </>
+          </div>
         ))}
       </View>
     </>

@@ -121,7 +121,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     return data.ignored.includes(key) ? (
       <></>
     ) : (
-      <Flex direction="column" gap="size-100">
+      <Flex key={i} direction="column" gap="size-100">
         <ImageItem src={composedUrl}>
           <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
         </ImageItem>
