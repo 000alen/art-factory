@@ -37,12 +37,8 @@ export function NodesPage() {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const {
-    id,
-    inputDir,
-    outputDir,
-    partialConfiguration,
-  } = state as NodesPageState;
+  const { id, inputDir, outputDir, partialConfiguration } =
+    state as NodesPageState;
 
   const [traits, setTraits] = useState([]);
   const [n, setN] = useState(0);
@@ -143,8 +139,6 @@ export function NodesPage() {
 
     const b = performance.now();
 
-    console.log(collection, bundles);
-
     setWorkTime(b - a);
     setCollection(collection);
     setBundles(bundles);
@@ -157,6 +151,7 @@ export function NodesPage() {
       state: {
         id,
         collection,
+        bundles,
         inputDir,
         outputDir,
         configuration,

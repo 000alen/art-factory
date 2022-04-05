@@ -65,7 +65,7 @@ export const Toolbar: React.FC = ({ children }) => {
   const { buttons } = useContext(ToolbarContext);
 
   return (
-    <Flex justifyContent="space-between" margin="size-100">
+    <Flex height="32px" justifyContent="space-between" margin="size-100">
       {children}
 
       <Flex direction="row-reverse" gap="size-100">

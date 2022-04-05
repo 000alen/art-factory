@@ -29,9 +29,11 @@ export interface RenderNodeComponentData {
   composedUrls?: Record<string, string>;
   renderIds?: Record<string, string>;
   ns?: Record<string, number>;
+  maxNs?: Record<string, number>;
   ignored?: string[];
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
+  requestMaxNs?: (traits: Trait[]) => void;
   updateNs?: (traits: Trait[], n: number) => void;
   updateIgnored?: (traits: Trait[], ignored: boolean) => void;
 }
@@ -96,28 +98,25 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
 
     if (currentCacheKey === cacheKey) return;
 
-    setCacheKey(currentCacheKey);
-    setNTraits(nTraits);
-  }, [nodes, edges]);
-
-  useEffect(() => {
-    if (nTraits.length === 0) return;
-
     const keys = nTraits.map(hash);
 
     for (const [i, key] of keys.entries()) {
       if (!(key in data.composedUrls)) data.requestComposedUrl(nTraits[i]);
       if (!(key in data.renderIds)) data.requestRenderId(nTraits[i]);
       if (!(key in data.ns)) data.updateNs(nTraits[i], DEFAULT_N);
+      if (!(key in data.maxNs)) data.requestMaxNs(nTraits[i]);
     }
 
+    setCacheKey(currentCacheKey);
+    setNTraits(nTraits);
     setKeys(keys);
-  }, [nTraits]);
+  }, [nodes, edges]);
 
   const renderItem = (key: string, i: number) => {
     const renderId = data.renderIds[key];
     const composedUrl = data.composedUrls[key];
     const n = data.ns[key];
+    const maxNs = data.maxNs[key];
 
     return data.ignored.includes(key) ? (
       <></>
@@ -130,9 +129,11 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
         <Flex gap="size-100" alignItems="end">
           <NumberField
             width="100%"
-            label="N"
+            minValue={1}
             {...{
+              label: `N (max: ${maxNs})`,
               value: n,
+              maxValue: maxNs,
               onChange: (value: number) => data.updateNs(nTraits[i], value),
             }}
           />

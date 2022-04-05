@@ -139,8 +139,7 @@ export const getContract = (name: string) => ipcTask("getContract")(name);
 export const getContractSource = (name: string) =>
   ipcTask("getContractSource")(name);
 
-export const openFolder = (path: string) =>
-  ipcTask("openFolder")(path);
+export const openFolder = (path: string) => ipcTask("openFolder")(path);
 
 export const getOutputDir = (inputDir: string) =>
   ipcTask("getOutputDir")(inputDir);
@@ -316,3 +315,12 @@ export const factoryRemoveCollectionItems = (
     collectionItems
   ) as Promise<Collection>;
 // #endregion
+
+export const factoryRegenerateCollectionItems = (
+  id: string,
+  collectionItems: Collection
+) =>
+  ipcTask("factoryRegenerateCollectionItems")(
+    id,
+    collectionItems
+  ) as Promise<Collection>;

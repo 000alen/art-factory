@@ -96,8 +96,6 @@ export const FactoryPanel = () => {
     const id = doc.name;
     const item = getItem(id);
 
-    console.log(item);
-
     if (item !== null) {
       const { width, height, name, traits } = item;
 

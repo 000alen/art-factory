@@ -24,7 +24,11 @@ import {
   MAX_SIZE,
   NODE_TYPES,
 } from "../constants";
-import { factoryComposeTraits, factoryGetTraitImage } from "../ipc";
+import {
+  factoryComposeTraits,
+  factoryComputeMaxCombinations,
+  factoryGetTraitImage,
+} from "../ipc";
 import { LayerNodeComponentData } from "./LayerNode";
 import { RenderNodeComponentData } from "./RenderNode";
 import { BundleNodeComponentData } from "./BundleNode";
@@ -99,6 +103,8 @@ export function useNodes(
   // ? hash(trait[]) -> number
   const [ns, setNs] = useState<Record<string, number>>({});
 
+  const [maxNs, setMaxNs] = useState<Record<string, number>>({});
+
   const [ignored, setIgnored] = useState<string[]>([]);
 
   useEffect(() => {
@@ -152,6 +158,10 @@ export function useNodes(
     ["renderNode", "bundleNode"],
     "ns"
   );
+  const onUpdateMaxNs = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "maxNs"
+  );
   const onUpdateIgnored = onUpdate<string[]>(
     ["renderNode", "bundleNode"],
     "ignored"
@@ -194,6 +204,17 @@ export function useNodes(
       const newRenderIds = { ...prevRenderIds, [key]: renderId };
       onUpdateRenderIds(newRenderIds);
       return newRenderIds;
+    });
+  };
+
+  const requestMaxNs = async (traits: Trait[]) => {
+    const key = hash(traits);
+    const maxNs = await factoryComputeMaxCombinations(id, traits);
+
+    setMaxNs((prevMaxNs) => {
+      const newMaxNs = { ...prevMaxNs, [key]: maxNs };
+      onUpdateMaxNs(newMaxNs);
+      return newMaxNs;
     });
   };
 
@@ -288,10 +309,12 @@ export function useNodes(
           composedUrls,
           renderIds,
           ns,
+          maxNs,
           ignored,
 
           requestComposedUrl,
           requestRenderId,
+          requestMaxNs,
           updateNs,
           updateIgnored,
         } as RenderNodeComponentData;

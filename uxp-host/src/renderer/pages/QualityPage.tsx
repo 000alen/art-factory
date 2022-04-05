@@ -1,72 +1,84 @@
 import {
-  Flex,
-  Heading,
-  ActionGroup,
-  Item,
   Button,
+  Checkbox,
+  Flex,
+  Grid,
+  Heading,
+  Item,
+  NumberField,
+  repeat,
+  TextField,
+  View,
 } from "@adobe/react-spectrum";
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import Back from "@spectrum-icons/workflow/Back";
-import Forward from "@spectrum-icons/workflow/Forward";
-import FastForward from "@spectrum-icons/workflow/FastForward";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useErrorHandler } from "../components/ErrorHandler";
+import { ToolbarContext } from "../components/Toolbar";
+import { UXPContext } from "../components/UXPContext";
+import { Collection, Configuration } from "../typings";
 import {
   factoryGetImage,
+  factoryRegenerateCollectionItems,
   factoryRemoveCollectionItems,
-  factoryRewriteImage,
   factorySaveInstance,
+  openFolder,
 } from "../ipc";
-import { UXPContext } from "../components/UXPContext";
-import { ToolbarContext } from "../components/Toolbar";
+import { MAX_SIZE } from "../constants";
+import { ImageItem } from "../components/ImageItem";
+import path from "path";
 import Close from "@spectrum-icons/workflow/Close";
 import Folder from "@spectrum-icons/workflow/Folder";
-
-import { Collection, Configuration } from "../typings";
-import { useErrorHandler } from "../components/ErrorHandler";
-import { ImageItem } from "../components/ImageItem";
-import { MAX_SIZE } from "../constants";
-
-import { openFolder } from "../ipc";
-
-import path from "path";
+import { hash } from "../utils";
 
 interface QualityPageState {
   id: string;
   collection: Collection;
+  bundles: Record<string, string[]>;
   inputDir: string;
   outputDir: string;
   configuration: Partial<Configuration>;
 }
 
-export function QualityPage() {
+type Filters = Record<string, string[]>;
+
+interface Item {
+  name: string;
+  url: string;
+}
+
+const PAGE_N = 25;
+
+export const QualityPage = () => {
   const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const task = useErrorHandler();
 
-  const { id, collection, inputDir, outputDir, configuration } =
-    state as QualityPageState;
+  const {
+    id,
+    collection: _collection,
+    bundles,
+    inputDir,
+    outputDir,
+    configuration,
+  } = state as QualityPageState;
 
-  const [index, setIndex] = useState(0);
-  const [imagesUrls, setImagesUrls] = useState([]);
-  const [indexesToRemove, setIndexesToRemove] = useState([]);
+  const [filtersInfo, setFiltersInfo] = useState<Filters>({});
+  const [filters, setFilters] = useState<Filters>({});
+  const [cursor, setCursor] = useState(0);
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
+  const [collection, setCollection] = useState<Collection>(_collection);
+  const [filteredCollection, setFilteredCollection] =
+    useState<Collection>(_collection);
+  const [items, setItems] = useState<Item[]>([]);
+  const [selectedItem, setSelectedItem] = useState(0);
+  const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
+  const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
+  const [repeatedItems, setRepeatedItems] = useState<string[]>([]);
 
   useEffect(() => {
-    const uxpReload = async ({ name }: { name: string }) => {
-      const i = Number(name) - index - 1;
-      const base64String = await factoryGetImage(
-        id,
-        collection[index + i],
-        MAX_SIZE
-      );
-      const url = `data:image/png;base64,${base64String}`;
-
-      setImagesUrls((prevUrls) =>
-        prevUrls.map((prevUrl, j) => (j === i ? url : prevUrl))
-      );
-    };
-
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
     toolbarContext.addButton(
       "open-explorer",
@@ -77,25 +89,16 @@ export function QualityPage() {
       }
     );
 
-    uxpContext.on("uxp-reload", uxpReload);
-
-    task("loading previews", async () => {
-      const urls = (
-        await Promise.all(
-          Array.from({ length: 25 }).map(async (_, i) => {
-            if (index + i >= collection.length) return null;
-            const base64String = await factoryGetImage(
-              id,
-              collection[index + i],
-              MAX_SIZE
-            );
-            const url = `data:image/png;base64,${base64String}`;
-            return url;
-          })
-        )
-      ).filter((url) => url !== null);
-      setImagesUrls(urls);
-    })();
+    const uxpReload = async ({ name }: { name: string }) => {
+      if (filteredCollection.some((item) => item.name === name)) {
+        const url = `data:image/png;base64,${await factoryGetImage(
+          id,
+          collection.find((collectionItem) => collectionItem.name === name),
+          MAX_SIZE
+        )}`;
+        reload(name, url);
+      }
+    };
 
     return () => {
       toolbarContext.removeButton("close");
@@ -103,47 +106,158 @@ export function QualityPage() {
 
       uxpContext.off("uxp-reload", uxpReload);
     };
-  }, [index, id]);
+  }, []);
+
+  useEffect(() => {
+    const filtersInfo: Filters = {};
+    for (const { traits } of collection)
+      for (const { name, value } of traits)
+        if (name in filtersInfo && !filtersInfo[name].includes(value))
+          filtersInfo[name].push(value);
+        else if (!(name in filtersInfo)) filtersInfo[name] = [value];
+
+    setFiltersInfo(filtersInfo);
+  }, [collection, bundles]);
+
+  useEffect(() => {
+    let filteredCollection = [...collection];
+    for (const [name, values] of Object.entries(filters)) {
+      if (values.length === 0) continue;
+      filteredCollection = filteredCollection.filter(({ traits }) =>
+        traits.some(({ name: n, value: v }) => n === name && values.includes(v))
+      );
+    }
+
+    setCursor(0);
+    setPage(1);
+    setSelectedItem(0);
+    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setFilteredCollection(filteredCollection);
+  }, [filters]);
+
+  useEffect(() => {
+    task("loading previews", async () => {
+      const items = (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            if (cursor + i >= filteredCollection.length) return null;
+            const collectionItem = filteredCollection[cursor + i];
+            const name = collectionItem.name;
+            const url = `data:image/png;base64,${await factoryGetImage(
+              id,
+              collectionItem,
+              MAX_SIZE
+            )}`;
+            return { name, url };
+          })
+        )
+      ).filter((item) => item !== null);
+
+      setItems(items);
+    })();
+  }, [filteredCollection, cursor]);
+
+  const reload = (name: string, url: string) =>
+    setItems((prevItems) =>
+      prevItems.map((item) => (item.name === name ? { name, url } : item))
+    );
+
+  const addFilter = (name: string, value: string) =>
+    setFilters((prevFilters) =>
+      name in prevFilters
+        ? {
+            ...prevFilters,
+            [name]: [...prevFilters[name], value],
+          }
+        : {
+            ...prevFilters,
+            [name]: [value],
+          }
+    );
+
+  const hasFilter = (name: string, value: string) =>
+    name in filters && filters[name].includes(value);
+
+  const removeFilter = (name: string, value: string) =>
+    setFilters((prevFilters) =>
+      name in prevFilters
+        ? {
+            ...prevFilters,
+            [name]: prevFilters[name].filter((v) => v !== value),
+          }
+        : prevFilters
+    );
+
+  const computeRepeatedCollection = () => {
+    const keys = new Set<string>();
+    const filteredCollection: Collection = [];
+    for (const { name, traits } of collection) {
+      const key = hash(traits);
+      if (keys.has(key)) filteredCollection.push({ name, traits });
+      else keys.add(key);
+    }
+    return filteredCollection;
+  };
+
+  const addRepeatedFilter = () => {
+    const filteredCollection = computeRepeatedCollection();
+
+    setRepeatedFilter(true);
+    setCursor(0);
+    setPage(1);
+    setSelectedItem(0);
+    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setFilteredCollection(filteredCollection);
+  };
+
+  const removeRepeatedFilter = () => {
+    setRepeatedFilter(false);
+    setFilters((prevFilters) => ({ ...prevFilters }));
+  };
+
+  const onRegenerateRepeated = async () => {
+    const collection = await factoryRegenerateCollectionItems(
+      id,
+      computeRepeatedCollection()
+    );
+    setCollection(collection);
+    setFilteredCollection((p) => [...p]);
+    if (repeatedFilter) addRepeatedFilter();
+  };
+
+  const onRemoveRepeated = () => {
+    computeRepeatedCollection().forEach(({ name }) => onRemove(name));
+  };
 
   const onEdit = (i: number) => {
     uxpContext.hostEdit({
       width: configuration.width,
       height: configuration.height,
-      ...collection[i],
+      ...filteredCollection[i],
     });
   };
 
-  const onAction = (action: string) => {
-    switch (action) {
-      case "back":
-        onBack();
-        break;
-      case "forward":
-        onForward();
-        break;
-      case "fastForward":
-        onFastForward();
-        break;
-      default:
-        break;
-    }
+  const onRemove = (name: string) =>
+    setItemsToRemove((prevItemsToRemove) => [...prevItemsToRemove, name]);
+
+  const onUndoRemove = (name: string) =>
+    setItemsToRemove((prevItemsToRemove) =>
+      prevItemsToRemove.filter((n) => n !== name)
+    );
+
+  const onSelect = (i: number) => setSelectedItem(i);
+
+  const onRegenerate = async (i: number) => {
+    const collection = await factoryRegenerateCollectionItems(id, [
+      filteredCollection[i],
+    ]);
+    setCollection(collection);
+    setFilteredCollection((p) => [...p]);
   };
 
-  const onBack = () => {
-    if (index === 0) return;
-    setImagesUrls([]);
-    setIndex((prevIndex) => Math.max(prevIndex - 25, 0));
-  };
-
-  const onForward = () => {
-    if (index >= collection.length - 25) return;
-    setImagesUrls([]);
-    setIndex((prevIndex) => prevIndex + 25);
-  };
-
-  const onFastForward = task("filtering", async () => {
-    const collectionItemsToRemove: Collection = indexesToRemove.map(
-      (i) => collection[i]
+  const onContinue = task("filtering", async () => {
+    const collectionItemsToRemove: Collection = itemsToRemove.map((name) =>
+      collection.find((collectionItem) => collectionItem.name === name)
     );
     const _collection = await factoryRemoveCollectionItems(
       id,
@@ -154,7 +268,6 @@ export function QualityPage() {
       n: _collection.length,
     };
     await factorySaveInstance(id);
-
     navigate("/deploy", {
       state: {
         id,
@@ -167,71 +280,176 @@ export function QualityPage() {
   });
 
   return (
-    <Flex
-      direction="column"
+    <Grid
+      areas={["left gallery viewer right"]}
+      columns={["1fr", "3fr", "4fr", "1fr"]}
+      rows={["auto"]}
       height="100%"
-      margin="size-100"
       gap="size-100"
-      justifyContent="space-between"
     >
-      <Heading level={1} marginStart={16}>
-        {Math.floor(index / 25) + 1} of {Math.ceil(collection.length / 25)}
-      </Heading>
-
-      <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">
-        {imagesUrls.map((url, i) => (
-          <div className="w-32">
-            {indexesToRemove.includes(index + i) ? (
-              <div
-                key={`d-${url.slice(10)}-${index + i}`}
-                className="w-32 m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
+      <View gridArea="left">
+        <View maxHeight="90vh" margin="1rem" overflow="auto">
+          <details className="space-x-2 space-y-2">
+            <summary>
+              <Checkbox
+                isSelected={repeatedFilter}
+                onChange={(isSelected) => {
+                  if (isSelected) addRepeatedFilter();
+                  else removeRepeatedFilter();
+                }}
               >
-                <Button
-                  variant="secondary"
-                  onPress={() =>
-                    setIndexesToRemove(
-                      indexesToRemove.filter((j) => j !== index + i)
-                    )
-                  }
-                >
-                  Undo
-                </Button>
+                Repeated
+              </Checkbox>
+            </summary>
+            <Button variant="secondary" onPress={onRegenerateRepeated}>
+              Regenerate
+            </Button>
+            <Button variant="secondary" onPress={onRemoveRepeated}>
+              Remove
+            </Button>
+          </details>
+
+          {Object.entries(filtersInfo).map(([name, values]) => (
+            <details>
+              <summary>
+                <Heading UNSAFE_className="inline-block">{name}</Heading>
+              </summary>
+              <div className="ml-2 flex flex-col">
+                {values.map((value) => (
+                  <Checkbox
+                    value={value}
+                    isSelected={hasFilter(name, value)}
+                    onChange={(isSelected) => {
+                      if (isSelected) addFilter(name, value);
+                      else removeFilter(name, value);
+                    }}
+                  >
+                    {value}
+                  </Checkbox>
+                ))}
               </div>
-            ) : (
+            </details>
+          ))}
+        </View>
+      </View>
+
+      <View gridArea="gallery">
+        <Flex
+          width="100%"
+          gap="size-100"
+          alignItems="center"
+          justifyContent="space-between"
+          marginBottom={8}
+        >
+          <div>{filteredCollection.length} elements</div>
+
+          <div>
+            Page{" "}
+            <NumberField
+              aria-label="page"
+              value={page}
+              minValue={1}
+              maxValue={maxPage}
+              onChange={(value: number) => {
+                setCursor((value - 1) * PAGE_N);
+                setPage(value);
+              }}
+            />{" "}
+            of {maxPage}
+          </div>
+        </Flex>
+
+        <View maxHeight="90vh" overflow="auto">
+          <Grid
+            columns={repeat("auto-fit", "175px")}
+            gap="size-100"
+            justifyContent="center"
+          >
+            {items.map(({ name, url }, i) =>
+              itemsToRemove.includes(name) ? (
+                <div className="w-full min-h-[175px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center">
+                  <Button
+                    variant="secondary"
+                    onPress={() => onUndoRemove(name)}
+                  >
+                    Undo
+                  </Button>
+                </div>
+              ) : (
+                <ImageItem
+                  name={name}
+                  src={url}
+                  actions={[
+                    {
+                      label: "Edit",
+                      onClick: () => onEdit(i),
+                    },
+                    {
+                      label: "Remove",
+                      onClick: () => onRemove(name),
+                    },
+                    {
+                      label: "Select",
+                      onClick: () => onSelect(i),
+                    },
+                    {
+                      label: "Regenerate",
+                      onClick: () => onRegenerate(i),
+                    },
+                  ]}
+                />
+              )
+            )}
+          </Grid>
+        </View>
+      </View>
+
+      <View gridArea="viewer">
+        <Flex height="100%" justifyContent="center" alignItems="center">
+          {items.length > 0 && (
+            <div className="w-[90%]">
               <ImageItem
-                key={`i-${url.slice(10)}-${index + i}`}
-                name={`${index + i + 1}`}
-                src={url}
+                name={items[selectedItem].name}
+                src={items[selectedItem].url}
                 actions={[
                   {
                     label: "Edit",
-                    onClick: () => onEdit(index + i),
+                    onClick: () => onEdit(selectedItem),
                   },
                   {
                     label: "Remove",
-                    onClick: () =>
-                      setIndexesToRemove((prev) => [...prev, index + i]),
+                    onClick: () => onRemove(items[selectedItem].name),
+                  },
+                  {
+                    label: "Regenerate",
+                    onClick: () => onRegenerate(selectedItem),
                   },
                 ]}
               />
-            )}
-          </div>
-        ))}
-      </div>
+            </div>
+          )}
+        </Flex>
+      </View>
 
-      <Flex direction="row-reverse">
-        <ActionGroup onAction={onAction}>
-          <Item key="back">
-            <Back />
-          </Item>
-          <Item key="forward">
-            <Forward />
-          </Item>
-          <Item key="fastForward">
-            <FastForward />
-          </Item>
-        </ActionGroup>
-      </Flex>
-    </Flex>
+      <View gridArea="right">
+        <Flex height="100%" direction="column" justifyContent="space-between">
+          <View maxHeight="90vh" overflow="auto">
+            {items.length > 0 && filteredCollection.length > 0 && (
+              <>
+                <Heading>{items[selectedItem].name}</Heading>
+                {filteredCollection[selectedItem].traits.map(
+                  ({ name, value }) => (
+                    <TextField label={name} value={value} isReadOnly={true} />
+                  )
+                )}
+              </>
+            )}
+          </View>
+          <Button variant="cta" onPress={onContinue}>
+            Continue
+          </Button>
+        </Flex>
+      </View>
+    </Grid>
   );
-}
+};

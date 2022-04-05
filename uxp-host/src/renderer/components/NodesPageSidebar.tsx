@@ -19,7 +19,6 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
   const task = useErrorHandler();
   const [urls, setUrls] = useState(null);
-  const [composedUrl, setComposedUrl] = useState(null);
 
   useEffect(() => {
     task("sidebar preview", async () => {
@@ -30,14 +29,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
           (base64String) => `data:image/png;base64,${base64String}`
         )
       );
-      const composedUrl = `data:image/png;base64,${await factoryComposeTraits(
-        id,
-        traits,
-        MAX_SIZE
-      )}`;
 
       setUrls(urls);
-      setComposedUrl(composedUrl);
     })();
   }, [traits]);
 
@@ -67,16 +60,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
             <Text>Bundle</Text>
           </div>
         </div>
-        {composedUrl && (
-          <div
-            onDragStart={(event) => onDragStart(event, { type: "renderNode" })}
-            draggable
-          >
-            <div className="w-20 p-1 border-[0.5px] border-solid border-white rounded">
-              <ImageItem src={composedUrl} />
-            </div>
+        <div
+          onDragStart={(event) => onDragStart(event, { type: "renderNode" })}
+          draggable
+        >
+          <div className="w-20 h-20 p-1 border-[0.5px] border-solid border-white rounded flex justify-center items-center">
+            <Text>Render</Text>
           </div>
-        )}
+        </div>
         {urls &&
           layers.map((name, i) => (
             <div

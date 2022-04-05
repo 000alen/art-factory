@@ -396,4 +396,10 @@ ipcAsyncTask(
     await factories[id].removeCollectionItems(collectionItems)
 );
 
+ipcAsyncTask(
+  "factoryRegenerateCollectionItems",
+  async (id: string, collectionItems: Collection) =>
+    await factories[id].regenerateCollectionItems(collectionItems)
+);
+
 // #endregion

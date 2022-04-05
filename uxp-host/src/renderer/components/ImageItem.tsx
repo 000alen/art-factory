@@ -18,11 +18,13 @@ export const ImageItem: React.FC<ImageItemProps> = ({ name, src, actions }) => {
       {actions && (
         <div className="absolute w-full h-full space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
           <Text>{name}</Text>
-          {actions.map((action, i) => (
-            <Button key={i} variant="secondary" onPress={action.onClick}>
-              {action.label}
-            </Button>
-          ))}
+          <div>
+            {actions.map((action, i) => (
+              <Button key={i} variant="secondary" onPress={action.onClick}>
+                {action.label}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 

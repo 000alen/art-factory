@@ -753,6 +753,32 @@ export class Factory {
 
     return collection;
   }
+
+  async regenerateCollectionItems(collectionItemsToRegenerate: Collection) {
+    const newCollectionItems: Collection = collectionItemsToRegenerate.map(
+      ({ name, traits }) => ({
+        name,
+        traits: traits.map((trait) =>
+          choose(this.traitsByLayerName.get(trait.name))
+        ),
+      })
+    );
+    await this.generateImages(newCollectionItems);
+
+    const newCollectionItemsByName = new Map(
+      newCollectionItems.map((item) => [item.name, item])
+    );
+
+    const collection = this.collection.map((collectionItem) =>
+      newCollectionItemsByName.has(collectionItem.name)
+        ? newCollectionItemsByName.get(collectionItem.name)
+        : collectionItem
+    );
+
+    this.collection = collection;
+
+    return collection;
+  }
 }
 
 export async function loadInstance(instancePath: string) {
