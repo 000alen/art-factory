@@ -181,12 +181,15 @@ export function useNodes(
   };
 
   const requestComposedUrl = async (traits: Trait[]) => {
+    console.log("a")
     const key = hash(traits);
     const composedBase64String = await factoryComposeTraits(
       id,
       traits,
       MAX_SIZE
     );
+    console.log("b")
+
     setComposedUrls((prevComposedUrls) => {
       const newComposedUrls = {
         ...prevComposedUrls,

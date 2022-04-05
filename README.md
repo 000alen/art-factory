@@ -13,12 +13,12 @@
 - [x] Add ignore list to renders
 - [x] **Feature request**: Un botón de 'abrir en explorador'.
 - [x] Remove editing in uxp-host
-- [ ] **Feature request**: Cuando borras uno, pedir que te genere uno nuevo.
-- [ ] **Feature request**: Poder ver las imágenes 1 por 1 e ir pasando con flechas.
+- [x] **Feature request**: Cuando borras uno, pedir que te genere uno nuevo.
+- [x] **Feature request**: Asegurarse de que cada NFT tenga al menos N caracteristicas distintas que el resto. Alternativamente, Filtrar por parecido.
+- [x] Show by bundle
+- [x] **Feature request**: Poder ver las imágenes 1 por 1 e ir pasando con flechas.
 - [ ] **Feature request**: Añadir un link a opensea en la ui.
-- [ ] **Feature request**: Asegurarse de que cada NFT tenga al menos N caracteristicas distintas que el resto. Alternativamente, Filtrar por parecido.
 - [ ] **Feature request**: Different smart contracts: pre-sale, not-revealed, pause, etc.
-- [ ] Show by bundle
 - [ ] Publish bundles
 
 - [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~

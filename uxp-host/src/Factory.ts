@@ -473,7 +473,12 @@ export class Factory {
                 b: Math.floor(Math.random() * 255),
                 alpha: 1,
               }
-            : this.configuration.defaultBackground,
+            : {
+                r: this.configuration.defaultBackground.r,
+                g: this.configuration.defaultBackground.g,
+                b: this.configuration.defaultBackground.b,
+                alpha: this.configuration.defaultBackground.a,
+              },
         },
       })
         .composite(
@@ -512,7 +517,12 @@ export class Factory {
               b: Math.floor(Math.random() * 255),
               alpha: 1,
             }
-          : this.configuration.defaultBackground,
+          : {
+              r: this.configuration.defaultBackground.r,
+              g: this.configuration.defaultBackground.g,
+              b: this.configuration.defaultBackground.b,
+              alpha: this.configuration.defaultBackground.a,
+            },
       },
     })
       .composite(

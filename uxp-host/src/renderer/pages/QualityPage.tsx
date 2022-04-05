@@ -1,12 +1,11 @@
 import {
+  ActionGroup,
   Button,
   Checkbox,
   Flex,
   Grid,
   Heading,
   Item,
-  NumberField,
-  repeat,
   TextField,
   View,
 } from "@adobe/react-spectrum";
@@ -29,11 +28,14 @@ import path from "path";
 import Close from "@spectrum-icons/workflow/Close";
 import Folder from "@spectrum-icons/workflow/Folder";
 import { hash } from "../utils";
+import { Gallery } from "../components/Gallery";
+import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
+import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 
 interface QualityPageState {
   id: string;
   collection: Collection;
-  bundles: Record<string, string[]>;
+  bundles: Record<string, string[][]>;
   inputDir: string;
   outputDir: string;
   configuration: Partial<Configuration>;
@@ -46,7 +48,12 @@ interface Item {
   url: string;
 }
 
-const PAGE_N = 25;
+interface BundleItem {
+  names: string[];
+  urls: string[];
+}
+
+export const PAGE_N = 25;
 
 export const QualityPage = () => {
   const toolbarContext = useContext(ToolbarContext);
@@ -58,7 +65,7 @@ export const QualityPage = () => {
   const {
     id,
     collection: _collection,
-    bundles,
+    bundles: _bundles,
     inputDir,
     outputDir,
     configuration,
@@ -76,7 +83,16 @@ export const QualityPage = () => {
   const [selectedItem, setSelectedItem] = useState(0);
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
   const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
-  const [repeatedItems, setRepeatedItems] = useState<string[]>([]);
+
+  const [bundles, setBundles] = useState<Record<string, string[][]>>(_bundles);
+  const [filteredBundles, setFilteredBundles] = useState<
+    Record<string, string[][]>
+  >({});
+  const [bundlesItems, setBundleItems] = useState<BundleItem[]>([]);
+  const [bundlesFilter, setBundlesFilter] = useState<string>(null);
+  const [bundlesCursor, setBundlesCursor] = useState(0);
+  const [bundlesPage, setBundlesPage] = useState(1);
+  const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -117,7 +133,7 @@ export const QualityPage = () => {
         else if (!(name in filtersInfo)) filtersInfo[name] = [value];
 
     setFiltersInfo(filtersInfo);
-  }, [collection, bundles]);
+  }, [collection]);
 
   useEffect(() => {
     let filteredCollection = [...collection];
@@ -156,6 +172,55 @@ export const QualityPage = () => {
       setItems(items);
     })();
   }, [filteredCollection, cursor]);
+
+  useEffect(() => {
+    if (bundlesFilter === null) {
+      setBundlesCursor(0);
+      setBundlesPage(1);
+      setBundlesMaxPage(1);
+      setFilteredBundles({});
+      return;
+    }
+
+    const filteredBundles: Record<string, string[][]> = {
+      [bundlesFilter]: bundles[bundlesFilter],
+    };
+
+    setBundlesCursor(0);
+    setBundlesPage(1);
+    setBundlesMaxPage(
+      Math.ceil(filteredBundles[bundlesFilter].length / PAGE_N)
+    );
+    setFilteredBundles(filteredBundles);
+  }, [bundlesFilter]);
+
+  useEffect(() => {
+    task("loading bundles previews", async () => {
+      const bundleItems = (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            if (bundlesFilter === null) return null;
+            if (bundlesCursor + i >= filteredBundles[bundlesFilter].length)
+              return null;
+            const names = filteredBundles[bundlesFilter][bundlesCursor + i];
+            const collectionItems = names.map((key) =>
+              collection.find((item) => item.name === key)
+            );
+            const base64Strings = await Promise.all(
+              collectionItems.map((collectionItem) =>
+                factoryGetImage(id, collectionItem, MAX_SIZE)
+              )
+            );
+            const urls = base64Strings.map(
+              (b64) => `data:image/png;base64,${b64}`
+            );
+            return { names, urls };
+          })
+        )
+      ).filter((item) => item !== null);
+      setBundleItems(bundleItems);
+    })();
+  }, [filteredBundles, bundlesCursor]);
 
   const reload = (name: string, url: string) =>
     setItems((prevItems) =>
@@ -229,6 +294,10 @@ export const QualityPage = () => {
     computeRepeatedCollection().forEach(({ name }) => onRemove(name));
   };
 
+  const addBundlesFilter = (bundle: string) => setBundlesFilter(bundle);
+
+  const removeBundlesFilter = () => setBundlesFilter(null);
+
   const onEdit = (i: number) => {
     uxpContext.hostEdit({
       width: configuration.width,
@@ -253,6 +322,23 @@ export const QualityPage = () => {
     ]);
     setCollection(collection);
     setFilteredCollection((p) => [...p]);
+  };
+
+  const onAction = (action: string) => {
+    switch (action) {
+      case "back":
+        setSelectedItem((prevSelectedItem) =>
+          Math.max(0, prevSelectedItem - 1)
+        );
+        break;
+      case "forward":
+        setSelectedItem((prevSelectedItem) =>
+          Math.min(items.length - 1, prevSelectedItem + 1)
+        );
+        break;
+      default:
+        break;
+    }
   };
 
   const onContinue = task("filtering", async () => {
@@ -287,26 +373,51 @@ export const QualityPage = () => {
       height="100%"
       gap="size-100"
     >
-      <View gridArea="left">
-        <View maxHeight="90vh" margin="1rem" overflow="auto">
+      <View
+        gridArea="left"
+        marginStart="size-100"
+        borderEndColor="static-white"
+        borderEndWidth="thin"
+      >
+        <View maxHeight="90vh" overflow="auto">
           <details className="space-x-2 space-y-2">
             <summary>
-              <Checkbox
-                isSelected={repeatedFilter}
-                onChange={(isSelected) => {
-                  if (isSelected) addRepeatedFilter();
-                  else removeRepeatedFilter();
-                }}
-              >
-                Repeated
-              </Checkbox>
+              <Heading UNSAFE_className="inline-block">Repeated</Heading>
             </summary>
+            <Checkbox
+              isSelected={repeatedFilter}
+              onChange={(isSelected) => {
+                if (isSelected) addRepeatedFilter();
+                else removeRepeatedFilter();
+              }}
+            >
+              Repeated
+            </Checkbox>
             <Button variant="secondary" onPress={onRegenerateRepeated}>
               Regenerate
             </Button>
             <Button variant="secondary" onPress={onRemoveRepeated}>
               Remove
             </Button>
+          </details>
+
+          <details>
+            <summary>
+              <Heading UNSAFE_className="inline-block">Bundles</Heading>
+            </summary>
+            <div className="ml-2 flex flex-col">
+              {Object.keys(bundles).map((bundle) => (
+                <Checkbox
+                  isSelected={bundle === bundlesFilter}
+                  onChange={(isSelected) => {
+                    if (isSelected) addBundlesFilter(bundle);
+                    else removeBundlesFilter();
+                  }}
+                >
+                  {bundle}
+                </Checkbox>
+              ))}
+            </div>
           </details>
 
           {Object.entries(filtersInfo).map(([name, values]) => (
@@ -334,78 +445,40 @@ export const QualityPage = () => {
       </View>
 
       <View gridArea="gallery">
-        <Flex
-          width="100%"
-          gap="size-100"
-          alignItems="center"
-          justifyContent="space-between"
-          marginBottom={8}
-        >
-          <div>{filteredCollection.length} elements</div>
-
-          <div>
-            Page{" "}
-            <NumberField
-              aria-label="page"
-              value={page}
-              minValue={1}
-              maxValue={maxPage}
-              onChange={(value: number) => {
-                setCursor((value - 1) * PAGE_N);
-                setPage(value);
-              }}
-            />{" "}
-            of {maxPage}
-          </div>
-        </Flex>
-
-        <View maxHeight="90vh" overflow="auto">
-          <Grid
-            columns={repeat("auto-fit", "175px")}
-            gap="size-100"
-            justifyContent="center"
-          >
-            {items.map(({ name, url }, i) =>
-              itemsToRemove.includes(name) ? (
-                <div className="w-full min-h-[175px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center">
-                  <Button
-                    variant="secondary"
-                    onPress={() => onUndoRemove(name)}
-                  >
-                    Undo
-                  </Button>
-                </div>
-              ) : (
-                <ImageItem
-                  name={name}
-                  src={url}
-                  actions={[
-                    {
-                      label: "Edit",
-                      onClick: () => onEdit(i),
-                    },
-                    {
-                      label: "Remove",
-                      onClick: () => onRemove(name),
-                    },
-                    {
-                      label: "Select",
-                      onClick: () => onSelect(i),
-                    },
-                    {
-                      label: "Regenerate",
-                      onClick: () => onRegenerate(i),
-                    },
-                  ]}
-                />
-              )
-            )}
-          </Grid>
-        </View>
+        <Gallery
+          {...{
+            filteredCollection,
+            page,
+            maxPage,
+            setCursor,
+            setPage,
+            items,
+            itemsToRemove,
+            onUndoRemove,
+            onEdit,
+            onRemove,
+            onSelect,
+            onRegenerate,
+            filteredBundles,
+            bundlesPage,
+            bundlesMaxPage,
+            setBundlesCursor,
+            setBundlesPage,
+            bundlesItems,
+            bundlesFilter,
+            bundlesCursor,
+          }}
+        />
       </View>
 
       <View gridArea="viewer">
-        <Flex height="100%" justifyContent="center" alignItems="center">
+        <Flex
+          direction="column"
+          height="100%"
+          gap="size-100"
+          justifyContent="center"
+          alignItems="center"
+        >
           {items.length > 0 && (
             <div className="w-[90%]">
               <ImageItem
@@ -428,11 +501,29 @@ export const QualityPage = () => {
               />
             </div>
           )}
+          <ActionGroup onAction={onAction}>
+            <Item key="back">
+              <ChevronLeft />
+            </Item>
+            <Item key="forward">
+              <ChevronRight />
+            </Item>
+          </ActionGroup>
         </Flex>
       </View>
 
-      <View gridArea="right">
-        <Flex height="100%" direction="column" justifyContent="space-between">
+      <View
+        gridArea="right"
+        borderStartColor="static-white"
+        borderStartWidth="thin"
+      >
+        <Flex
+          height="100%"
+          marginStart="size-100"
+          direction="column"
+          justifyContent="space-between"
+          alignItems="end"
+        >
           <View maxHeight="90vh" overflow="auto">
             {items.length > 0 && filteredCollection.length > 0 && (
               <>
@@ -445,7 +536,12 @@ export const QualityPage = () => {
               </>
             )}
           </View>
-          <Button variant="cta" onPress={onContinue}>
+          <Button
+            variant="cta"
+            marginBottom="size-100"
+            marginEnd="size-100"
+            onPress={onContinue}
+          >
             Continue
           </Button>
         </Flex>
