@@ -47,6 +47,10 @@ const sendWhitelist = [
   "factoryRewriteImage",
   "factoryRemoveCollectionItems",
   "factoryRegenerateCollectionItems",
+  "factoryGenerateNotRevealedImage",
+  "factoryGenerateNotRevealedMetadata",
+  "factoryDeployNotRevealedImage",
+  "factoryDeployNotRevealedMetadata",
 ];
 
 const onWhitelist = [
@@ -99,6 +103,10 @@ const onWhitelist = [
   "factoryRewriteImageResult",
   "factoryRemoveCollectionItemsResult",
   "factoryRegenerateCollectionItemsResult",
+  "factoryGenerateNotRevealedImageResult",
+  "factoryGenerateNotRevealedMetadataResult",
+  "factoryDeployNotRevealedImageResult",
+  "factoryDeployNotRevealedMetadataResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

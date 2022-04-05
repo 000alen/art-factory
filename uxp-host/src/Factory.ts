@@ -171,7 +171,9 @@ export class Factory {
   imagesGenerated: boolean;
   metadataGenerated: boolean;
   imagesCid: string;
+  notRevealedImageCid: string;
   metadataCid: string;
+  notRevealedMetadataCid: string;
   network: string;
   compilerVersion: string;
   abi: any[];
@@ -198,6 +200,9 @@ export class Factory {
 
     if (!fs.existsSync(path.join(this.outputDir, "images")))
       fs.mkdirSync(path.join(this.outputDir, "images"));
+
+    if (!fs.existsSync(path.join(this.outputDir, "not_revealed")))
+      fs.mkdirSync(path.join(this.outputDir, "not_revealed"));
   }
 
   private async _ensureLayers() {
@@ -301,6 +306,7 @@ export class Factory {
 
     if (inputDir) this.inputDir = inputDir;
     if (outputDir) this.outputDir = outputDir;
+    // @ts-ignore
     if (configuration) this.configuration = configuration;
     if (collection) this.collection = collection;
     if (bundles) this.bundles = new Map(Object.entries(bundles));
@@ -445,6 +451,31 @@ export class Factory {
     return { collection, bundles };
   }
 
+  async generateNotRevealedImage(traits: Trait[]) {
+    const item = {
+      name: "not_revealed",
+      traits: traits.map((trait) =>
+        choose(this.traitsByLayerName.get(trait.name))
+      ),
+    };
+    await this.generateImage(item, "not_revealed");
+  }
+
+  async generateNotRevealedMetadata() {
+    const metadata = {
+      name: this.configuration.name,
+      description: this.configuration.description,
+      image: `ipfs://${this.notRevealedImageCid}`,
+      edition: "not_revealed",
+      date: Date.now(),
+    };
+
+    await fs.promises.writeFile(
+      path.join(this.outputDir, "not_revealed", `not_revealed.json`),
+      JSON.stringify(metadata)
+    );
+  }
+
   computeMaxCombinations(layers: Layer[]) {
     return layers.reduce(
       (combinations, layer) =>
@@ -496,7 +527,10 @@ export class Factory {
     );
   }
 
-  async generateImage(collectionItem: CollectionItem) {
+  async generateImage(
+    collectionItem: CollectionItem,
+    folder: string = "images"
+  ) {
     const keys = await Promise.all(
       collectionItem.traits.map(
         async (trait) => await this._ensureTraitBuffer(trait)
@@ -535,9 +569,7 @@ export class Factory {
         )
       )
       .png()
-      .toFile(
-        path.join(this.outputDir, "images", `${collectionItem.name}.png`)
-      );
+      .toFile(path.join(this.outputDir, folder, `${collectionItem.name}.png`));
   }
 
   async generateImages(
@@ -601,6 +633,22 @@ export class Factory {
     return this.imagesCid;
   }
 
+  async deployNotRevealedImage() {
+    if (this.notRevealedImageCid) return this.notRevealedImageCid;
+
+    const notRevealedDir = path.join(this.outputDir, "not_revealed");
+
+    const { IpfsHash } = await pinFileToIPFS(
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretApiKey,
+      path.join(notRevealedDir, "not_revealed.png")
+    );
+
+    this.notRevealedImageCid = IpfsHash;
+
+    return this.notRevealedImageCid;
+  }
+
   async deployMetadata() {
     if (this.metadataCid) return this.metadataCid;
 
@@ -616,6 +664,22 @@ export class Factory {
     this.metadataCid = IpfsHash;
 
     return this.metadataCid;
+  }
+
+  async deployNotRevealedMetadata() {
+    if (this.notRevealedMetadataCid) return this.notRevealedMetadataCid;
+
+    const notRevealedDir = path.join(this.outputDir, "not_revealed");
+
+    const { IpfsHash } = await pinFileToIPFS(
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretApiKey,
+      path.join(notRevealedDir, "not_revealed.json")
+    );
+
+    this.notRevealedMetadataCid = IpfsHash;
+
+    return this.notRevealedMetadataCid;
   }
 
   async getTraitImage(trait: Trait, maxSize?: number) {

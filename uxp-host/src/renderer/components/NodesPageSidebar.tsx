@@ -13,10 +13,16 @@ import { RenderNode } from "./RenderNode";
 interface SidebarProps {
   id: string;
   layers: string[];
+  contractType: string;
   traits: Trait[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  id,
+  layers,
+  contractType,
+  traits,
+}) => {
   const task = useErrorHandler();
   const [urls, setUrls] = useState(null);
 
@@ -68,6 +74,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ id, layers, traits }) => {
             <Text>Render</Text>
           </div>
         </div>
+        {contractType === "721_reveal_pause" && (
+          <div
+            onDragStart={(event) =>
+              onDragStart(event, { type: "notRevealedNode" })
+            }
+            draggable
+          >
+            <div className="w-20 h-20 p-1 border-[0.5px] border-solid border-white rounded flex justify-center items-center">
+              <Text>Not revealed</Text>
+            </div>
+          </div>
+        )}
         {urls &&
           layers.map((name, i) => (
             <div

@@ -112,7 +112,8 @@ export const ConfigurationBase: React.FC<ConfigurationBaseProps> = ({
         onChange={setContractType}
       >
         <Radio value="721">ERC721</Radio>
-        <Radio value="721_reveal_pause">ERC721_reveal_pause</Radio>
+        {/* <Radio value="721_reveal_pause">ERC721_reveal_pause</Radio> */}
+        {/* <Radio value="1155">ERC1155</Radio> */}
       </RadioGroup>
     </Flex>
   );

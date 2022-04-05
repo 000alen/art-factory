@@ -18,6 +18,8 @@ import {
   getPinataSecretApiKey,
   getInfuraProjectId,
   getEtherscanApiKey,
+  factoryDeployNotRevealedImage,
+  factoryDeployNotRevealedMetadata,
 } from "./ipc";
 import { v4 as uuid } from "uuid";
 import { ContractFactory, Signer, utils } from "ethers";
@@ -108,7 +110,7 @@ export const resolvePathFromInstance = (
     inputDir,
     outputDir,
     collection,
-    generated,
+    imagesGenerated,
     metadataGenerated,
     imagesCid,
     metadataCid,
@@ -118,7 +120,7 @@ export const resolvePathFromInstance = (
     abi,
   } = instance;
 
-  return !collection && !generated
+  return !collection && !imagesGenerated
     ? [
         "/configuration",
         { inputDir, outputDir, partialConfiguration: configuration },
@@ -144,8 +146,8 @@ export const resolvePathFromInstance = (
           outputDir,
           configuration,
           partialDeploy: {
-            imagesCID: imagesCid,
-            metadataCID: metadataCid,
+            imagesCid,
+            metadataCid,
           },
         },
       ]
@@ -158,8 +160,8 @@ export const resolvePathFromInstance = (
           inputDir,
           outputDir,
           configuration,
-          imagesCID: imagesCid,
-          metadataCID: metadataCid,
+          imagesCid,
+          metadataCid,
           network,
           contractAddress,
           abi,
@@ -233,22 +235,33 @@ export const factoryDeployAssets = async (
   id: string,
   secrets: Secrets,
   collection: Collection,
+  configuration: Configuration,
   partialDeploy: any
 ) => {
-  let imagesCid, metadataCid;
+  let imagesCid, metadataCid, notRevealedImageCid, notRevealedMetadataCid;
 
   await factoryLoadSecrets(id, secrets);
 
   try {
     imagesCid = partialDeploy
-      ? partialDeploy.imagesCID
+      ? partialDeploy.imagesCid
       : await factoryDeployImages(id);
 
     if (!partialDeploy) await factoryGenerateMetadata(id);
 
     metadataCid = partialDeploy
-      ? partialDeploy.metadataCID
+      ? partialDeploy.metadataCid
       : await factoryDeployMetadata(id);
+
+    notRevealedImageCid =
+      configuration.contractType === "721_reveal_pause"
+        ? ((await factoryDeployNotRevealedImage(id)) as string)
+        : undefined;
+
+    notRevealedMetadataCid =
+      configuration.contractType === "721_reveal_pause"
+        ? ((await factoryDeployNotRevealedMetadata(id)) as string)
+        : undefined;
   } catch (error) {
     throw FormattedError(4, "Could not deploy assets", {
       collection,
@@ -261,11 +274,15 @@ export const factoryDeployAssets = async (
   await factoryLoadInstance(id, {
     imagesCid,
     metadataCid,
+    notRevealedImageCid,
+    notRevealedMetadataCid,
   });
 
   return {
     imagesCid,
     metadataCid,
+    notRevealedImageCid,
+    notRevealedMetadataCid,
   };
 };
 
@@ -278,6 +295,22 @@ export const deploy721 = async (
     configuration.name,
     configuration.symbol,
     `ipfs://${metadataCid}/`,
+    utils.parseEther(`${configuration.cost}`),
+    configuration.n,
+    configuration.maxMintAmount
+  );
+
+export const deploy721_reveal_pause = async (
+  contractFactory: ContractFactory,
+  configuration: Configuration721,
+  metadataCid: string,
+  notRevealedImageCid: string
+) =>
+  await contractFactory.deploy(
+    configuration.name,
+    configuration.symbol,
+    `ipfs://${metadataCid}/`,
+    `ipfs://${notRevealedImageCid}`,
     utils.parseEther(`${configuration.cost}`),
     configuration.n,
     configuration.maxMintAmount
@@ -299,7 +332,8 @@ export const factoryDeployContract = async (
   configuration: Configuration,
   network: string,
   signer: Signer,
-  metadataCid: string
+  metadataCid: string,
+  notRevealedMetadataCid: string
 ) => {
   let contracts;
   // let source;
@@ -331,6 +365,13 @@ export const factoryDeployContract = async (
             contractFactory,
             configuration as Configuration721,
             metadataCid
+          )
+        : configuration.contractType === "721_reveal_pause"
+        ? await deploy721_reveal_pause(
+            contractFactory,
+            configuration as Configuration721,
+            metadataCid,
+            notRevealedMetadataCid
           )
         : await deploy1155(
             contractFactory,

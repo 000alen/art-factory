@@ -1,6 +1,7 @@
 import { BundleNode } from "./components/BundleNode";
 import { CustomEdge } from "./components/CustomEdge";
 import { LayerNode } from "./components/LayerNode";
+import { NotRevealedNode } from "./components/NotRevealedNode";
 import { RenderNode } from "./components/RenderNode";
 import { RootNode } from "./components/RootNode";
 
@@ -23,6 +24,9 @@ export const ContractTypes: Record<string, any> = {
   721: {
     name: "ERC721",
   },
+  "721_reveal_pause": {
+    name: "ERC721 (reveal & pause)",
+  },
   1155: {
     name: "ERC1155",
   },
@@ -38,6 +42,7 @@ export const NODE_TYPES = {
   layerNode: LayerNode,
   renderNode: RenderNode,
   bundleNode: BundleNode,
+  notRevealedNode: NotRevealedNode,
 };
 
 export const EDGE_TYPES = {

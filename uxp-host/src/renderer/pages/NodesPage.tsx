@@ -7,7 +7,11 @@ import React, {
 } from "react";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { useLocation, useNavigate } from "react-router-dom";
-import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
+import {
+  factoryGenerateNotRevealedImage,
+  factoryGetLayerByName,
+  factoryGetRandomTraitImage,
+} from "../ipc";
 import { factoryGenerate } from "../actions";
 import {
   Nodes,
@@ -20,7 +24,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
 import { Configuration, Trait } from "../typings";
 import { MAX_SIZE } from "../constants";
-import { getBranches } from "../nodesUtils";
+import { getBranches, getNotRevealedTraits } from "../nodesUtils";
 import { LayerNodeComponentData } from "../components/LayerNode";
 import { Node as FlowNode } from "react-flow-renderer";
 import { hash } from "../utils";
@@ -137,6 +141,11 @@ export function NodesPage() {
       onProgress
     );
 
+    if (configuration.contractType === "721_reveal_pause") {
+      const notRevealedTraits = getNotRevealedTraits(nodes, edges);
+      await factoryGenerateNotRevealedImage(id, notRevealedTraits);
+    }
+
     const b = performance.now();
 
     setWorkTime(b - a);
@@ -173,7 +182,12 @@ export function NodesPage() {
       setter={setter}
     >
       <div className="w-full h-full flex overflow-hidden">
-        <Sidebar id={id} layers={partialConfiguration.layers} traits={traits} />
+        <Sidebar
+          id={id}
+          layers={partialConfiguration.layers}
+          contractType={partialConfiguration.contractType}
+          traits={traits}
+        />
         <Nodes>
           <div className="absolute z-10 bottom-4 right-4">
             <TriStateButton

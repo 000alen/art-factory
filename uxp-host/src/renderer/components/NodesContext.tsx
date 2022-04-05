@@ -32,6 +32,7 @@ import {
 import { LayerNodeComponentData } from "./LayerNode";
 import { RenderNodeComponentData } from "./RenderNode";
 import { BundleNodeComponentData } from "./BundleNode";
+import { NotRevealedNodeComponentData } from "./NotRevealedNode";
 
 interface NodesContextProviderProps {
   id: string;
@@ -147,11 +148,11 @@ export function useNodes(
 
   const onUpdateUrls = onUpdate<Record<string, string>>(["layerNode"], "urls");
   const onUpdateComposedUrls = onUpdate<Record<string, string>>(
-    ["renderNode", "bundleNode"],
+    ["renderNode", "bundleNode", "notRevealedNode"],
     "composedUrls"
   );
   const onUpdateRenderIds = onUpdate<Record<string, string>>(
-    ["renderNode", "bundleNode"],
+    ["renderNode", "bundleNode", "notRevealedNode"],
     "renderIds"
   );
   const onUpdateNs = onUpdate<Record<string, number>>(
@@ -181,14 +182,14 @@ export function useNodes(
   };
 
   const requestComposedUrl = async (traits: Trait[]) => {
-    console.log("a")
+    console.log("a");
     const key = hash(traits);
     const composedBase64String = await factoryComposeTraits(
       id,
       traits,
       MAX_SIZE
     );
-    console.log("b")
+    console.log("b");
 
     setComposedUrls((prevComposedUrls) => {
       const newComposedUrls = {
@@ -333,6 +334,14 @@ export function useNodes(
           name: spacedName(),
           ids: null,
         } as BundleNodeComponentData;
+      case "notRevealedNode":
+        return {
+          composedUrls,
+          renderIds,
+
+          requestComposedUrl,
+          requestRenderId,
+        } as NotRevealedNodeComponentData;
       default:
         return {};
     }

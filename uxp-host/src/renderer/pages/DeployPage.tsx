@@ -61,19 +61,13 @@ export function DeployPage() {
 
   const navigate = useNavigate();
   const { state } = useLocation();
-  const {
-    id,
-    collection,
-    inputDir,
-    outputDir,
-    configuration,
-    partialDeploy,
-  } = state as DeployPageState;
+  const { id, collection, inputDir, outputDir, configuration, partialDeploy } =
+    state as DeployPageState;
 
   const [secrets, setSecrets] = useState(null);
   const [provider, setProvider] = useState(null);
-  const [imagesCID, setImagesCID] = useState("");
-  const [metadataCID, setMetadataCID] = useState("");
+  const [imagesCid, setImagesCid] = useState("");
+  const [metadataCid, setMetadataCid] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
   const [contractAddress, setContractAddress] = useState("");
   const [abi, setAbi] = useState(null);
@@ -116,22 +110,29 @@ export function DeployPage() {
     await provider.enable();
     const web3Provider = new providers.Web3Provider(provider);
     const signer = await web3Provider.getSigner();
-    const { imagesCid, metadataCid } = await factoryDeployAssets(
+    const {
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+    } = await factoryDeployAssets(
       id,
       secrets,
       collection,
+      configuration,
       partialDeploy
     );
     await factorySaveInstance(id);
-    setImagesCID(imagesCid);
-    setMetadataCID(metadataCid);
+    setImagesCid(imagesCid);
+    setMetadataCid(metadataCid);
     const { contractAddress, abi, transactionHash, wait } =
       await factoryDeployContract(
         id,
         configuration,
         networkKey,
         signer,
-        metadataCid
+        metadataCid,
+        notRevealedMetadataCid
       );
     setContractAddress(contractAddress);
     setAbi(abi);
@@ -153,8 +154,8 @@ export function DeployPage() {
         inputDir,
         outputDir,
         configuration,
-        imagesCID,
-        metadataCID,
+        imagesCid,
+        metadataCid,
         network: networkKey,
         contractAddress,
         abi,
@@ -197,14 +198,14 @@ export function DeployPage() {
         <TextField
           width="50%"
           isReadOnly={true}
-          value={imagesCID}
+          value={imagesCid}
           label="Images CID"
         />
 
         <TextField
           width="50%"
           isReadOnly={true}
-          value={metadataCID}
+          value={metadataCid}
           label="Metadata CID"
         />
 

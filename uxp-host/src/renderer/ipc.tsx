@@ -324,3 +324,15 @@ export const factoryRegenerateCollectionItems = (
     id,
     collectionItems
   ) as Promise<Collection>;
+
+export const factoryGenerateNotRevealedImage = (id: string, traits: Trait[]) =>
+  ipcTask("factoryGenerateNotRevealedImage")(id, traits);
+
+export const factoryGenerateNotRevealedMetadata = (id: string) =>
+  ipcTask("factoryGenerateNotRevealedMetadata")(id);
+
+export const factoryDeployNotRevealedImage = (id: string) =>
+  ipcTask("factoryDeployNotRevealedImage")(id);
+
+export const factoryDeployNotRevealedMetadata = (id: string) =>
+  ipcTask("factoryDeployNotRevealedMetadata")(id);

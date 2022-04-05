@@ -110,7 +110,7 @@ export function ConfigurationPage() {
       height &&
       (generateBackground || defaultBackground) &&
       contractType &&
-      (contractType === "721"
+      (contractType === "721" || contractType === "721_reveal_pause"
         ? cost && maxMintAmount
         : contractType === "1155"
         ? true
@@ -217,6 +217,15 @@ export function ConfigurationPage() {
         />
 
         {contractType === "721" ? (
+          <Configuration721
+            {...{
+              cost,
+              setCost,
+              maxMintAmount,
+              setMaxMintAmount,
+            }}
+          />
+        ) : contractType === "721_reveal_pause" ? (
           <Configuration721
             {...{
               cost,

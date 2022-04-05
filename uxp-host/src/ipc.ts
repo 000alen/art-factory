@@ -402,4 +402,25 @@ ipcAsyncTask(
     await factories[id].regenerateCollectionItems(collectionItems)
 );
 
+ipcAsyncTask(
+  "factoryGenerateNotRevealedImage",
+  async (id: string, traits: Trait[]) =>
+    await factories[id].generateNotRevealedImage(traits)
+);
+
+ipcAsyncTask(
+  "factoryGenerateNotRevealedMetadata",
+  async (id: string) => await factories[id].generateNotRevealedMetadata()
+);
+
+ipcAsyncTask(
+  "factoryDeployNotRevealedImage",
+  async (id: string) => await factories[id].deployNotRevealedImage()
+);
+
+ipcAsyncTask(
+  "factoryDeployNotRevealedMetadata",
+  async (id: string) => await factories[id].deployNotRevealedMetadata()
+);
+
 // #endregion
