@@ -12,6 +12,7 @@ import React, { useContext } from "react";
 import { Toolbar, ToolbarProvider } from "./components/Toolbar";
 import { UXPContext } from "./components/UXPContext";
 import { GenericDialogProvider } from "./components/GenericDialog";
+import { FactoryPage } from "./pages/FactoryPage";
 
 export function App() {
   const { connectionStatus } = useContext(UXPContext);
@@ -31,6 +32,7 @@ export function App() {
 
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/factory" element={<FactoryPage />} />
               <Route path="/configuration" element={<ConfigurationPage />} />
               <Route path="/nodes" element={<NodesPage />} />
               <Route path="/quality" element={<QualityPage />} />

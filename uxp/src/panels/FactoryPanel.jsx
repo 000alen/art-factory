@@ -70,6 +70,8 @@ export const FactoryPanel = () => {
             return;
           }
 
+          const folder = await fs.getEntryForPersistentToken(token);
+
           await hideAll(doc);
           await exportAll(doc, folder);
 
