@@ -11,38 +11,38 @@ import React from "react";
 
 export const FactoryPage: React.FC = () => {
   return (
-    <Grid
+    <Flex
       height="100%"
-      columns={repeat(2, "size-5000")}
+      direction="column"
       gap="size-100"
-      alignItems="center"
-      alignContent="center"
       justifyContent="center"
+      alignItems="center"
     >
-      <View borderWidth="thin" padding="size-100">
-        <Heading level={1}>Configuration</Heading>
-        <Button variant="secondary">Go</Button>
-      </View>
-
-      <View borderWidth="thin" padding="size-100">
+      <Heading level={1}>Configuration</Heading>
+      <Divider />
+      <View>
         <Heading level={1}>Nodes</Heading>
-        <Button variant="secondary">Go</Button>
-      </View>
 
-      <View borderWidth="thin" padding="size-100">
+        <Flex gap="size-100">
+          <Button variant="secondary">Edit Alien</Button>
+          <Button variant="secondary">Edit Robot</Button>
+          <Button variant="secondary">Edit Reptiles</Button>
+        </Flex>
+      </View>
+      <Divider />
+      <View>
         <Heading level={1}>Quality</Heading>
-        <Button variant="secondary">Go</Button>
-      </View>
 
-      <View borderWidth="thin" padding="size-100">
-        <Heading level={1}>Deploy</Heading>
-        <Button variant="secondary">Go</Button>
-      </View>
-
-      <View borderWidth="thin" padding="size-100">
-        <Heading level={1}>Instance</Heading>
-        <Button variant="secondary">Go</Button>
-      </View>
-    </Grid>
+        <Flex gap="size-100">
+          <Button variant="secondary">Quality Alien</Button>
+          <Button variant="secondary">Quality Robot</Button>
+          <Button variant="secondary">Quality Reptiles</Button>
+        </Flex>
+      </View>{" "}
+      <Divider />
+      <Button variant="secondary">Deploy</Button>
+      <Divider />
+      <Button variant="secondary">Instance</Button>
+    </Flex>
   );
 };

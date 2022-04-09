@@ -14,6 +14,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import Close from "@spectrum-icons/workflow/Close";
 import { Configuration } from "../typings";
 import { parseColor } from "@react-stately/color";
+import Back from "@spectrum-icons/workflow/Back";
 
 interface ConfigurationPageState {
   inputDir: string;
@@ -53,6 +54,8 @@ export function ConfigurationPage() {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+
+    toolbarContext.addButton("back", "Back", <Back />, () => {});
 
     const loadInformation = task("load information", async () => {
       const layers = (await layersNames(inputDir)) as string[];
@@ -98,6 +101,7 @@ export function ConfigurationPage() {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
     };
   }, [inputDir, partialConfiguration]);
 

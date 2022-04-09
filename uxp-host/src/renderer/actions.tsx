@@ -43,7 +43,9 @@ export const loadSecrets = async () =>
     etherscanApiKey: ((await getEtherscanApiKey()) as unknown as string) || "",
   } as Secrets);
 
-export const openDirectory = async () => {
+export const createProject = async () => {};
+
+export const openProject = async () => {
   const { canceled, filePaths } = (await showOpenDialog({
     properties: ["openFile", "openDirectory"],
   })) as {
@@ -65,42 +67,27 @@ export const openDirectory = async () => {
   };
 };
 
-export const openInstance = async () => {
-  const { canceled, filePaths } = (await showOpenDialog({
-    properties: ["openFile"],
-    filters: [
-      {
-        name: "Instance",
-        extensions: ["json"],
-      },
-    ],
-  })) as {
-    canceled: boolean;
-    filePaths: string[];
-  };
-  if (canceled) return;
-  const [instancePath] = filePaths;
+// export const openDirectory = async () => {
+//   const { canceled, filePaths } = (await showOpenDialog({
+//     properties: ["openFile", "openDirectory"],
+//   })) as {
+//     canceled: boolean;
+//     filePaths: string[];
+//   };
 
-  const id = uuid();
-  try {
-    await createFactoryFromInstance(id, instancePath);
-  } catch (error) {
-    throw FormattedError(1, "Could not load instance", {
-      instancePath,
-      message: error.message,
-    });
-  }
+//   if (canceled) return;
+//   const [inputDir] = filePaths;
 
-  const instance = await factoryInstance(id);
+//   if (!(await isValidInputDir(inputDir)))
+//     throw FormattedError(7, "Invalid input directory", { inputDir });
 
-  return {
-    id,
-    instance,
-  } as {
-    id: string;
-    instance: Partial<Instance>;
-  };
-};
+//   const outputDir = await getOutputDir(inputDir);
+
+//   return {
+//     inputDir,
+//     outputDir,
+//   };
+// };
 
 export const resolvePathFromInstance = (
   id: string,
@@ -182,7 +169,7 @@ export const initializeFactory = async (
     await factorySaveInstance(id);
   } catch (error) {
     throw FormattedError(2, "Could not initialize factory", {
-      configuration,
+      // configuration,
       inputDir,
       outputDir,
       message: error.message,
@@ -219,7 +206,7 @@ export const factoryGenerate = async (
     await factoryGenerateImages(id, collection, onProgress);
   } catch (error) {
     throw FormattedError(3, "Could not generate images", {
-      collection,
+      // collection,
       message: error.message,
     });
   }
@@ -264,7 +251,7 @@ export const factoryDeployAssets = async (
         : undefined;
   } catch (error) {
     throw FormattedError(4, "Could not deploy assets", {
-      collection,
+      // collection,
       imagesCid,
       metadataCid,
       message: error.message,
@@ -343,7 +330,7 @@ export const factoryDeployContract = async (
     // source = await getContractSource(configuration.contractType);
   } catch (error) {
     throw FormattedError(5, "Could not get contract", {
-      configuration,
+      // configuration,
       message: error.message,
     });
   }
@@ -380,7 +367,7 @@ export const factoryDeployContract = async (
           );
   } catch (error) {
     throw FormattedError(6, "Could not deploy contract", {
-      configuration,
+      // configuration,
       message: error.message,
     });
   }

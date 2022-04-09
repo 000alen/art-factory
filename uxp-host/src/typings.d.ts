@@ -56,35 +56,22 @@ export interface CollectionItem {
 
 export type Collection = CollectionItem[];
 
-// export interface Instance {
-//   inputDir: string;
-//   outputDir: string;
-//   configuration: Configuration;
-//   collection: Collection;
-//   generated: boolean;
-//   metadataGenerated: boolean;
-//   imagesCid: string;
-//   metadataCid: string;
-//   notRevealedImageCid: string;
-//   notRevealedMetadataCid: string;
-//   network: string;
-//   contractAddress: string;
-//   abi: any[];
-//   compilerVersion: string;
-// }
-
 export interface Instance {
   inputDir: string;
   outputDir: string;
   configuration: Partial<Configuration>;
+
   collection: Collection;
   bundles: Record<string, string[][]>;
+
   imagesGenerated: boolean;
   metadataGenerated: boolean;
+
   imagesCid: string;
   metadataCid: string;
   notRevealedImageCid: string;
   notRevealedMetadataCid: string;
+
   network: string;
   contractAddress: string;
   abi: any[];

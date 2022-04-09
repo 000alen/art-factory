@@ -32,6 +32,7 @@ import { Gallery } from "../components/Gallery";
 import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
 import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import { Filters } from "../components/Filters";
+import Back from "@spectrum-icons/workflow/Back";
 
 interface QualityPageState {
   id: string;
@@ -98,6 +99,9 @@ export const QualityPage = () => {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+
+    toolbarContext.addButton("back", "Back", <Back />, () => {});
+
     toolbarContext.addButton(
       "open-explorer",
       "Open in Explorer",
@@ -120,6 +124,7 @@ export const QualityPage = () => {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
       toolbarContext.removeButton("open-explorer");
 
       uxpContext.off("uxp-reload", uxpReload);

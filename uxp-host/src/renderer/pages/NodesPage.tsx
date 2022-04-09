@@ -28,6 +28,7 @@ import { getBranches, getNotRevealedTraits } from "../nodesUtils";
 import { LayerNodeComponentData } from "../components/LayerNode";
 import { Node as FlowNode } from "react-flow-renderer";
 import { hash } from "../utils";
+import Back from "@spectrum-icons/workflow/Back";
 
 interface NodesPageState {
   id: string;
@@ -58,6 +59,8 @@ export function NodesPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
+    toolbarContext.addButton("back", "Back", <Back />, () => {});
+
     task("loading preview", async () => {
       const layers = await Promise.all(
         partialConfiguration.layers.map((layerName) =>
@@ -75,6 +78,7 @@ export function NodesPage() {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
     };
   }, [id, partialConfiguration.layers]);
 

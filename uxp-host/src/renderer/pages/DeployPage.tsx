@@ -30,6 +30,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { TriStateButton } from "../components/TriStateButton";
 import { Collection, Configuration } from "../typings";
+import Back from "@spectrum-icons/workflow/Back";
 
 interface DeployPageState {
   id: string;
@@ -84,6 +85,8 @@ export function DeployPage() {
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
 
+    toolbarContext.addButton("back", "Back", <Back />, () => {});
+
     toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
       localStorage.clear()
     );
@@ -101,6 +104,7 @@ export function DeployPage() {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
       toolbarContext.removeButton("logOut");
     };
   }, [networkKey]);

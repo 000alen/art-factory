@@ -27,6 +27,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Configuration } from "../typings";
 import { loadSecrets } from "../actions";
+import Back from "@spectrum-icons/workflow/Back";
 // import { OpenSeaPort } from "opensea-js";
 
 interface InstancePageState {
@@ -63,6 +64,7 @@ export function InstancePage() {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+    toolbarContext.addButton("back", "Back", <Back />, () => {});
     toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
       localStorage.clear()
     );
@@ -88,6 +90,7 @@ export function InstancePage() {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
       toolbarContext.removeButton("logOut");
     };
   }, [abi, contractAddress, network]);
