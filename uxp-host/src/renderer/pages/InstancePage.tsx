@@ -153,15 +153,6 @@ export function InstancePage() {
               addOutput,
             }}
           />
-        ) : configuration.contractType === "1155" ? (
-          <Panel1155
-            {...{
-              task: _task,
-              contract,
-              contractAddress,
-              addOutput,
-            }}
-          />
         ) : null}
 
         <View>

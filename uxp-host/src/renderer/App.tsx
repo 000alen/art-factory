@@ -6,7 +6,7 @@ import { DeployPage } from "./pages/DeployPage";
 import { ConfigurationPage } from "./pages/ConfigurationPage";
 import { InstancePage } from "./pages/InstancePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { NodesPage } from "./pages/NodesPage";
+import { TemplatePage } from "./pages/TemplatePage";
 
 import React, { useContext } from "react";
 import { Toolbar, ToolbarProvider } from "./components/Toolbar";
@@ -36,7 +36,7 @@ export function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/factory" element={<FactoryPage />} />
                 <Route path="/configuration" element={<ConfigurationPage />} />
-                <Route path="/nodes" element={<NodesPage />} />
+                <Route path="/template" element={<TemplatePage />} />
                 <Route path="/generation" element={<GenerationPage />} />
                 <Route path="/quality" element={<QualityPage />} />
                 <Route path="/deploy" element={<DeployPage />} />

@@ -51,7 +51,7 @@ Base parameters: projectDir, instance, id
 ```
 Home -> Project
     -> Configuration
-     | Nodes
+     | Template
      | Generation
      | Quality
      | Deploy
@@ -60,7 +60,7 @@ Home -> Project
 
 ```
 Configuration parameters:   projectDir, instance, id
-Nodes parameters:           projectDir, instance, id, nodesId?
+Template parameters:        projectDir, instance, id, templateId?
 Generation parameters:      projectDir, instance, id, generationId?
 Quality parameters:         projectDir, instance, id, generationId
 Deploy parameters:          projectDir, instance, id
@@ -79,7 +79,7 @@ Instance parameters:        projectDir, instance, id
 
 # Configuration Page
 
-# Nodes Page
+# Template Page
 
 # Quality Page
 

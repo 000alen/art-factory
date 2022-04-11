@@ -1,4 +1,4 @@
-import { Configuration, ContractType, Instance } from "./newTypings";
+import { Configuration, ContractType, Instance } from "./typings";
 import { spacedName } from "./utils";
 
 export const createConfiguration = (): Configuration => ({
@@ -22,6 +22,6 @@ export const createConfiguration = (): Configuration => ({
 
 export const createInstance = (): Instance => ({
   configuration: createConfiguration(),
-  nodes: [],
+  templates: [],
   generations: [],
 });

@@ -24,7 +24,6 @@ import {
   Secrets,
   Trait,
 } from "./typings";
-import { Instance as NewInstance } from "./newTypings";
 import { capitalize } from "./utils";
 
 // #region Helpers
@@ -109,14 +108,14 @@ const ipcSetterAndGetter = (
 
 // #region General
 export const readProjectInstance = (projectDir: string) =>
-  ipcTask("readProjectInstance")(projectDir) as Promise<NewInstance>;
+  ipcTask("readProjectInstance")(projectDir) as Promise<Instance>;
 
 export const ensureProjectStructure = (projectDir: string) =>
   ipcTask("ensureProjectStructure")(projectDir);
 
 export const writeProjectInstance = (
   projectDir: string,
-  instance: NewInstance
+  instance: Instance
 ) => ipcTask("writeProjectInstance")(projectDir, instance);
 
 export const readProjectAvailableLayers = (projectDir: string) =>
@@ -206,7 +205,7 @@ export const createFactoryFromInstance = (id: string, instancePath: string) =>
 
 export const factoryInstance = (id: string) => ipcTask("factoryInstance")(id);
 
-export const factoryLoadInstance = (id: string, instance: Partial<Instance>) =>
+export const factoryLoadInstance = (id: string, instance: any) =>
   ipcTask("factoryLoadInstance")(id, instance);
 
 export const factorySaveInstance = (id: string) =>

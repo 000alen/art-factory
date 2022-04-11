@@ -27,9 +27,9 @@ import { FormattedError } from "./components/ErrorHandler";
 import {
   Collection,
   Configuration,
-  Configuration1155,
-  Configuration721,
+  ContractType,
   Instance,
+  Network,
   Secrets,
   Trait,
 } from "./typings";
@@ -89,73 +89,73 @@ export const openProject = async () => {
 //   };
 // };
 
-export const resolvePathFromInstance = (
-  id: string,
-  instance: Partial<Instance>
-) => {
-  const {
-    inputDir,
-    outputDir,
-    collection,
-    imagesGenerated,
-    metadataGenerated,
-    imagesCid,
-    metadataCid,
-    contractAddress,
-    configuration,
-    network,
-    abi,
-  } = instance;
+// export const resolvePathFromInstance = (
+//   id: string,
+//   instance: Partial<Instance>
+// ) => {
+//   const {
+//     inputDir,
+//     outputDir,
+//     collection,
+//     imagesGenerated,
+//     metadataGenerated,
+//     imagesCid,
+//     metadataCid,
+//     contractAddress,
+//     configuration,
+//     network,
+//     abi,
+//   } = instance;
 
-  return !collection && !imagesGenerated
-    ? [
-        "/configuration",
-        { inputDir, outputDir, partialConfiguration: configuration },
-      ]
-    : !metadataGenerated && !imagesCid && !metadataCid && !contractAddress
-    ? [
-        "/quality",
-        {
-          id,
-          collection,
-          inputDir,
-          outputDir,
-          configuration,
-        },
-      ]
-    : imagesCid && metadataCid && !contractAddress
-    ? [
-        "/deploy",
-        {
-          id,
-          collection,
-          inputDir,
-          outputDir,
-          configuration,
-          partialDeploy: {
-            imagesCid,
-            metadataCid,
-          },
-        },
-      ]
-    : contractAddress
-    ? [
-        "/instance",
-        {
-          id,
-          collection,
-          inputDir,
-          outputDir,
-          configuration,
-          imagesCid,
-          metadataCid,
-          network,
-          contractAddress,
-          abi,
-        },
-      ]
-    : null;
-};
+//   return !collection && !imagesGenerated
+//     ? [
+//         "/configuration",
+//         { inputDir, outputDir, partialConfiguration: configuration },
+//       ]
+//     : !metadataGenerated && !imagesCid && !metadataCid && !contractAddress
+//     ? [
+//         "/quality",
+//         {
+//           id,
+//           collection,
+//           inputDir,
+//           outputDir,
+//           configuration,
+//         },
+//       ]
+//     : imagesCid && metadataCid && !contractAddress
+//     ? [
+//         "/deploy",
+//         {
+//           id,
+//           collection,
+//           inputDir,
+//           outputDir,
+//           configuration,
+//           partialDeploy: {
+//             imagesCid,
+//             metadataCid,
+//           },
+//         },
+//       ]
+//     : contractAddress
+//     ? [
+//         "/instance",
+//         {
+//           id,
+//           collection,
+//           inputDir,
+//           outputDir,
+//           configuration,
+//           imagesCid,
+//           metadataCid,
+//           network,
+//           contractAddress,
+//           abi,
+//         },
+//       ]
+//     : null;
+// };
 
 export const initializeFactory = async (
   configuration: Partial<Configuration>,
@@ -275,7 +275,7 @@ export const factoryDeployAssets = async (
 
 export const deploy721 = async (
   contractFactory: ContractFactory,
-  configuration: Configuration721,
+  configuration: Configuration,
   metadataCid: string
 ) =>
   await contractFactory.deploy(
@@ -283,13 +283,13 @@ export const deploy721 = async (
     configuration.symbol,
     `ipfs://${metadataCid}/`,
     utils.parseEther(`${configuration.cost}`),
-    configuration.n,
+    10, // configuration.n, // ! TODO
     configuration.maxMintAmount
   );
 
 export const deploy721_reveal_pause = async (
   contractFactory: ContractFactory,
-  configuration: Configuration721,
+  configuration: Configuration,
   metadataCid: string,
   notRevealedImageCid: string
 ) =>
@@ -299,25 +299,25 @@ export const deploy721_reveal_pause = async (
     `ipfs://${metadataCid}/`,
     `ipfs://${notRevealedImageCid}`,
     utils.parseEther(`${configuration.cost}`),
-    configuration.n,
+    10, // configuration.n, // ! TODO
     configuration.maxMintAmount
   );
 
-export const deploy1155 = async (
-  contractFactory: ContractFactory,
-  configuration: Configuration1155,
-  metadataCid: string
-) =>
-  await contractFactory.deploy(
-    configuration.name,
-    configuration.symbol,
-    `ipfs://${metadataCid}/`
-  );
+// export const deploy1155 = async (
+//   contractFactory: ContractFactory,
+//   configuration: Configuration1155,
+//   metadataCid: string
+// ) =>
+//   await contractFactory.deploy(
+//     configuration.name,
+//     configuration.symbol,
+//     `ipfs://${metadataCid}/`
+//   );
 
 export const factoryDeployContract = async (
   id: string,
   configuration: Configuration,
-  network: string,
+  network: Network,
   signer: Signer,
   metadataCid: string,
   notRevealedMetadataCid: string
@@ -347,24 +347,21 @@ export const factoryDeployContract = async (
   let contract;
   try {
     contract =
-      configuration.contractType === "721"
-        ? await deploy721(
-            contractFactory,
-            configuration as Configuration721,
-            metadataCid
-          )
-        : configuration.contractType === "721_reveal_pause"
+      configuration.contractType === ContractType.ERC721
+        ? await deploy721(contractFactory, configuration, metadataCid)
+        : configuration.contractType === ContractType.ERC721_REVEAL_PAUSE
         ? await deploy721_reveal_pause(
             contractFactory,
-            configuration as Configuration721,
+            configuration,
             metadataCid,
             notRevealedMetadataCid
           )
-        : await deploy1155(
-            contractFactory,
-            configuration as Configuration1155,
-            metadataCid
-          );
+        : null;
+    // : await deploy1155(
+    //     contractFactory,
+    //     configuration as Configuration1155,
+    //     metadataCid
+    //   );
   } catch (error) {
     throw FormattedError(6, "Could not deploy contract", {
       // configuration,

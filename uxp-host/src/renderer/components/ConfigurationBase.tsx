@@ -10,7 +10,7 @@ import {
   Slider,
 } from "@adobe/react-spectrum";
 import { ColorPicker } from "./ColorPicker";
-import { ContractType } from "../newTypings";
+import { ContractType } from "../typings";
 
 interface ConfigurationBaseProps {
   name: string;

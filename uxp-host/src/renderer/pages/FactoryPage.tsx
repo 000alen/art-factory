@@ -2,10 +2,11 @@ import { Button, Flex } from "@adobe/react-spectrum";
 import React, { useContext, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ToolbarContext } from "../components/Toolbar";
-import { Instance } from "../newTypings";
+import { Instance } from "../typings";
 import { createFactory, hasFactory, writeProjectInstance } from "../ipc";
-import Close from "@spectrum-icons/workflow/Close";
 import { useErrorHandler } from "../components/ErrorHandler";
+import Close from "@spectrum-icons/workflow/Close";
+import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
 interface FactoryPageState {
   projectDir: string;
@@ -23,6 +24,9 @@ export const FactoryPage: React.FC = () => {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+    toolbarContext.addButton("save", "Save", <SaveFloppy />, () =>
+      writeProjectInstance(projectDir, instance)
+    );
 
     task("factory", async () => {
       if (await hasFactory(id)) return;
@@ -32,12 +36,9 @@ export const FactoryPage: React.FC = () => {
 
     return () => {
       toolbarContext.removeButton("close");
+      toolbarContext.removeButton("save");
     };
   }, []);
-
-  const onSave = () => {
-    writeProjectInstance(projectDir, instance);
-  };
 
   const onDebug = () => {
     console.log({ projectDir, instance, id });
@@ -53,13 +54,13 @@ export const FactoryPage: React.FC = () => {
     });
   };
 
-  const onNodes = (nodesId?: string) => {
-    navigate("/nodes", {
+  const onTemplate = (templateId?: string) => {
+    navigate("/template", {
       state: {
         projectDir,
         instance,
         id,
-        nodesId,
+        templateId,
       },
     });
   };
@@ -83,9 +84,6 @@ export const FactoryPage: React.FC = () => {
 
   return (
     <Flex direction="column" gap="size-100">
-      <Button variant="secondary" onPress={onSave}>
-        Save
-      </Button>
       <Button variant="secondary" onPress={onDebug}>
         Debug
       </Button>
@@ -93,18 +91,18 @@ export const FactoryPage: React.FC = () => {
         Configuration
       </Button>
 
-      <Button variant="secondary" onPress={() => onNodes()}>
-        Nodes
+      <Button variant="secondary" onPress={() => onTemplate()}>
+        Template
       </Button>
 
       <Flex gap="size-100" marginX="size-500">
-        {instance.nodes.map((nodes) => (
+        {instance.templates.map((template) => (
           <Button
-            key={nodes.id}
+            key={template.id}
             variant="secondary"
-            onPress={() => onNodes(nodes.id)}
+            onPress={() => onTemplate(template.id)}
           >
-            {nodes.name}
+            {template.name}
           </Button>
         ))}
       </Flex>

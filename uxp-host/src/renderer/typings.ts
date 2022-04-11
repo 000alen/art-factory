@@ -39,7 +39,7 @@ export interface Configuration {
   layers: string[];
 }
 
-export interface Nodes {
+export interface Template {
   id: string;
   name: string;
   nodes: FlowNode[];
@@ -98,7 +98,7 @@ export interface Deployment {
 
 export interface Instance {
   configuration: Configuration;
-  nodes: Nodes[];
+  templates: Template[];
   generations: Generation[];
   deployment?: Deployment;
 }

@@ -33,7 +33,6 @@ import { LayerNodeComponentData } from "./LayerNode";
 import { RenderNodeComponentData } from "./RenderNode";
 import { BundleNodeComponentData } from "./BundleNode";
 import { NotRevealedNodeComponentData } from "./NotRevealedNode";
-import { node } from "webpack";
 
 interface NodesContextProviderProps {
   id: string;
@@ -102,7 +101,7 @@ export function useNodes(
   const [ignored, setIgnored] = useState<string[]>(initialIgnored || []);
 
   useEffect(() => {
-    if (traits.length === 0) return;
+    if (traits.length === 0) return; // ! TODO: Nodes don't work without traits
 
     if (initialNodes) setNodes(hydrateNodes(initialNodes));
     if (initialEdges) setEdges(hydrateEdges(initialEdges));

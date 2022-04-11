@@ -17,43 +17,47 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { Trait } from "../typings";
 import { MAX_SIZE } from "../constants";
-import { Instance } from "../newTypings";
+import { Instance } from "../typings";
 import { Button } from "@adobe/react-spectrum";
 import { v4 as uuid } from "uuid";
 import Close from "@spectrum-icons/workflow/Close";
 import Back from "@spectrum-icons/workflow/Back";
 import { spacedName } from "../utils";
 
-interface NodesPageState {
+interface TemplatePageState {
   projectDir: string;
   instance: Instance;
   id: string;
-  nodesId?: string;
+  templateId?: string;
 }
 
-export function NodesPage() {
+export function TemplatePage() {
   const toolbarContext = useContext(ToolbarContext);
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id, nodesId } = state as NodesPageState;
-  const { configuration, nodes } = instance;
+  const { projectDir, instance, id, templateId } = state as TemplatePageState;
+  const { configuration, templates } = instance;
 
-  const [workingId] = useState(nodesId || uuid());
+  const [workingId] = useState(templateId || uuid());
   const [initialNodes] = useState(
-    nodesId ? nodes.find(({ id }) => id == nodesId).nodes : undefined
+    templateId ? templates.find(({ id }) => id == templateId).nodes : undefined
   );
   const [initialEdges] = useState(
-    nodesId ? nodes.find(({ id }) => id == nodesId).edges : undefined
+    templateId ? templates.find(({ id }) => id == templateId).edges : undefined
   );
   const [initialRenderIds] = useState(
-    nodesId ? nodes.find(({ id }) => id == nodesId).renderIds : undefined
+    templateId
+      ? templates.find(({ id }) => id == templateId).renderIds
+      : undefined
   );
   const [initialNs] = useState(
-    nodesId ? nodes.find(({ id }) => id == nodesId).ns : undefined
+    templateId ? templates.find(({ id }) => id == templateId).ns : undefined
   );
   const [initialIgnored] = useState(
-    nodesId ? nodes.find(({ id }) => id == nodesId).ignored : undefined
+    templateId
+      ? templates.find(({ id }) => id == templateId).ignored
+      : undefined
   );
 
   const [traits, setTraits] = useState([]);
@@ -87,34 +91,30 @@ export function NodesPage() {
   }, []);
 
   const onSave = () => {
-    const {
-      nodes: _nodes,
-      edges,
-      renderIds,
-      ns,
-      ignored,
-    } = getterRef.current();
-    const index = instance.nodes.findIndex((nodes) => nodes.id === workingId);
+    const { nodes, edges, renderIds, ns, ignored } = getterRef.current();
+
+    const index = instance.templates.findIndex(
+      (template) => template.id === workingId
+    );
     const name = spacedName();
 
-    let nNodes;
-    if (index === -1) {
-      nNodes = [
-        ...instance.nodes,
-        { id: workingId, name, nodes: _nodes, edges, renderIds, ns, ignored },
+    let templates;
+    if (index === -1)
+      templates = [
+        ...instance.templates,
+        { id: workingId, name, nodes, edges, renderIds, ns, ignored },
       ];
-    } else {
-      nNodes = instance.nodes.map((nodes) =>
-        nodes.id === workingId
-          ? { ...nodes, name, nodes: _nodes, edges, renderIds, ns, ignored }
-          : nodes
+    else
+      templates = instance.templates.map((template) =>
+        template.id === workingId
+          ? { ...template, name, nodes, edges, renderIds, ns, ignored }
+          : template
       );
-    }
 
-    nNodes = JSON.parse(JSON.stringify(nNodes));
+    templates = JSON.parse(JSON.stringify(templates));
 
     navigate("/factory", {
-      state: { projectDir, instance: { ...instance, nodes: nNodes }, id },
+      state: { projectDir, instance: { ...instance, templates }, id },
     });
   };
 

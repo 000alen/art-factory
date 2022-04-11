@@ -29,7 +29,7 @@ import {
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { TriStateButton } from "../components/TriStateButton";
-import { Collection, Configuration } from "../typings";
+import { Collection, Configuration, Network } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 
 interface DeployPageState {
@@ -133,7 +133,8 @@ export function DeployPage() {
       await factoryDeployContract(
         id,
         configuration,
-        networkKey,
+        Network.RINKEBY,
+        // networkKey === "rinkeby" ? ,
         signer,
         metadataCid,
         notRevealedMetadataCid

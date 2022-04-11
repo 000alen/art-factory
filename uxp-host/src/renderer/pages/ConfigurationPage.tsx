@@ -7,7 +7,7 @@ import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
 import { ToolbarContext } from "../components/Toolbar";
 import { parseColor } from "@react-stately/color";
-import { Configuration, Instance } from "../newTypings";
+import { Configuration, Instance } from "../typings";
 
 import Back from "@spectrum-icons/workflow/Back";
 import Close from "@spectrum-icons/workflow/Close";

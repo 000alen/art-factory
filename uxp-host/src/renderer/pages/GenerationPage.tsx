@@ -10,7 +10,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import { Instance } from "../newTypings";
+import { Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import Close from "@spectrum-icons/workflow/Close";
 import { getBranches, getNotRevealedTraits } from "../nodesUtils";
@@ -35,11 +35,11 @@ export const GenerationPage: React.FC = () => {
   const { state } = useLocation();
   const { projectDir, instance, id, generationId } =
     state as GenerationPageState;
-  const { configuration, nodes: _nodes } = instance;
+  const { configuration, templates } = instance;
 
   const [workingId] = useState(generationId || id);
-  const [workingNodesId, setWorkingNodesId] = useState(_nodes[0].id);
-  const [workingNodesName, setWorkingNodesName] = useState(_nodes[0].name);
+  const [workingTemplateId, setWorkingTemplateId] = useState(templates[0].id);
+  const [workingTemplateName, setWorkingTemplateName] = useState(templates[0].name);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -58,7 +58,7 @@ export const GenerationPage: React.FC = () => {
   };
 
   const onGenerate = task("generation", async () => {
-    const { nodes, edges, ns, ignored } = _nodes.find(
+    const { nodes, edges, ns, ignored } = templates.find(
       (nodes) => nodes.id === workingId
     );
 
@@ -120,22 +120,22 @@ export const GenerationPage: React.FC = () => {
 
   const onSave = () => {};
 
-  const items = _nodes.map(({ id, name }) => ({ id, name }));
+  const items = templates.map(({ id, name }) => ({ id, name }));
 
   return (
     <Flex gap="size-100">
       <MenuTrigger>
-        <ActionButton>{workingNodesName}</ActionButton>
+        <ActionButton>{workingTemplateName}</ActionButton>
         <Menu
           items={items}
           selectionMode="single"
           disallowEmptySelection={true}
-          selectedKeys={[workingNodesId]}
+          selectedKeys={[workingTemplateId]}
           onSelectionChange={(selectedKeys) => {
             const selectedKey = [...selectedKeys].shift() as string;
-            setWorkingNodesId(selectedKey);
-            setWorkingNodesName(
-              _nodes.find((nodes) => nodes.id === selectedKey).name
+            setWorkingTemplateId(selectedKey);
+            setWorkingTemplateName(
+              templates.find((nodes) => nodes.id === selectedKey).name
             );
           }}
         >
