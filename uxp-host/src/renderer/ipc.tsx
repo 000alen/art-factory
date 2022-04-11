@@ -24,6 +24,7 @@ import {
   Secrets,
   Trait,
 } from "./typings";
+import { Instance as NewInstance } from "./newTypings";
 import { capitalize } from "./utils";
 
 // #region Helpers
@@ -107,6 +108,23 @@ const ipcSetterAndGetter = (
 // #endregion
 
 // #region General
+export const readProjectInstance = (projectDir: string) =>
+  ipcTask("readProjectInstance")(projectDir) as Promise<NewInstance>;
+
+export const ensureProjectStructure = (projectDir: string) =>
+  ipcTask("ensureProjectStructure")(projectDir);
+
+export const writeProjectInstance = (
+  projectDir: string,
+  instance: NewInstance
+) => ipcTask("writeProjectInstance")(projectDir, instance);
+
+export const readProjectAvailableLayers = (projectDir: string) =>
+  ipcTask("readProjectAvailableLayers")(projectDir) as Promise<string[]>;
+
+export const hasFactory = (id: string) =>
+  ipcTask("hasFactory")(id) as Promise<boolean>;
+
 export const [setPinataApiKey, getPinataApiKey] =
   ipcSetterAndGetter("pinataApiKey");
 
@@ -126,13 +144,13 @@ export const writeFile = (file: string, data: any, options: any) =>
   ipcTask("writeFile")(file, data, options);
 
 export const showOpenDialog = (options: any) =>
-  ipcTask("showOpenDialog")(options);
+  ipcTask("showOpenDialog")(options) as Promise<{
+    canceled: boolean;
+    filePaths: string[];
+  }>;
 
 export const showSaveDialog = (options: any) =>
   ipcTask("showSaveDialog")(options);
-
-export const layersNames = (inputDir: string) =>
-  ipcTask("layersNames")(inputDir);
 
 export const getContract = (name: string) => ipcTask("getContract")(name);
 
@@ -179,9 +197,9 @@ export const createFactory = (
   id: string,
   configuration: Partial<Configuration>,
   inputDir: string,
-  outputDir: string,
+  // outputDir: string,
   instance?: Partial<Instance>
-) => ipcTask("createFactory")(id, configuration, inputDir, outputDir, instance);
+) => ipcTask("createFactory")(id, configuration, inputDir, instance);
 
 export const createFactoryFromInstance = (id: string, instancePath: string) =>
   ipcTask("createFactoryFromInstance")(id, instancePath);

@@ -42,9 +42,30 @@
 - getRandomMetadata
 
 - removeCollectionItems
-- regenerateCollectionItems 
+- regenerateCollectionItems
 
 # Factory
+
+Base parameters: projectDir, instance, id
+
+```
+Home -> Project
+    -> Configuration
+     | Nodes
+     | Generation
+     | Quality
+     | Deploy
+     | Instance
+```
+
+```
+Configuration parameters:   projectDir, instance, id
+Nodes parameters:           projectDir, instance, id, nodesId?
+Generation parameters:      projectDir, instance, id, generationId?
+Quality parameters:         projectDir, instance, id, generationId
+Deploy parameters:          projectDir, instance, id
+Instance parameters:        projectDir, instance, id
+```
 
 ## `instance`
 

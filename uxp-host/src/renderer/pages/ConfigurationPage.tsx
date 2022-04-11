@@ -1,25 +1,23 @@
-import React, { useState, useContext, useEffect, useMemo } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Flex, Heading, ButtonGroup } from "@adobe/react-spectrum";
 
-import { layersNames, name as _name, sizeOf } from "../ipc";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Configuration721 } from "../components/Configuration721";
-import { Configuration1155 } from "../components/Configuration1155";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
-import { initializeFactory } from "../actions";
-import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import Close from "@spectrum-icons/workflow/Close";
-import { Configuration } from "../typings";
 import { parseColor } from "@react-stately/color";
+import { Configuration, Instance } from "../newTypings";
+
 import Back from "@spectrum-icons/workflow/Back";
+import Close from "@spectrum-icons/workflow/Close";
+import { readProjectAvailableLayers } from "../ipc";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 interface ConfigurationPageState {
-  inputDir: string;
-  outputDir: string;
-  partialConfiguration: Partial<Configuration>;
+  projectDir: string;
+  instance: Instance;
+  id: string;
 }
 
 export function ConfigurationPage() {
@@ -27,124 +25,59 @@ export function ConfigurationPage() {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir, partialConfiguration } =
-    state as ConfigurationPageState;
+  const { projectDir, instance, id } = state as ConfigurationPageState;
+  const { configuration } = instance;
 
   // ConfigurationBase
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [symbol, setSymbol] = useState("");
+  const [name, setName] = useState(configuration.name);
+  const [description, setDescription] = useState(configuration.description);
+  const [symbol, setSymbol] = useState(configuration.symbol);
 
-  const [originalWidth, setOriginalWidth] = useState(null);
-  const [originalHeight, setOriginalHeight] = useState(null);
-  const [width, setWidth] = useState(512);
-  const [height, setHeight] = useState(512);
-  const [generateBackground, setGenerateBackground] = useState(true);
-  // const [defaultBackground, _setDefaultBackground] = useState("#ffffff");
+  const [originalWidth] = useState(configuration.width);
+  const [originalHeight] = useState(configuration.height);
+  const [width, setWidth] = useState(configuration.width);
+  const [height, setHeight] = useState(configuration.height);
+  const [generateBackground, setGenerateBackground] = useState(
+    configuration.generateBackground
+  );
   const [defaultBackground, _setDefaultBackground] = useState(
     parseColor("#ffffff")
+  ); // ! TODO: use configuration.defaultBackground
+  const [contractType, setContractType] = useState(configuration.contractType);
+  const [cost, setCost] = useState(configuration.cost);
+  const [maxMintAmount, setMaxMintAmount] = useState(
+    configuration.maxMintAmount
   );
-  const [contractType, setContractType] = useState("721");
 
-  // Configuration721
-  const [cost, setCost] = useState(0.05);
-  const [maxMintAmount, setMaxMintAmount] = useState(20);
-
-  const [layers, setLayers] = useState([""]);
+  const [availableLayers, setAvailableLayers] = useState(configuration.layers);
+  const [layers, setLayers] = useState(configuration.layers);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
+    toolbarContext.addButton("back", "Back", <Back />, () =>
+      navigate("/factory", { state: { projectDir, instance, id } })
+    );
 
-    toolbarContext.addButton("back", "Back", <Back />, () => {});
-
-    const loadInformation = task("load information", async () => {
-      const layers = (await layersNames(inputDir)) as string[];
-      const name = (await _name(inputDir)) as string;
-      const { width, height } = (await sizeOf(inputDir)) as {
-        width: number;
-        height: number;
-      };
-      setLayers(layers);
-      setName(name);
-      setOriginalWidth(width);
-      setOriginalHeight(height);
-      setWidth(width);
-      setHeight(height);
-    });
-
-    if (partialConfiguration) {
-      if (partialConfiguration.name) setName(partialConfiguration.name);
-      if (partialConfiguration.description)
-        setDescription(partialConfiguration.description);
-      if (partialConfiguration.symbol) setSymbol(partialConfiguration.symbol);
-      if (partialConfiguration.width) setWidth(partialConfiguration.width);
-      if (partialConfiguration.height) setHeight(partialConfiguration.height);
-      if (partialConfiguration.generateBackground)
-        setGenerateBackground(partialConfiguration.generateBackground);
-      if (partialConfiguration.defaultBackground)
-        setDefaultBackground(partialConfiguration.defaultBackground);
-      if (partialConfiguration.contractType)
-        setContractType(partialConfiguration.contractType);
-
-      if ("cost" in partialConfiguration && partialConfiguration.cost)
-        setCost(partialConfiguration.cost);
-      if (
-        "maxMintAmount" in partialConfiguration &&
-        partialConfiguration.maxMintAmount
-      )
-        setMaxMintAmount(partialConfiguration.maxMintAmount);
-
-      if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
-    } else {
-      loadInformation();
-    }
+    task("available layers", async () => {
+      setAvailableLayers(await readProjectAvailableLayers(projectDir));
+    })();
 
     return () => {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
     };
-  }, [inputDir, partialConfiguration]);
-
-  const canContinue = useMemo(
-    () =>
-      name &&
-      description &&
-      symbol &&
-      width &&
-      height &&
-      (generateBackground || defaultBackground) &&
-      contractType &&
-      (contractType === "721" || contractType === "721_reveal_pause"
-        ? cost && maxMintAmount
-        : contractType === "1155"
-        ? true
-        : false) &&
-      layers.length > 0 &&
-      layers.every((layer) => layer.length > 0),
-    [
-      name,
-      description,
-      symbol,
-      width,
-      height,
-      generateBackground,
-      defaultBackground,
-      contractType,
-      cost,
-      maxMintAmount,
-      layers,
-    ]
-  );
+  }, []);
 
   const setDefaultBackground = (color: any) => {
     _setDefaultBackground(color);
   };
 
-  const onContinue = task("initializing factory", async () => {
-    const partialConfiguration = {
+  const onSave = () => {
+    const configuration: Configuration = {
       name,
       description,
       symbol,
+      contractType,
       width,
       height,
       generateBackground,
@@ -154,35 +87,22 @@ export function ConfigurationPage() {
         b: defaultBackground.getChannelValue("blue"),
         a: defaultBackground.getChannelValue("alpha"),
       },
-      contractType,
-
-      ...(contractType === "721"
-        ? {
-            cost,
-            maxMintAmount,
-          }
-        : contractType === "1155"
-        ? {}
-        : {}),
-
+      cost,
+      maxMintAmount,
       layers,
-    } as Partial<Configuration>;
+    };
 
-    const { id } = await initializeFactory(
-      partialConfiguration,
-      inputDir,
-      outputDir
-    );
-
-    navigate("/nodes", {
+    navigate("/factory", {
       state: {
+        projectDir,
+        instance: {
+          ...instance,
+          configuration,
+        },
         id,
-        inputDir,
-        outputDir,
-        partialConfiguration,
       },
     });
-  });
+  };
 
   return (
     <Flex
@@ -220,30 +140,18 @@ export function ConfigurationPage() {
           }}
         />
 
-        {contractType === "721" ? (
-          <Configuration721
-            {...{
-              cost,
-              setCost,
-              maxMintAmount,
-              setMaxMintAmount,
-            }}
-          />
-        ) : contractType === "721_reveal_pause" ? (
-          <Configuration721
-            {...{
-              cost,
-              setCost,
-              maxMintAmount,
-              setMaxMintAmount,
-            }}
-          />
-        ) : contractType === "1155" ? (
-          <Configuration1155 {...{}} />
-        ) : null}
+        <Configuration721
+          {...{
+            cost,
+            setCost,
+            maxMintAmount,
+            setMaxMintAmount,
+          }}
+        />
 
         <ConfigurationLayers
           {...{
+            availableLayers,
             layers,
             setLayers,
           }}
@@ -251,8 +159,8 @@ export function ConfigurationPage() {
       </Flex>
 
       <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-        <Button variant="cta" onPress={onContinue} isDisabled={!canContinue}>
-          Continue!
+        <Button variant="cta" onPress={onSave}>
+          Save
         </Button>
       </ButtonGroup>
     </Flex>

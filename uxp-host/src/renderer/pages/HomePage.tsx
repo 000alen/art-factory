@@ -1,60 +1,67 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Flex, Heading, Button, ButtonGroup } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
-import { openProject } from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { UXPContext } from "../components/UXPContext";
+import { v4 as uuid } from "uuid";
+import {
+  ensureProjectStructure,
+  readProjectInstance,
+  showOpenDialog,
+  writeProjectInstance,
+} from "../ipc";
+import { createInstance } from "../newUtils";
 
 export function HomePage() {
   const navigate = useNavigate();
-  const uxpContext = useContext(UXPContext);
   const task = useErrorHandler();
 
-  // useEffect(() => {
-  //   const uxpGenerate = async ({
-  //     inputDir,
-  //     partialConfiguration,
-  //   }: {
-  //     inputDir: string;
-  //     partialConfiguration: any;
-  //   }) => {
-  //     const outputDir = await getOutputDir(inputDir);
+  const onNew = task("new", async () => {
+    const { canceled, filePaths } = await showOpenDialog({
+      properties: ["openFile", "openDirectory"],
+    });
 
-  //     navigate("/configuration", {
-  //       state: {
-  //         inputDir,
-  //         outputDir,
-  //         partialConfiguration,
-  //       },
-  //     });
-  //   };
+    if (canceled) return;
 
-  //   uxpContext.on("uxp-generate", uxpGenerate);
-  //   return () => {
-  //     uxpContext.off("uxp-generate", uxpGenerate);
-  //   };
-  // }, []);
+    const [projectDir] = filePaths;
+    const instance = createInstance();
+    const id = uuid();
 
-  const onOpenProject = task("open project", async () => {
-    navigate("/factory")
-    // const result = await openProject();
+    await ensureProjectStructure(projectDir);
+    await writeProjectInstance(projectDir, instance);
 
-    // if (result) {
-    //   const { inputDir, outputDir } = result;
-    //   navigate("/configuration", {
-    //     state: {
-    //       inputDir,
-    //       outputDir,
-    //     },
-    //   });
-    // }
+    navigate("/factory", {
+      state: {
+        projectDir,
+        instance,
+        id,
+      },
+    });
+  });
+
+  const onOpen = task("open", async () => {
+    const { canceled, filePaths } = await showOpenDialog({
+      properties: ["openFile", "openDirectory"],
+    });
+
+    if (canceled) return;
+
+    const [projectDir] = filePaths;
+    const instance = await readProjectInstance(projectDir);
+    const id = uuid();
+
+    navigate("/factory", {
+      state: {
+        projectDir,
+        instance,
+        id,
+      },
+    });
   });
 
   return (
     <Flex
       direction="column"
       height="100%"
-      margin="size-100"
       gap="size-100"
       alignItems="center"
       justifyContent="center"
@@ -64,8 +71,12 @@ export function HomePage() {
       </Heading>
 
       <ButtonGroup>
-        <Button variant="cta" onPress={onOpenProject}>
-          Open Project!
+        <Button variant="cta" onPress={onNew}>
+          New
+        </Button>
+
+        <Button variant="secondary" onPress={onOpen}>
+          Open
         </Button>
       </ButtonGroup>
     </Flex>

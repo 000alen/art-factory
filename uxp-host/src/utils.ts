@@ -76,3 +76,6 @@ export function sizeOf(inputDir: string) {
   const { width, height } = imageSize(path.join(inputDir, layer, layerElement));
   return { width, height };
 }
+
+export const capitalize = (string: string) =>
+  string.charAt(0).toUpperCase() + string.slice(1);

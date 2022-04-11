@@ -14,7 +14,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
 } from "react-flow-renderer";
-import { Configuration, Trait } from "../typings";
+import { Trait } from "../typings";
 import { dashedName, getId, hash, spacedName } from "../utils";
 import {
   DEFAULT_BLENDING,
@@ -33,13 +33,20 @@ import { LayerNodeComponentData } from "./LayerNode";
 import { RenderNodeComponentData } from "./RenderNode";
 import { BundleNodeComponentData } from "./BundleNode";
 import { NotRevealedNodeComponentData } from "./NotRevealedNode";
+import { node } from "webpack";
 
 interface NodesContextProviderProps {
   id: string;
   autoPlace?: boolean;
-  partialConfiguration: Partial<Configuration>;
+  layers: string[];
   traits: Trait[];
   setter: (getter: () => NodesInstance) => void;
+
+  initialNodes?: FlowNode[];
+  initialEdges?: FlowEdge[];
+  initialRenderIds?: Record<string, string>;
+  initialNs?: Record<string, number>;
+  initialIgnored?: string[];
 }
 
 interface INodesContext {
@@ -71,42 +78,35 @@ export interface NodesInstance {
 
 export function useNodes(
   id: string,
-  partialConfiguration: Partial<Configuration>,
+  layers: string[],
   traits: Trait[],
-  setter: (getter: () => NodesInstance) => void
+  setter: (getter: () => NodesInstance) => void,
+  initialNodes?: FlowNode[],
+  initialEdges?: FlowEdge[],
+  initialRenderIds?: Record<string, string>,
+  initialNs?: Record<string, number>,
+  initialIgnored?: string[]
 ) {
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
   const [nodes, setNodes, _onNodesChange] = useNodesState(DEFAULT_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-
-  const onNodesChange = (changes: FlowNodeChange[]) =>
-    _onNodesChange(
-      changes.filter(
-        (change) => !(change.type === "remove" && change.id === "root")
-      )
-    );
-
-  // TODO
-  // // ? name -> dashedName[]
-  // const layersIds = useMap<string, string[]>();
-
-  // ? hash(trait) -> url
   const [urls, setUrls] = useState<Record<string, string>>({});
-
-  // ? hash(trait[]) -> url
   const [composedUrls, setComposedUrls] = useState<Record<string, string>>({});
-
-  // ? hash(trait[]) -> dashedName
-  const [renderIds, setRenderIds] = useState<Record<string, string>>({});
-
-  // ? hash(trait[]) -> number
-  const [ns, setNs] = useState<Record<string, number>>({});
-
+  const [renderIds, setRenderIds] = useState<Record<string, string>>(
+    initialRenderIds || {}
+  );
+  const [ns, setNs] = useState<Record<string, number>>(initialNs || {});
   const [maxNs, setMaxNs] = useState<Record<string, number>>({});
+  const [ignored, setIgnored] = useState<string[]>(initialIgnored || []);
 
-  const [ignored, setIgnored] = useState<string[]>([]);
+  useEffect(() => {
+    if (traits.length === 0) return;
+
+    if (initialNodes) setNodes(hydrateNodes(initialNodes));
+    if (initialEdges) setEdges(hydrateEdges(initialEdges));
+  }, [initialNodes, initialEdges, traits]);
 
   useEffect(() => {
     setter(() => ({
@@ -119,6 +119,13 @@ export function useNodes(
       ignored,
     }));
   }, [setter, nodes, edges, urls, composedUrls, renderIds, ns, ignored]);
+
+  const onNodesChange = (changes: FlowNodeChange[]) =>
+    _onNodesChange(
+      changes.filter(
+        (change) => !(change.type === "remove" && change.id === "root")
+      )
+    );
 
   const onChange =
     <T,>(name: string) =>
@@ -182,14 +189,12 @@ export function useNodes(
   };
 
   const requestComposedUrl = async (traits: Trait[]) => {
-    console.log("a");
     const key = hash(traits);
     const composedBase64String = await factoryComposeTraits(
       id,
       traits,
       MAX_SIZE
     );
-    console.log("b");
 
     setComposedUrls((prevComposedUrls) => {
       const newComposedUrls = {
@@ -299,10 +304,7 @@ export function useNodes(
           onChangeLayerOpacity,
           onChangeLayerBlending,
 
-          trait:
-            traits[
-              partialConfiguration.layers.findIndex((e: string) => e === name)
-            ],
+          trait: traits[layers.findIndex((e: string) => e === name)],
           id: dashedName(),
           name,
           opacity: DEFAULT_OPACITY,
@@ -363,6 +365,86 @@ export function useNodes(
     };
   };
 
+  const hydrateNodeData = (type: string, data: any): any => {
+    switch (type) {
+      case "layerNode":
+        return {
+          ...data,
+
+          urls,
+          requestUrl,
+          onChangeLayerId,
+          onChangeLayerOpacity,
+          onChangeLayerBlending,
+
+          trait: traits[layers.findIndex((e: string) => e === data.name)],
+        } as LayerNodeComponentData;
+      case "renderNode":
+        return {
+          ...data,
+
+          composedUrls,
+          renderIds,
+          ns,
+          maxNs,
+          ignored,
+
+          requestComposedUrl,
+          requestRenderId,
+          requestMaxNs,
+          updateNs,
+          updateIgnored,
+        } as RenderNodeComponentData;
+      case "bundleNode":
+        return {
+          ...data,
+
+          composedUrls,
+          renderIds,
+          ns,
+          ignored,
+          onChangeBundleName,
+          onChangeBundleIds,
+        } as BundleNodeComponentData;
+      case "notRevealedNode":
+        return {
+          ...data,
+
+          composedUrls,
+          renderIds,
+
+          requestComposedUrl,
+          requestRenderId,
+        } as NotRevealedNodeComponentData;
+      default:
+        return data;
+    }
+  };
+
+  const hydrateNodes = (nodes: FlowNode[]): FlowNode[] =>
+    nodes.map((node) => ({
+      ...node,
+      data: hydrateNodeData(node.type, node.data),
+    }));
+
+  const hydrateEdgeDate = (type: string, data: any): any => {
+    switch (type) {
+      case "customEdge":
+        return {
+          ...data,
+          onEdgeRemove,
+        };
+      default:
+        return data;
+    }
+  };
+
+  const hydrateEdges = (edges: FlowEdge[]): FlowEdge[] =>
+    edges.map((edge) => ({
+      ...edge,
+      data: hydrateEdgeDate(edge.type, edge.data),
+    }));
+
   return {
     id,
     reactFlowWrapperRef,
@@ -420,12 +502,28 @@ export const Nodes: React.FC = ({ children }) => {
 export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   id,
   autoPlace = true,
-  partialConfiguration,
+  layers,
   children,
   traits,
   setter,
+
+  initialNodes,
+  initialEdges,
+  initialRenderIds,
+  initialNs,
+  initialIgnored,
 }) => {
-  const value = useNodes(id, partialConfiguration, traits, setter);
+  const value = useNodes(
+    id,
+    layers,
+    traits,
+    setter,
+    initialNodes,
+    initialEdges,
+    initialRenderIds,
+    initialNs,
+    initialIgnored
+  );
 
   return (
     <NodesContext.Provider value={value}>

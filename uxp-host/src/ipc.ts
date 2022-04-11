@@ -2,7 +2,7 @@ import { ipcMain, dialog, shell } from "electron";
 import path from "path";
 import solc from "solc";
 import { Factory, loadInstance } from "./Factory";
-import { layersNames, name, sizeOf, verifyContract } from "./utils";
+import { capitalize, layersNames, name, sizeOf, verifyContract } from "./utils";
 import fs from "fs";
 import {
   setPinataApiKey,
@@ -93,9 +93,6 @@ const ipcTaskWithRequestId = (
   });
 };
 
-const capitalize = (string: string) =>
-  string.charAt(0).toUpperCase() + string.slice(1);
-
 const ipcSetterAndGetter = (
   property: string,
   setter: (value: any) => void,
@@ -109,7 +106,38 @@ const ipcSetterAndGetter = (
 };
 // #endregion
 
+const factories: Record<string, Factory> = {};
+
 // #region General
+ipcAsyncTask("readProjectInstance", async (projectDir: string) =>
+  JSON.parse(
+    await fs.promises.readFile(
+      path.join(projectDir, ".build", "instance.json"),
+      "utf8"
+    )
+  )
+);
+
+ipcAsyncTask("ensureProjectStructure", async (projectDir: string) => {
+  const buildDir = path.join(projectDir, ".build");
+  if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir);
+});
+
+ipcAsyncTask(
+  "writeProjectInstance",
+  async (projectDir: string, instance: any) =>
+    await fs.promises.writeFile(
+      path.join(projectDir, ".build", "instance.json"),
+      JSON.stringify(instance)
+    )
+);
+
+ipcTask("readProjectAvailableLayers", (projectDir: string) =>
+  layersNames(projectDir)
+);
+
+ipcTask("hasFactory", (id: string) => id in factories);
+
 ipcAsyncTask("writeFile", async (file, data, options) => {
   await fs.promises.writeFile(file, data, options);
   return true;
@@ -237,23 +265,19 @@ ipcSetterAndGetter(
 ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
 
 ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
-
-ipcTask("layersNames", (inputDir) => layersNames(inputDir));
 // #endregion
 
 // #region Factory
-const factories: Record<string, Factory> = {};
-
 ipcTask(
   "createFactory",
   (
     id: string,
     configuration: Configuration,
     inputDir: string,
-    outputDir: string,
+    // outputDir: string,
     instance?: Partial<Instance>
   ) => {
-    const factory = new Factory(configuration, inputDir, outputDir);
+    const factory = new Factory(configuration, inputDir); //, outputDir);
     if (instance) factory.loadInstance(instance);
     factories[id] = factory;
     return true;

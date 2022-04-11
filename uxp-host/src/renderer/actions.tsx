@@ -165,7 +165,7 @@ export const initializeFactory = async (
   const id = uuid();
 
   try {
-    await createFactory(id, configuration, inputDir, outputDir);
+    await createFactory(id, configuration, inputDir); //, outputDir);
     await factorySaveInstance(id);
   } catch (error) {
     throw FormattedError(2, "Could not initialize factory", {

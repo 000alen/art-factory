@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 const sendWhitelist = [
+  "readProjectInstance",
+  "ensureProjectStructure",
+  "writeProjectInstance",
+  "readProjectAvailableLayers",
+  "hasFactory",
+
   "writeFile",
   "mkDir",
   "showOpenDialog",
@@ -16,7 +22,6 @@ const sendWhitelist = [
   "getEtherscanApiKey",
   "setInfuraProjectId",
   "getInfuraProjectId",
-  "layersNames",
   "compose",
   "name",
   "sizeOf",
@@ -54,6 +59,12 @@ const sendWhitelist = [
 ];
 
 const onWhitelist = [
+  "readProjectInstanceResult",
+  "ensureProjectStructureResult",
+  "writeProjectInstanceResult",
+  "readProjectAvailableLayersResult",
+  "hasFactoryResult",
+
   "openFolderResult",
 
   "writeFileResult",
@@ -71,7 +82,6 @@ const onWhitelist = [
   "getInfuraProjectIdResult",
   "setEtherscanApiKeyResult",
   "getEtherscanApiKeyResult",
-  "layersNamesResult",
   "composeResult",
   "nameResult",
   "sizeOfResult",

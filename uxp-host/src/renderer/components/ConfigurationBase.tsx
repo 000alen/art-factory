@@ -10,6 +10,7 @@ import {
   Slider,
 } from "@adobe/react-spectrum";
 import { ColorPicker } from "./ColorPicker";
+import { ContractType } from "../newTypings";
 
 interface ConfigurationBaseProps {
   name: string;
@@ -28,8 +29,8 @@ interface ConfigurationBaseProps {
   setGenerateBackground: (generateBackground: boolean) => void;
   defaultBackground: any;
   setDefaultBackground: (defaultBackground: any) => void;
-  contractType: string;
-  setContractType: (contractType: string) => void;
+  contractType: ContractType;
+  setContractType: (contractType: ContractType) => void;
 }
 
 export const ConfigurationBase: React.FC<ConfigurationBaseProps> = ({

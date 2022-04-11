@@ -19,13 +19,14 @@ const dashedNameConfiguration = {
   length: 2,
 };
 
-let _id = 0;
+// let _id = 0;
 
 export const spacedName = () => uniqueNamesGenerator(spacedNameConfiguration);
 
 export const dashedName = () => uniqueNamesGenerator(dashedNameConfiguration);
 
-export const getId = () => `${_id++}`;
+// export const getId = () => `${_id++}`;
+export const getId = () => uuid();
 
 export const capitalize = (string: string) =>
   string.charAt(0).toUpperCase() + string.slice(1);

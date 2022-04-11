@@ -160,6 +160,8 @@ export async function restrictImage(buffer: Buffer, maxSize?: number) {
 // #endregion
 
 export class Factory {
+  outputDir: string;
+
   layerByName: Map<string, Layer>;
   traitsByLayerName: Map<string, Trait[]>;
   traitsBuffer: Map<string, Buffer>;
@@ -181,9 +183,9 @@ export class Factory {
 
   constructor(
     public configuration: Configuration,
-    public inputDir: string,
-    public outputDir: string
+    public inputDir: string // public outputDir: string
   ) {
+    this.outputDir = path.join(inputDir, ".build");
     this.layerByName = new Map();
     this.traitsByLayerName = new Map();
     this.traitsBuffer = new Map();
@@ -856,10 +858,10 @@ export class Factory {
 }
 
 export async function loadInstance(instancePath: string) {
-  const { inputDir, outputDir, configuration, ...instance } = JSON.parse(
+  const { inputDir, configuration, ...instance } = JSON.parse(
     await fs.promises.readFile(instancePath, "utf8")
   );
-  const factory = new Factory(configuration, inputDir, outputDir);
+  const factory = new Factory(configuration, inputDir);
   factory.loadInstance(instance);
   return factory;
 }
