@@ -5,8 +5,7 @@ import { Trait } from "./typings";
 import sharp from "sharp";
 import FormData from "form-data";
 import axios from "axios";
-
-export const RARITY_DELIMITER = "#";
+import { RARITY_DELIMITER } from "./constants";
 
 export function rarity(elementName: string) {
   let rarity = Number(elementName.split(RARITY_DELIMITER).pop());

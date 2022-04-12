@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import { CollectionItem, Instance } from "../typings";
+import { BundlesInfo, CollectionItem, Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import Close from "@spectrum-icons/workflow/Close";
 import { getBranches } from "../nodesUtils";
@@ -137,7 +137,7 @@ export const GenerationPage: React.FC = () => {
 
     keys = keys.filter((key) => !ignored.includes(key));
 
-    const nBundles = nodes
+    const bundlesInfo: BundlesInfo = nodes
       .filter((node) => node.type === "bundleNode")
       .map((node) => node.data)
       .map((data) => ({
@@ -152,7 +152,7 @@ export const GenerationPage: React.FC = () => {
       keys,
       nTraits,
       ns,
-      nBundles
+      bundlesInfo
     );
 
     await factoryGenerateImages(id, name, collection, onProgress);

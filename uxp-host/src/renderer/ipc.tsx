@@ -16,6 +16,8 @@ declare global {
 
 import { v4 as uuid } from "uuid";
 import {
+  Bundles,
+  BundlesInfo,
   Collection,
   CollectionItem,
   Configuration,
@@ -97,11 +99,11 @@ const ipcTaskWithRequestId =
     });
   };
 
-const ipcSetterAndGetter = (
+const ipcSetterAndGetter = <T,>(
   property: string
-): [(value: any) => void, () => void] => [
+): [(value: T) => void, () => Promise<T>] => [
   (value: any) => ipcTask(`set${capitalize(property)}`)(value),
-  () => ipcTask(`get${capitalize(property)}`)(),
+  () => ipcTask(`get${capitalize(property)}`)() as Promise<T>,
 ];
 
 // #endregion
@@ -123,22 +125,16 @@ export const hasFactory = (id: string) =>
   ipcTask("hasFactory")(id) as Promise<boolean>;
 
 export const [setPinataApiKey, getPinataApiKey] =
-  ipcSetterAndGetter("pinataApiKey");
+  ipcSetterAndGetter<string>("pinataApiKey");
 
 export const [setPinataSecretApiKey, getPinataSecretApiKey] =
-  ipcSetterAndGetter("pinataSecretApiKey");
+  ipcSetterAndGetter<string>("pinataSecretApiKey");
 
 export const [setInfuraProjectId, getInfuraProjectId] =
-  ipcSetterAndGetter("infuraProjectId");
+  ipcSetterAndGetter<string>("infuraProjectId");
 
 export const [setEtherscanApiKey, getEtherscanApiKey] =
-  ipcSetterAndGetter("etherscanApiKey");
-
-export const mkDir = (dir: string, options: any) =>
-  ipcTask("mkDir")(dir, options);
-
-export const writeFile = (file: string, data: any, options: any) =>
-  ipcTask("writeFile")(file, data, options);
+  ipcSetterAndGetter<string>("etherscanApiKey");
 
 export const showOpenDialog = (options: any) =>
   ipcTask("showOpenDialog")(options) as Promise<{
@@ -146,27 +142,14 @@ export const showOpenDialog = (options: any) =>
     filePaths: string[];
   }>;
 
-export const showSaveDialog = (options: any) =>
-  ipcTask("showSaveDialog")(options);
-
 export const getContract = (name: string) =>
   ipcTask("getContract")(name) as Promise<any>;
 
 export const getContractSource = (name: string) =>
   ipcTask("getContractSource")(name);
 
-export const openFolder = (path: string) => ipcTask("openFolder")(path);
-
-export const getOutputDir = (inputDir: string) =>
-  ipcTask("getOutputDir")(inputDir);
-
-export const name = (inputDir: string) => ipcTask("name")(inputDir);
-
-export const sizeOf = (inputDir: string) => ipcTask("sizeOf")(inputDir);
-
-export const isValidInputDir = (inputDir: string) =>
-  ipcTask("isValidInputDir")(inputDir);
-
+export const openInExplorer = (...paths: string[]) =>
+  ipcTask("openInExplorer")(paths);
 // #endregion
 
 // #region Factory
@@ -195,15 +178,15 @@ export const factoryGenerateCollection = (
   keys: string[],
   nTraits: Trait[][],
   ns: Record<string, number>,
-  nBundles: { name: string; ids: string[] }[]
+  bundlesInfo: BundlesInfo
 ) =>
   ipcTask("factoryGenerateCollection")(
     id,
     keys,
     nTraits,
     ns,
-    nBundles
-  ) as Promise<{ collection: Collection; bundles: Record<string, string[][]> }>;
+    bundlesInfo
+  ) as Promise<{ collection: Collection; bundles: Bundles }>;
 
 export const factoryComputeMaxCombinations = (id: string, layers: Layer[]) =>
   ipcTaskWithRequestId("factoryComputeMaxCombinations")(

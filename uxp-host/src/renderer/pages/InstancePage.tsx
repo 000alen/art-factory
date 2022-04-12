@@ -20,39 +20,28 @@ import Copy from "@spectrum-icons/workflow/Copy";
 import Close from "@spectrum-icons/workflow/Close";
 
 import { Panel721 } from "../components/Panel721";
-import { chopAddress } from "../utils";
+import { chopAddress, resolveEtherscanUrlII } from "../utils";
 import { Panel1155 } from "../components/Panel1155";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { Configuration } from "../typings";
+import { Configuration, Instance } from "../typings";
 import { loadSecrets } from "../actions";
 import Back from "@spectrum-icons/workflow/Back";
 
 interface InstancePageState {
-  configuration: Configuration;
-  network: string;
-  contractAddress: string;
-  abi: any[];
-}
-
-function resolveEtherscanUrl(network: string, contractAddress: string) {
-  return network === "mainnet"
-    ? `https://etherscan.io/address/${contractAddress}`
-    : network === "ropsten"
-    ? `https://ropsten.etherscan.io/address/${contractAddress}`
-    : network === "rinkeby"
-    ? `https://rinkeby.etherscan.io/address/${contractAddress}`
-    : null;
+  projectDir: string;
+  instance: Instance;
+  id: string;
 }
 
 export function InstancePage() {
-  const task = useErrorHandler();
   const toolbarContext = useContext(ToolbarContext);
+  const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { configuration, network, contractAddress, abi } =
-    state as InstancePageState;
+  const { projectDir, instance, id } = state as InstancePageState;
+  const { configuration, deployment } = instance;
 
   const [isWorking, setIsWorking] = useState(false);
   const [contract, setContract] = useState(null);
@@ -60,39 +49,39 @@ export function InstancePage() {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    // toolbarContext.addButton("back", "Back", <Back />, () =>
-    //   navigate("/factory", {
-    //     state: {
-    //       projectDir,
-    //       instance,
-    //       id,
-    //     },
-    //   })
-    // );
+    toolbarContext.addButton("back", "Back", <Back />, () =>
+      navigate("/factory", {
+        state: {
+          projectDir,
+          instance,
+          id,
+        },
+      })
+    );
     toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
       localStorage.clear()
     );
 
-    task("loading secrets", async () => {
-      const secrets = await loadSecrets();
-      const provider = new WalletConnectProvider({
-        infuraId: secrets.infuraProjectId,
-        chainId: Networks[network].id,
-      });
-      await provider.enable();
-      const web3Provider = new providers.Web3Provider(provider);
-      const signer = web3Provider.getSigner();
-      const contract = new Contract(contractAddress, abi, signer);
+    // task("loading secrets", async () => {
+    //   const secrets = await loadSecrets();
+    //   const provider = new WalletConnectProvider({
+    //     infuraId: secrets.infuraProjectId,
+    //     chainId: Networks[network].id,
+    //   });
+    //   await provider.enable();
+    //   const web3Provider = new providers.Web3Provider(provider);
+    //   const signer = web3Provider.getSigner();
+    //   const contract = new Contract(contractAddress, abi, signer);
 
-      setContract(contract);
-    })();
+    //   setContract(contract);
+    // })();
 
     return () => {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
       toolbarContext.removeButton("logOut");
     };
-  }, [abi, contractAddress, network]);
+  }, []);
 
   const addOutput = (output: {
     title: string;
@@ -103,7 +92,7 @@ export function InstancePage() {
   };
 
   const onCopy = () => {
-    navigator.clipboard.writeText(contractAddress);
+    navigator.clipboard.writeText(deployment.contractAddress);
   };
 
   const _task =
@@ -125,21 +114,26 @@ export function InstancePage() {
       <Flex justifyContent="space-between" alignItems="center">
         <Flex gap="size-100" alignItems="center">
           <Heading level={1} marginStart={16}>
-            <pre className="inline">{chopAddress(contractAddress)}</pre> at{" "}
-            {Networks[network].name}
+            <pre className="inline">
+              {chopAddress(deployment.contractAddress)}
+            </pre>{" "}
+            at {Networks[deployment.network].name}
           </Heading>
           <ActionButton onPress={onCopy}>
             <Copy />
           </ActionButton>
         </Flex>
-        <Link>
+        {/* <Link>
           <a
-            href={resolveEtherscanUrl(network, contractAddress)}
+            href={resolveEtherscanUrlII(
+              deployment.network,
+              deployment.contractAddress
+            )}
             target="_blank"
           >
             Contract at Etherscan.
           </a>
-        </Link>
+        </Link> */}
       </Flex>
 
       <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
@@ -148,7 +142,7 @@ export function InstancePage() {
             {...{
               task: _task,
               contract,
-              contractAddress,
+              contractAddress: deployment.contractAddress,
               addOutput,
             }}
           />

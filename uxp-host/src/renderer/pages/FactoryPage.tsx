@@ -93,7 +93,15 @@ export const FactoryPage: React.FC = () => {
     });
   };
 
-  const onInstance = () => {};
+  const onInstance = () => {
+    navigate("/instance", {
+      state: {
+        projectDir,
+        instance,
+        id,
+      },
+    });
+  };
 
   return (
     <Flex direction="column" gap="size-100">

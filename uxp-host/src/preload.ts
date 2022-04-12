@@ -26,7 +26,7 @@ const sendWhitelist = [
   "name",
   "sizeOf",
   "isValidInputDir",
-  "openFolder",
+  "openInExplorer",
 
   // Factory
   "createFactory",
@@ -60,7 +60,7 @@ const onWhitelist = [
   "readProjectAvailableLayersResult",
   "hasFactoryResult",
 
-  "openFolderResult",
+  "openInExplorerResult",
 
   "writeFileResult",
   "mkDirResult",

@@ -4,6 +4,7 @@ import imageSize from "image-size";
 import sharp, { Blend } from "sharp";
 import {
   Bundles,
+  BundlesInfo,
   Collection,
   CollectionItem,
   Configuration,
@@ -143,7 +144,7 @@ export class Factory {
     keys: string[],
     nTraits: Trait[][],
     branchesNs: Record<string, number>,
-    nBundles: { name: string; ids: string[] }[]
+    bundlesInfo: BundlesInfo
   ) {
     const computeTraitsNs = (
       _nTraits: Trait[][],
@@ -163,11 +164,11 @@ export class Factory {
     };
 
     const computeBundlesNs = (
-      _nBundles: { name: string; ids: string[] }[],
+      _bundlesInfo: BundlesInfo,
       _branchesNs: Record<string, number>
     ): Record<string, number> => {
       const bundlesNs: Record<string, number> = {};
-      for (const { name, ids } of _nBundles)
+      for (const { name, ids } of _bundlesInfo)
         bundlesNs[name] = Math.min(...ids.map((id) => _branchesNs[id]));
       return bundlesNs;
     };
@@ -203,10 +204,9 @@ export class Factory {
     };
 
     const traitsNs = computeTraitsNs(nTraits, branchesNs);
-    const bundlesNs = computeBundlesNs(nBundles, branchesNs);
+    const bundlesNs = computeBundlesNs(bundlesInfo, branchesNs);
     const cache = computeCache(nTraits, traitsNs);
     const collection: Collection = [];
-    // const bundles: Record<string, string[][]> = {};
     const bundles: Bundles = [];
 
     let i = 1;
@@ -222,29 +222,17 @@ export class Factory {
         traits,
       }));
 
-      const bundle = nBundles.find(({ ids }) => ids.includes(keys[index]));
+      const bundle = bundlesInfo.find(({ ids }) => ids.includes(keys[index]));
 
       if (bundle !== undefined) {
         const bundleName = bundle.name;
 
-        // if (!(bundleName in bundles))
-        //   bundles[bundleName] = Array.from(
-        //     { length: bundlesNs[bundleName] },
-        //     () => []
-        //   );
         if (!bundles.some((b) => b.name === bundleName))
           bundles.push({
             name: bundleName,
             ids: Array.from({ length: bundlesNs[bundleName] }, () => []),
           });
 
-        // bundles[bundleName] = append(
-        //   bundles[bundleName],
-        //   collectionItems
-        //     .map((collectionItem) => collectionItem.name)
-        //     .slice(0, bundlesNs[bundleName])
-        //     .map((name) => [name])
-        // );
         const bundleIndex = bundles.findIndex((b) => b.name === bundleName);
         bundles[bundleIndex].ids = append(
           bundles[bundleIndex].ids,

@@ -15,6 +15,7 @@ import {
   getEtherscanApiKey,
 } from "./store";
 import {
+  BundlesInfo,
   Collection,
   CollectionItem,
   Configuration,
@@ -214,7 +215,9 @@ ipcAsyncTask("getContract", async (name) => {
   return JSON.parse(solc.compile(JSON.stringify(input)));
 });
 
-ipcTask("openFolder", (path: string) => shell.openPath(path));
+ipcTask("openInExplorer", (paths: string[]) =>
+  shell.openPath(path.join(...paths))
+);
 
 ipcAsyncTask(
   "getContractSource",
@@ -274,8 +277,8 @@ ipcTask(
     keys: string[],
     nTraits: Trait[][],
     ns: Record<string, number>,
-    nBundles: { name: string; ids: string[] }[]
-  ) => factories[id].generateCollection(keys, nTraits, ns, nBundles)
+    bundlesInfo: BundlesInfo
+  ) => factories[id].generateCollection(keys, nTraits, ns, bundlesInfo)
 );
 
 ipcTaskWithRequestId(

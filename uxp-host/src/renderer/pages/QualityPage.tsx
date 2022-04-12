@@ -18,7 +18,7 @@ import {
   factoryGetImage,
   factoryRegenerateCollectionItems,
   factoryRemoveCollectionItems,
-  openFolder,
+  openInExplorer,
 } from "../ipc";
 import { MAX_SIZE, PAGE_N } from "../constants";
 import { ImageItem } from "../components/ImageItem";
@@ -118,7 +118,7 @@ export const QualityPage = () => {
       "Open in Explorer",
       <Folder />,
       () => {
-        openFolder(path.join(projectDir, "images", name));
+        openInExplorer(projectDir, "images", name);
       }
     );
 

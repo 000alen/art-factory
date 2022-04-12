@@ -85,3 +85,16 @@ export function resolveEtherscanUrl(
     ? `https://rinkeby.etherscan.io/tx/${transactionHash}`
     : null;
 }
+
+export function resolveEtherscanUrlII(
+  network: string,
+  contractAddress: string
+) {
+  return network === "mainnet"
+    ? `https://etherscan.io/address/${contractAddress}`
+    : network === "ropsten"
+    ? `https://ropsten.etherscan.io/address/${contractAddress}`
+    : network === "rinkeby"
+    ? `https://rinkeby.etherscan.io/address/${contractAddress}`
+    : null;
+}

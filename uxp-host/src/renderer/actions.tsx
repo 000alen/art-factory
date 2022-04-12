@@ -1,15 +1,9 @@
 import {
-  showOpenDialog,
-  createFactory,
-  getOutputDir,
-  factoryGenerateImages,
   factoryDeployImages,
   getContract,
   factoryLoadSecrets,
   factoryDeployMetadata,
   factoryGenerateMetadata,
-  isValidInputDir,
-  factoryGenerateCollection,
   getPinataApiKey,
   getPinataSecretApiKey,
   getInfuraProjectId,
@@ -17,17 +11,14 @@ import {
   factoryDeployNotRevealedImage,
   factoryDeployNotRevealedMetadata,
 } from "./ipc";
-import { v4 as uuid } from "uuid";
 import { ContractFactory, Signer, utils } from "ethers";
 import { FormattedError } from "./components/ErrorHandler";
 import {
   Collection,
   Configuration,
   ContractType,
-  Instance,
   Network,
   Secrets,
-  Trait,
 } from "./typings";
 
 export const loadSecrets = async () =>
@@ -38,51 +29,6 @@ export const loadSecrets = async () =>
     infuraProjectId: ((await getInfuraProjectId()) as unknown as string) || "",
     etherscanApiKey: ((await getEtherscanApiKey()) as unknown as string) || "",
   } as Secrets);
-
-export const createProject = async () => {};
-
-export const openProject = async () => {
-  const { canceled, filePaths } = (await showOpenDialog({
-    properties: ["openFile", "openDirectory"],
-  })) as {
-    canceled: boolean;
-    filePaths: string[];
-  };
-
-  if (canceled) return;
-  const [inputDir] = filePaths;
-
-  if (!(await isValidInputDir(inputDir)))
-    throw FormattedError(7, "Invalid input directory", { inputDir });
-
-  const outputDir = await getOutputDir(inputDir);
-
-  return {
-    inputDir,
-    outputDir,
-  };
-};
-
-export const initializeFactory = async (
-  configuration: Partial<Configuration>,
-  projectDir: string
-) => {
-  const id = uuid();
-
-  try {
-    await createFactory(id, configuration, projectDir);
-  } catch (error) {
-    throw FormattedError(2, "Could not initialize factory", {
-      // configuration,
-      projectDir,
-      message: error.message,
-    });
-  }
-
-  return {
-    id,
-  };
-};
 
 export const factoryDeployAssets = async (
   id: string,

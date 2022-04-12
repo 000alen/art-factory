@@ -70,6 +70,13 @@ export interface CollectionItem {
   traits: Trait[];
 }
 
+export interface BundlesInfoItem {
+  name: string;
+  ids: string[];
+}
+
+export type BundlesInfo = BundlesInfoItem[];
+
 export interface BundleItem {
   name: string;
   ids: string[][];
