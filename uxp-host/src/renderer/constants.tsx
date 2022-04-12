@@ -59,3 +59,5 @@ export const DEFAULT_NODES = [
     data: {},
   },
 ];
+
+export const PAGE_N = 25;

@@ -31,10 +31,6 @@ const sendWhitelist = [
 
   // Factory
   "createFactory",
-  "createFactoryFromInstance",
-  "factoryInstance",
-  "factoryLoadInstance",
-  "factorySaveInstance",
   "factoryLoadSecrets",
   "factoryGetLayerByName",
   "factoryGetTraitsByLayerName",
@@ -90,10 +86,6 @@ const onWhitelist = [
 
   // Factory
   "createFactoryResult",
-  "createFactoryFromInstanceResult",
-  "factoryInstanceResult",
-  "factoryLoadInstanceResult",
-  "factorySaveInstanceResult",
   "factoryLoadSecretsResult",
   "factoryGetLayerByNameResult",
   "factoryGetTraitsByLayerNameResult",

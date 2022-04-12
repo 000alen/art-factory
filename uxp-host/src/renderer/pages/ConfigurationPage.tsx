@@ -116,7 +116,7 @@ export function ConfigurationPage() {
         Configuration
       </Heading>
 
-      <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
+      <Flex gap="size-100" justifyContent="space-evenly">
         <ConfigurationBase
           {...{
             name,

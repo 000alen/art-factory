@@ -17,10 +17,10 @@ interface FiltersProps {
   onRemoveRepeated: () => void;
   addStringFilter: (query: string) => void;
   removeStringFilter: () => void;
-  bundles: Record<string, string[][]>;
-  bundlesFilter: string;
-  addBundlesFilter: (bundle: string) => void;
-  removeBundlesFilter: () => void;
+  // bundles: Record<string, string[][]>;
+  // bundlesFilter: string;
+  // addBundlesFilter: (bundle: string) => void;
+  // removeBundlesFilter: () => void;
   filtersInfo: Filters;
   hasFilter: (name: string, value: string) => boolean;
   addFilter: (name: string, value: string) => void;
@@ -35,10 +35,10 @@ export const Filters: React.FC<FiltersProps> = ({
   removeRepeatedFilter,
   onRegenerateRepeated,
   onRemoveRepeated,
-  bundles,
-  bundlesFilter,
-  addBundlesFilter,
-  removeBundlesFilter,
+  // bundles,
+  // bundlesFilter,
+  // addBundlesFilter,
+  // removeBundlesFilter,
   filtersInfo,
   hasFilter,
   addFilter,
@@ -74,7 +74,7 @@ export const Filters: React.FC<FiltersProps> = ({
         </Button>
       </details>
 
-      <details>
+      {/* <details>
         <summary>
           <Heading UNSAFE_className="inline-block">Bundles</Heading>
         </summary>
@@ -92,7 +92,7 @@ export const Filters: React.FC<FiltersProps> = ({
             </Checkbox>
           ))}
         </div>
-      </details>
+      </details> */}
 
       {Object.entries(filtersInfo).map(([name, values], i) => (
         <details key={i}>

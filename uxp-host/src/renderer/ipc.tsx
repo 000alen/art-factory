@@ -113,10 +113,8 @@ export const readProjectInstance = (projectDir: string) =>
 export const ensureProjectStructure = (projectDir: string) =>
   ipcTask("ensureProjectStructure")(projectDir);
 
-export const writeProjectInstance = (
-  projectDir: string,
-  instance: Instance
-) => ipcTask("writeProjectInstance")(projectDir, instance);
+export const writeProjectInstance = (projectDir: string, instance: Instance) =>
+  ipcTask("writeProjectInstance")(projectDir, instance);
 
 export const readProjectAvailableLayers = (projectDir: string) =>
   ipcTask("readProjectAvailableLayers")(projectDir) as Promise<string[]>;
@@ -195,21 +193,8 @@ export const isValidInputDir = (inputDir: string) =>
 export const createFactory = (
   id: string,
   configuration: Partial<Configuration>,
-  inputDir: string,
-  // outputDir: string,
-  instance?: Partial<Instance>
-) => ipcTask("createFactory")(id, configuration, inputDir, instance);
-
-export const createFactoryFromInstance = (id: string, instancePath: string) =>
-  ipcTask("createFactoryFromInstance")(id, instancePath);
-
-export const factoryInstance = (id: string) => ipcTask("factoryInstance")(id);
-
-export const factoryLoadInstance = (id: string, instance: any) =>
-  ipcTask("factoryLoadInstance")(id, instance);
-
-export const factorySaveInstance = (id: string) =>
-  ipcTask("factorySaveInstance")(id);
+  projectDir: string
+) => ipcTask("createFactory")(id, configuration, projectDir);
 
 export const factoryLoadSecrets = (id: string, secrets: Secrets) =>
   ipcTask("factoryLoadSecrets")(id, secrets);
@@ -259,14 +244,29 @@ export const factoryComposeTraits = (
 
 export const factoryGenerateImages = (
   id: string,
+  name: string,
   collection: Collection,
   onProgress?: (name: string) => void
-) => ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, collection);
+) =>
+  ipcTaskWithProgress("factoryGenerateImages")(
+    onProgress,
+    id,
+    name,
+    collection
+  );
 
 export const factoryGenerateMetadata = (
   id: string,
+  name: string,
+  collection: Collection,
   onProgress?: (name: string) => void
-) => ipcTaskWithProgress("factoryGenerateMetadata")(onProgress, id);
+) =>
+  ipcTaskWithProgress("factoryGenerateMetadata")(
+    onProgress,
+    id,
+    name,
+    collection
+  );
 
 export const factoryDeployImages = (id: string) =>
   ipcTask("factoryDeployImages")(id);
@@ -298,17 +298,24 @@ export const factoryGetRandomTraitImage = (
 
 export const factoryGetImage = (
   id: string,
+  name: string,
   collectionItem: CollectionItem,
   maxSize?: number
 ) =>
   ipcTaskWithRequestId("factoryGetImage")(
     id,
+    name,
     collectionItem,
     maxSize
   ) as Promise<string>;
 
-export const factoryGetRandomImage = (id: string, maxSize?: number) =>
-  ipcTask("factoryGetRandomImage")(id, maxSize) as Promise<
+export const factoryGetRandomImage = (
+  id: string,
+  name: string,
+  collection: Collection,
+  maxSize?: number
+) =>
+  ipcTask("factoryGetRandomImage")(id, name, collection, maxSize) as Promise<
     [CollectionItem, string]
   >;
 
@@ -325,20 +332,28 @@ export const factoryRewriteImage = (
 
 export const factoryRemoveCollectionItems = (
   id: string,
+  name: string,
+  collection: Collection,
   collectionItems: Collection
 ) =>
   ipcTask("factoryRemoveCollectionItems")(
     id,
+    name,
+    collection,
     collectionItems
   ) as Promise<Collection>;
 // #endregion
 
 export const factoryRegenerateCollectionItems = (
   id: string,
+  name: string,
+  collection: Collection,
   collectionItems: Collection
 ) =>
   ipcTask("factoryRegenerateCollectionItems")(
     id,
+    name,
+    collection,
     collectionItems
   ) as Promise<Collection>;
 

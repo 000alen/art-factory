@@ -5,6 +5,8 @@ import {
   Item,
   Menu,
   MenuTrigger,
+  Text,
+  TextField,
 } from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -16,16 +18,20 @@ import Close from "@spectrum-icons/workflow/Close";
 import { getBranches, getNotRevealedTraits } from "../nodesUtils";
 import { LayerNodeComponentData } from "../components/LayerNode";
 import { Trait } from "../typings";
-import { factoryGenerate } from "../actions";
-import { factoryGenerateNotRevealedImage } from "../ipc";
-import { hash } from "../utils";
+import {
+  factoryGenerateCollection,
+  factoryGenerateImages,
+  factoryGenerateNotRevealedImage,
+} from "../ipc";
+import { hash, spacedName } from "../utils";
 import { Node as FlowNode } from "react-flow-renderer";
+import { v4 as uuid } from "uuid";
 
 interface GenerationPageState {
   projectDir: string;
   instance: Instance;
   id: string;
-  generationId?: string;
+  templateId: string;
 }
 
 export const GenerationPage: React.FC = () => {
@@ -33,13 +39,16 @@ export const GenerationPage: React.FC = () => {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id, generationId } =
-    state as GenerationPageState;
+  const { projectDir, instance, id, templateId } = state as GenerationPageState;
   const { configuration, templates } = instance;
 
-  const [workingId] = useState(generationId || id);
-  const [workingTemplateId, setWorkingTemplateId] = useState(templates[0].id);
-  const [workingTemplateName, setWorkingTemplateName] = useState(templates[0].name);
+  const [templateName] = useState(
+    templates.find((template) => template.id === templateId).name
+  );
+
+  const [name, setName] = useState(spacedName());
+  const [collection, setCollection] = useState(null);
+  const [bundles, setBundles] = useState(null);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -54,12 +63,12 @@ export const GenerationPage: React.FC = () => {
   }, []);
 
   const onProgress = (name: string) => {
-    // setCurrentGeneration((prevGeneration) => prevGeneration + 1);
+    //   setCurrentGeneration((prevGeneration) => prevGeneration + 1);
   };
 
   const onGenerate = task("generation", async () => {
     const { nodes, edges, ns, ignored } = templates.find(
-      (nodes) => nodes.id === workingId
+      (nodes) => nodes.id === templateId
     );
 
     const nData = (
@@ -100,52 +109,57 @@ export const GenerationPage: React.FC = () => {
 
     const a = performance.now();
 
-    const { collection, bundles } = await factoryGenerate(
+    const { collection, bundles } = await factoryGenerateCollection(
       id,
-      configuration,
       keys,
       nTraits,
       ns,
-      nBundles,
-      onProgress
+      nBundles
     );
-    if (configuration.contractType === "721_reveal_pause") {
-      const notRevealedTraits = getNotRevealedTraits(nodes, edges);
-      await factoryGenerateNotRevealedImage(id, notRevealedTraits);
-    }
+
+    await factoryGenerateImages(id, name, collection, onProgress);
+
+    // ! TODO
+    // if (configuration.contractType === "721_reveal_pause") {
+    //   const notRevealedTraits = getNotRevealedTraits(nodes, edges);
+    //   await factoryGenerateNotRevealedImage(id, notRevealedTraits);
+    // }
+
     const b = performance.now();
 
-    console.log(b - a, collection, bundles);
+    console.log(b - a);
+
+    setCollection(collection);
+    // setBundles(bundles);
   });
 
-  const onSave = () => {};
+  const onSave = () => {
+    let generations = [
+      ...instance.generations,
+      { id: uuid(), name, collection, bundles },
+    ];
 
-  const items = templates.map(({ id, name }) => ({ id, name }));
+    generations = JSON.parse(JSON.stringify(generations));
+
+    navigate("/factory", {
+      state: {
+        projectDir,
+        instance: { ...instance, generations },
+        id,
+      },
+    });
+  };
 
   return (
     <Flex gap="size-100">
-      <MenuTrigger>
-        <ActionButton>{workingTemplateName}</ActionButton>
-        <Menu
-          items={items}
-          selectionMode="single"
-          disallowEmptySelection={true}
-          selectedKeys={[workingTemplateId]}
-          onSelectionChange={(selectedKeys) => {
-            const selectedKey = [...selectedKeys].shift() as string;
-            setWorkingTemplateId(selectedKey);
-            setWorkingTemplateName(
-              templates.find((nodes) => nodes.id === selectedKey).name
-            );
-          }}
-        >
-          {({ id, name }) => <Item key={id}>{name}</Item>}
-        </Menu>
-      </MenuTrigger>
+      <Text>{templateName}</Text>
+      <TextField label="Name" value={name} onChange={setName} />
       <Button variant="cta" onPress={onGenerate}>
         Generate
       </Button>
-      <Button variant="cta">Save</Button>
+      <Button variant="cta" onPress={onSave}>
+        Save
+      </Button>
     </Flex>
   );
 };

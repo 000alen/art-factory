@@ -1,7 +1,7 @@
 import { ipcMain, dialog, shell } from "electron";
 import path from "path";
 import solc from "solc";
-import { Factory, loadInstance } from "./Factory";
+import { Factory } from "./Factory";
 import { capitalize, layersNames, name, sizeOf, verifyContract } from "./utils";
 import fs from "fs";
 import {
@@ -270,38 +270,11 @@ ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 // #region Factory
 ipcTask(
   "createFactory",
-  (
-    id: string,
-    configuration: Configuration,
-    inputDir: string,
-    // outputDir: string,
-    instance?: Partial<Instance>
-  ) => {
-    const factory = new Factory(configuration, inputDir); //, outputDir);
-    if (instance) factory.loadInstance(instance);
+  (id: string, configuration: Configuration, projectDir: string) => {
+    const factory = new Factory(configuration, projectDir);
     factories[id] = factory;
     return true;
   }
-);
-
-ipcAsyncTask(
-  "createFactoryFromInstance",
-  async (id: string, instancePath: string) => {
-    factories[id] = await loadInstance(instancePath);
-    return true;
-  }
-);
-
-ipcTask("factoryInstance", (id: string) => factories[id].instance());
-
-ipcTask("factoryLoadInstance", (id: string, instance: Partial<Instance>) => {
-  factories[id].loadInstance(instance);
-  return true;
-});
-
-ipcAsyncTask(
-  "factorySaveInstance",
-  async (id: string) => await factories[id].saveInstance()
 );
 
 ipcTask("factoryLoadSecrets", (id: string, secrets: Secrets) => {
@@ -348,17 +321,23 @@ ipcTaskWithProgress(
   async (
     onProgress: (name: string) => void,
     id: string,
+    name: string,
     collection: Collection
   ) => {
-    await factories[id].generateImages(collection, onProgress);
+    await factories[id].generateImages(name, collection, onProgress);
     return true;
   }
 );
 
 ipcTaskWithProgress(
   "factoryGenerateMetadata",
-  async (onProgress: (name: string) => void, id: string) => {
-    await factories[id].generateMetadata(onProgress);
+  async (
+    onProgress: (name: string) => void,
+    id: string,
+    name: string,
+    collection: Collection
+  ) => {
+    await factories[id].generateMetadata(name, collection, onProgress);
     return true;
   }
 );
@@ -394,16 +373,33 @@ ipcTaskWithRequestId(
 
 ipcTaskWithRequestId(
   "factoryGetImage",
-  async (id: string, collectionItem: CollectionItem, maxSize?: number) => {
-    const buffer = await factories[id].getImage(collectionItem, maxSize);
+  async (
+    id: string,
+    name: string,
+    collectionItem: CollectionItem,
+    maxSize?: number
+  ) => {
+    const buffer = await factories[id].getImage(name, collectionItem, maxSize);
     return buffer.toString("base64");
   }
 );
 
-ipcAsyncTask("factoryGetRandomImage", async (id: string, maxSize?: number) => {
-  const [collectionItem, buffer] = await factories[id].getRandomImage(maxSize);
-  return [collectionItem, buffer.toString("base64")];
-});
+ipcAsyncTask(
+  "factoryGetRandomImage",
+  async (
+    id: string,
+    name: string,
+    collection: Collection,
+    maxSize?: number
+  ) => {
+    const [collectionItem, buffer] = await factories[id].getRandomImage(
+      name,
+      collection,
+      maxSize
+    );
+    return [collectionItem, buffer.toString("base64")];
+  }
+);
 
 // ! TODO: Change to base64 string
 ipcAsyncTask(
@@ -416,14 +412,28 @@ ipcAsyncTask(
 
 ipcAsyncTask(
   "factoryRemoveCollectionItems",
-  async (id: string, collectionItems: Collection) =>
-    await factories[id].removeCollectionItems(collectionItems)
+  async (
+    id: string,
+    name: string,
+    collection: Collection,
+    collectionItems: Collection
+  ) =>
+    await factories[id].removeCollectionItems(name, collection, collectionItems)
 );
 
 ipcAsyncTask(
   "factoryRegenerateCollectionItems",
-  async (id: string, collectionItems: Collection) =>
-    await factories[id].regenerateCollectionItems(collectionItems)
+  async (
+    id: string,
+    name: string,
+    collection: Collection,
+    collectionItems: Collection
+  ) =>
+    await factories[id].regenerateCollectionItems(
+      name,
+      collection,
+      collectionItems
+    )
 );
 
 ipcAsyncTask(

@@ -18,7 +18,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { Trait } from "../typings";
 import { MAX_SIZE } from "../constants";
 import { Instance } from "../typings";
-import { Button } from "@adobe/react-spectrum";
+import { Button, TextField } from "@adobe/react-spectrum";
 import { v4 as uuid } from "uuid";
 import Close from "@spectrum-icons/workflow/Close";
 import Back from "@spectrum-icons/workflow/Back";
@@ -40,6 +40,11 @@ export function TemplatePage() {
   const { configuration, templates } = instance;
 
   const [workingId] = useState(templateId || uuid());
+  const [name, setName] = useState(
+    templateId
+      ? templates.find(({ id }) => id == templateId).name
+      : spacedName()
+  );
   const [initialNodes] = useState(
     templateId ? templates.find(({ id }) => id == templateId).nodes : undefined
   );
@@ -96,7 +101,6 @@ export function TemplatePage() {
     const index = instance.templates.findIndex(
       (template) => template.id === workingId
     );
-    const name = spacedName();
 
     let templates;
     if (index === -1)
@@ -144,6 +148,9 @@ export function TemplatePage() {
           traits={traits}
         />
         <Nodes>
+          <div className="absolute z-10 top-4 right-4">
+            <TextField label="Name" value={name} onChange={setName} />
+          </div>
           <div className="absolute z-10 bottom-4 right-4">
             <Button variant="cta" onPress={onSave}>
               Save

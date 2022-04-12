@@ -7,7 +7,7 @@ import {
   View,
 } from "@adobe/react-spectrum";
 import React from "react";
-import { PAGE_N } from "../pages/QualityPage";
+import { PAGE_N } from "../constants";
 import { setter } from "./Gallery";
 import { ImageItem } from "./ImageItem";
 

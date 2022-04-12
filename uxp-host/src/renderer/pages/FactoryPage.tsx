@@ -1,4 +1,4 @@
-import { Button, Flex } from "@adobe/react-spectrum";
+import { Button, Flex, Heading } from "@adobe/react-spectrum";
 import React, { useContext, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ToolbarContext } from "../components/Toolbar";
@@ -40,10 +40,6 @@ export const FactoryPage: React.FC = () => {
     };
   }, []);
 
-  const onDebug = () => {
-    console.log({ projectDir, instance, id });
-  };
-
   const onConfiguration = () => {
     navigate("/configuration", {
       state: {
@@ -65,8 +61,19 @@ export const FactoryPage: React.FC = () => {
     });
   };
 
-  const onGeneration = (generationId?: string) => {
+  const onGeneration = (templateId: string) => {
     navigate("/generation", {
+      state: {
+        projectDir,
+        instance,
+        id,
+        templateId,
+      },
+    });
+  };
+
+  const onQuality = (generationId: string) => {
+    navigate("/quality", {
       state: {
         projectDir,
         instance,
@@ -76,17 +83,20 @@ export const FactoryPage: React.FC = () => {
     });
   };
 
-  const onQuality = () => {};
-
-  const onDeploy = () => {};
+  const onDeploy = () => {
+    navigate("/deploy", {
+      state: {
+        projectDir,
+        instance,
+        id,
+      },
+    });
+  };
 
   const onInstance = () => {};
 
   return (
     <Flex direction="column" gap="size-100">
-      <Button variant="secondary" onPress={onDebug}>
-        Debug
-      </Button>
       <Button variant="secondary" onPress={onConfiguration}>
         Configuration
       </Button>
@@ -107,25 +117,29 @@ export const FactoryPage: React.FC = () => {
         ))}
       </Flex>
 
-      <Button variant="secondary" onPress={() => onGeneration()}>
-        Generation
-      </Button>
+      <Heading>Generation</Heading>
 
       <Flex gap="size-100" marginX="size-500">
-        {instance.generations.map((generation) => (
-          <Button key={generation.id} variant="secondary">
-            {generation.name}
+        {instance.templates.map((template) => (
+          <Button
+            key={template.id}
+            variant="secondary"
+            onPress={() => onGeneration(template.id)}
+          >
+            {template.name}
           </Button>
         ))}
       </Flex>
 
-      <Button variant="secondary" onPress={onQuality}>
-        Quality
-      </Button>
+      <Heading>Quality</Heading>
 
       <Flex gap="size-100" marginX="size-500">
         {instance.generations.map((generation) => (
-          <Button key={generation.id} variant="secondary">
+          <Button
+            key={generation.id}
+            variant="secondary"
+            onPress={() => onQuality(generation.id)}
+          >
             {generation.name}
           </Button>
         ))}

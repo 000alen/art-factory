@@ -5,7 +5,8 @@ import {
   uniqueNamesGenerator,
 } from "unique-names-generator";
 import { v4 as uuid, v5 as uuidv5 } from "uuid";
-import { NAMESPACE } from "./constants";
+import { NAMESPACE, Networks } from "./constants";
+import { Configuration, ContractType, Instance } from "./typings";
 
 const spacedNameConfiguration = {
   dictionaries: [colors, adjectives, animals],
@@ -45,3 +46,41 @@ export const arrayDifference = <T,>(a: T[], b: T[]): T[] =>
 
 export const chooseN = <T,>(a: T[], n: number): T[] =>
   [...a].sort(() => 0.5 - Math.random()).slice(0, n);
+
+export const createConfiguration = (): Configuration => ({
+  name: spacedName(),
+  description: "Lorem ipsum",
+  symbol: "LOREM",
+  contractType: ContractType.ERC721,
+  width: 500,
+  height: 500,
+  generateBackground: true,
+  defaultBackground: {
+    r: 255,
+    g: 255,
+    b: 255,
+    a: 1,
+  },
+  cost: 0,
+  maxMintAmount: 0,
+  layers: [] as string[],
+});
+
+export const createInstance = (): Instance => ({
+  configuration: createConfiguration(),
+  templates: [],
+  generations: [],
+});
+
+export function resolveEtherscanUrl(
+  network: { name: string; id: number },
+  transactionHash: string
+) {
+  return network === Networks.mainnet
+    ? `https://etherscan.io/tx/${transactionHash}`
+    : network === Networks.ropsten
+    ? `https://ropsten.etherscan.io/tx/${transactionHash}`
+    : network === Networks.rinkeby
+    ? `https://rinkeby.etherscan.io/tx/${transactionHash}`
+    : null;
+}

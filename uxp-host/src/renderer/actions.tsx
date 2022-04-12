@@ -1,10 +1,7 @@
 import {
   showOpenDialog,
-  factorySaveInstance,
   createFactory,
   getOutputDir,
-  factoryLoadInstance,
-  factoryInstance,
   factoryGenerateImages,
   factoryDeployImages,
   getContract,
@@ -12,7 +9,6 @@ import {
   factoryDeployMetadata,
   factoryGenerateMetadata,
   isValidInputDir,
-  createFactoryFromInstance,
   factoryGenerateCollection,
   getPinataApiKey,
   getPinataSecretApiKey,
@@ -67,160 +63,31 @@ export const openProject = async () => {
   };
 };
 
-// export const openDirectory = async () => {
-//   const { canceled, filePaths } = (await showOpenDialog({
-//     properties: ["openFile", "openDirectory"],
-//   })) as {
-//     canceled: boolean;
-//     filePaths: string[];
-//   };
-
-//   if (canceled) return;
-//   const [inputDir] = filePaths;
-
-//   if (!(await isValidInputDir(inputDir)))
-//     throw FormattedError(7, "Invalid input directory", { inputDir });
-
-//   const outputDir = await getOutputDir(inputDir);
-
-//   return {
-//     inputDir,
-//     outputDir,
-//   };
-// };
-
-// export const resolvePathFromInstance = (
-//   id: string,
-//   instance: Partial<Instance>
-// ) => {
-//   const {
-//     inputDir,
-//     outputDir,
-//     collection,
-//     imagesGenerated,
-//     metadataGenerated,
-//     imagesCid,
-//     metadataCid,
-//     contractAddress,
-//     configuration,
-//     network,
-//     abi,
-//   } = instance;
-
-//   return !collection && !imagesGenerated
-//     ? [
-//         "/configuration",
-//         { inputDir, outputDir, partialConfiguration: configuration },
-//       ]
-//     : !metadataGenerated && !imagesCid && !metadataCid && !contractAddress
-//     ? [
-//         "/quality",
-//         {
-//           id,
-//           collection,
-//           inputDir,
-//           outputDir,
-//           configuration,
-//         },
-//       ]
-//     : imagesCid && metadataCid && !contractAddress
-//     ? [
-//         "/deploy",
-//         {
-//           id,
-//           collection,
-//           inputDir,
-//           outputDir,
-//           configuration,
-//           partialDeploy: {
-//             imagesCid,
-//             metadataCid,
-//           },
-//         },
-//       ]
-//     : contractAddress
-//     ? [
-//         "/instance",
-//         {
-//           id,
-//           collection,
-//           inputDir,
-//           outputDir,
-//           configuration,
-//           imagesCid,
-//           metadataCid,
-//           network,
-//           contractAddress,
-//           abi,
-//         },
-//       ]
-//     : null;
-// };
-
 export const initializeFactory = async (
   configuration: Partial<Configuration>,
-  inputDir: string,
-  outputDir: string
+  projectDir: string
 ) => {
   const id = uuid();
 
   try {
-    await createFactory(id, configuration, inputDir); //, outputDir);
-    await factorySaveInstance(id);
+    await createFactory(id, configuration, projectDir);
   } catch (error) {
     throw FormattedError(2, "Could not initialize factory", {
       // configuration,
-      inputDir,
-      outputDir,
+      projectDir,
       message: error.message,
     });
   }
 
   return {
     id,
-  };
-};
-
-export const factoryGenerate = async (
-  id: string,
-  configuration: Partial<Configuration>,
-  keys: string[],
-  nTraits: Trait[][],
-  ns: Record<string, number>,
-  nBundles: { name: string; ids: string[] }[],
-  onProgress: (name: string) => void
-) => {
-  // @ts-ignore
-  await factoryLoadInstance(id, { configuration });
-  await factorySaveInstance(id);
-
-  const { collection, bundles } = await factoryGenerateCollection(
-    id,
-    keys,
-    nTraits,
-    ns,
-    nBundles
-  );
-
-  try {
-    await factoryGenerateImages(id, collection, onProgress);
-  } catch (error) {
-    throw FormattedError(3, "Could not generate images", {
-      // collection,
-      message: error.message,
-    });
-  }
-  await factorySaveInstance(id);
-
-  return {
-    collection,
-    bundles,
   };
 };
 
 export const factoryDeployAssets = async (
   id: string,
   secrets: Secrets,
+  name: string,
   collection: Collection,
   configuration: Configuration,
   partialDeploy: any
@@ -234,7 +101,7 @@ export const factoryDeployAssets = async (
       ? partialDeploy.imagesCid
       : await factoryDeployImages(id);
 
-    if (!partialDeploy) await factoryGenerateMetadata(id);
+    if (!partialDeploy) await factoryGenerateMetadata(id, name, collection);
 
     metadataCid = partialDeploy
       ? partialDeploy.metadataCid
@@ -257,13 +124,6 @@ export const factoryDeployAssets = async (
       message: error.message,
     });
   }
-
-  await factoryLoadInstance(id, {
-    imagesCid,
-    metadataCid,
-    notRevealedImageCid,
-    notRevealedMetadataCid,
-  });
 
   return {
     imagesCid,
@@ -371,26 +231,6 @@ export const factoryDeployContract = async (
 
   const contractAddress = contract.address;
   const transactionHash = contract.deployTransaction.hash;
-
-  await factoryLoadInstance(id, {
-    network,
-    contractAddress,
-    abi,
-    compilerVersion,
-  });
-  await factorySaveInstance(id);
-
-  // TODO
-  // await verifyContract(
-  //   secrets.etherscanApiKey,
-  //   source,
-  //   network,
-  //   contractAddress,
-  //   "solidity-single-file",
-  //   "NFT",
-  //   version,
-  //   0
-  // );
 
   return {
     contractAddress,

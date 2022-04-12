@@ -119,7 +119,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
             value={infuraProjectId}
             onChange={_setInfuraProjectId}
             type="password"
-            label="Infura ID"
+            label="Infura Project ID"
           />
           <TextField
             value={etherscanApiKey}

@@ -9,7 +9,7 @@ import {
   showOpenDialog,
   writeProjectInstance,
 } from "../ipc";
-import { createInstance } from "../newUtils";
+import { createInstance } from "../utils";
 
 export function HomePage() {
   const navigate = useNavigate();

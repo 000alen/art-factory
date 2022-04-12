@@ -1,7 +1,6 @@
 import {
   ActionGroup,
   Button,
-  Checkbox,
   Flex,
   Grid,
   Heading,
@@ -9,38 +8,35 @@ import {
   TextField,
   View,
 } from "@adobe/react-spectrum";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
-import { Collection, Configuration } from "../typings";
+import { Collection, CollectionItem, Instance } from "../typings";
 import {
   factoryGetImage,
   factoryRegenerateCollectionItems,
   factoryRemoveCollectionItems,
-  factorySaveInstance,
   openFolder,
 } from "../ipc";
-import { MAX_SIZE } from "../constants";
+import { MAX_SIZE, PAGE_N } from "../constants";
 import { ImageItem } from "../components/ImageItem";
 import path from "path";
-import Close from "@spectrum-icons/workflow/Close";
-import Folder from "@spectrum-icons/workflow/Folder";
 import { hash } from "../utils";
 import { Gallery } from "../components/Gallery";
-import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
-import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import { Filters } from "../components/Filters";
 import Back from "@spectrum-icons/workflow/Back";
+import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
+import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
+import Close from "@spectrum-icons/workflow/Close";
+import Folder from "@spectrum-icons/workflow/Folder";
 
 interface QualityPageState {
+  projectDir: string;
+  instance: Instance;
   id: string;
-  collection: Collection;
-  bundles: Record<string, string[][]>;
-  inputDir: string;
-  outputDir: string;
-  configuration: Partial<Configuration>;
+  generationId: string;
 }
 
 type Filters = Record<string, string[]>;
@@ -55,8 +51,6 @@ interface BundleItem {
   urls: string[];
 }
 
-export const PAGE_N = 25;
-
 export const QualityPage = () => {
   const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
@@ -64,38 +58,44 @@ export const QualityPage = () => {
   const { state } = useLocation();
   const task = useErrorHandler();
 
-  const {
-    id,
-    collection: _collection,
-    bundles: _bundles,
-    inputDir,
-    outputDir,
-    configuration,
-  } = state as QualityPageState;
+  const { projectDir, instance, id, generationId } = state as QualityPageState;
+  const { configuration, generations } = instance;
+
+  const [name] = useState(
+    generations.find((generation) => generation.id === generationId).name
+  );
+
+  const [collection, setCollection] = useState<Collection>(
+    generations.find((generation) => generation.id === generationId).collection
+  );
 
   const [filtersInfo, setFiltersInfo] = useState<Filters>({});
   const [filters, setFilters] = useState<Filters>({});
   const [cursor, setCursor] = useState(0);
   const [page, setPage] = useState(1);
   const [maxPage, setMaxPage] = useState(1);
-  const [collection, setCollection] = useState<Collection>(_collection);
-  const [filteredCollection, setFilteredCollection] =
-    useState<Collection>(_collection);
+
+  const [filteredCollection, setFilteredCollection] = useState<Collection>(
+    generations.find((generation) => generation.id === generationId).collection
+  );
+
   const [items, setItems] = useState<Item[]>([]);
   const [selectedItem, setSelectedItem] = useState(0);
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
   const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
   const [stringFilter, setStringFilter] = useState<string>(null);
 
-  const [bundles, setBundles] = useState<Record<string, string[][]>>(_bundles);
-  const [filteredBundles, setFilteredBundles] = useState<
-    Record<string, string[][]>
-  >({});
-  const [bundlesItems, setBundleItems] = useState<BundleItem[]>([]);
-  const [bundlesFilter, setBundlesFilter] = useState<string>(null);
-  const [bundlesCursor, setBundlesCursor] = useState(0);
-  const [bundlesPage, setBundlesPage] = useState(1);
-  const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
+  // const [bundles, setBundles] = useState<Record<string, string[][]>>(
+  //   generations.find((generation) => generation.id === generationId).collection
+  // );
+  // const [filteredBundles, setFilteredBundles] = useState<
+  //   Record<string, string[][]>
+  // >({});
+  // const [bundlesItems, setBundleItems] = useState<BundleItem[]>([]);
+  // const [bundlesFilter, setBundlesFilter] = useState<string>(null);
+  // const [bundlesCursor, setBundlesCursor] = useState(0);
+  // const [bundlesPage, setBundlesPage] = useState(1);
+  // const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -107,18 +107,19 @@ export const QualityPage = () => {
       "Open in Explorer",
       <Folder />,
       () => {
-        openFolder(path.join(outputDir, "images"));
+        openFolder(path.join(projectDir, "images", name));
       }
     );
 
-    const uxpReload = async ({ name }: { name: string }) => {
-      if (filteredCollection.some((item) => item.name === name)) {
+    const uxpReload = async ({ name: itemName }: { name: string }) => {
+      if (filteredCollection.some((item) => item.name === itemName)) {
         const url = `data:image/png;base64,${await factoryGetImage(
           id,
-          collection.find((collectionItem) => collectionItem.name === name),
+          name,
+          collection.find((collectionItem) => collectionItem.name === itemName),
           MAX_SIZE
         )}`;
-        reload(name, url);
+        reload(itemName, url);
       }
     };
 
@@ -164,14 +165,16 @@ export const QualityPage = () => {
         await Promise.all(
           Array.from({ length: PAGE_N }).map(async (_, i) => {
             if (cursor + i >= filteredCollection.length) return null;
-            const collectionItem = filteredCollection[cursor + i];
-            const name = collectionItem.name;
+            const collectionItem = filteredCollection[
+              cursor + i
+            ] as CollectionItem;
             const url = `data:image/png;base64,${await factoryGetImage(
               id,
+              name,
               collectionItem,
               MAX_SIZE
             )}`;
-            return { name, url };
+            return { name: collectionItem.name, url };
           })
         )
       ).filter((item) => item !== null);
@@ -180,54 +183,54 @@ export const QualityPage = () => {
     })();
   }, [filteredCollection, cursor]);
 
-  useEffect(() => {
-    if (bundlesFilter === null) {
-      setBundlesCursor(0);
-      setBundlesPage(1);
-      setBundlesMaxPage(1);
-      setFilteredBundles({});
-      return;
-    }
+  // useEffect(() => {
+  //   if (bundlesFilter === null) {
+  //     setBundlesCursor(0);
+  //     setBundlesPage(1);
+  //     setBundlesMaxPage(1);
+  //     setFilteredBundles({});
+  //     return;
+  //   }
 
-    const filteredBundles: Record<string, string[][]> = {
-      [bundlesFilter]: bundles[bundlesFilter],
-    };
+  //   const filteredBundles: Record<string, string[][]> = {
+  //     [bundlesFilter]: bundles[bundlesFilter],
+  //   };
 
-    setBundlesCursor(0);
-    setBundlesPage(1);
-    setBundlesMaxPage(
-      Math.ceil(filteredBundles[bundlesFilter].length / PAGE_N)
-    );
-    setFilteredBundles(filteredBundles);
-  }, [bundlesFilter]);
+  //   setBundlesCursor(0);
+  //   setBundlesPage(1);
+  //   setBundlesMaxPage(
+  //     Math.ceil(filteredBundles[bundlesFilter].length / PAGE_N)
+  //   );
+  //   setFilteredBundles(filteredBundles);
+  // }, [bundlesFilter]);
 
-  useEffect(() => {
-    task("loading bundles previews", async () => {
-      const bundleItems = (
-        await Promise.all(
-          Array.from({ length: PAGE_N }).map(async (_, i) => {
-            if (bundlesFilter === null) return null;
-            if (bundlesCursor + i >= filteredBundles[bundlesFilter].length)
-              return null;
-            const names = filteredBundles[bundlesFilter][bundlesCursor + i];
-            const collectionItems = names.map((key) =>
-              collection.find((item) => item.name === key)
-            );
-            const base64Strings = await Promise.all(
-              collectionItems.map((collectionItem) =>
-                factoryGetImage(id, collectionItem, MAX_SIZE)
-              )
-            );
-            const urls = base64Strings.map(
-              (b64) => `data:image/png;base64,${b64}`
-            );
-            return { names, urls };
-          })
-        )
-      ).filter((item) => item !== null);
-      setBundleItems(bundleItems);
-    })();
-  }, [filteredBundles, bundlesCursor]);
+  // useEffect(() => {
+  //   task("loading bundles previews", async () => {
+  //     const bundleItems = (
+  //       await Promise.all(
+  //         Array.from({ length: PAGE_N }).map(async (_, i) => {
+  //           if (bundlesFilter === null) return null;
+  //           if (bundlesCursor + i >= filteredBundles[bundlesFilter].length)
+  //             return null;
+  //           const names = filteredBundles[bundlesFilter][bundlesCursor + i];
+  //           const collectionItems = names.map((key) =>
+  //             collection.find((item) => item.name === key)
+  //           );
+  //           const base64Strings = await Promise.all(
+  //             collectionItems.map((collectionItem) =>
+  //               factoryGetImage(id, collectionItem, MAX_SIZE)
+  //             )
+  //           );
+  //           const urls = base64Strings.map(
+  //             (b64) => `data:image/png;base64,${b64}`
+  //           );
+  //           return { names, urls };
+  //         })
+  //       )
+  //     ).filter((item) => item !== null);
+  //     setBundleItems(bundleItems);
+  //   })();
+  // }, [filteredBundles, bundlesCursor]);
 
   const reload = (name: string, url: string) =>
     setItems((prevItems) =>
@@ -288,11 +291,13 @@ export const QualityPage = () => {
   };
 
   const onRegenerateRepeated = async () => {
-    const collection = await factoryRegenerateCollectionItems(
+    const _collection = await factoryRegenerateCollectionItems(
       id,
+      name,
+      collection,
       computeRepeatedCollection()
     );
-    setCollection(collection);
+    setCollection(_collection);
     setFilteredCollection((p) => [...p]);
     if (repeatedFilter) addRepeatedFilter();
   };
@@ -321,9 +326,9 @@ export const QualityPage = () => {
     setFilters((prevFilters) => ({ ...prevFilters }));
   };
 
-  const addBundlesFilter = (bundle: string) => setBundlesFilter(bundle);
+  // const addBundlesFilter = (bundle: string) => setBundlesFilter(bundle);
 
-  const removeBundlesFilter = () => setBundlesFilter(null);
+  // const removeBundlesFilter = () => setBundlesFilter(null);
 
   const onEdit = (i: number) => {
     uxpContext.hostEdit({
@@ -344,10 +349,13 @@ export const QualityPage = () => {
   const onSelect = (i: number) => setSelectedItem(i);
 
   const onRegenerate = async (i: number) => {
-    const collection = await factoryRegenerateCollectionItems(id, [
-      filteredCollection[i],
-    ]);
-    setCollection(collection);
+    const _collection = await factoryRegenerateCollectionItems(
+      id,
+      name,
+      collection,
+      [filteredCollection[i]]
+    );
+    setCollection(_collection);
     setFilteredCollection((p) => [...p]);
   };
 
@@ -368,26 +376,30 @@ export const QualityPage = () => {
     }
   };
 
-  const onContinue = task("filtering", async () => {
+  const onSave = task("filtering", async () => {
     const collectionItemsToRemove: Collection = itemsToRemove.map((name) =>
       collection.find((collectionItem) => collectionItem.name === name)
     );
     const _collection = await factoryRemoveCollectionItems(
       id,
+      name,
+      collection,
       collectionItemsToRemove
     );
-    const _configuration = {
-      ...configuration,
-      n: _collection.length,
-    };
-    await factorySaveInstance(id);
-    navigate("/deploy", {
+
+    let generations = instance.generations.map((generation) =>
+      generation.id === generationId
+        ? { ...generation, collection: _collection }
+        : generation
+    );
+
+    generations = JSON.parse(JSON.stringify(generations));
+
+    navigate("/factory", {
       state: {
+        projectDir,
+        instance: { ...instance, generations },
         id,
-        inputDir,
-        outputDir,
-        collection: _collection,
-        configuration: _configuration,
       },
     });
   });
@@ -410,10 +422,10 @@ export const QualityPage = () => {
             removeRepeatedFilter,
             onRegenerateRepeated,
             onRemoveRepeated,
-            bundles,
-            bundlesFilter,
-            addBundlesFilter,
-            removeBundlesFilter,
+            // bundles,
+            // bundlesFilter,
+            // addBundlesFilter,
+            // removeBundlesFilter,
             filtersInfo,
             hasFilter,
             addFilter,
@@ -437,14 +449,14 @@ export const QualityPage = () => {
             onRemove,
             onSelect,
             onRegenerate,
-            filteredBundles,
-            bundlesPage,
-            bundlesMaxPage,
-            setBundlesCursor,
-            setBundlesPage,
-            bundlesItems,
-            bundlesFilter,
-            bundlesCursor,
+            // filteredBundles,
+            // bundlesPage,
+            // bundlesMaxPage,
+            // setBundlesCursor,
+            // setBundlesPage,
+            // bundlesItems,
+            // bundlesFilter,
+            // bundlesCursor,
           }}
         />
       </View>
@@ -518,9 +530,9 @@ export const QualityPage = () => {
             variant="cta"
             marginBottom="size-100"
             marginEnd="size-100"
-            onPress={onContinue}
+            onPress={onSave}
           >
-            Continue
+            Save
           </Button>
         </Flex>
       </View>
