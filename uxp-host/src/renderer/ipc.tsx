@@ -297,12 +297,14 @@ export const factoryRemoveCollectionItems = (
   id: string,
   name: string,
   collection: Collection,
+  bundles: Bundles,
   collectionItems: Collection
 ) =>
   ipcTask("factoryRemoveCollectionItems")(
     id,
     name,
     collection,
+    bundles,
     collectionItems
   ) as Promise<Collection>;
 // #endregion

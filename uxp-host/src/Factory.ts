@@ -32,8 +32,6 @@ export class Factory {
   traitsBuffer: Map<string, Buffer>;
 
   secrets: Secrets;
-  imagesGenerated: boolean;
-  metadataGenerated: boolean;
 
   imagesCid: string;
   notRevealedImageCid: string;
@@ -384,7 +382,6 @@ export class Factory {
         if (callback) callback(collectionItem.name);
       })
     );
-    this.imagesGenerated = true;
   }
 
   async generateMetadata(
@@ -392,9 +389,6 @@ export class Factory {
     collection: Collection,
     callback?: (name: string) => void
   ) {
-    if (!this.imagesGenerated) return;
-    if (!this.imagesCid) return;
-
     if (!fs.existsSync(path.join(this.buildDir, "json", name)))
       fs.mkdirSync(path.join(this.buildDir, "json", name));
 
@@ -403,7 +397,7 @@ export class Factory {
       const metadata = {
         name: this.configuration.name,
         description: this.configuration.description,
-        image: `ipfs://${this.imagesCid}/${collectionItem.name}.png`,
+        image: `ipfs://<unknown>/${collectionItem.name}.png`,
         edition: collectionItem.name,
         date: Date.now(),
         attributes: collectionItem.traits.map((trait) => ({
@@ -423,8 +417,38 @@ export class Factory {
       path.join(this.buildDir, "json", "metadata.json"),
       JSON.stringify(metadatas)
     );
+  }
 
-    this.metadataGenerated = true;
+  async hydrateMetadata(
+    name: string,
+    collection: Collection,
+    callback?: (name: string) => void
+  ) {
+    if (!fs.existsSync(path.join(this.buildDir, "json", name)))
+      fs.mkdirSync(path.join(this.buildDir, "json", name));
+
+    const metadatas = [];
+    for (const collectionItem of collection) {
+      const metadata = JSON.parse(
+        await fs.promises.readFile(
+          path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
+          "utf8"
+        )
+      );
+      metadata["image"] = `ipfs://${this.imagesCid}/${collectionItem.name}.png`;
+
+      metadatas.push(metadata);
+
+      await fs.promises.writeFile(
+        path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
+        JSON.stringify(metadata)
+      );
+    }
+
+    await fs.promises.writeFile(
+      path.join(this.buildDir, "json", "metadata.json"),
+      JSON.stringify(metadatas)
+    );
   }
 
   async deployImages() {
@@ -553,15 +577,18 @@ export class Factory {
   async removeCollectionItems(
     name: string,
     collection: Collection,
-    // bundles: any,
+    bundles: Bundles,
     collectionItemsToRemove: Collection
   ) {
     await Promise.all(
-      collectionItemsToRemove.map((itemToRemove) =>
-        fs.promises.rm(
+      collectionItemsToRemove.map(async (itemToRemove) => {
+        await fs.promises.rm(
           path.join(this.buildDir, "images", name, `${itemToRemove.name}.png`)
-        )
-      )
+        );
+        await fs.promises.rm(
+          path.join(this.buildDir, "json", name, `${itemToRemove.name}.json`)
+        );
+      })
     );
 
     collection = collection.filter(
@@ -571,17 +598,15 @@ export class Factory {
         })
     );
 
-    // bundles = new Map(
-    //   [...bundles.entries()].map(([bundleName, nBundles]) => [
-    //     bundleName,
-    //     nBundles.filter(
-    //       (bundle: any) =>
-    //         !collectionItemsToRemove.some((itemToRemove) =>
-    //           bundle.includes(itemToRemove.name)
-    //         )
-    //     ),
-    //   ])
-    // );
+    bundles = bundles.map(({ name, ids }) => ({
+      name,
+      ids: ids.filter(
+        (ids) =>
+          !ids.some((id) =>
+            collectionItemsToRemove.some((item) => item.name === id)
+          )
+      ),
+    }));
 
     for (const [i, item] of collection.entries()) {
       await fs.promises.rename(
@@ -589,18 +614,24 @@ export class Factory {
         path.join(this.buildDir, "images", name, `_${i + 1}.png`)
       );
 
-      // const _bundles = new Map(bundles);
-      // for (const [bundlesName, nBundles] of _bundles) {
-      //   const newNBundles = [];
-      //   for (const bundle of nBundles) {
-      //     newNBundles.push(
-      //       bundle.includes(item.name)
-      //         ? bundle.map((name) => (name === item.name ? `_${i + 1}` : name))
-      //         : bundle
-      //     );
-      //   }
-      //   bundles.set(bundlesName, newNBundles);
-      // }
+      await fs.promises.rename(
+        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        path.join(this.buildDir, "json", name, `_${i + 1}.json`)
+      );
+
+      const _bundles = [];
+      for (const { name, ids } of bundles) {
+        const newIds = [];
+        for (const _ids of ids) {
+          newIds.push(
+            _ids.includes(item.name)
+              ? _ids.map((id) => (id === item.name ? `_${i + 1}` : id))
+              : _ids
+          );
+        }
+        _bundles.push({ name, ids: newIds });
+      }
+      bundles = _bundles;
 
       item.name = `${i + 1}`;
     }
@@ -611,18 +642,24 @@ export class Factory {
         path.join(this.buildDir, "images", name, `${i + 1}.png`)
       );
 
-      // const _bundles = new Map(bundles);
-      // for (const [bundlesName, nBundles] of _bundles) {
-      //   const newNBundles = [];
-      //   for (const bundle of nBundles) {
-      //     newNBundles.push(
-      //       bundle.includes(`_${i + 1}`)
-      //         ? bundle.map((name) => (name === `_${i + 1}` ? `${i + 1}` : name))
-      //         : bundle
-      //     );
-      //   }
-      //   bundles.set(bundlesName, newNBundles);
-      // }
+      await fs.promises.rename(
+        path.join(this.buildDir, "json", name, `_${i + 1}.json`),
+        path.join(this.buildDir, "json", name, `${i + 1}.json`)
+      );
+
+      const _bundles = [];
+      for (const { name, ids } of bundles) {
+        const newIds = [];
+        for (const _ids of ids) {
+          newIds.push(
+            _ids.includes(`_${i + 1}`)
+              ? _ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
+              : _ids
+          );
+        }
+        _bundles.push({ name, ids: newIds });
+      }
+      bundles = _bundles;
     }
 
     return collection;

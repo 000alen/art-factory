@@ -15,6 +15,7 @@ import {
   getEtherscanApiKey,
 } from "./store";
 import {
+  Bundles,
   BundlesInfo,
   Collection,
   CollectionItem,
@@ -393,9 +394,15 @@ ipcAsyncTask(
     id: string,
     name: string,
     collection: Collection,
+    bundles: Bundles,
     collectionItems: Collection
   ) =>
-    await factories[id].removeCollectionItems(name, collection, collectionItems)
+    await factories[id].removeCollectionItems(
+      name,
+      collection,
+      bundles,
+      collectionItems
+    )
 );
 
 ipcAsyncTask(

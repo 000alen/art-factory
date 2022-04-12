@@ -12,6 +12,7 @@ import { Trait } from "../typings";
 import {
   factoryGenerateCollection,
   factoryGenerateImages,
+  factoryGenerateMetadata,
   factoryGetImage,
 } from "../ipc";
 import { hash, spacedName } from "../utils";
@@ -146,7 +147,6 @@ export const GenerationPage: React.FC = () => {
       }));
 
     const a = performance.now();
-
     const { collection, bundles } = await factoryGenerateCollection(
       id,
       keys,
@@ -154,14 +154,11 @@ export const GenerationPage: React.FC = () => {
       ns,
       bundlesInfo
     );
-
     await factoryGenerateImages(id, name, collection, onProgress);
-
+    await factoryGenerateMetadata(id, name, collection);
     const b = performance.now();
 
     console.log(b - a);
-
-    console.log(collection, bundles);
 
     setCollection(collection);
     setBundles(bundles);

@@ -401,6 +401,7 @@ export const QualityPage = () => {
       id,
       name,
       collection,
+      bundles,
       _collectionItemsToRemove
     );
 
