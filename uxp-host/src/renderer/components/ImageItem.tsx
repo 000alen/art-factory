@@ -10,11 +10,17 @@ interface ImageItemProps {
   name?: string;
   src: string;
   actions?: ImageItemAction[];
+  maxSize?: number;
 }
 
-export const ImageItem: React.FC<ImageItemProps> = ({ name, src, actions }) => {
+export const ImageItem: React.FC<ImageItemProps> = ({
+  name,
+  src,
+  actions,
+  maxSize,
+}) => {
   return (
-    <div className="relative w-full h-full m-auto rounded">
+    <div className="relative w-auto h-auto m-auto rounded">
       {actions && (
         <div className="absolute w-[calc(100%-0.5rem)] h-[calc(100%-0.5rem)] p-2 space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
           <Text>{name}</Text>
@@ -29,7 +35,15 @@ export const ImageItem: React.FC<ImageItemProps> = ({ name, src, actions }) => {
       )}
 
       <img
-        className="w-full h-full select-none rounded"
+        style={
+          maxSize
+            ? {
+                maxWidth: maxSize,
+                maxHeight: maxSize,
+              }
+            : {}
+        }
+        className="w-auto h-auto select-none rounded"
         draggable="false"
         src={src}
         alt={name}

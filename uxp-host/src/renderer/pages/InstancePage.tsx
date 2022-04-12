@@ -60,7 +60,15 @@ export function InstancePage() {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () => {});
+    // toolbarContext.addButton("back", "Back", <Back />, () =>
+    //   navigate("/factory", {
+    //     state: {
+    //       projectDir,
+    //       instance,
+    //       id,
+    //     },
+    //   })
+    // );
     toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
       localStorage.clear()
     );

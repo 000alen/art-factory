@@ -8,22 +8,19 @@ import {
 } from "@adobe/react-spectrum";
 import React from "react";
 import { PAGE_N } from "../constants";
+import { BundleItem } from "../pages/QualityPage";
+import { Bundles } from "../typings";
 import { setter } from "./Gallery";
 import { ImageItem } from "./ImageItem";
 
-interface BundleItem {
-  names: string[];
-  urls: string[];
-}
-
 interface GalleryBundlesProps {
-  filteredBundles: Record<string, string[][]>;
+  filteredBundles: Bundles;
   bundlesPage: number;
   bundlesMaxPage: number;
   setBundlesCursor: setter<number>;
   setBundlesPage: setter<number>;
   bundlesItems: BundleItem[];
-  bundlesFilter: string;
+  bundlesFilters: string[];
   bundlesCursor: number;
 }
 
@@ -34,7 +31,7 @@ export const GalleryBundles: React.FC<GalleryBundlesProps> = ({
   setBundlesCursor,
   setBundlesPage,
   bundlesItems,
-  bundlesFilter,
+  bundlesFilters,
   bundlesCursor,
 }) => {
   return (
@@ -46,14 +43,7 @@ export const GalleryBundles: React.FC<GalleryBundlesProps> = ({
         justifyContent="space-between"
         marginBottom={8}
       >
-        <div>
-          {bundlesFilter === null
-            ? 0
-            : bundlesFilter in filteredBundles
-            ? filteredBundles[bundlesFilter].length
-            : 0}{" "}
-          elements
-        </div>
+        <div>{filteredBundles.length} elements</div>
 
         <div>
           Page{" "}
@@ -72,16 +62,16 @@ export const GalleryBundles: React.FC<GalleryBundlesProps> = ({
       </Flex>
 
       <View maxHeight="85vh" overflow="auto">
-        {bundlesItems.map(({ names, urls }, i) => (
+        {bundlesItems.map(({ bundleName, names, urls }, i) => (
           <div key={i}>
-            <Heading>{`${bundlesFilter} ${bundlesCursor + i + 1}`}</Heading>
+            <Heading>{`${bundleName} ${bundlesCursor + i + 1}`}</Heading>
             <Grid
               columns={repeat("auto-fit", "175px")}
               gap="size-100"
               justifyContent="center"
             >
               {names.map((name, j) => (
-                <ImageItem key={j} src={urls[j]} />
+                <ImageItem key={j} src={urls[j]} maxSize={175} />
               ))}
             </Grid>
           </div>

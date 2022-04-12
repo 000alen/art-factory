@@ -6,6 +6,7 @@ import {
   View,
 } from "@adobe/react-spectrum";
 import React from "react";
+import { Bundles } from "../typings";
 
 type Filters = Record<string, string[]>;
 
@@ -17,10 +18,10 @@ interface FiltersProps {
   onRemoveRepeated: () => void;
   addStringFilter: (query: string) => void;
   removeStringFilter: () => void;
-  // bundles: Record<string, string[][]>;
-  // bundlesFilter: string;
-  // addBundlesFilter: (bundle: string) => void;
-  // removeBundlesFilter: () => void;
+  bundlesFiltersInfo: string[];
+  bundlesFilters: string[];
+  addBundlesFilter: (bundle: string) => void;
+  removeBundlesFilter: (bundle: string) => void;
   filtersInfo: Filters;
   hasFilter: (name: string, value: string) => boolean;
   addFilter: (name: string, value: string) => void;
@@ -35,10 +36,10 @@ export const Filters: React.FC<FiltersProps> = ({
   removeRepeatedFilter,
   onRegenerateRepeated,
   onRemoveRepeated,
-  // bundles,
-  // bundlesFilter,
-  // addBundlesFilter,
-  // removeBundlesFilter,
+  bundlesFiltersInfo,
+  bundlesFilters,
+  addBundlesFilter,
+  removeBundlesFilter,
   filtersInfo,
   hasFilter,
   addFilter,
@@ -74,25 +75,25 @@ export const Filters: React.FC<FiltersProps> = ({
         </Button>
       </details>
 
-      {/* <details>
+      <details>
         <summary>
           <Heading UNSAFE_className="inline-block">Bundles</Heading>
         </summary>
         <div className="ml-2 flex flex-col">
-          {Object.keys(bundles).map((bundle, i) => (
+          {bundlesFiltersInfo.map((bundle, i) => (
             <Checkbox
               key={i}
-              isSelected={bundle === bundlesFilter}
+              isSelected={bundlesFilters.includes(bundle)}
               onChange={(isSelected) => {
                 if (isSelected) addBundlesFilter(bundle);
-                else removeBundlesFilter();
+                else removeBundlesFilter(bundle);
               }}
             >
               {bundle}
             </Checkbox>
           ))}
         </div>
-      </details> */}
+      </details>
 
       {Object.entries(filtersInfo).map(([name, values], i) => (
         <details key={i}>

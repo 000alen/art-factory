@@ -12,7 +12,8 @@ import {
   View,
 } from "@adobe/react-spectrum";
 import React from "react";
-import { Collection } from "../typings";
+import { BundleItem } from "../pages/QualityPage";
+import { Bundles, Collection } from "../typings";
 import { GalleryBundles } from "./GalleryBundles";
 import { GalleryItems } from "./GalleryItems";
 import { ImageItem } from "./ImageItem";
@@ -22,11 +23,6 @@ export type setter<T> = (value: T | ((p: T) => T)) => void;
 interface Item {
   name: string;
   url: string;
-}
-
-interface BundleItem {
-  names: string[];
-  urls: string[];
 }
 
 interface GalleryProps {
@@ -42,14 +38,14 @@ interface GalleryProps {
   onRemove: (name: string) => void;
   onSelect: (i: number) => void;
   onRegenerate: (i: number) => void;
-  // filteredBundles: Record<string, string[][]>;
-  // bundlesPage: number;
-  // bundlesMaxPage: number;
-  // setBundlesCursor: setter<number>;
-  // setBundlesPage: setter<number>;
-  // bundlesItems: BundleItem[];
-  // bundlesFilter: string;
-  // bundlesCursor: number;
+  filteredBundles: Bundles;
+  bundlesPage: number;
+  bundlesMaxPage: number;
+  setBundlesCursor: setter<number>;
+  setBundlesPage: setter<number>;
+  bundlesItems: BundleItem[];
+  bundlesFilters: string[];
+  bundlesCursor: number;
 }
 
 export const Gallery: React.FC<GalleryProps> = ({
@@ -65,14 +61,14 @@ export const Gallery: React.FC<GalleryProps> = ({
   onRemove,
   onSelect,
   onRegenerate,
-  // filteredBundles,
-  // bundlesPage,
-  // bundlesMaxPage,
-  // setBundlesCursor,
-  // setBundlesPage,
-  // bundlesItems,
-  // bundlesFilter,
-  // bundlesCursor,
+  filteredBundles,
+  bundlesPage,
+  bundlesMaxPage,
+  setBundlesCursor,
+  setBundlesPage,
+  bundlesItems,
+  bundlesFilters,
+  bundlesCursor,
 }) => (
   <Tabs>
     <TabList>
@@ -100,7 +96,7 @@ export const Gallery: React.FC<GalleryProps> = ({
       </Item>
 
       <Item key="bundles">
-        {/* <GalleryBundles
+        <GalleryBundles
           {...{
             filteredBundles,
             bundlesPage,
@@ -108,10 +104,10 @@ export const Gallery: React.FC<GalleryProps> = ({
             setBundlesCursor,
             setBundlesPage,
             bundlesItems,
-            bundlesFilter,
+            bundlesFilters,
             bundlesCursor,
           }}
-        /> */}
+        />
       </Item>
     </TabPanels>
   </Tabs>

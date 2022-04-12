@@ -72,7 +72,7 @@ export interface CollectionItem {
 
 export interface BundleItem {
   name: string;
-  ids: string[];
+  ids: string[][];
 }
 
 export type Collection = CollectionItem[];

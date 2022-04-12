@@ -85,12 +85,13 @@ export function TemplatePage() {
         )
       );
 
+      // ! TODO URLS ARE NOT USED
       const traitsAndBase64Strings = await Promise.all(
         layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
       );
 
       const _traits: Trait[] = traitsAndBase64Strings.map(([trait]) => trait);
-      setTraits(traits);
+      setTraits(_traits);
     })();
 
     return () => {

@@ -13,7 +13,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
-import { Collection, CollectionItem, Instance } from "../typings";
+import { Bundles, Collection, CollectionItem, Instance } from "../typings";
 import {
   factoryGetImage,
   factoryRegenerateCollectionItems,
@@ -46,7 +46,8 @@ interface Item {
   url: string;
 }
 
-interface BundleItem {
+export interface BundleItem {
+  bundleName: string;
   names: string[];
   urls: string[];
 }
@@ -69,39 +70,49 @@ export const QualityPage = () => {
     generations.find((generation) => generation.id === generationId).collection
   );
 
-  const [filtersInfo, setFiltersInfo] = useState<Filters>({});
-  const [filters, setFilters] = useState<Filters>({});
-  const [cursor, setCursor] = useState(0);
-  const [page, setPage] = useState(1);
-  const [maxPage, setMaxPage] = useState(1);
+  const [bundles, setBundles] = useState<Bundles>(
+    generations.find((generation) => generation.id === generationId).bundles
+  );
 
+  const [collectionFiltersInfo, setCollectionFiltersInfo] = useState<Filters>(
+    {}
+  );
+  const [collectionFilters, setCollectionFilters] = useState<Filters>({});
+  const [collectionCursor, setCollectionCursor] = useState(0);
+  const [collectionPage, setCollectionPage] = useState(1);
+  const [collectionMaxPage, setCollectionMaxPage] = useState(1);
   const [filteredCollection, setFilteredCollection] = useState<Collection>(
     generations.find((generation) => generation.id === generationId).collection
   );
+  const [collectionItems, setCollectionItems] = useState<Item[]>([]);
+  const [selectedCollectionItem, setSelectedCollectionItem] = useState(0);
+  const [collectionItemsToRemove, setCollectionItemsToRemove] = useState<
+    string[]
+  >([]);
+  const [collectionRepeatedFilter, setCollectionRepeatedFilter] =
+    useState<boolean>(false);
+  const [collectionStringFilter, setCollectionStringFilter] =
+    useState<string>(null);
 
-  const [items, setItems] = useState<Item[]>([]);
-  const [selectedItem, setSelectedItem] = useState(0);
-  const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
-  const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
-  const [stringFilter, setStringFilter] = useState<string>(null);
-
-  // const [bundles, setBundles] = useState<Record<string, string[][]>>(
-  //   generations.find((generation) => generation.id === generationId).collection
-  // );
-  // const [filteredBundles, setFilteredBundles] = useState<
-  //   Record<string, string[][]>
-  // >({});
-  // const [bundlesItems, setBundleItems] = useState<BundleItem[]>([]);
-  // const [bundlesFilter, setBundlesFilter] = useState<string>(null);
-  // const [bundlesCursor, setBundlesCursor] = useState(0);
-  // const [bundlesPage, setBundlesPage] = useState(1);
-  // const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
+  const [bundlesFiltersInfo, setBundlesFiltersInfo] = useState<string[]>([]);
+  const [bundlesFilters, setBundlesFilters] = useState<string[]>([]);
+  const [bundlesCursor, setBundlesCursor] = useState(0);
+  const [bundlesPage, setBundlesPage] = useState(1);
+  const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
+  const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
+  const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-
-    toolbarContext.addButton("back", "Back", <Back />, () => {});
-
+    toolbarContext.addButton("back", "Back", <Back />, () =>
+      navigate("/factory", {
+        state: {
+          projectDir,
+          instance,
+          id,
+        },
+      })
+    );
     toolbarContext.addButton(
       "open-explorer",
       "Open in Explorer",
@@ -140,33 +151,40 @@ export const QualityPage = () => {
           filtersInfo[name].push(value);
         else if (!(name in filtersInfo)) filtersInfo[name] = [value];
 
-    setFiltersInfo(filtersInfo);
+    setCollectionFiltersInfo(filtersInfo);
   }, [collection]);
 
   useEffect(() => {
+    const filtersInfo: string[] = [];
+    for (const { name } of bundles)
+      if (!filtersInfo.includes(name)) filtersInfo.push(name);
+    setBundlesFiltersInfo(filtersInfo);
+  }, [bundles]);
+
+  useEffect(() => {
     let filteredCollection = [...collection];
-    for (const [name, values] of Object.entries(filters)) {
+    for (const [name, values] of Object.entries(collectionFilters)) {
       if (values.length === 0) continue;
       filteredCollection = filteredCollection.filter(({ traits }) =>
         traits.some(({ name: n, value: v }) => n === name && values.includes(v))
       );
     }
 
-    setCursor(0);
-    setPage(1);
-    setSelectedItem(0);
-    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setCollectionCursor(0);
+    setCollectionPage(1);
+    setSelectedCollectionItem(0);
+    setCollectionMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
-  }, [filters]);
+  }, [collectionFilters]);
 
   useEffect(() => {
     task("loading previews", async () => {
       const items = (
         await Promise.all(
           Array.from({ length: PAGE_N }).map(async (_, i) => {
-            if (cursor + i >= filteredCollection.length) return null;
+            if (collectionCursor + i >= filteredCollection.length) return null;
             const collectionItem = filteredCollection[
-              cursor + i
+              collectionCursor + i
             ] as CollectionItem;
             const url = `data:image/png;base64,${await factoryGetImage(
               id,
@@ -179,66 +197,59 @@ export const QualityPage = () => {
         )
       ).filter((item) => item !== null);
 
-      setItems(items);
+      setCollectionItems(items);
     })();
-  }, [filteredCollection, cursor]);
+  }, [filteredCollection, collectionCursor]);
 
-  // useEffect(() => {
-  //   if (bundlesFilter === null) {
-  //     setBundlesCursor(0);
-  //     setBundlesPage(1);
-  //     setBundlesMaxPage(1);
-  //     setFilteredBundles({});
-  //     return;
-  //   }
+  useEffect(() => {
+    let filteredBundles = bundles.filter(({ name }) =>
+      bundlesFilters.includes(name)
+    );
 
-  //   const filteredBundles: Record<string, string[][]> = {
-  //     [bundlesFilter]: bundles[bundlesFilter],
-  //   };
+    setBundlesCursor(0);
+    setBundlesPage(1);
+    setBundlesMaxPage(Math.ceil(filteredBundles.length / PAGE_N));
+    setFilteredBundles(filteredBundles);
+  }, [bundlesFilters]);
 
-  //   setBundlesCursor(0);
-  //   setBundlesPage(1);
-  //   setBundlesMaxPage(
-  //     Math.ceil(filteredBundles[bundlesFilter].length / PAGE_N)
-  //   );
-  //   setFilteredBundles(filteredBundles);
-  // }, [bundlesFilter]);
+  useEffect(() => {
+    task("loading bundles previews", async () => {
+      const flatFilteredBundles: { name: string; ids: string[] }[] = [];
+      for (const { name, ids } of filteredBundles)
+        flatFilteredBundles.push(...ids.map((ids) => ({ name, ids })));
 
-  // useEffect(() => {
-  //   task("loading bundles previews", async () => {
-  //     const bundleItems = (
-  //       await Promise.all(
-  //         Array.from({ length: PAGE_N }).map(async (_, i) => {
-  //           if (bundlesFilter === null) return null;
-  //           if (bundlesCursor + i >= filteredBundles[bundlesFilter].length)
-  //             return null;
-  //           const names = filteredBundles[bundlesFilter][bundlesCursor + i];
-  //           const collectionItems = names.map((key) =>
-  //             collection.find((item) => item.name === key)
-  //           );
-  //           const base64Strings = await Promise.all(
-  //             collectionItems.map((collectionItem) =>
-  //               factoryGetImage(id, collectionItem, MAX_SIZE)
-  //             )
-  //           );
-  //           const urls = base64Strings.map(
-  //             (b64) => `data:image/png;base64,${b64}`
-  //           );
-  //           return { names, urls };
-  //         })
-  //       )
-  //     ).filter((item) => item !== null);
-  //     setBundleItems(bundleItems);
-  //   })();
-  // }, [filteredBundles, bundlesCursor]);
+      const bundlesItems = (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            if (bundlesCursor + i >= flatFilteredBundles.length) return null;
+            const { ids: names, name: bundleName } =
+              flatFilteredBundles[bundlesCursor + i];
+            const collectionItems = names.map((id) =>
+              collection.find((item) => item.name === id)
+            );
+            const base64Strings = await Promise.all(
+              collectionItems.map((collectionItem) =>
+                factoryGetImage(id, name, collectionItem, MAX_SIZE)
+              )
+            );
+            const urls = base64Strings.map(
+              (b64) => `data:image/png;base64,${b64}`
+            );
+            return { bundleName, names, urls };
+          })
+        )
+      ).filter((item) => item !== null);
+      setBundleSItems(bundlesItems);
+    })();
+  }, [filteredBundles, bundlesCursor]);
 
   const reload = (name: string, url: string) =>
-    setItems((prevItems) =>
+    setCollectionItems((prevItems) =>
       prevItems.map((item) => (item.name === name ? { name, url } : item))
     );
 
   const addFilter = (name: string, value: string) =>
-    setFilters((prevFilters) =>
+    setCollectionFilters((prevFilters) =>
       name in prevFilters
         ? {
             ...prevFilters,
@@ -251,10 +262,10 @@ export const QualityPage = () => {
     );
 
   const hasFilter = (name: string, value: string) =>
-    name in filters && filters[name].includes(value);
+    name in collectionFilters && collectionFilters[name].includes(value);
 
   const removeFilter = (name: string, value: string) =>
-    setFilters((prevFilters) =>
+    setCollectionFilters((prevFilters) =>
       name in prevFilters
         ? {
             ...prevFilters,
@@ -277,17 +288,17 @@ export const QualityPage = () => {
   const addRepeatedFilter = () => {
     const filteredCollection = computeRepeatedCollection();
 
-    setRepeatedFilter(true);
-    setCursor(0);
-    setPage(1);
-    setSelectedItem(0);
-    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setCollectionRepeatedFilter(true);
+    setCollectionCursor(0);
+    setCollectionPage(1);
+    setSelectedCollectionItem(0);
+    setCollectionMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
   };
 
   const removeRepeatedFilter = () => {
-    setRepeatedFilter(false);
-    setFilters((prevFilters) => ({ ...prevFilters }));
+    setCollectionRepeatedFilter(false);
+    setCollectionFilters((prevFilters) => ({ ...prevFilters }));
   };
 
   const onRegenerateRepeated = async () => {
@@ -299,7 +310,7 @@ export const QualityPage = () => {
     );
     setCollection(_collection);
     setFilteredCollection((p) => [...p]);
-    if (repeatedFilter) addRepeatedFilter();
+    if (collectionRepeatedFilter) addRepeatedFilter();
   };
 
   const onRemoveRepeated = () => {
@@ -313,22 +324,24 @@ export const QualityPage = () => {
   const addStringFilter = (query: string) => {
     const filteredCollection = computeCollectionQuery(query);
 
-    setStringFilter(query);
-    setCursor(0);
-    setPage(1);
-    setSelectedItem(0);
-    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setCollectionStringFilter(query);
+    setCollectionCursor(0);
+    setCollectionPage(1);
+    setSelectedCollectionItem(0);
+    setCollectionMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
   };
 
   const removeStringFilter = () => {
-    setStringFilter(null);
-    setFilters((prevFilters) => ({ ...prevFilters }));
+    setCollectionStringFilter(null);
+    setCollectionFilters((prevFilters) => ({ ...prevFilters }));
   };
 
-  // const addBundlesFilter = (bundle: string) => setBundlesFilter(bundle);
+  const addBundlesFilter = (bundle: string) =>
+    setBundlesFilters((prevFilters) => [...prevFilters, bundle]);
 
-  // const removeBundlesFilter = () => setBundlesFilter(null);
+  const removeBundlesFilter = (bundle: string) =>
+    setBundlesFilters((prevFilters) => prevFilters.filter((v) => v !== bundle));
 
   const onEdit = (i: number) => {
     uxpContext.hostEdit({
@@ -339,14 +352,17 @@ export const QualityPage = () => {
   };
 
   const onRemove = (name: string) =>
-    setItemsToRemove((prevItemsToRemove) => [...prevItemsToRemove, name]);
+    setCollectionItemsToRemove((prevItemsToRemove) => [
+      ...prevItemsToRemove,
+      name,
+    ]);
 
   const onUndoRemove = (name: string) =>
-    setItemsToRemove((prevItemsToRemove) =>
+    setCollectionItemsToRemove((prevItemsToRemove) =>
       prevItemsToRemove.filter((n) => n !== name)
     );
 
-  const onSelect = (i: number) => setSelectedItem(i);
+  const onSelect = (i: number) => setSelectedCollectionItem(i);
 
   const onRegenerate = async (i: number) => {
     const _collection = await factoryRegenerateCollectionItems(
@@ -362,13 +378,13 @@ export const QualityPage = () => {
   const onAction = (action: string) => {
     switch (action) {
       case "back":
-        setSelectedItem((prevSelectedItem) =>
+        setSelectedCollectionItem((prevSelectedItem) =>
           Math.max(0, prevSelectedItem - 1)
         );
         break;
       case "forward":
-        setSelectedItem((prevSelectedItem) =>
-          Math.min(items.length - 1, prevSelectedItem + 1)
+        setSelectedCollectionItem((prevSelectedItem) =>
+          Math.min(collectionItems.length - 1, prevSelectedItem + 1)
         );
         break;
       default:
@@ -377,14 +393,15 @@ export const QualityPage = () => {
   };
 
   const onSave = task("filtering", async () => {
-    const collectionItemsToRemove: Collection = itemsToRemove.map((name) =>
-      collection.find((collectionItem) => collectionItem.name === name)
+    const _collectionItemsToRemove: Collection = collectionItemsToRemove.map(
+      (name) =>
+        collection.find((collectionItem) => collectionItem.name === name)
     );
     const _collection = await factoryRemoveCollectionItems(
       id,
       name,
       collection,
-      collectionItemsToRemove
+      _collectionItemsToRemove
     );
 
     let generations = instance.generations.map((generation) =>
@@ -417,16 +434,16 @@ export const QualityPage = () => {
           {...{
             addStringFilter,
             removeStringFilter,
-            repeatedFilter,
+            repeatedFilter: collectionRepeatedFilter,
             addRepeatedFilter,
             removeRepeatedFilter,
             onRegenerateRepeated,
             onRemoveRepeated,
-            // bundles,
-            // bundlesFilter,
-            // addBundlesFilter,
-            // removeBundlesFilter,
-            filtersInfo,
+            bundlesFiltersInfo,
+            bundlesFilters,
+            addBundlesFilter,
+            removeBundlesFilter,
+            filtersInfo: collectionFiltersInfo,
             hasFilter,
             addFilter,
             removeFilter,
@@ -438,25 +455,25 @@ export const QualityPage = () => {
         <Gallery
           {...{
             filteredCollection,
-            page,
-            maxPage,
-            setCursor,
-            setPage,
-            items,
-            itemsToRemove,
+            page: collectionPage,
+            maxPage: collectionMaxPage,
+            setCursor: setCollectionCursor,
+            setPage: setCollectionPage,
+            items: collectionItems,
+            itemsToRemove: collectionItemsToRemove,
             onUndoRemove,
             onEdit,
             onRemove,
             onSelect,
             onRegenerate,
-            // filteredBundles,
-            // bundlesPage,
-            // bundlesMaxPage,
-            // setBundlesCursor,
-            // setBundlesPage,
-            // bundlesItems,
-            // bundlesFilter,
-            // bundlesCursor,
+            filteredBundles,
+            bundlesPage,
+            bundlesMaxPage,
+            setBundlesCursor,
+            setBundlesPage,
+            bundlesItems,
+            bundlesFilters,
+            bundlesCursor,
           }}
         />
       </View>
@@ -469,23 +486,24 @@ export const QualityPage = () => {
           justifyContent="center"
           alignItems="center"
         >
-          {items.length > 0 && (
+          {collectionItems.length > 0 && (
             <div className="w-[90%]">
               <ImageItem
-                name={items[selectedItem].name}
-                src={items[selectedItem].url}
+                name={collectionItems[selectedCollectionItem].name}
+                src={collectionItems[selectedCollectionItem].url}
                 actions={[
                   {
                     label: "Edit",
-                    onClick: () => onEdit(selectedItem),
+                    onClick: () => onEdit(selectedCollectionItem),
                   },
                   {
                     label: "Remove",
-                    onClick: () => onRemove(items[selectedItem].name),
+                    onClick: () =>
+                      onRemove(collectionItems[selectedCollectionItem].name),
                   },
                   {
                     label: "Regenerate",
-                    onClick: () => onRegenerate(selectedItem),
+                    onClick: () => onRegenerate(selectedCollectionItem),
                   },
                 ]}
               />
@@ -510,10 +528,12 @@ export const QualityPage = () => {
           alignItems="end"
         >
           <View maxHeight="90vh" overflow="auto">
-            {items.length > 0 && filteredCollection.length > 0 && (
+            {collectionItems.length > 0 && filteredCollection.length > 0 && (
               <>
-                <Heading>{items[selectedItem].name}</Heading>
-                {filteredCollection[selectedItem].traits.map(
+                <Heading>
+                  {collectionItems[selectedCollectionItem].name}
+                </Heading>
+                {filteredCollection[selectedCollectionItem].traits.map(
                   ({ name, value }, i) => (
                     <TextField
                       key={i}

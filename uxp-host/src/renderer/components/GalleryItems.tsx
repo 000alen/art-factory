@@ -94,6 +94,7 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
                 key={i}
                 name={name}
                 src={url}
+                maxSize={175}
                 actions={[
                   {
                     label: "Edit",

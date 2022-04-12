@@ -3,6 +3,7 @@ import path from "path";
 import imageSize from "image-size";
 import sharp, { Blend } from "sharp";
 import {
+  Bundles,
   Collection,
   CollectionItem,
   Configuration,
@@ -205,7 +206,8 @@ export class Factory {
     const bundlesNs = computeBundlesNs(nBundles, branchesNs);
     const cache = computeCache(nTraits, traitsNs);
     const collection: Collection = [];
-    const bundles: Record<string, string[][]> = {};
+    // const bundles: Record<string, string[][]> = {};
+    const bundles: Bundles = [];
 
     let i = 1;
     for (const [index, traits] of nTraits.entries()) {
@@ -220,19 +222,32 @@ export class Factory {
         traits,
       }));
 
-      const bundle = nBundles.find(({ name, ids }) =>
-        ids.includes(keys[index])
-      );
+      const bundle = nBundles.find(({ ids }) => ids.includes(keys[index]));
 
       if (bundle !== undefined) {
         const bundleName = bundle.name;
-        if (!(bundleName in bundles))
-          bundles[bundleName] = Array.from(
-            { length: bundlesNs[bundleName] },
-            () => []
-          );
-        bundles[bundleName] = append(
-          bundles[bundleName],
+
+        // if (!(bundleName in bundles))
+        //   bundles[bundleName] = Array.from(
+        //     { length: bundlesNs[bundleName] },
+        //     () => []
+        //   );
+        if (!bundles.some((b) => b.name === bundleName))
+          bundles.push({
+            name: bundleName,
+            ids: Array.from({ length: bundlesNs[bundleName] }, () => []),
+          });
+
+        // bundles[bundleName] = append(
+        //   bundles[bundleName],
+        //   collectionItems
+        //     .map((collectionItem) => collectionItem.name)
+        //     .slice(0, bundlesNs[bundleName])
+        //     .map((name) => [name])
+        // );
+        const bundleIndex = bundles.findIndex((b) => b.name === bundleName);
+        bundles[bundleIndex].ids = append(
+          bundles[bundleIndex].ids,
           collectionItems
             .map((collectionItem) => collectionItem.name)
             .slice(0, bundlesNs[bundleName])

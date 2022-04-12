@@ -3,19 +3,25 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import { Instance } from "../typings";
+import { CollectionItem, Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import Close from "@spectrum-icons/workflow/Close";
 import { getBranches } from "../nodesUtils";
 import { LayerNodeComponentData } from "../components/LayerNode";
 import { Trait } from "../typings";
-import { factoryGenerateCollection, factoryGenerateImages } from "../ipc";
+import {
+  factoryGenerateCollection,
+  factoryGenerateImages,
+  factoryGetImage,
+} from "../ipc";
 import { hash, spacedName } from "../utils";
 import { Node as FlowNode } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
 import { TriStateButton } from "../components/TriStateButton";
 import { ArrayOf } from "../components/ArrayOf";
 import { MetadataField } from "../components/MetadataField";
+import { ImageItem } from "../components/ImageItem";
+import useStateRef from "react-usestateref";
 
 interface GenerationPageState {
   projectDir: string;
@@ -43,6 +49,8 @@ export const GenerationPage: React.FC = () => {
   const [isWorking, setIsWorking] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
   const [metadataItems, setMetadataItems] = useState([]);
+  const [url, setUrl, urlRef] = useStateRef(null);
+  const [currentGeneration, setCurrentGeneration] = useState(0);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -79,11 +87,25 @@ export const GenerationPage: React.FC = () => {
     return keys.reduce((acc, key) => ns[key] + acc, 0);
   }, []);
 
-  const onProgress = (name: string) => {
-    //   setCurrentGeneration((prevGeneration) => prevGeneration + 1);
+  const updateUrlThreshold = useMemo(() => Math.ceil(n / 3), []);
+
+  const onProgress = async (n: string) => {
+    const updateUrl = async () =>
+      setUrl(
+        `data:image/png;base64,${await factoryGetImage(id, name, {
+          name: n,
+        } as CollectionItem)}`
+      );
+
+    setCurrentGeneration((prevGeneration) => {
+      if (prevGeneration % updateUrlThreshold === 0) updateUrl();
+      return prevGeneration + 1;
+    });
   };
 
   const onGenerate = task("generation", async () => {
+    setIsWorking(true);
+
     const { nodes, edges, ns, ignored } = templates.find(
       (nodes) => nodes.id === templateId
     );
@@ -139,8 +161,13 @@ export const GenerationPage: React.FC = () => {
 
     console.log(b - a);
 
+    console.log(collection, bundles);
+
     setCollection(collection);
-    // setBundles(bundles);
+    setBundles(bundles);
+
+    setIsWorking(false);
+    setGenerationDone(true);
   });
 
   const onSave = () => {
@@ -179,6 +206,7 @@ export const GenerationPage: React.FC = () => {
         <Flex direction="column" justifyContent="center" alignItems="center">
           <Heading>{templateName}</Heading>
           <Text>{n}</Text>
+          <ImageItem src={url} />
         </Flex>
 
         <ArrayOf
@@ -192,11 +220,13 @@ export const GenerationPage: React.FC = () => {
       </Flex>
 
       <TriStateButton
-        preLabel="Deploy"
+        preLabel="Generate"
         preAction={onGenerate}
         loading={isWorking}
         loadingDone={generationDone}
         loadingLabel="Generating…"
+        loadingMaxValue={n}
+        loadingValue={currentGeneration}
         postLabel="Save"
         postAction={onSave}
       />

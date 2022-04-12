@@ -95,7 +95,7 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(({ id, data }) => {
         <Handles name="layer" />
 
         <Flex direction="column" gap="size-100">
-          <ImageItem src={url} />
+          <ImageItem src={url} maxSize={192} />
           <Heading>{data.name}</Heading>
           <Slider
             label="Opacity"
