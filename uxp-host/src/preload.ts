@@ -25,7 +25,6 @@ const sendWhitelist = [
   "compose",
   "name",
   "sizeOf",
-  "verifyContract",
   "isValidInputDir",
   "openFolder",
 
@@ -81,7 +80,6 @@ const onWhitelist = [
   "composeResult",
   "nameResult",
   "sizeOfResult",
-  "verifyContractResult",
   "isValidInputDirResult",
 
   // Factory

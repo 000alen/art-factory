@@ -163,17 +163,6 @@ export const deploy721_reveal_pause = async (
     configuration.maxMintAmount
   );
 
-// export const deploy1155 = async (
-//   contractFactory: ContractFactory,
-//   configuration: Configuration1155,
-//   metadataCid: string
-// ) =>
-//   await contractFactory.deploy(
-//     configuration.name,
-//     configuration.symbol,
-//     `ipfs://${metadataCid}/`
-//   );
-
 export const factoryDeployContract = async (
   id: string,
   configuration: Configuration,
@@ -183,14 +172,10 @@ export const factoryDeployContract = async (
   notRevealedMetadataCid: string
 ) => {
   let contracts;
-  // let source;
   try {
-    // @ts-ignore
     ({ contracts } = await getContract(configuration.contractType));
-    // source = await getContractSource(configuration.contractType);
   } catch (error) {
     throw FormattedError(5, "Could not get contract", {
-      // configuration,
       message: error.message,
     });
   }

@@ -28,7 +28,6 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { Configuration } from "../typings";
 import { loadSecrets } from "../actions";
 import Back from "@spectrum-icons/workflow/Back";
-// import { OpenSeaPort } from "opensea-js";
 
 interface InstancePageState {
   configuration: Configuration;
@@ -46,9 +45,6 @@ function resolveEtherscanUrl(network: string, contractAddress: string) {
     ? `https://rinkeby.etherscan.io/address/${contractAddress}`
     : null;
 }
-
-// TODO
-// https://testnets.opensea.io/assets/<asset_contract_address>/<token_id>
 
 export function InstancePage() {
   const task = useErrorHandler();
@@ -79,11 +75,6 @@ export function InstancePage() {
       const web3Provider = new providers.Web3Provider(provider);
       const signer = web3Provider.getSigner();
       const contract = new Contract(contractAddress, abi, signer);
-
-      // TODO
-      // const seaport = new OpenSeaPort(web3Provider, {
-      //   networkName: network === "mainnet" ? "main" : "rinkeby",
-      // });
 
       setContract(contract);
     })();

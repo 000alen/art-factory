@@ -156,7 +156,13 @@ export function DeployPage() {
   }));
 
   return (
-    <Flex direction="column" height="100%" margin="size-100" gap="size-100">
+    <Flex
+      direction="column"
+      height="100%"
+      margin="size-100"
+      gap="size-100"
+      justifyContent="space-between"
+    >
       <Flex gap="size-100" alignItems="center">
         <Heading level={1} marginStart={16}>
           Deploy {ContractTypes[configuration.contractType].name} to{" "}
@@ -182,27 +188,22 @@ export function DeployPage() {
       </Flex>
 
       <Flex gap="size-100" justifyContent="space-evenly">
-        <Flex
-          direction="column"
-          height="100%"
-          justifyContent="center"
-          alignItems="center"
-        >
+        <Flex direction="column" justifyContent="center" alignItems="center">
           <TextField
-            width="50%"
+            width="100%"
             isReadOnly={true}
             value={imagesCid}
             label="Images CID"
           />
 
           <TextField
-            width="50%"
+            width="100%"
             isReadOnly={true}
             value={metadataCid}
             label="Metadata CID"
           />
 
-          <Flex width="50%" gap="size-100" alignItems="end">
+          <Flex width="100%" gap="size-100" alignItems="end">
             <TextField
               width="100%"
               isReadOnly={true}
@@ -240,7 +241,6 @@ export function DeployPage() {
         <ListBox
           width="size-2400"
           selectionMode="multiple"
-          aria-label="Pick an animal"
           items={items}
           // defaultSelectedKeys={layers}
           // onSelectionChange={(selectedKeys) =>

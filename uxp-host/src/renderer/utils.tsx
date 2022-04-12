@@ -67,6 +67,7 @@ export const createConfiguration = (): Configuration => ({
 });
 
 export const createInstance = (): Instance => ({
+  frozen: false,
   configuration: createConfiguration(),
   templates: [],
   generations: [],

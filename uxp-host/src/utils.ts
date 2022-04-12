@@ -18,41 +18,6 @@ export function removeRarity(elementName: string) {
   return elementName.split(RARITY_DELIMITER).shift();
 }
 
-// ! TODO
-// Source: https://docs.etherscan.io/tutorials/verifying-contracts-programmatically
-export function verifyContract(
-  apiKey: string,
-  sourceCode: string,
-  network: string,
-  contractaddress: string,
-  codeformat: string,
-  contractname: string,
-  compilerversion: string,
-  optimizationUsed: number
-) {
-  const urls = {
-    mainnet: "https://api.etherscan.io/api",
-    ropsten: "https://api-ropsten.etherscan.io/api",
-    rinkeby: "https://api-rinkeby.etherscan.io/api",
-  };
-  // @ts-ignore
-  const url = urls[network];
-
-  return axios
-    .post(url, {
-      module: "contract",
-      action: "verify",
-      contractaddress,
-      sourceCode,
-      codeformat,
-      contractname,
-      compilerversion,
-      optimizationUsed,
-      apikey: apiKey,
-    })
-    .then((response) => response.data);
-}
-
 export function append(a: any[], b: any[]) {
   return a.map((a_i, i) => [...a_i, ...b[i]]);
 }

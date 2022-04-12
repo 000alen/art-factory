@@ -65,7 +65,9 @@ export function TemplatePage() {
       : undefined
   );
 
-  const [traits, setTraits] = useState([]);
+  const [traits, setTraits] = useState(
+    templateId ? templates.find(({ id }) => id == templateId).traits : []
+  );
   const getterRef = useRef<() => NodesInstance>(null);
 
   useEffect(() => {
@@ -75,6 +77,8 @@ export function TemplatePage() {
     );
 
     task("loading preview", async () => {
+      if (traits.length > 0) return;
+
       const layers = await Promise.all(
         configuration.layers.map(
           async (layerName) => await factoryGetLayerByName(id, layerName)
@@ -85,7 +89,7 @@ export function TemplatePage() {
         layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
       );
 
-      const traits: Trait[] = traitsAndBase64Strings.map(([trait]) => trait);
+      const _traits: Trait[] = traitsAndBase64Strings.map(([trait]) => trait);
       setTraits(traits);
     })();
 
@@ -106,12 +110,12 @@ export function TemplatePage() {
     if (index === -1)
       templates = [
         ...instance.templates,
-        { id: workingId, name, nodes, edges, renderIds, ns, ignored },
+        { id: workingId, name, traits, nodes, edges, renderIds, ns, ignored },
       ];
     else
       templates = instance.templates.map((template) =>
         template.id === workingId
-          ? { ...template, name, nodes, edges, renderIds, ns, ignored }
+          ? { ...template, traits, name, nodes, edges, renderIds, ns, ignored }
           : template
       );
 

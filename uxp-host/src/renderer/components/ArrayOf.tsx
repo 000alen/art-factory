@@ -48,17 +48,7 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
     }
   };
 
-  return typeof Component === "function" ? (
-    (Component as Function)({
-      ...props,
-      value,
-      moveable,
-      onChange,
-      onMoveDown,
-      onMoveUp,
-      onRemove,
-    })
-  ) : (
+  return (
     <Flex gap="size-100" justifyContent="space-between">
       {/* @ts-ignore */}
       <Component
@@ -86,6 +76,18 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
       </ActionGroup>
     </Flex>
   );
+
+  // typeof Component === "function" ? (
+  //   (Component as Function)({
+  //     ...props,
+  //     value,
+  //     moveable,
+  //     onChange,
+  //     onMoveDown,
+  //     onMoveUp,
+  //     onRemove,
+  //   })
+  // ) :
 };
 
 interface ArrayOfProps {

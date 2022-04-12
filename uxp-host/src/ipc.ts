@@ -2,7 +2,7 @@ import { ipcMain, dialog, shell } from "electron";
 import path from "path";
 import solc from "solc";
 import { Factory } from "./Factory";
-import { capitalize, layersNames, name, sizeOf, verifyContract } from "./utils";
+import { capitalize, layersNames, name, sizeOf } from "./utils";
 import fs from "fs";
 import {
   setPinataApiKey,
@@ -161,31 +161,6 @@ ipcAsyncTask(
 ipcTask("name", (inputDir) => name(inputDir));
 
 ipcTask("sizeOf", (inputDir) => sizeOf(inputDir));
-
-ipcAsyncTask(
-  "verifyContract",
-  async function (
-    apiKey,
-    sourceCode,
-    network,
-    contractaddress,
-    codeformat,
-    contractname,
-    compilerversion,
-    optimizationUsed
-  ) {
-    return verifyContract(
-      apiKey,
-      sourceCode,
-      network,
-      contractaddress,
-      codeformat,
-      contractname,
-      compilerversion,
-      optimizationUsed
-    );
-  }
-);
 
 ipcAsyncTask("isValidInputDir", async (inputDir: string) => {
   const layersNames = (await fs.promises.readdir(inputDir)).filter(
@@ -401,7 +376,6 @@ ipcAsyncTask(
   }
 );
 
-// ! TODO: Change to base64 string
 ipcAsyncTask(
   "factoryRewriteImage",
   async (id: string, collectionItem: CollectionItem, dataUrl: string) => {

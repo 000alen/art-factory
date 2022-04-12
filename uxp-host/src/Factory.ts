@@ -367,7 +367,6 @@ export class Factory {
       .toFile(path.join(this.buildDir, folder, `${collectionItem.name}.png`));
   }
 
-  // ! TODO
   async generateImages(
     name: string,
     collection: Collection,
@@ -385,7 +384,6 @@ export class Factory {
     this.imagesGenerated = true;
   }
 
-  // ! TODO
   async generateMetadata(
     name: string,
     collection: Collection,

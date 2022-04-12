@@ -149,7 +149,8 @@ export const showOpenDialog = (options: any) =>
 export const showSaveDialog = (options: any) =>
   ipcTask("showSaveDialog")(options);
 
-export const getContract = (name: string) => ipcTask("getContract")(name);
+export const getContract = (name: string) =>
+  ipcTask("getContract")(name) as Promise<any>;
 
 export const getContractSource = (name: string) =>
   ipcTask("getContractSource")(name);
@@ -162,27 +163,6 @@ export const getOutputDir = (inputDir: string) =>
 export const name = (inputDir: string) => ipcTask("name")(inputDir);
 
 export const sizeOf = (inputDir: string) => ipcTask("sizeOf")(inputDir);
-
-export const verifyContract = (
-  apiKey: string,
-  sourceCode: string,
-  network: string,
-  contractaddress: string,
-  codeformat: string,
-  contractname: string,
-  compilerversion: string,
-  optimizationUsed: number
-) =>
-  ipcTask("verifyContract")(
-    apiKey,
-    sourceCode,
-    network,
-    contractaddress,
-    codeformat,
-    contractname,
-    compilerversion,
-    optimizationUsed
-  );
 
 export const isValidInputDir = (inputDir: string) =>
   ipcTask("isValidInputDir")(inputDir);

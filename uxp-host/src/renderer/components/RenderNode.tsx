@@ -94,6 +94,9 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
           id: data.id,
         }))
       );
+
+    console.log("nTraits", nTraits);
+
     const currentCacheKey = hash(nTraits);
 
     if (currentCacheKey === cacheKey) return;

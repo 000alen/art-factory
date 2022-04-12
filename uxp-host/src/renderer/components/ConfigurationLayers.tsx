@@ -1,7 +1,5 @@
 import React from "react";
-import { Item, ListBox, TextField } from "@adobe/react-spectrum";
-import { ArrayOf } from "./ArrayOf";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
+import { Item, ListBox } from "@adobe/react-spectrum";
 
 interface ConfigurationLayersProps {
   availableLayers: string[];

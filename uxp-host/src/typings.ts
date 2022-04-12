@@ -97,6 +97,7 @@ export interface Deployment {
 }
 
 export interface Instance {
+  frozen: boolean;
   configuration: Configuration;
   templates: Template[];
   generations: Generation[];

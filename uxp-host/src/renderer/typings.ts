@@ -42,6 +42,7 @@ export interface Configuration {
 export interface Template {
   id: string;
   name: string;
+  traits: Trait[];
   nodes: FlowNode[];
   edges: FlowEdge[];
   renderIds: Record<string, string>;
@@ -97,6 +98,7 @@ export interface Deployment {
 }
 
 export interface Instance {
+  frozen: boolean;
   configuration: Configuration;
   templates: Template[];
   generations: Generation[];
