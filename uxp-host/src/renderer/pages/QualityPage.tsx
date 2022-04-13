@@ -1,5 +1,5 @@
 import {
-  ActionGroup,
+  // ActionGroup,
   Button,
   Flex,
   Grid,
@@ -20,9 +20,8 @@ import {
   factoryRemoveCollectionItems,
   openInExplorer,
 } from "../ipc";
-import { MAX_SIZE, PAGE_N } from "../constants";
+import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import { ImageItem } from "../components/ImageItem";
-import path from "path";
 import { hash } from "../utils";
 import { Gallery } from "../components/Gallery";
 import { Filters } from "../components/Filters";
@@ -118,7 +117,7 @@ export const QualityPage = () => {
       "Open in Explorer",
       <Folder />,
       () => {
-        openInExplorer(projectDir, "images", name);
+        openInExplorer(projectDir, BUILD_DIR_NAME, "images", name);
       }
     );
 
@@ -510,14 +509,14 @@ export const QualityPage = () => {
               />
             </div>
           )}
-          <ActionGroup onAction={onAction}>
+          {/* <ActionGroup onAction={onAction}>
             <Item key="back">
               <ChevronLeft />
             </Item>
             <Item key="forward">
               <ChevronRight />
             </Item>
-          </ActionGroup>
+          </ActionGroup> */}
         </Flex>
       </View>
 

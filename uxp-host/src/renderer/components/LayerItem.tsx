@@ -1,5 +1,7 @@
 import React from "react";
-import { Flex, TextField, ActionGroup, Item } from "@adobe/react-spectrum";
+import { Flex, TextField, 
+  // ActionGroup, 
+  Item } from "@adobe/react-spectrum";
 
 import Remove from "@spectrum-icons/workflow/Remove";
 import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
@@ -46,7 +48,7 @@ export const LayerItem: React.FC<LayerItemProps> = ({
         value={value}
         onChange={(_value) => onChange(index, _value)}
       />
-      <ActionGroup overflowMode="collapse" onAction={onAction}>
+      {/* <ActionGroup overflowMode="collapse" onAction={onAction}>
         <Item key="moveDown">
           <ChevronDown />
         </Item>
@@ -56,7 +58,7 @@ export const LayerItem: React.FC<LayerItemProps> = ({
         <Item key="remove">
           <Remove />
         </Item>
-      </ActionGroup>
+      </ActionGroup> */}
     </Flex>
   );
 };

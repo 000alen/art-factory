@@ -21,8 +21,10 @@ import {
   Collection,
   CollectionItem,
   Configuration,
+  Generation,
   Instance,
   Layer,
+  MetadataItem,
   Secrets,
   Trait,
 } from "./typings";
@@ -222,13 +224,15 @@ export const factoryGenerateMetadata = (
   id: string,
   name: string,
   collection: Collection,
+  metadataItems: MetadataItem[],
   onProgress?: (name: string) => void
 ) =>
   ipcTaskWithProgress("factoryGenerateMetadata")(
     onProgress,
     id,
     name,
-    collection
+    collection,
+    metadataItems
   );
 
 export const factoryDeployImages = (id: string) =>
@@ -333,3 +337,9 @@ export const factoryDeployNotRevealedImage = (id: string) =>
 
 export const factoryDeployNotRevealedMetadata = (id: string) =>
   ipcTask("factoryDeployNotRevealedMetadata")(id);
+
+export const factoryUnify = (id: string, generations: Generation) =>
+  ipcTask("factoryUnify")(id, generations) as Promise<{
+    collection: Collection;
+    bundles: Bundles;
+  }>;

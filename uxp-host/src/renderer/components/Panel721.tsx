@@ -1,8 +1,6 @@
 import React from "react";
 import { Flex } from "@adobe/react-spectrum";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { TaskItem } from "./TaskItem";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Contract, utils } from "ethers";
 import { chopAddress } from "../utils";
 // import { OpenSeaPort } from "opensea-js";

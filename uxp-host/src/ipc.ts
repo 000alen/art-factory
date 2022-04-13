@@ -20,8 +20,9 @@ import {
   Collection,
   CollectionItem,
   Configuration,
-  Instance,
+  Generation,
   Layer,
+  MetadataItem,
   Secrets,
   Trait,
 } from "./typings";
@@ -314,9 +315,15 @@ ipcTaskWithProgress(
     onProgress: (name: string) => void,
     id: string,
     name: string,
-    collection: Collection
+    collection: Collection,
+    metadataItems: MetadataItem[]
   ) => {
-    await factories[id].generateMetadata(name, collection, onProgress);
+    await factories[id].generateMetadata(
+      name,
+      collection,
+      metadataItems,
+      onProgress
+    );
     return true;
   }
 );
@@ -439,6 +446,12 @@ ipcAsyncTask(
 ipcAsyncTask(
   "factoryDeployNotRevealedMetadata",
   async (id: string) => await factories[id].deployNotRevealedMetadata()
+);
+
+ipcAsyncTask(
+  "factoryUnify",
+  async (id: string, generations: Generation[]) =>
+    await factories[id].unify(generations)
 );
 
 // #endregion

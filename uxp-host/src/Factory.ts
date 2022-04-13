@@ -8,7 +8,9 @@ import {
   Collection,
   CollectionItem,
   Configuration,
+  Generation,
   Layer,
+  MetadataItem,
   Secrets,
   Trait,
 } from "./typings";
@@ -20,9 +22,15 @@ import {
   rarity,
   readDir,
   removeRarity,
+  replaceAll,
   restrictImage,
 } from "./utils";
-import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
+import {
+  BUILD_DIR_NAME,
+  DEFAULT_BLENDING,
+  DEFAULT_OPACITY,
+  COLLECTION_DIR_NAME,
+} from "./constants";
 
 export class Factory {
   buildDir: string;
@@ -51,11 +59,17 @@ export class Factory {
   private async _ensureOutputDir() {
     if (!fs.existsSync(this.buildDir)) fs.mkdirSync(this.buildDir);
 
-    if (!fs.existsSync(path.join(this.buildDir, "json")))
-      fs.mkdirSync(path.join(this.buildDir, "json"));
-
     if (!fs.existsSync(path.join(this.buildDir, "images")))
       fs.mkdirSync(path.join(this.buildDir, "images"));
+
+    if (!fs.existsSync(path.join(this.buildDir, "images", COLLECTION_DIR_NAME)))
+      fs.mkdirSync(path.join(this.buildDir, "images", COLLECTION_DIR_NAME));
+
+    if (!fs.existsSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME)))
+      fs.mkdirSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME));
+
+    if (!fs.existsSync(path.join(this.buildDir, "json")))
+      fs.mkdirSync(path.join(this.buildDir, "json"));
 
     if (!fs.existsSync(path.join(this.buildDir, "not_revealed")))
       fs.mkdirSync(path.join(this.buildDir, "not_revealed"));
@@ -387,6 +401,7 @@ export class Factory {
   async generateMetadata(
     name: string,
     collection: Collection,
+    metadataItems: MetadataItem[],
     callback?: (name: string) => void
   ) {
     if (!fs.existsSync(path.join(this.buildDir, "json", name)))
@@ -394,7 +409,7 @@ export class Factory {
 
     const metadatas = [];
     for (const collectionItem of collection) {
-      const metadata = {
+      const metadata: any = {
         name: this.configuration.name,
         description: this.configuration.description,
         image: `ipfs://<unknown>/${collectionItem.name}.png`,
@@ -405,6 +420,9 @@ export class Factory {
           value: trait.value,
         })),
       };
+      for (const { key, value } of metadataItems)
+        metadata[key] = replaceAll(value, /\${name}/, collectionItem.name);
+
       metadatas.push(metadata);
 
       await fs.promises.writeFile(
@@ -688,5 +706,39 @@ export class Factory {
         : collectionItem
     );
     return collection;
+  }
+
+  async unify(generations: Generation[]) {
+    const unifiedCollection: Collection = [];
+    const unifiedBundles: Bundles = []; // ! TODO
+
+    let i = 1;
+    for (const { name, collection } of generations) {
+      for (const collectionItem of collection) {
+        await fs.promises.copyFile(
+          path.join(
+            this.buildDir,
+            "images",
+            name,
+            `${collectionItem.name}.png`
+          ),
+          path.join(this.buildDir, "images", COLLECTION_DIR_NAME, `${i}.png`)
+        );
+
+        await fs.promises.copyFile(
+          path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
+          path.join(this.buildDir, "json", COLLECTION_DIR_NAME, `${i}.json`)
+        );
+
+        unifiedCollection.push({
+          ...collectionItem,
+          name: `${i}`,
+        });
+
+        i++;
+      }
+    }
+
+    return { collection: unifiedCollection, bundles: unifiedBundles };
   }
 }

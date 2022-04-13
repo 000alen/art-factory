@@ -1,7 +1,6 @@
 import React from "react";
 import { Flex } from "@adobe/react-spectrum";
 import { ColorSlider } from "@react-spectrum/color";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 
 interface ColorPickerProps {
   label: string;
@@ -18,7 +17,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 }) => {
   return (
     <Flex direction="column">
-      <label className="spectrum-FieldLabel">{label}</label>
+      {/* <label className="spectrum-FieldLabel">{label}</label> */}
       <ColorSlider
         isDisabled={isDisabled}
         channel="red"

@@ -1,10 +1,3 @@
-import { BundleNode } from "./components/BundleNode";
-import { CustomEdge } from "./components/CustomEdge";
-import { LayerNode } from "./components/LayerNode";
-import { NotRevealedNode } from "./components/NotRevealedNode";
-import { RenderNode } from "./components/RenderNode";
-import { RootNode } from "./components/RootNode";
-
 export const Networks: Record<string, any> = {
   mainnet: {
     name: "Mainnet",
@@ -37,18 +30,6 @@ export const DEFAULT_OPACITY = 1;
 export const DEFAULT_BLENDING = "normal";
 export const DEFAULT_N = 1;
 
-export const NODE_TYPES = {
-  rootNode: RootNode,
-  layerNode: LayerNode,
-  renderNode: RenderNode,
-  bundleNode: BundleNode,
-  notRevealedNode: NotRevealedNode,
-};
-
-export const EDGE_TYPES = {
-  customEdge: CustomEdge,
-};
-
 export const NAMESPACE = "84002a51-4399-4405-bf15-05decc67081e";
 
 export const DEFAULT_NODES = [
@@ -61,3 +42,7 @@ export const DEFAULT_NODES = [
 ];
 
 export const PAGE_N = 25;
+export const RARITY_DELIMITER = "#";
+export const DEFAULT_BACKGROUND = "#ffffff";
+export const BUILD_DIR_NAME = ".build";
+export const COLLECTION_DIR_NAME = ".collection";

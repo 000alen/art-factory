@@ -14,7 +14,6 @@ import {
   Heading,
   Divider,
 } from "@adobe/react-spectrum";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import Play from "@spectrum-icons/workflow/Play";
 import ShowMenu from "@spectrum-icons/workflow/ShowMenu";
 

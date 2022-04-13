@@ -5,7 +5,7 @@ import {
   ActionButton,
   Flex,
   Item,
-  ActionGroup,
+  // ActionGroup,
   Heading,
 } from "@adobe/react-spectrum";
 
@@ -58,7 +58,7 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
         value={value}
         onChange={onChange}
       />
-      <ActionGroup overflowMode="collapse" onAction={onAction}>
+      {/* <ActionGroup overflowMode="collapse" onAction={onAction}>
         {moveable && (
           <Item key="moveDown">
             <ChevronDown />
@@ -73,21 +73,9 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
         <Item key="remove">
           <Remove />
         </Item>
-      </ActionGroup>
+      </ActionGroup> */}
     </Flex>
   );
-
-  // typeof Component === "function" ? (
-  //   (Component as Function)({
-  //     ...props,
-  //     value,
-  //     moveable,
-  //     onChange,
-  //     onMoveDown,
-  //     onMoveUp,
-  //     onRemove,
-  //   })
-  // ) :
 };
 
 interface ArrayOfProps {
@@ -151,7 +139,8 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
       {heading ? (
         <Heading>{label}</Heading>
       ) : (
-        <label className="spectrum-FieldLabel">{label}</label>
+        <></>
+        // <label className="spectrum-FieldLabel">{label}</label>
       )}
 
       {children}

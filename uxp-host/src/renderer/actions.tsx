@@ -47,7 +47,7 @@ export const factoryDeployAssets = async (
       ? partialDeploy.imagesCid
       : await factoryDeployImages(id);
 
-    if (!partialDeploy) await factoryGenerateMetadata(id, name, collection);
+    if (!partialDeploy) await factoryGenerateMetadata(id, name, collection, []);
 
     metadataCid = partialDeploy
       ? partialDeploy.metadataCid

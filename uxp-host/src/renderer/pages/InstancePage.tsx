@@ -8,10 +8,8 @@ import {
   ActionButton,
   Link,
 } from "@adobe/react-spectrum";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { OutputItem } from "../components/OutputItem";
 import { useLocation, useNavigate } from "react-router-dom";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import { Networks } from "../constants";
 import { Contract, providers } from "ethers";
 
@@ -149,7 +147,7 @@ export function InstancePage() {
         ) : null}
 
         <View>
-          <label className="spectrum-FieldLabel">Output</label>
+          {/* <label className="spectrum-FieldLabel">Output</label> */}
 
           <View
             width="30vw"

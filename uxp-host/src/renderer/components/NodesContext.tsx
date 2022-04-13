@@ -20,19 +20,19 @@ import {
   DEFAULT_BLENDING,
   DEFAULT_NODES,
   DEFAULT_OPACITY,
-  EDGE_TYPES,
   MAX_SIZE,
-  NODE_TYPES,
 } from "../constants";
 import {
   factoryComposeTraits,
   factoryComputeMaxCombinations,
   factoryGetTraitImage,
 } from "../ipc";
-import { LayerNodeComponentData } from "./LayerNode";
-import { RenderNodeComponentData } from "./RenderNode";
-import { BundleNodeComponentData } from "./BundleNode";
-import { NotRevealedNodeComponentData } from "./NotRevealedNode";
+import { LayerNode, LayerNodeComponentData } from "./LayerNode";
+import { RenderNode, RenderNodeComponentData } from "./RenderNode";
+import { BundleNode, BundleNodeComponentData } from "./BundleNode";
+import { NotRevealedNode, NotRevealedNodeComponentData } from "./NotRevealedNode";
+import { RootNode } from "./RootNode";
+import { CustomEdge } from "./CustomEdge";
 
 interface NodesContextProviderProps {
   id: string;
@@ -74,6 +74,18 @@ export interface NodesInstance {
   ns: Record<string, number>;
   ignored: string[];
 }
+
+export const NODE_TYPES = {
+  rootNode: RootNode,
+  layerNode: LayerNode,
+  renderNode: RenderNode,
+  bundleNode: BundleNode,
+  notRevealedNode: NotRevealedNode,
+};
+
+export const EDGE_TYPES = {
+  customEdge: CustomEdge,
+};
 
 export function useNodes(
   id: string,

@@ -86,6 +86,11 @@ export type Collection = CollectionItem[];
 
 export type Bundles = BundleItem[];
 
+export interface MetadataItem {
+  key: string;
+  value: string;
+}
+
 export interface Generation {
   id: string;
   name: string;

@@ -3,7 +3,12 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import { BundlesInfo, CollectionItem, Instance } from "../typings";
+import {
+  BundlesInfo,
+  CollectionItem,
+  Instance,
+  MetadataItem,
+} from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import Close from "@spectrum-icons/workflow/Close";
 import { getBranches } from "../nodesUtils";
@@ -31,6 +36,11 @@ interface GenerationPageState {
   templateId: string;
 }
 
+// youtube_url
+// animation_url
+// background_color
+// external_url
+
 export const GenerationPage: React.FC = () => {
   const toolbarContext = useContext(ToolbarContext);
   const task = useErrorHandler();
@@ -49,8 +59,8 @@ export const GenerationPage: React.FC = () => {
 
   const [isWorking, setIsWorking] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
-  const [metadataItems, setMetadataItems] = useState([]);
-  const [url, setUrl, urlRef] = useStateRef(null);
+  const [metadataItems, setMetadataItems] = useState<MetadataItem[]>([]);
+  const [url, setUrl] = useState(null);
   const [currentGeneration, setCurrentGeneration] = useState(0);
 
   useEffect(() => {
@@ -155,7 +165,7 @@ export const GenerationPage: React.FC = () => {
       bundlesInfo
     );
     await factoryGenerateImages(id, name, collection, onProgress);
-    await factoryGenerateMetadata(id, name, collection);
+    await factoryGenerateMetadata(id, name, collection, metadataItems);
     const b = performance.now();
 
     console.log(b - a);
@@ -213,7 +223,12 @@ export const GenerationPage: React.FC = () => {
           emptyValue={{ key: "", value: "" }}
           items={metadataItems}
           setItems={setMetadataItems}
-        />
+        >
+          <Text>
+            * <code>{"${name}"}</code> will get replaced with the name of the
+            item
+          </Text>
+        </ArrayOf>
       </Flex>
 
       <TriStateButton

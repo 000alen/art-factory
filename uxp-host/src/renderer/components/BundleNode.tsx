@@ -10,14 +10,14 @@ import {
 } from "@adobe/react-spectrum";
 import React, { memo, useEffect, useState } from "react";
 import { ImageItem } from "./ImageItem";
-import Remove from "@spectrum-icons/workflow/Remove";
-import Refresh from "@spectrum-icons/workflow/Refresh";
 import { useForceUpdate } from "../hooks/useForceUpdate";
 import { useEdges, useNodes, Node as FlowNode } from "react-flow-renderer";
 import { getBranches } from "../nodesUtils";
 import { LayerNodeComponentData } from "./LayerNode";
 import { arrayDifference, chooseN, hash } from "../utils";
 import Add from "@spectrum-icons/workflow/Add";
+import Remove from "@spectrum-icons/workflow/Remove";
+import Refresh from "@spectrum-icons/workflow/Refresh";
 
 export interface BundleNodeComponentData {
   composedUrls?: Record<string, string>;

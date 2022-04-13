@@ -1,12 +1,20 @@
 import { Button, Flex, Heading } from "@adobe/react-spectrum";
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ToolbarContext } from "../components/Toolbar";
-import { Instance } from "../typings";
-import { createFactory, hasFactory, writeProjectInstance } from "../ipc";
+import { CollectionItem, Instance } from "../typings";
+import {
+  createFactory,
+  factoryGetImage,
+  hasFactory,
+  openInExplorer,
+  writeProjectInstance,
+} from "../ipc";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
+import Folder from "@spectrum-icons/workflow/Folder";
+import { ImageItem } from "../components/ImageItem";
 
 interface FactoryPageState {
   projectDir: string;
@@ -27,6 +35,14 @@ export const FactoryPage: React.FC = () => {
     toolbarContext.addButton("save", "Save", <SaveFloppy />, () =>
       writeProjectInstance(projectDir, instance)
     );
+    toolbarContext.addButton(
+      "open-explorer",
+      "Open in Explorer",
+      <Folder />,
+      () => {
+        openInExplorer(projectDir);
+      }
+    );
 
     task("factory", async () => {
       if (await hasFactory(id)) return;
@@ -37,6 +53,7 @@ export const FactoryPage: React.FC = () => {
     return () => {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("save");
+      toolbarContext.removeButton("open-explorer");
     };
   }, []);
 
