@@ -713,8 +713,12 @@ export class Factory {
     const unifiedBundles: Bundles = []; // ! TODO
 
     let i = 1;
-    for (const { name, collection } of generations) {
+    for (const { name, collection, bundles } of generations) {
+      const mappings: Record<string, string> = {};
+
       for (const collectionItem of collection) {
+        mappings[collectionItem.name] = `${i}`;
+
         await fs.promises.copyFile(
           path.join(
             this.buildDir,
@@ -737,6 +741,13 @@ export class Factory {
 
         i++;
       }
+
+      unifiedBundles.push(
+        ...bundles.map(({ name, ids }) => ({
+          name,
+          ids: ids.map((_ids) => _ids.map((id) => mappings[id])),
+        }))
+      );
     }
 
     return { collection: unifiedCollection, bundles: unifiedBundles };

@@ -1,4 +1,5 @@
 import {
+  ActionGroup,
   // ActionGroup,
   Button,
   Flex,
@@ -509,14 +510,14 @@ export const QualityPage = () => {
               />
             </div>
           )}
-          {/* <ActionGroup onAction={onAction}>
+          <ActionGroup onAction={onAction}>
             <Item key="back">
               <ChevronLeft />
             </Item>
             <Item key="forward">
               <ChevronRight />
             </Item>
-          </ActionGroup> */}
+          </ActionGroup>
         </Flex>
       </View>
 

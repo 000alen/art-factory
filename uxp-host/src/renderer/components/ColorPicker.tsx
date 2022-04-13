@@ -17,7 +17,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 }) => {
   return (
     <Flex direction="column">
-      {/* <label className="spectrum-FieldLabel">{label}</label> */}
+      <label className="spectrum-FieldLabel">{label}</label>
       <ColorSlider
         isDisabled={isDisabled}
         channel="red"

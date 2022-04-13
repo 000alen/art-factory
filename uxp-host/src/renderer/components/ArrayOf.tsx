@@ -7,6 +7,7 @@ import {
   Item,
   // ActionGroup,
   Heading,
+  ActionGroup,
 } from "@adobe/react-spectrum";
 
 import Add from "@spectrum-icons/workflow/Add";
@@ -58,7 +59,7 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
         value={value}
         onChange={onChange}
       />
-      {/* <ActionGroup overflowMode="collapse" onAction={onAction}>
+      <ActionGroup overflowMode="collapse" onAction={onAction}>
         {moveable && (
           <Item key="moveDown">
             <ChevronDown />
@@ -73,7 +74,7 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
         <Item key="remove">
           <Remove />
         </Item>
-      </ActionGroup> */}
+      </ActionGroup>
     </Flex>
   );
 };
@@ -139,8 +140,7 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
       {heading ? (
         <Heading>{label}</Heading>
       ) : (
-        <></>
-        // <label className="spectrum-FieldLabel">{label}</label>
+        <label className="spectrum-FieldLabel">{label}</label>
       )}
 
       {children}

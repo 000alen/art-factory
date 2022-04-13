@@ -338,7 +338,7 @@ export const factoryDeployNotRevealedImage = (id: string) =>
 export const factoryDeployNotRevealedMetadata = (id: string) =>
   ipcTask("factoryDeployNotRevealedMetadata")(id);
 
-export const factoryUnify = (id: string, generations: Generation) =>
+export const factoryUnify = (id: string, generations: Generation[]) =>
   ipcTask("factoryUnify")(id, generations) as Promise<{
     collection: Collection;
     bundles: Bundles;

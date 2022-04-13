@@ -29,9 +29,17 @@ import {
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { TriStateButton } from "../components/TriStateButton";
-import { Collection, Configuration, Instance, Network } from "../typings";
+import {
+  Bundles,
+  Collection,
+  Configuration,
+  Instance,
+  Network,
+} from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import { resolveEtherscanUrl } from "../utils";
+import { factoryUnify } from "../ipc";
+import { ArrayOf } from "../components/ArrayOf";
 
 interface DeployPageState {
   projectDir: string;
@@ -64,6 +72,10 @@ export function DeployPage() {
   const [timerId, setTimerId] = useState(null);
   const [contractAddressTooltipShown, setContractAddressTooltipShown] =
     useState(false);
+
+  const [generationsToUnify, setGenerationsToUnify] = useState<string[]>([]);
+  const [collection, setCollection] = useState<Collection>(null);
+  const [bundles, setBundles] = useState<Bundles>(null);
 
   // useEffect(() => () => clearTimeout(timerId), [timerId]);
 
@@ -140,9 +152,19 @@ export function DeployPage() {
     // await wait;
     // setDeployedDone(true);
     // setIsWorking(false);
+
+    const { collection, bundles } = await factoryUnify(
+      id,
+      generationsToUnify.map((id) =>
+        generations.find(({ name }) => name === id)
+      )
+    );
+
+    setCollection(collection);
+    setBundles(bundles);
   });
 
-  const onContinue = task("continue", async () => {
+  const onSave = task("continue", async () => {
     // navigate("/instance", {
     //   state: {
     //     id,
@@ -159,9 +181,39 @@ export function DeployPage() {
     // });
   });
 
-  const items = generations.map((generation) => ({
-    name: generation.name,
+  interface GenerationItemProps {
+    value: string;
+    onChange: (value: string) => void;
+  }
+
+  const generationItems = generations.map(({ name }) => ({
+    name,
   }));
+
+  const emptyValue = generations[0].name;
+
+  const GenerationItem: React.FC<GenerationItemProps> = ({
+    value,
+    onChange,
+  }) => {
+    return (
+      <MenuTrigger>
+        <ActionButton width="100%">{value}</ActionButton>
+        <Menu
+          items={generationItems}
+          selectionMode="single"
+          disallowEmptySelection={true}
+          selectedKeys={[value]}
+          onSelectionChange={(selectedKeys) => {
+            const selectedKey = [...selectedKeys].shift() as string;
+            onChange(selectedKey);
+          }}
+        >
+          {({ name }) => <Item key={name}>{name}</Item>}
+        </Menu>
+      </MenuTrigger>
+    );
+  };
 
   return (
     <Flex
@@ -195,7 +247,7 @@ export function DeployPage() {
         </MenuTrigger>
       </Flex>
 
-      <Flex gap="size-100" justifyContent="space-evenly">
+      <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" justifyContent="center" alignItems="center">
           <TextField
             width="100%"
@@ -246,17 +298,15 @@ export function DeployPage() {
           </Flex>
         </Flex>
 
-        <ListBox
-          width="size-2400"
-          selectionMode="multiple"
-          items={items}
-          // defaultSelectedKeys={layers}
-          // onSelectionChange={(selectedKeys) =>
-          //   setLayers([...selectedKeys] as string[])
-          // }
-        >
-          {(item) => <Item key={item.name}>{item.name}</Item>}
-        </ListBox>
+        <ArrayOf
+          Component={GenerationItem}
+          label="Generations"
+          heading={true}
+          moveable={true}
+          emptyValue={emptyValue}
+          items={generationsToUnify}
+          setItems={setGenerationsToUnify}
+        />
       </Flex>
 
       <TriStateButton
@@ -265,8 +315,8 @@ export function DeployPage() {
         loading={isWorking}
         loadingDone={deployedDone}
         loadingLabel="Deploying…"
-        postLabel="Continue"
-        postAction={onContinue}
+        postLabel="Save"
+        postAction={onSave}
       />
     </Flex>
   );

@@ -51,6 +51,7 @@ const sendWhitelist = [
   "factoryGenerateNotRevealedMetadata",
   "factoryDeployNotRevealedImage",
   "factoryDeployNotRevealedMetadata",
+  "factoryUnify",
 ];
 
 const onWhitelist = [
@@ -107,6 +108,7 @@ const onWhitelist = [
   "factoryGenerateNotRevealedMetadataResult",
   "factoryDeployNotRevealedImageResult",
   "factoryDeployNotRevealedMetadataResult",
+  "factoryUnifyResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

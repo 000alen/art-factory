@@ -209,7 +209,7 @@ export const GenerationPage: React.FC = () => {
         onChange={setName}
       />
 
-      <Flex height="50vh" gap="size-100" justifyContent="space-evenly">
+      <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" justifyContent="center" alignItems="center">
           <Heading>{templateName}</Heading>
           <Text>{n}</Text>

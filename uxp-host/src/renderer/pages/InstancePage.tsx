@@ -19,12 +19,10 @@ import Close from "@spectrum-icons/workflow/Close";
 
 import { Panel721 } from "../components/Panel721";
 import { chopAddress, resolveEtherscanUrlII } from "../utils";
-import { Panel1155 } from "../components/Panel1155";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { Configuration, Instance } from "../typings";
-import { loadSecrets } from "../actions";
+import { Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 
 interface InstancePageState {
@@ -32,6 +30,7 @@ interface InstancePageState {
   instance: Instance;
   id: string;
 }
+
 
 export function InstancePage() {
   const toolbarContext = useContext(ToolbarContext);
@@ -134,7 +133,7 @@ export function InstancePage() {
         </Link> */}
       </Flex>
 
-      <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
+      <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         {configuration.contractType === "721" ? (
           <Panel721
             {...{
@@ -147,7 +146,7 @@ export function InstancePage() {
         ) : null}
 
         <View>
-          {/* <label className="spectrum-FieldLabel">Output</label> */}
+          <label className="spectrum-FieldLabel">Output</label>
 
           <View
             width="30vw"
