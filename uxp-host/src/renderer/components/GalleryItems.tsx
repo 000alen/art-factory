@@ -48,13 +48,7 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
 }) => {
   return (
     <>
-      <Flex
-        width="100%"
-        gap="size-100"
-        alignItems="center"
-        justifyContent="space-between"
-        marginBottom={8}
-      >
+      <Flex gap="size-100" alignItems="center" justifyContent="space-between">
         <div>{filteredCollection.length} elements</div>
 
         <div>
@@ -73,51 +67,49 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
         </div>
       </Flex>
 
-      <View maxHeight="85vh" overflow="auto">
-        <Grid
-          columns={repeat("auto-fit", "175px")}
-          gap="size-100"
-          justifyContent="center"
-        >
-          {items.map(({ name, url }, i) =>
-            itemsToRemove.includes(name) ? (
-              <div
-                key={i}
-                className="w-full min-h-[175px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
-              >
-                <Button variant="secondary" onPress={() => onUndoRemove(name)}>
-                  Undo
-                </Button>
-              </div>
-            ) : (
-              <ImageItem
-                key={i}
-                name={name}
-                src={url}
-                maxSize={175}
-                actions={[
-                  {
-                    label: "Edit",
-                    onClick: () => onEdit(i),
-                  },
-                  {
-                    label: "Remove",
-                    onClick: () => onRemove(name),
-                  },
-                  {
-                    label: "Select",
-                    onClick: () => onSelect(i),
-                  },
-                  {
-                    label: "Regenerate",
-                    onClick: () => onRegenerate(i),
-                  },
-                ]}
-              />
-            )
-          )}
-        </Grid>
-      </View>
+      <Grid
+        columns={repeat("auto-fit", "175px")}
+        gap="size-100"
+        justifyContent="center"
+      >
+        {items.map(({ name, url }, i) =>
+          itemsToRemove.includes(name) ? (
+            <div
+              key={i}
+              className="w-full min-h-[175px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
+            >
+              <Button variant="secondary" onPress={() => onUndoRemove(name)}>
+                Undo
+              </Button>
+            </div>
+          ) : (
+            <ImageItem
+              key={i}
+              name={name}
+              src={url}
+              maxSize={175}
+              actions={[
+                {
+                  label: "Edit",
+                  onClick: () => onEdit(i),
+                },
+                {
+                  label: "Remove",
+                  onClick: () => onRemove(name),
+                },
+                {
+                  label: "Select",
+                  onClick: () => onSelect(i),
+                },
+                {
+                  label: "Regenerate",
+                  onClick: () => onRegenerate(i),
+                },
+              ]}
+            />
+          )
+        )}
+      </Grid>
     </>
   );
 };

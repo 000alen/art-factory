@@ -46,7 +46,7 @@ export const Filters: React.FC<FiltersProps> = ({
   removeFilter,
 }) => {
   return (
-    <View maxHeight="90vh" overflow="auto">
+    <View>
       <SearchField
         onSubmit={(query: string) => {
           if (query !== "") addStringFilter(query);

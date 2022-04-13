@@ -6,6 +6,10 @@ import {
   ActionGroup,
   Item,
   ActionButton,
+  Grid,
+  Text,
+  ButtonGroup,
+  repeat,
 } from "@adobe/react-spectrum";
 import React, { useContext, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -33,6 +37,7 @@ import { LayerNodeComponentData } from "../components/LayerNode";
 import { Node as FlowNode } from "react-flow-renderer";
 import { MAX_SIZE } from "../constants";
 import { ImageItem } from "../components/ImageItem";
+import { TaskItem } from "../components/TaskItem";
 
 interface FactoryPageState {
   projectDir: string;
@@ -109,8 +114,6 @@ export const FactoryPage: React.FC = () => {
       setTemplatesPreviews(templatesUrls);
       setGenerationPreviews(generationUrls);
     })();
-
-    // task("previews", async () => {})();
 
     return () => {
       toolbarContext.removeButton("close");
@@ -210,17 +213,30 @@ export const FactoryPage: React.FC = () => {
   };
 
   return (
-    <View height="100%" margin="size-100" overflow="auto">
-      <Flex gap="size-100" alignItems="center">
-        <Heading level={1}>{configuration.name}</Heading>
-
-        <ActionButton onPress={onConfiguration}>
-          <Settings />
-        </ActionButton>
-      </Flex>
-
-      <Flex direction="column" gap="size-100">
-        <>
+    <Grid
+      UNSAFE_className="overflow-hidden"
+      areas={["left right"]}
+      columns={["1fr", "2fr"]}
+      rows={["auto"]}
+      height="100%"
+      gap="size-100"
+      margin="size-100"
+    >
+      <View
+        UNSAFE_style={{
+          direction: "rtl",
+        }}
+        gridArea="left"
+        overflow="auto"
+      >
+        <Flex
+          UNSAFE_style={{
+            direction: "ltr",
+          }}
+          margin="size-100"
+          direction="column"
+          gap="size-100"
+        >
           <Flex gap="size-100" alignItems="center">
             <Heading level={2}>Templates</Heading>
 
@@ -232,102 +248,153 @@ export const FactoryPage: React.FC = () => {
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
               {instance.templates.map((template, i) => (
-                <View
-                  borderWidth="thin"
-                  borderColor="dark"
-                  borderRadius="medium"
-                  padding="size-100"
-                  height="size-1500"
-                  justifySelf="end"
-                >
-                  {templatesPreviews && templatesPreviews[i] && (
-                    <ImageItem src={templatesPreviews[i]} maxSize={128} />
-                  )}
-                  <Heading>{template.name}</Heading>
-                  <ActionGroup onAction={onTemplateAction} isJustified>
-                    <Item key={`edit_${template.id}`}>
-                      <Edit />
-                    </Item>
-                    <Item key="close">
-                      <Close />
-                    </Item>
-                  </ActionGroup>
-                </View>
+                <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+                  <Flex direction="column" gap="size-100">
+                    {templatesPreviews && templatesPreviews[i] ? (
+                      <ImageItem src={templatesPreviews[i]} maxSize={192} />
+                    ) : (
+                      <div className="w-48 h-48 flex justify-center items-center">
+                        <Text>Nothing to see here</Text>
+                      </div>
+                    )}
+                    <Heading>{template.name}</Heading>
+                    <ActionGroup onAction={onTemplateAction} isJustified>
+                      <Item key={`edit_${template.id}`}>
+                        <Edit />
+                      </Item>
+                      <Item key="close">
+                        <Close />
+                      </Item>
+                    </ActionGroup>
+                  </Flex>
+                </div>
               ))}
             </Flex>
           </View>
-        </>
 
-        <>
           <Heading level={2}>Generations</Heading>
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
               {instance.templates.map((template, i) => (
-                <View
-                  borderWidth="thin"
-                  borderColor="dark"
-                  borderRadius="medium"
-                  padding="size-100"
-                  height="size-1500"
-                  justifySelf="end"
-                >
-                  {generationPreviews && generationPreviews[i] && (
-                    <ImageItem src={generationPreviews[i]} maxSize={128} />
-                  )}
-                  <Heading>{template.name}</Heading>
-                  <ActionGroup onAction={onGenerationAction} isJustified>
-                    <Item key={`generate_${template.id}`}>
-                      <Hammer />
-                    </Item>
-                  </ActionGroup>
-                </View>
+                <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+                  <Flex direction="column" gap="size-100">
+                    {templatesPreviews && templatesPreviews[i] ? (
+                      <ImageItem src={templatesPreviews[i]} maxSize={192} />
+                    ) : (
+                      <div className="w-48 h-48 flex justify-center items-center">
+                        <Text>Nothing to see here</Text>
+                      </div>
+                    )}
+                    <Heading>{template.name}</Heading>
+                    <ActionGroup onAction={onGenerationAction} isJustified>
+                      <Item key={`generate_${template.id}`}>
+                        <Hammer />
+                      </Item>
+                    </ActionGroup>
+                  </Flex>
+                </div>
               ))}
             </Flex>
           </View>
-        </>
 
-        <>
           <Heading level={2}>Quality control</Heading>
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
               {instance.generations.map((generation, i) => (
-                <View
-                  borderWidth="thin"
-                  borderColor="dark"
-                  borderRadius="medium"
-                  padding="size-100"
-                  height="size-1500"
-                  justifySelf="end"
-                >
-                  {generationPreviews && generationPreviews[i] && (
-                    <ImageItem src={generationPreviews[i]} maxSize={128} />
-                  )}
-                  <Heading>{generation.name}</Heading>
-                  <ActionGroup onAction={onQualityAction} isJustified>
-                    <Item key={`edit_${generation.id}`}>
-                      <Edit />
-                    </Item>
-                    {/* <Item>
-                      <Close />
-                    </Item> */}
-                  </ActionGroup>
-                </View>
+                <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+                  <Flex direction="column" gap="size-100">
+                    {templatesPreviews && templatesPreviews[i] ? (
+                      <ImageItem src={templatesPreviews[i]} maxSize={192} />
+                    ) : (
+                      <div className="w-48 h-48 flex justify-center items-center">
+                        <Text>Nothing to see here</Text>
+                      </div>
+                    )}
+                    <Heading>{generation.name}</Heading>
+                    <ActionGroup onAction={onQualityAction} isJustified>
+                      <Item key={`edit_${generation.id}`}>
+                        <Edit />
+                      </Item>
+                      <Item>
+                        <Close />
+                      </Item>
+                    </ActionGroup>
+                  </Flex>
+                </div>
               ))}
             </Flex>
           </View>
-        </>
-
-        <Flex marginStart="auto" marginTop="auto">
-          <Button variant="cta" margin="size-100" onPress={onDeploy}>
-            Deploy
-          </Button>
-          <Button variant="cta" margin="size-100" onPress={onInstance}>
-            Instance
-          </Button>
         </Flex>
-      </Flex>
-    </View>
+      </View>
+
+      <View gridArea="right">
+        <Flex height="100%" direction="column" justifyContent="space-between">
+          <Flex direction="column" gap="size-100">
+            <Flex gap="size-100" alignItems="center">
+              <Heading level={1}>{configuration.name}</Heading>
+
+              <ActionButton onPress={onConfiguration}>
+                <Settings />
+              </ActionButton>
+            </Flex>
+
+            <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
+              <TaskItem task="Cost" onRun={() => {}} />
+              <TaskItem
+                task="Balance of"
+                onRun={() => {}}
+                fields={[
+                  {
+                    key: "address",
+                    type: "address",
+                    label: "Address",
+                  },
+                ]}
+              />
+
+              <TaskItem
+                task="Token of owner by index"
+                onRun={() => {}}
+                fields={[
+                  {
+                    key: "address",
+                    type: "address",
+                    label: "Address",
+                  },
+                  {
+                    key: "index",
+                    type: "int",
+                    label: "Index",
+                  },
+                ]}
+              />
+
+              <TaskItem
+                task="Token URI"
+                onRun={() => {}}
+                fields={[
+                  {
+                    key: "index",
+                    type: "int",
+                    label: "Token Index",
+                  },
+                ]}
+              />
+            </Grid>
+          </Flex>
+
+          <ButtonGroup align="end">
+            <Button variant="cta" margin="size-100" onPress={onDeploy}>
+              Deploy
+            </Button>
+            <Button variant="cta" margin="size-100" onPress={onInstance}>
+              Instance
+            </Button>
+          </ButtonGroup>
+        </Flex>
+      </View>
+    </Grid>
   );
 };

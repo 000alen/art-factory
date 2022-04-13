@@ -192,8 +192,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         padding="size-100"
       >
         <Flex direction="column" gap="size-100">
-          <Flex alignItems="center" justifyContent="space-between">
-            <Text>{task}</Text>
+          <Flex
+            gap="size-100"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Heading>{task}</Heading>
             <ActionButton onPress={onPress}>
               {dialog ? <ShowMenu /> : <Play />}
             </ActionButton>

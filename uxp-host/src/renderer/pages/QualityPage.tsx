@@ -424,13 +424,14 @@ export const QualityPage = () => {
 
   return (
     <Grid
+      UNSAFE_className="overflow-hidden"
       areas={["filters gallery viewer right"]}
       columns={["1fr", "3fr", "4fr", "1fr"]}
       rows={["auto"]}
       height="100%"
       gap="size-100"
     >
-      <View gridArea="filters">
+      <View gridArea="filters" overflow="auto">
         <Filters
           {...{
             addStringFilter,
@@ -452,7 +453,7 @@ export const QualityPage = () => {
         />
       </View>
 
-      <View gridArea="gallery">
+      <View gridArea="gallery" overflow="auto">
         <Gallery
           {...{
             filteredCollection,
