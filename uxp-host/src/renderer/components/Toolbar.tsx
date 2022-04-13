@@ -1,7 +1,7 @@
 import React, { useState, createContext, useContext } from "react";
 import { Flex, DialogTrigger, ActionButton, Text } from "@adobe/react-spectrum";
-import Settings from "@spectrum-icons/workflow/Settings";
 import { SecretsDialog } from "./SecretsDialog";
+import Settings from "@spectrum-icons/workflow/Settings";
 
 interface ButtonItemProps {
   label: string;
@@ -71,7 +71,7 @@ export const Toolbar: React.FC = ({ children }) => {
       <Flex direction="row-reverse" gap="size-100">
         <DialogTrigger>
           <ActionButton>
-            <Settings size="M" />
+            <Settings />
           </ActionButton>
           {(close) => <SecretsDialog close={close} />}
         </DialogTrigger>

@@ -27,7 +27,6 @@ import { TriStateButton } from "../components/TriStateButton";
 import { ArrayOf } from "../components/ArrayOf";
 import { MetadataField } from "../components/MetadataField";
 import { ImageItem } from "../components/ImageItem";
-import useStateRef from "react-usestateref";
 
 interface GenerationPageState {
   projectDir: string;
