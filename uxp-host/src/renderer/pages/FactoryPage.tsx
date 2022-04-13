@@ -1,4 +1,4 @@
-import { Button, Flex, Heading } from "@adobe/react-spectrum";
+import { Button, Flex, Heading, View, Text } from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ToolbarContext } from "../components/Toolbar";
@@ -12,6 +12,9 @@ import {
 } from "../ipc";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
+import Edit from "@spectrum-icons/workflow/Edit";
+import Hammer from "@spectrum-icons/workflow/Hammer";
+
 import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 import Folder from "@spectrum-icons/workflow/Folder";
 import { ImageItem } from "../components/ImageItem";
@@ -121,61 +124,113 @@ export const FactoryPage: React.FC = () => {
   };
 
   return (
-    <Flex direction="column" gap="size-100">
-      <Button variant="secondary" onPress={onConfiguration}>
-        Configuration
-      </Button>
+    <Flex direction="column" gap="size-100" height="100vh">
 
-      <Button variant="secondary" onPress={() => onTemplate()}>
-        Template
-      </Button>
+      <Flex marginEnd="auto">
+        <Button margin="size-100" variant="secondary" onPress={onConfiguration}>
+          Project configuration
+        </Button>
 
-      <Flex gap="size-100" marginX="size-500">
+        <Button margin="size-100" variant="cta" onPress={() => onTemplate()}>
+          Create a new template
+        </Button>
+      </Flex>
+
+      <Heading margin="size-300">Templates &amp; Generation</Heading>
+      
+      <View overflow="auto" height="20vh" marginX="size-100">
+      <Flex gap="size-100" marginX="size-500" justifyContent="space-around">
         {instance.templates.map((template) => (
+          /* x si lo necesito
           <Button
             key={template.id}
             variant="secondary"
             onPress={() => onTemplate(template.id)}
           >
             {template.name}
-          </Button>
+          </Button>*/
+
+          <View
+            borderWidth="thin"
+            borderColor="dark"
+            borderRadius="medium"
+            padding="size-100"
+            height="size-1500"
+            justifySelf="end"
+            >
+              <Heading UNSAFE_className="text-center"> {template.name} </Heading>
+              <Flex>
+                <Button 
+                  variant="secondary"
+                  margin="size-10"
+                  key={`${template.id}_edit`}
+                  onPress={() => onTemplate(template.id)}
+                > <Edit/> </Button>
+                <Button 
+                  variant="secondary"
+                  margin="size-10"
+                  key={`${template.id}_generating`}
+                  onPress={() => onGeneration(template.id)}
+                > <Hammer/> </Button>
+                <Button variant="secondary" margin="size-10" key={`${template.id}_close`}> <Close/> </Button>
+              </Flex>
+          </View>
         ))}
       </Flex>
+      </View>
 
-      <Heading>Generation</Heading>
+      <Heading margin="size-300">Quality control</Heading>
 
-      <Flex gap="size-100" marginX="size-500">
-        {instance.templates.map((template) => (
-          <Button
-            key={template.id}
-            variant="secondary"
-            onPress={() => onGeneration(template.id)}
-          >
-            {template.name}
-          </Button>
-        ))}
+      <View overflow="auto" height="40vh" marginX="size-100">
+        <Flex gap="size-100" marginX="size-500" justifyContent="center">
+
+          { /*instance.generations.map((generation) => ( <- cambiarlo cuando no crashee*/ 
+          instance.templates.map((generation) => (
+            /*
+            <Button
+              key={generation.id}
+              variant="secondary"
+              onPress={() => onQuality(generation.id)}
+            >
+              {generation.name}
+            </Button>
+            */
+
+            <View
+            borderWidth="thin"
+            borderColor="dark"
+            borderRadius="medium"
+            padding="size-100"
+            height="size-1500"
+            justifySelf="end"
+            >
+              <Heading UNSAFE_className="text-center"> {generation.name} </Heading>
+              <div className="h-56 w-56"></div>
+              <Flex justifyContent="space-around">
+                <Button 
+                  variant="secondary"
+                  margin="size-10"
+                  key={`${generation.id}_edit`}
+                  onPress={() => onQuality(generation.id)}
+                > <Edit/> </Button>
+                <Button variant="secondary" margin="size-10" key={`${generation.id}_close`}> <Close/> </Button>
+              </Flex>
+            </View>
+          ))}
+           
+           
+        </Flex>
+      </View>
+      
+      <Flex marginStart="auto" marginTop="auto">
+        <Button variant="cta" margin="size-100" onPress={onDeploy}>
+          Deploy
+        </Button>
+        <Button variant="cta" margin="size-100" onPress={onInstance} >
+          Instance
+        </Button>
       </Flex>
 
-      <Heading>Quality</Heading>
-
-      <Flex gap="size-100" marginX="size-500">
-        {instance.generations.map((generation) => (
-          <Button
-            key={generation.id}
-            variant="secondary"
-            onPress={() => onQuality(generation.id)}
-          >
-            {generation.name}
-          </Button>
-        ))}
-      </Flex>
-
-      <Button variant="secondary" onPress={onDeploy}>
-        Deploy
-      </Button>
-      <Button variant="secondary" onPress={onInstance}>
-        Instance
-      </Button>
     </Flex>
   );
 };
