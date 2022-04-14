@@ -4,7 +4,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "noImplicitAny": true,
+    // "noImplicitAny": true,
     "sourceMap": true,
     "baseUrl": ".",
     "outDir": "dist",
@@ -12,6 +12,10 @@
     "resolveJsonModule": true,
     "jsx": "react",
     "downlevelIteration": true,
+
+    "noUnusedLocals": false,
+    "noImplicitAny": false,
+
     "paths": {
       "*": ["node_modules/*"]
     }

@@ -28,6 +28,8 @@ import {
 } from "./typings";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import Web3 from "web3";
+import { OpenSeaPort, Network } from "./opensea";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -478,19 +480,21 @@ ipcAsyncTask("AAA", async () => {
     infuraId: getInfuraProjectId() as string,
   });
 
-  // // @ts-ignore
-  // const web3 = new Web3(provider);
+  // @ts-ignore
+  const web3 = new Web3(provider);
 
-  // try {
-  //   const seaport = new OpenSeaPort(web3.currentProvider);
-  //   const asset = seaport.api.getAsset({
-  //     tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60",
-  //     tokenId: "1",
-  //   });
-  //   console.log(asset);
-  // } catch (e) {
-  //   console.error(e);
-  // }
+  try {
+    const seaport = new OpenSeaPort(web3.currentProvider, {
+      networkName: Network.Rinkeby,
+    });
+    const asset = await seaport.api.getAsset({
+      tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60",
+      tokenId: "1",
+    });
+    console.log(asset);
+  } catch (e) {
+    console.error(e);
+  }
 
   await connector.createSession();
   return connector.uri;
