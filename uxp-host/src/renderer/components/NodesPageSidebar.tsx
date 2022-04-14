@@ -1,4 +1,4 @@
-import { Text } from "@adobe/react-spectrum";
+import { Flex, Text, View } from "@adobe/react-spectrum";
 import React, { useEffect, useState } from "react";
 import { MAX_SIZE } from "../constants";
 import { factoryComposeTraits, factoryGetTraitImage } from "../ipc";
@@ -46,17 +46,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div
-      className="px-4 overflow-auto"
-      style={{
+    <View
+      UNSAFE_style={{
         direction: "rtl",
       }}
+      overflow="auto"
     >
-      <div
-        className="p-2 space-y-2 rounded flex flex-col justify-center items-center"
-        style={{
+      <Flex
+        UNSAFE_style={{
           direction: "ltr",
         }}
+        margin="size-100"
+        direction="column"
+        gap="size-100"
       >
         <div
           onDragStart={(event) => onDragStart(event, { type: "bundleNode" })}
@@ -103,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
           ))}
-      </div>
-    </div>
+      </Flex>
+    </View>
   );
 };

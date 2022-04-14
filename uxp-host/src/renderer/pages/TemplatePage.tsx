@@ -18,7 +18,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { Trait } from "../typings";
 import { MAX_SIZE } from "../constants";
 import { Instance } from "../typings";
-import { Button, TextField } from "@adobe/react-spectrum";
+import { Button, Flex, TextField } from "@adobe/react-spectrum";
 import { v4 as uuid } from "uuid";
 import Close from "@spectrum-icons/workflow/Close";
 import Back from "@spectrum-icons/workflow/Back";
@@ -145,7 +145,12 @@ export function TemplatePage() {
       initialNs={initialNs}
       initialIgnored={initialIgnored}
     >
-      <div className="w-full h-full flex overflow-hidden">
+      <Flex
+        UNSAFE_className="overflow-hidden"
+        height="100%"
+        margin="size-100"
+        gap="size-100"
+      >
         <Sidebar
           id={id}
           layers={configuration.layers}
@@ -153,16 +158,26 @@ export function TemplatePage() {
           traits={traits}
         />
         <Nodes>
-          <div className="absolute z-10 top-4 right-4">
-            <TextField label="Name" value={name} onChange={setName} />
-          </div>
-          <div className="absolute z-10 bottom-4 right-4">
-            <Button variant="cta" onPress={onSave}>
-              Save
-            </Button>
-          </div>
+          <TextField
+            position="absolute"
+            top={0}
+            right={0}
+            label="Name"
+            value={name}
+            onChange={setName}
+          />
+          <Button
+            zIndex={1001}
+            position="absolute"
+            bottom={0}
+            right={0}
+            variant="cta"
+            onPress={onSave}
+          >
+            Save
+          </Button>
         </Nodes>
-      </div>
+      </Flex>
     </NodesContextProvider>
   );
 }

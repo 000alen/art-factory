@@ -201,12 +201,7 @@ export const GenerationPage: React.FC = () => {
       gap="size-100"
       justifyContent="space-between"
     >
-      <TextField
-        marginStart={16}
-        label="Name"
-        value={name}
-        onChange={setName}
-      />
+      <TextField label="Name" value={name} onChange={setName} />
 
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" justifyContent="center" alignItems="center">

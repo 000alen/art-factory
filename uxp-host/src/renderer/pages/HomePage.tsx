@@ -62,6 +62,7 @@ export function HomePage() {
     <Flex
       direction="column"
       height="100%"
+      margin="size-100"
       gap="size-100"
       alignItems="center"
       justifyContent="center"

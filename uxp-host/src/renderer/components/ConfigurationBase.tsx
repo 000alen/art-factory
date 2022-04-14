@@ -92,11 +92,7 @@ export const ConfigurationBase: React.FC<ConfigurationBaseProps> = ({
         />
       </Flex>
 
-      <Switch
-        margin="size-10"
-        isSelected={generateBackground}
-        onChange={setGenerateBackground}
-      >
+      <Switch isSelected={generateBackground} onChange={setGenerateBackground}>
         Generate Background
       </Switch>
 
@@ -113,8 +109,7 @@ export const ConfigurationBase: React.FC<ConfigurationBaseProps> = ({
         onChange={setContractType}
       >
         <Radio value="721">ERC721</Radio>
-        {/* <Radio value="721_reveal_pause">ERC721_reveal_pause</Radio> */}
-        {/* <Radio value="1155">ERC1155</Radio> */}
+        <Radio value="721_reveal_pause">ERC721_reveal_pause</Radio>
       </RadioGroup>
     </Flex>
   );

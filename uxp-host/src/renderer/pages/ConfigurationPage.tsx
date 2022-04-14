@@ -112,9 +112,7 @@ export function ConfigurationPage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Heading level={1} marginStart={16}>
-        Configuration
-      </Heading>
+      <Heading level={1}>Configuration</Heading>
 
       <Flex gap="size-100" justifyContent="space-evenly">
         <ConfigurationBase
@@ -158,7 +156,7 @@ export function ConfigurationPage() {
         />
       </Flex>
 
-      <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
+      <ButtonGroup align="end">
         <Button variant="cta" onPress={onSave}>
           Save
         </Button>

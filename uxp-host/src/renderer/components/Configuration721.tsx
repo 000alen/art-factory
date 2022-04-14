@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, NumberField } from "@adobe/react-spectrum";
+import { Flex, Heading, NumberField } from "@adobe/react-spectrum";
 
 interface Configuration721Props {
   cost: number;
@@ -16,6 +16,7 @@ export const Configuration721: React.FC<Configuration721Props> = ({
 }) => {
   return (
     <Flex direction="column" gap="size-100">
+      <Heading>Contract configuration</Heading>
       <NumberField
         label="Cost"
         value={cost}
