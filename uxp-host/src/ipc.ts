@@ -28,7 +28,6 @@ import {
 } from "./typings";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-// import { OpenSeaPort, Network } from "./opensea";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -479,53 +478,19 @@ ipcAsyncTask("AAA", async () => {
     infuraId: getInfuraProjectId() as string,
   });
 
-  // @ts-ignore
-  // const seaport = new OpenSeaPort(provider, {
-  //   networkName: Network.Main,
-  //   // apiKey: YOUR_API_KEY,
-  // });
+  // // @ts-ignore
+  // const web3 = new Web3(provider);
 
   // try {
-  //   const asset = await seaport.api.getAsset({
-  //     tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60", // string
-  //     tokenId: "1", // string | number | null
+  //   const seaport = new OpenSeaPort(web3.currentProvider);
+  //   const asset = seaport.api.getAsset({
+  //     tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60",
+  //     tokenId: "1",
   //   });
-  //   console.log("asset", asset);
+  //   console.log(asset);
   // } catch (e) {
   //   console.error(e);
   // }
-
-  // Subscribe to connection events
-  connector.on("connect", (error, payload) => {
-    if (error) {
-      throw error;
-    }
-
-    // Close QR Code Modal
-    // WalletConnectQRCodeModal.close(
-    //   true // isNode = true
-    // );
-
-    // Get provided accounts and chainId
-    const { accounts, chainId } = payload.params[0];
-  });
-
-  connector.on("session_update", (error, payload) => {
-    if (error) {
-      throw error;
-    }
-
-    // Get updated accounts and chainId
-    const { accounts, chainId } = payload.params[0];
-  });
-
-  connector.on("disconnect", (error, payload) => {
-    if (error) {
-      throw error;
-    }
-
-    // Delete walletConnector
-  });
 
   await connector.createSession();
   return connector.uri;

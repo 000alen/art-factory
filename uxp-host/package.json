@@ -108,6 +108,7 @@
     "@react-spectrum/color": "^3.0.0-beta.9",
     "@react-stately/color": "^3.0.0-beta.9",
     "@spectrum-css/fieldlabel": "^4.0.17",
+    "@walletconnect/node": "^1.0.0",
     "@walletconnect/web3-provider": "^1.7.5",
     "assert": "^2.0.0",
     "axios": "^0.26.1",
