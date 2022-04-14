@@ -191,12 +191,6 @@ export const FactoryPage: React.FC = () => {
       case "edit":
         onTemplate(id);
         break;
-    }
-  };
-
-  const onGenerationAction = (message: string) => {
-    const [action, id] = message.split("_");
-    switch (action) {
       case "generate":
         onGeneration(id);
         break;
@@ -214,29 +208,15 @@ export const FactoryPage: React.FC = () => {
 
   return (
     <Grid
-      UNSAFE_className="overflow-hidden"
       areas={["left right"]}
-      columns={["1fr", "2fr"]}
+      columns={["2fr", "1fr"]}
       rows={["auto"]}
       height="100%"
       gap="size-100"
       margin="size-100"
     >
-      <View
-        UNSAFE_style={{
-          direction: "rtl",
-        }}
-        gridArea="left"
-        overflow="auto"
-      >
-        <Flex
-          UNSAFE_style={{
-            direction: "ltr",
-          }}
-          margin="size-100"
-          direction="column"
-          gap="size-100"
-        >
+      <View gridArea="left" overflow="auto">
+        <Flex direction="column" gap="size-100">
           <Flex gap="size-100" alignItems="center">
             <Heading level={2}>Templates</Heading>
 
@@ -262,6 +242,9 @@ export const FactoryPage: React.FC = () => {
                       <Item key={`edit_${template.id}`}>
                         <Edit />
                       </Item>
+                      <Item key={`generate_${template.id}`}>
+                        <Hammer />
+                      </Item>
                       <Item key="close">
                         <Close />
                       </Item>
@@ -276,37 +259,11 @@ export const FactoryPage: React.FC = () => {
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
-              {instance.templates.map((template, i) => (
-                <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
-                  <Flex direction="column" gap="size-100">
-                    {templatesPreviews && templatesPreviews[i] ? (
-                      <ImageItem src={templatesPreviews[i]} maxSize={192} />
-                    ) : (
-                      <div className="w-48 h-48 flex justify-center items-center">
-                        <Text>Nothing to see here</Text>
-                      </div>
-                    )}
-                    <Heading>{template.name}</Heading>
-                    <ActionGroup onAction={onGenerationAction} isJustified>
-                      <Item key={`generate_${template.id}`}>
-                        <Hammer />
-                      </Item>
-                    </ActionGroup>
-                  </Flex>
-                </div>
-              ))}
-            </Flex>
-          </View>
-
-          <Heading level={2}>Quality control</Heading>
-
-          <View marginX="size-200" paddingBottom="size-100" overflow="auto">
-            <Flex gap="size-200">
               {instance.generations.map((generation, i) => (
                 <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
                   <Flex direction="column" gap="size-100">
-                    {templatesPreviews && templatesPreviews[i] ? (
-                      <ImageItem src={templatesPreviews[i]} maxSize={192} />
+                    {generationPreviews && generationPreviews[i] ? (
+                      <ImageItem src={generationPreviews[i]} maxSize={192} />
                     ) : (
                       <div className="w-48 h-48 flex justify-center items-center">
                         <Text>Nothing to see here</Text>

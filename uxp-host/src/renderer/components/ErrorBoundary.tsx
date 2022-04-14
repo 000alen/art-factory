@@ -1,13 +1,13 @@
-import { Heading } from "@adobe/react-spectrum";
+import { Heading, Text } from "@adobe/react-spectrum";
 import React from "react";
 import { Link } from "react-router-dom";
 
 interface ErrorBoundaryProps {}
 
 interface ErrorBoundaryState {
+  error: Error;
   hasError: boolean;
 }
-
 
 // ! TODO
 export class ErrorBoundary extends React.Component<
@@ -16,11 +16,11 @@ export class ErrorBoundary extends React.Component<
 > {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
 
   render() {
@@ -28,6 +28,7 @@ export class ErrorBoundary extends React.Component<
       return (
         <>
           <Heading>Something went wrong :(</Heading>
+          <Text>{this.state.error.message}</Text>
           <Link to="/" onClick={() => this.setState({ hasError: false })}>
             Go home
           </Link>

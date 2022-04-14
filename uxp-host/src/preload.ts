@@ -52,6 +52,7 @@ const sendWhitelist = [
   "factoryDeployNotRevealedImage",
   "factoryDeployNotRevealedMetadata",
   "factoryUnify",
+  "AAA",
 ];
 
 const onWhitelist = [
@@ -109,6 +110,7 @@ const onWhitelist = [
   "factoryDeployNotRevealedImageResult",
   "factoryDeployNotRevealedMetadataResult",
   "factoryUnifyResult",
+  "AAAResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

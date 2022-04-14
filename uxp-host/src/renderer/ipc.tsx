@@ -311,7 +311,6 @@ export const factoryRemoveCollectionItems = (
     bundles,
     collectionItems
   ) as Promise<Collection>;
-// #endregion
 
 export const factoryRegenerateCollectionItems = (
   id: string,
@@ -343,3 +342,7 @@ export const factoryUnify = (id: string, generations: Generation[]) =>
     collection: Collection;
     bundles: Bundles;
   }>;
+
+// #endregion
+
+export const AAA = () => ipcTask("AAA")() as Promise<string>;

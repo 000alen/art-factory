@@ -27,6 +27,7 @@ import { TriStateButton } from "../components/TriStateButton";
 import { ArrayOf } from "../components/ArrayOf";
 import { MetadataField } from "../components/MetadataField";
 import { ImageItem } from "../components/ImageItem";
+import { generateFromTemplate } from "../commands";
 
 interface GenerationPageState {
   projectDir: string;
@@ -46,7 +47,7 @@ export const GenerationPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { projectDir, instance, id, templateId } = state as GenerationPageState;
-  const { configuration, templates } = instance;
+  const { templates } = instance;
 
   const [templateName] = useState(
     templates.find((template) => template.id === templateId).name
@@ -116,55 +117,16 @@ export const GenerationPage: React.FC = () => {
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
 
-    const { nodes, edges, ns, ignored } = templates.find(
-      (nodes) => nodes.id === templateId
-    );
-
-    const nData = (
-      getBranches(nodes, edges).map((branch) =>
-        branch.slice(1, -1)
-      ) as FlowNode<LayerNodeComponentData>[][]
-    ).map((branch) => branch.map((node) => node.data));
-    let keys = nData
-      .map((branch) =>
-        branch.map((data) => ({
-          ...data.trait,
-          id: data.id,
-        }))
-      )
-      .map(hash);
-
-    const nTraits: Trait[][] = nData
-      .map((branch) =>
-        branch.map((data) => ({
-          ...data.trait,
-          id: data.id,
-          opacity: data.opacity,
-          blending: data.blending,
-        }))
-      )
-      .filter((_, i) => !ignored.includes(keys[i]));
-
-    keys = keys.filter((key) => !ignored.includes(key));
-
-    const bundlesInfo: BundlesInfo = nodes
-      .filter((node) => node.type === "bundleNode")
-      .map((node) => node.data)
-      .map((data) => ({
-        name: data.name,
-        ids: data.ids,
-      }));
+    const template = templates.find((nodes) => nodes.id === templateId);
 
     const a = performance.now();
-    const { collection, bundles } = await factoryGenerateCollection(
+    const { collection, bundles } = await generateFromTemplate(
       id,
-      keys,
-      nTraits,
-      ns,
-      bundlesInfo
+      name,
+      metadataItems,
+      template,
+      onProgress
     );
-    await factoryGenerateImages(id, name, collection, onProgress);
-    await factoryGenerateMetadata(id, name, collection, metadataItems);
     const b = performance.now();
 
     console.log(b - a);
