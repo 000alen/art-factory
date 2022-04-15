@@ -13,18 +13,6 @@ export const Networks: Record<string, any> = {
   },
 };
 
-export const ContractTypes: Record<string, any> = {
-  721: {
-    name: "ERC721",
-  },
-  "721_reveal_pause": {
-    name: "ERC721 (reveal & pause)",
-  },
-  1155: {
-    name: "ERC1155",
-  },
-};
-
 export const MAX_SIZE = 500;
 export const DEFAULT_OPACITY = 1;
 export const DEFAULT_BLENDING = "normal";
@@ -45,4 +33,3 @@ export const PAGE_N = 25;
 export const RARITY_DELIMITER = "#";
 export const DEFAULT_BACKGROUND = "#ffffff";
 export const BUILD_DIR_NAME = ".build";
-export const COLLECTION_DIR_NAME = ".collection";

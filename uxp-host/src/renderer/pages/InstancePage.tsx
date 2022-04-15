@@ -18,7 +18,7 @@ import Copy from "@spectrum-icons/workflow/Copy";
 import Close from "@spectrum-icons/workflow/Close";
 
 import { Panel721 } from "../components/Panel721";
-import { chopAddress, resolveEtherscanUrlII } from "../utils";
+import { chopAddress } from "../utils";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
@@ -116,17 +116,6 @@ export function InstancePage() {
             <Copy />
           </ActionButton>
         </Flex>
-        {/* <Link>
-          <a
-            href={resolveEtherscanUrlII(
-              deployment.network,
-              deployment.contractAddress
-            )}
-            target="_blank"
-          >
-            Contract at Etherscan.
-          </a>
-        </Link> */}
       </Flex>
 
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">

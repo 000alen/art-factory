@@ -20,13 +20,10 @@ const dashedNameConfiguration = {
   length: 2,
 };
 
-// let _id = 0;
-
 export const spacedName = () => uniqueNamesGenerator(spacedNameConfiguration);
 
 export const dashedName = () => uniqueNamesGenerator(dashedNameConfiguration);
 
-// export const getId = () => `${_id++}`;
 export const getId = () => uuid();
 
 export const capitalize = (string: string) =>
@@ -37,9 +34,6 @@ export const chopAddress = (address: string) =>
 
 export const hash = (object: any): string =>
   uuidv5(JSON.stringify(object), NAMESPACE);
-
-export const difference = <T,>(a: Set<T>, b: Set<T>): Set<T> =>
-  new Set([...a].filter((x) => !b.has(x)));
 
 export const arrayDifference = <T,>(a: T[], b: T[]): T[] =>
   a.filter((x) => !b.includes(x));
@@ -72,29 +66,3 @@ export const createInstance = (): Instance => ({
   templates: [],
   generations: [],
 });
-
-export function resolveEtherscanUrl(
-  network: { name: string; id: number },
-  transactionHash: string
-) {
-  return network === Networks.mainnet
-    ? `https://etherscan.io/tx/${transactionHash}`
-    : network === Networks.ropsten
-    ? `https://ropsten.etherscan.io/tx/${transactionHash}`
-    : network === Networks.rinkeby
-    ? `https://rinkeby.etherscan.io/tx/${transactionHash}`
-    : null;
-}
-
-export function resolveEtherscanUrlII(
-  network: string,
-  contractAddress: string
-) {
-  return network === "mainnet"
-    ? `https://etherscan.io/address/${contractAddress}`
-    : network === "ropsten"
-    ? `https://ropsten.etherscan.io/address/${contractAddress}`
-    : network === "rinkeby"
-    ? `https://rinkeby.etherscan.io/address/${contractAddress}`
-    : null;
-}

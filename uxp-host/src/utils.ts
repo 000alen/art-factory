@@ -5,7 +5,8 @@ import { Trait } from "./typings";
 import sharp from "sharp";
 import FormData from "form-data";
 import axios from "axios";
-import { RARITY_DELIMITER } from "./constants";
+import { NAMESPACE, RARITY_DELIMITER } from "./constants";
+import { v5 as uuidv5 } from "uuid";
 
 export function rarity(elementName: string) {
   let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
@@ -96,17 +97,6 @@ export function choose(
   }
 }
 
-export function getBundle(
-  bundlesByRenderId: Map<string, string[]>,
-  renderId: string
-) {
-  for (const [bundle, renderIds] of bundlesByRenderId) {
-    if (renderIds.includes(renderId)) {
-      return bundle;
-    }
-  }
-}
-
 export async function pinDirectoryToIPFS(
   pinataApiKey: string,
   pinataSecretApiKey: string,
@@ -188,3 +178,6 @@ export function replaceAll(
 ) {
   return str.replace(new RegExp(find, "g"), replace);
 }
+
+export const hash = (object: any): string =>
+  uuidv5(JSON.stringify(object), NAMESPACE);

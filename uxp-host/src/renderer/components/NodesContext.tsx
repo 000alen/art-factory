@@ -30,10 +30,6 @@ import {
 import { LayerNode, LayerNodeComponentData } from "./LayerNode";
 import { RenderNode, RenderNodeComponentData } from "./RenderNode";
 import { BundleNode, BundleNodeComponentData } from "./BundleNode";
-import {
-  NotRevealedNode,
-  NotRevealedNodeComponentData,
-} from "./NotRevealedNode";
 import { RootNode } from "./RootNode";
 import { CustomEdge } from "./CustomEdge";
 
@@ -85,7 +81,6 @@ export const NODE_TYPES = {
   layerNode: LayerNode,
   renderNode: RenderNode,
   bundleNode: BundleNode,
-  notRevealedNode: NotRevealedNode,
 };
 
 export const EDGE_TYPES = {
@@ -360,14 +355,6 @@ export function useNodes(
           name: spacedName(),
           ids: null,
         } as BundleNodeComponentData;
-      case "notRevealedNode":
-        return {
-          composedUrls,
-          renderIds,
-
-          requestComposedUrl,
-          requestRenderId,
-        } as NotRevealedNodeComponentData;
       default:
         return {};
     }
@@ -430,16 +417,6 @@ export function useNodes(
           onChangeBundleName,
           onChangeBundleIds,
         } as BundleNodeComponentData;
-      case "notRevealedNode":
-        return {
-          ...data,
-
-          composedUrls,
-          renderIds,
-
-          requestComposedUrl,
-          requestRenderId,
-        } as NotRevealedNodeComponentData;
       default:
         return data;
     }

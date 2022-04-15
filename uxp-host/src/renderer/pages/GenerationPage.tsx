@@ -15,7 +15,7 @@ import { getBranches } from "../nodesUtils";
 import { LayerNodeComponentData } from "../components/LayerNode";
 import { Trait } from "../typings";
 import {
-  factoryGenerateCollection,
+  factoryMakeGeneration,
   factoryGenerateImages,
   factoryGenerateMetadata,
   factoryGetImage,
@@ -27,7 +27,7 @@ import { TriStateButton } from "../components/TriStateButton";
 import { ArrayOf } from "../components/ArrayOf";
 import { MetadataField } from "../components/MetadataField";
 import { ImageItem } from "../components/ImageItem";
-import { generateFromTemplate } from "../commands";
+import { generate } from "../commands";
 
 interface GenerationPageState {
   projectDir: string;
@@ -118,7 +118,7 @@ export const GenerationPage: React.FC = () => {
     const template = templates.find((nodes) => nodes.id === templateId);
 
     const a = performance.now();
-    const { collection, bundles } = await generateFromTemplate(
+    const { collection, bundles } = await generate(
       id,
       name,
       metadataItems,

@@ -46,6 +46,7 @@ export function DeployPage() {
   const { configuration, generations } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
+  const [providerId, setProviderId] = useState<string>(null);
   const [generationName, setGenerationName] = useState(generations[0].name);
   const [url, setUrl] = useState<string>(null);
 
@@ -85,13 +86,12 @@ export function DeployPage() {
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onConnect = task("connect", async () => {
-    const id = uuid();
-    const uri = await createProvider(id, ({ connected }) => {
-      WalletConnectQRCodeModal.close();
-      console.log("connected", connected);
-    });
-
+    const providerId = uuid();
+    const uri = await createProvider(providerId, ({ connected }) =>
+      WalletConnectQRCodeModal.close()
+    );
     WalletConnectQRCodeModal.open(uri, () => {});
+    setProviderId(providerId);
   });
 
   const onDeploy = task("deployment", async () => {

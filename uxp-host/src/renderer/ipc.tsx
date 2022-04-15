@@ -14,7 +14,7 @@ declare global {
 }
 // #endregion
 
-import { stringify, v4 as uuid } from "uuid";
+import { v4 as uuid } from "uuid";
 import {
   Bundles,
   BundlesInfo,
@@ -26,6 +26,7 @@ import {
   Layer,
   MetadataItem,
   Secrets,
+  Template,
   Trait,
 } from "./typings";
 import { capitalize } from "./utils";
@@ -110,22 +111,7 @@ const ipcSetterAndGetter = <T,>(
 
 // #endregion
 
-// #region General
-export const readProjectInstance = (projectDir: string) =>
-  ipcTask("readProjectInstance")(projectDir) as Promise<Instance>;
-
-export const ensureProjectStructure = (projectDir: string) =>
-  ipcTask("ensureProjectStructure")(projectDir);
-
-export const writeProjectInstance = (projectDir: string, instance: Instance) =>
-  ipcTask("writeProjectInstance")(projectDir, instance);
-
-export const readProjectAvailableLayers = (projectDir: string) =>
-  ipcTask("readProjectAvailableLayers")(projectDir) as Promise<string[]>;
-
-export const hasFactory = (id: string) =>
-  ipcTask("hasFactory")(id) as Promise<boolean>;
-
+// #region Property
 export const [setPinataApiKey, getPinataApiKey] =
   ipcSetterAndGetter<string>("pinataApiKey");
 
@@ -137,7 +123,9 @@ export const [setInfuraProjectId, getInfuraProjectId] =
 
 export const [setEtherscanApiKey, getEtherscanApiKey] =
   ipcSetterAndGetter<string>("etherscanApiKey");
+// #endregion
 
+// #region General
 export const showOpenDialog = (options: any) =>
   ipcTask("showOpenDialog")(options) as Promise<{
     canceled: boolean;
@@ -155,6 +143,21 @@ export const openInExplorer = (...paths: string[]) =>
 // #endregion
 
 // #region Factory
+export const readProjectInstance = (projectDir: string) =>
+  ipcTask("readProjectInstance")(projectDir) as Promise<Instance>;
+
+export const ensureProjectStructure = (projectDir: string) =>
+  ipcTask("ensureProjectStructure")(projectDir);
+
+export const writeProjectInstance = (projectDir: string, instance: Instance) =>
+  ipcTask("writeProjectInstance")(projectDir, instance);
+
+export const readProjectAvailableLayers = (projectDir: string) =>
+  ipcTask("readProjectAvailableLayers")(projectDir) as Promise<string[]>;
+
+export const hasFactory = (id: string) =>
+  ipcTask("hasFactory")(id) as Promise<boolean>;
+
 export const createFactory = (
   id: string,
   configuration: Partial<Configuration>,
@@ -175,20 +178,12 @@ export const factoryGetTraitsByLayerName = (id: string, layerName: string) =>
     Trait[]
   >;
 
-export const factoryGenerateCollection = (
+export const factoryMakeGeneration = (
   id: string,
-  keys: string[],
-  nTraits: Trait[][],
-  ns: Record<string, number>,
-  bundlesInfo: BundlesInfo
+  name: string,
+  template: Template
 ) =>
-  ipcTask("factoryGenerateCollection")(
-    id,
-    keys,
-    nTraits,
-    ns,
-    bundlesInfo
-  ) as Promise<{ collection: Collection; bundles: Bundles }>;
+  ipcTask("factoryMakeGeneration")(id, name, template) as Promise<Generation>;
 
 export const factoryComputeMaxCombinations = (id: string, layers: Layer[]) =>
   ipcTaskWithRequestId("factoryComputeMaxCombinations")(
@@ -209,16 +204,9 @@ export const factoryComposeTraits = (
 
 export const factoryGenerateImages = (
   id: string,
-  name: string,
-  collection: Collection,
+  generation: Generation,
   onProgress?: (name: string) => void
-) =>
-  ipcTaskWithProgress("factoryGenerateImages")(
-    onProgress,
-    id,
-    name,
-    collection
-  );
+) => ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, generation);
 
 export const factoryGenerateMetadata = (
   id: string,
@@ -283,23 +271,19 @@ export const factoryGetRandomImage = (
     [CollectionItem, string]
   >;
 
-export const factoryRemoveCollectionItems = (
+export const factoryRemoveItems = (
   id: string,
   generation: Generation,
   items: Collection
 ) =>
-  ipcTask("factoryRemoveCollectionItems")(
-    id,
-    generation,
-    items
-  ) as Promise<Collection>;
+  ipcTask("factoryRemoveItems")(id, generation, items) as Promise<Collection>;
 
-export const factoryRegenerateCollectionItems = (
+export const factoryRegenerateItems = (
   id: string,
   generation: Generation,
   items: Collection
 ) =>
-  ipcTask("factoryRegenerateCollectionItems")(
+  ipcTask("factoryRegenerateItems")(
     id,
     generation,
     items

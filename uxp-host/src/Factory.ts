@@ -12,11 +12,13 @@ import {
   Layer,
   MetadataItem,
   Secrets,
+  Template,
   Trait,
 } from "./typings";
 import {
   append,
   choose,
+  hash,
   pinDirectoryToIPFS,
   pinFileToIPFS,
   rarity,
@@ -25,13 +27,10 @@ import {
   replaceAll,
   restrictImage,
 } from "./utils";
-import {
-  BUILD_DIR_NAME,
-  DEFAULT_BLENDING,
-  DEFAULT_OPACITY,
-  COLLECTION_DIR_NAME,
-} from "./constants";
-
+import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
+import { getBranches } from "./nodesUtils";
+import { Node as FlowNode } from "react-flow-renderer";
+import { v4 as uuid } from "uuid";
 export class Factory {
   buildDir: string;
 
@@ -40,11 +39,6 @@ export class Factory {
   traitsBuffer: Map<string, Buffer>;
 
   secrets: Secrets;
-
-  imagesCid: string;
-  notRevealedImageCid: string;
-  metadataCid: string;
-  notRevealedMetadataCid: string;
 
   constructor(public configuration: Configuration, public projectDir: string) {
     this.buildDir = path.join(this.projectDir, BUILD_DIR_NAME);
@@ -62,17 +56,8 @@ export class Factory {
     if (!fs.existsSync(path.join(this.buildDir, "images")))
       fs.mkdirSync(path.join(this.buildDir, "images"));
 
-    if (!fs.existsSync(path.join(this.buildDir, "images", COLLECTION_DIR_NAME)))
-      fs.mkdirSync(path.join(this.buildDir, "images", COLLECTION_DIR_NAME));
-
     if (!fs.existsSync(path.join(this.buildDir, "json")))
       fs.mkdirSync(path.join(this.buildDir, "json"));
-
-    if (!fs.existsSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME)))
-      fs.mkdirSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME));
-
-    if (!fs.existsSync(path.join(this.buildDir, "not_revealed")))
-      fs.mkdirSync(path.join(this.buildDir, "not_revealed"));
   }
 
   private async _ensureLayers() {
@@ -137,10 +122,11 @@ export class Factory {
     this.secrets = secrets;
   }
 
+  reloadConfiguration(configuration: Configuration) {
+    this.configuration = configuration;
+  }
+
   reloadLayers() {
-    // this.layerByName.clear();
-    // this.traitsByLayerName.clear();
-    // this.traitsBuffer.clear();
     this._ensureLayers();
   }
 
@@ -152,12 +138,53 @@ export class Factory {
     return this.traitsByLayerName.get(layerName);
   }
 
-  generateCollection(
-    keys: string[],
-    nTraits: Trait[][],
-    branchesNs: Record<string, number>,
-    bundlesInfo: BundlesInfo
-  ) {
+  makeGeneration(name: string, template: Template): Generation {
+    interface LayerNodeComponentData {
+      urls?: Record<string, string>;
+      trait: Trait;
+      id: string;
+      name: string;
+      opacity: number;
+      blending: string;
+    }
+
+    const { nodes, edges, ns, ignored } = template;
+
+    const nData = (
+      getBranches(nodes, edges).map((branch) =>
+        branch.slice(1, -1)
+      ) as FlowNode<LayerNodeComponentData>[][]
+    ).map((branch) => branch.map((node) => node.data));
+    let keys = nData
+      .map((branch) =>
+        branch.map((data) => ({
+          ...data.trait,
+          id: data.id,
+        }))
+      )
+      .map(hash);
+
+    const nTraits: Trait[][] = nData
+      .map((branch) =>
+        branch.map((data) => ({
+          ...data.trait,
+          id: data.id,
+          opacity: data.opacity,
+          blending: data.blending,
+        }))
+      )
+      .filter((_, i) => !ignored.includes(keys[i]));
+
+    keys = keys.filter((key) => !ignored.includes(key));
+
+    const bundlesInfo: BundlesInfo = nodes
+      .filter((node) => node.type === "bundleNode")
+      .map((node) => node.data)
+      .map((data) => ({
+        name: data.name,
+        ids: data.ids,
+      }));
+
     const computeTraitsNs = (
       _nTraits: Trait[][],
       _branchesNs: Record<string, number>
@@ -215,15 +242,15 @@ export class Factory {
       return cache;
     };
 
-    const traitsNs = computeTraitsNs(nTraits, branchesNs);
-    const bundlesNs = computeBundlesNs(bundlesInfo, branchesNs);
+    const traitsNs = computeTraitsNs(nTraits, ns);
+    const bundlesNs = computeBundlesNs(bundlesInfo, ns);
     const cache = computeCache(nTraits, traitsNs);
     const collection: Collection = [];
     const bundles: Bundles = [];
 
     let i = 1;
     for (const [index, traits] of nTraits.entries()) {
-      const n = branchesNs[keys[index]];
+      const n = ns[keys[index]];
 
       let nTraits = Array.from({ length: n }, () => []);
       for (const trait of traits)
@@ -258,7 +285,7 @@ export class Factory {
       collection.push(...collectionItems);
     }
 
-    return { collection, bundles };
+    return { id: uuid(), name, collection, bundles };
   }
 
   computeMaxCombinations(layers: Layer[]) {
@@ -353,10 +380,10 @@ export class Factory {
   }
 
   async generateImages(
-    name: string,
-    collection: Collection,
+    generation: Generation,
     callback?: (name: string) => void
   ) {
+    const { name, collection } = generation;
     if (!fs.existsSync(path.join(this.buildDir, "images", name)))
       fs.mkdirSync(path.join(this.buildDir, "images", name));
 
@@ -441,6 +468,184 @@ export class Factory {
       JSON.stringify(metadatas)
     );
   }
+
+  // factoryDeployAssets = async (
+  //   id: string,
+  //   secrets: Secrets,
+  //   name: string,
+  //   collection: Collection,
+  //   configuration: Configuration,
+  //   partialDeploy: any
+  // ) => {
+  //   let imagesCid, metadataCid, notRevealedImageCid, notRevealedMetadataCid;
+
+  //   // await factoryLoadSecrets(id, secrets);
+
+  //   // try {
+  //   //   imagesCid = partialDeploy
+  //   //     ? partialDeploy.imagesCid
+  //   //     : await factoryDeployImages(id);
+
+  //   //   if (!partialDeploy) await factoryGenerateMetadata(id, name, collection, []);
+
+  //   //   metadataCid = partialDeploy
+  //   //     ? partialDeploy.metadataCid
+  //   //     : await factoryDeployMetadata(id);
+
+  //   //   notRevealedImageCid =
+  //   //     configuration.contractType === "721_reveal_pause"
+  //   //       ? ((await factoryDeployNotRevealedImage(id)) as string)
+  //   //       : undefined;
+
+  //   //   notRevealedMetadataCid =
+  //   //     configuration.contractType === "721_reveal_pause"
+  //   //       ? ((await factoryDeployNotRevealedMetadata(id)) as string)
+  //   //       : undefined;
+  //   // } catch (error) {
+  //   //   throw FormattedError(4, "Could not deploy assets", {
+  //   //     // collection,
+  //   //     imagesCid,
+  //   //     metadataCid,
+  //   //     message: error.message,
+  //   //   });
+  //   // }
+
+  //   return {
+  //     imagesCid,
+  //     metadataCid,
+  //     notRevealedImageCid,
+  //     notRevealedMetadataCid,
+  //   };
+  // };
+
+  // deploy721 = async (
+  //   contractFactory: ContractFactory,
+  //   configuration: Configuration,
+  //   metadataCid: string
+  // ) =>
+  //   await contractFactory.deploy(
+  //     configuration.name,
+  //     configuration.symbol,
+  //     `ipfs://${metadataCid}/`,
+  //     utils.parseEther(`${configuration.cost}`),
+  //     10, // configuration.n, // ! TODO
+  //     configuration.maxMintAmount
+  //   );
+
+  // deploy721_reveal_pause = async (
+  //   contractFactory: ContractFactory,
+  //   configuration: Configuration,
+  //   metadataCid: string,
+  //   notRevealedImageCid: string
+  // ) =>
+  //   await contractFactory.deploy(
+  //     configuration.name,
+  //     configuration.symbol,
+  //     `ipfs://${metadataCid}/`,
+  //     `ipfs://${notRevealedImageCid}`,
+  //     utils.parseEther(`${configuration.cost}`),
+  //     10, // configuration.n, // ! TODO
+  //     configuration.maxMintAmount
+  //   );
+
+  // factoryDeployContract = async (
+  //   id: string,
+  //   configuration: Configuration,
+  //   network: Network,
+  //   signer: Signer,
+  //   metadataCid: string,
+  //   notRevealedMetadataCid: string
+  // ) => {
+  //   let contracts;
+  //   try {
+  //     ({ contracts } = await getContract(configuration.contractType));
+  //   } catch (error) {
+  //     throw FormattedError(5, "Could not get contract", {
+  //       message: error.message,
+  //     });
+  //   }
+
+  //   const { NFT } = contracts[configuration.contractType];
+  //   const metadata = JSON.parse(NFT.metadata);
+  //   const { version: compilerVersion } = metadata.compiler;
+
+  //   const { abi } = NFT;
+  //   const { evm } = NFT;
+  //   const { bytecode } = evm;
+  //   const contractFactory = new ContractFactory(abi, bytecode, signer);
+
+  //   let contract;
+  //   try {
+  //     contract =
+  //       configuration.contractType === ContractType.ERC721
+  //         ? await deploy721(contractFactory, configuration, metadataCid)
+  //         : configuration.contractType === ContractType.ERC721_REVEAL_PAUSE
+  //         ? await deploy721_reveal_pause(
+  //             contractFactory,
+  //             configuration,
+  //             metadataCid,
+  //             notRevealedMetadataCid
+  //           )
+  //         : null;
+  //     // : await deploy1155(
+  //     //     contractFactory,
+  //     //     configuration as Configuration1155,
+  //     //     metadataCid
+  //     //   );
+  //   } catch (error) {
+  //     throw FormattedError(6, "Could not deploy contract", {
+  //       // configuration,
+  //       message: error.message,
+  //     });
+  //   }
+
+  //   const contractAddress = contract.address;
+  //   const transactionHash = contract.deployTransaction.hash;
+
+  //   return {
+  //     contractAddress,
+  //     abi,
+  //     compilerVersion,
+  //     transactionHash,
+  //     wait: contract.deployTransaction.wait(),
+  //   };
+  // };
+
+  // ipcAsyncTask("getContract", async (name) => {
+  //   const content = await fs.promises.readFile(
+  //     path.join(__dirname, "contracts", `${name}.sol`),
+  //     {
+  //       encoding: "utf8",
+  //     }
+  //   );
+  //   const input = {
+  //     language: "Solidity",
+  //     sources: {
+  //       [name]: {
+  //         content,
+  //       },
+  //     },
+  //     settings: {
+  //       outputSelection: {
+  //         "*": {
+  //           "*": ["*"],
+  //         },
+  //       },
+  //     },
+  //   };
+  //   return JSON.parse(solc.compile(JSON.stringify(input)));
+  // });
+
+  // ipcAsyncTask(
+  //   "getContractSource",
+  //   async (name) =>
+  //     await fs.promises.readFile(
+  //       path.join(__dirname, "contracts", `${name}.sol`),
+  //       {
+  //         encoding: "utf8",
+  //       }
+  //     )
+  // );
 
   async deployNotRevealedImage(generation: Generation) {
     const { IpfsHash } = await pinFileToIPFS(
@@ -622,7 +827,7 @@ export class Factory {
         choose(this.traitsByLayerName.get(trait.name))
       ),
     }));
-    await this.generateImages(name, newItems);
+    await this.generateImages({ name, collection: newItems } as Generation);
     const newCollectionItemsByName = new Map(
       newItems.map((item) => [item.name, item])
     );

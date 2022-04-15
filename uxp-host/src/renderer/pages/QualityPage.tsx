@@ -17,8 +17,8 @@ import { UXPContext } from "../components/UXPContext";
 import { Bundles, Collection, CollectionItem, Instance } from "../typings";
 import {
   factoryGetImage,
-  factoryRegenerateCollectionItems,
-  factoryRemoveCollectionItems,
+  factoryRegenerateItems,
+  factoryRemoveItems,
   openInExplorer,
 } from "../ipc";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
@@ -300,7 +300,7 @@ export const QualityPage = () => {
   };
 
   const onRegenerateRepeated = async () => {
-    const _collection = await factoryRegenerateCollectionItems(
+    const _collection = await factoryRegenerateItems(
       id,
       _generation,
       computeRepeatedCollection()
@@ -362,7 +362,7 @@ export const QualityPage = () => {
   const onSelect = (i: number) => setSelectedCollectionItem(i);
 
   const onRegenerate = async (i: number) => {
-    const _collection = await factoryRegenerateCollectionItems(
+    const _collection = await factoryRegenerateItems(
       id,
       _generation,
       [filteredCollection[i]]
@@ -393,7 +393,7 @@ export const QualityPage = () => {
       (name) =>
         collection.find((collectionItem) => collectionItem.name === name)
     );
-    const _collection = await factoryRemoveCollectionItems(
+    const _collection = await factoryRemoveItems(
       id,
       _generation,
       _collectionItemsToRemove

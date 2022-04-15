@@ -2,10 +2,7 @@ import {
   Node as FlowNode,
   Edge as FlowEdge,
   getOutgoers,
-  isNode,
 } from "react-flow-renderer";
-import { LayerNodeComponentData } from "./components/LayerNode";
-import { Trait } from "./typings";
 
 export function getBranches(
   nodes: FlowNode[],

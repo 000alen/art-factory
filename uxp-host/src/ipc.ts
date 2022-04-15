@@ -24,6 +24,7 @@ import {
   Layer,
   MetadataItem,
   Secrets,
+  Template,
   Trait,
 } from "./typings";
 import NodeWalletConnect from "@walletconnect/node";
@@ -111,9 +112,34 @@ const ipcSetterAndGetter = (
 };
 // #endregion
 
-const factories: Record<string, Factory> = {};
+// #region Property
+ipcSetterAndGetter("pinataApiKey", setPinataApiKey, getPinataApiKey);
+
+ipcSetterAndGetter(
+  "pinataSecretApiKey",
+  setPinataSecretApiKey,
+  getPinataSecretApiKey
+);
+
+ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
+
+ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
+// #endregion
 
 // #region General
+ipcAsyncTask(
+  "showOpenDialog",
+  async (options) => await dialog.showOpenDialog(options)
+);
+
+ipcTask("openInExplorer", (paths: string[]) =>
+  shell.openPath(path.join(...paths))
+);
+// #endregion
+
+// #region Factory
+export const factories: Record<string, Factory> = {};
+
 ipcAsyncTask("readProjectInstance", async (projectDir: string) =>
   JSON.parse(
     await fs.promises.readFile(
@@ -143,113 +169,6 @@ ipcTask("readProjectAvailableLayers", (projectDir: string) =>
 
 ipcTask("hasFactory", (id: string) => id in factories);
 
-ipcAsyncTask("writeFile", async (file, data, options) => {
-  await fs.promises.writeFile(file, data, options);
-  return true;
-});
-
-ipcAsyncTask("mkDir", async (path, options) => {
-  await fs.promises.mkdir(path, options);
-  return true;
-});
-
-ipcAsyncTask(
-  "showOpenDialog",
-  async (options) => await dialog.showOpenDialog(options)
-);
-
-ipcAsyncTask(
-  "showSaveDialog",
-  async (options) => await dialog.showSaveDialog(options)
-);
-
-ipcTask("name", (inputDir) => name(inputDir));
-
-ipcTask("sizeOf", (inputDir) => sizeOf(inputDir));
-
-ipcAsyncTask("isValidInputDir", async (inputDir: string) => {
-  const layersNames = (await fs.promises.readdir(inputDir)).filter(
-    (file) => !file.startsWith(".")
-  );
-
-  if (layersNames.length === 0) return false;
-
-  for (const layerName of layersNames) {
-    const layerPath = path.join(inputDir, layerName);
-    const isDir = (await fs.promises.lstat(layerPath)).isDirectory();
-    if (!isDir) return false;
-    const layerElements = (await fs.promises.readdir(layerPath)).filter(
-      (file) => !file.startsWith(".")
-    );
-    for (const layerElement of layerElements) {
-      const elementPath = path.join(layerPath, layerElement);
-      const isFile = (await fs.promises.lstat(elementPath)).isFile();
-      if (!isFile) return false;
-      const ext = path.parse(elementPath).ext;
-      if (ext !== ".png" && ext !== ".gif") return false;
-    }
-  }
-  return true;
-});
-
-ipcAsyncTask("getContract", async (name) => {
-  const content = await fs.promises.readFile(
-    path.join(__dirname, "contracts", `${name}.sol`),
-    {
-      encoding: "utf8",
-    }
-  );
-
-  const input = {
-    language: "Solidity",
-    sources: {
-      [name]: {
-        content,
-      },
-    },
-    settings: {
-      outputSelection: {
-        "*": {
-          "*": ["*"],
-        },
-      },
-    },
-  };
-
-  return JSON.parse(solc.compile(JSON.stringify(input)));
-});
-
-ipcTask("openInExplorer", (paths: string[]) =>
-  shell.openPath(path.join(...paths))
-);
-
-ipcAsyncTask(
-  "getContractSource",
-  async (name) =>
-    await fs.promises.readFile(
-      path.join(__dirname, "contracts", `${name}.sol`),
-      {
-        encoding: "utf8",
-      }
-    )
-);
-
-ipcTask("getOutputDir", (inputDir) => path.join(inputDir, ".build"));
-
-ipcSetterAndGetter("pinataApiKey", setPinataApiKey, getPinataApiKey);
-
-ipcSetterAndGetter(
-  "pinataSecretApiKey",
-  setPinataSecretApiKey,
-  getPinataSecretApiKey
-);
-
-ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
-
-ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
-// #endregion
-
-// #region Factory
 ipcTask(
   "createFactory",
   (id: string, configuration: Configuration, projectDir: string) => {
@@ -275,14 +194,9 @@ ipcTaskWithRequestId(
 );
 
 ipcTask(
-  "factoryGenerateCollection",
-  (
-    id: string,
-    keys: string[],
-    nTraits: Trait[][],
-    ns: Record<string, number>,
-    bundlesInfo: BundlesInfo
-  ) => factories[id].generateCollection(keys, nTraits, ns, bundlesInfo)
+  "factoryMakeGeneration",
+  (id: string, name: string, template: Template) =>
+    factories[id].makeGeneration(name, template)
 );
 
 ipcTaskWithRequestId(
@@ -303,10 +217,9 @@ ipcTaskWithProgress(
   async (
     onProgress: (name: string) => void,
     id: string,
-    name: string,
-    collection: Collection
+    generation: Generation
   ) => {
-    await factories[id].generateImages(name, collection, onProgress);
+    await factories[id].generateImages(generation, onProgress);
     return true;
   }
 );
@@ -380,13 +293,13 @@ ipcAsyncTask(
 );
 
 ipcAsyncTask(
-  "factoryRemoveCollectionItems",
+  "factoryRemoveItems",
   async (id: string, generation: Generation, items: Collection) =>
     await factories[id].removeItems(generation, items)
 );
 
 ipcAsyncTask(
-  "factoryRegenerateCollectionItems",
+  "factoryRegenerateItems",
   async (id: string, generation: Generation, items: Collection) =>
     await factories[id].regenerateItems(generation, items)
 );
@@ -418,7 +331,7 @@ ipcAsyncTask(
 // #endregion
 
 // #region Provider
-const providers: Record<string, WalletConnectProvider> = {};
+export const providers: Record<string, WalletConnectProvider> = {};
 
 /*
 -> createProvider
@@ -458,7 +371,6 @@ ipcMain.on("createProvider", async (event, id: string) => {
   const uri = connector.uri;
   event.reply("createProviderUri", { id, uri });
 });
-// #endregion
 
 // try {
 //   const seaport = new OpenSeaPort(web3.currentProvider, {
@@ -472,3 +384,5 @@ ipcMain.on("createProvider", async (event, id: string) => {
 // } catch (e) {
 //   console.error(e);
 // }
+
+// #endregion
