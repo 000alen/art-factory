@@ -16,6 +16,7 @@ export function HomePage() {
         projectDir,
         instance,
         id,
+        dirty: true,
       },
     });
   });
@@ -28,6 +29,7 @@ export function HomePage() {
         projectDir,
         instance,
         id,
+        dirty: false,
       },
     });
   });

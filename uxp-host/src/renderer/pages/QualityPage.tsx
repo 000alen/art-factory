@@ -37,6 +37,7 @@ interface QualityPageState {
   instance: Instance;
   id: string;
   generationId: string;
+  dirty: boolean;
 }
 
 type Filters = Record<string, string[]>;
@@ -59,8 +60,16 @@ export const QualityPage = () => {
   const { state } = useLocation();
   const task = useErrorHandler();
 
-  const { projectDir, instance, id, generationId } = state as QualityPageState;
+  const {
+    projectDir,
+    instance,
+    id,
+    generationId,
+    dirty: _dirty,
+  } = state as QualityPageState;
   const { configuration, generations } = instance;
+
+  const [dirty, setDirty] = useState(_dirty);
 
   const [name] = useState(
     generations.find((generation) => generation.id === generationId).name
@@ -103,16 +112,7 @@ export const QualityPage = () => {
   const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () =>
-      navigate("/factory", {
-        state: {
-          projectDir,
-          instance,
-          id,
-        },
-      })
-    );
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
     toolbarContext.addButton(
       "open-explorer",
       "Open in Explorer",
@@ -135,7 +135,6 @@ export const QualityPage = () => {
     };
 
     return () => {
-      toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
       toolbarContext.removeButton("open-explorer");
 
@@ -242,6 +241,9 @@ export const QualityPage = () => {
       setBundleSItems(bundlesItems);
     })();
   }, [filteredBundles, bundlesCursor]);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const reload = (name: string, url: string) =>
     setCollectionItems((prevItems) =>
@@ -418,6 +420,7 @@ export const QualityPage = () => {
         projectDir,
         instance: { ...instance, generations },
         id,
+        dirty,
       },
     });
   });

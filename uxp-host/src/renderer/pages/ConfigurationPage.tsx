@@ -18,6 +18,7 @@ interface ConfigurationPageState {
   projectDir: string;
   instance: Instance;
   id: string;
+  dirty: boolean;
 }
 
 export function ConfigurationPage() {
@@ -25,8 +26,15 @@ export function ConfigurationPage() {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id } = state as ConfigurationPageState;
+  const {
+    projectDir,
+    instance,
+    id,
+    dirty: _dirty,
+  } = state as ConfigurationPageState;
   const { configuration } = instance;
+
+  const [dirty, setDirty] = useState(_dirty);
 
   // ConfigurationBase
   const [name, setName] = useState(configuration.name);
@@ -53,17 +61,13 @@ export function ConfigurationPage() {
   const [layers, setLayers] = useState(configuration.layers);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () =>
-      navigate("/factory", { state: { projectDir, instance, id } })
-    );
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     task("available layers", async () => {
       setAvailableLayers(await readProjectAvailableLayers(projectDir));
     })();
 
     return () => {
-      toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
     };
   }, []);
@@ -71,6 +75,9 @@ export function ConfigurationPage() {
   const setDefaultBackground = (color: any) => {
     _setDefaultBackground(color);
   };
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onSave = () => {
     const configuration: Configuration = {
@@ -100,6 +107,7 @@ export function ConfigurationPage() {
           configuration,
         },
         id,
+        dirty,
       },
     });
   };

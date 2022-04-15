@@ -29,35 +29,30 @@ interface InstancePageState {
   projectDir: string;
   instance: Instance;
   id: string;
+  dirty: boolean;
 }
-
 
 export function InstancePage() {
   const toolbarContext = useContext(ToolbarContext);
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id } = state as InstancePageState;
+  const {
+    projectDir,
+    instance,
+    id,
+    dirty: _dirty,
+  } = state as InstancePageState;
   const { configuration, deployment } = instance;
+
+  const [dirty, setDirty] = useState(_dirty);
 
   const [isWorking, setIsWorking] = useState(false);
   const [contract, setContract] = useState(null);
   const [outputs, setOutputs] = useState([]);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () =>
-      navigate("/factory", {
-        state: {
-          projectDir,
-          instance,
-          id,
-        },
-      })
-    );
-    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
-      localStorage.clear()
-    );
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     // task("loading secrets", async () => {
     //   const secrets = await loadSecrets();
@@ -74,11 +69,12 @@ export function InstancePage() {
     // })();
 
     return () => {
-      toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
-      toolbarContext.removeButton("logOut");
     };
   }, []);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const addOutput = (output: {
     title: string;

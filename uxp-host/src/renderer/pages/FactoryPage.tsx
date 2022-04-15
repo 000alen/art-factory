@@ -16,7 +16,7 @@ import {
 import React, { useContext, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ToolbarContext } from "../components/Toolbar";
-import { Configuration, Instance, Trait } from "../typings";
+import { Instance, Trait } from "../typings";
 import {
   createFactory,
   factoryComposeTraits,
@@ -50,6 +50,7 @@ interface FactoryPageState {
   projectDir: string;
   instance: Instance;
   id: string;
+  dirty: boolean;
 }
 
 interface GenerationItemProps {
@@ -62,8 +63,9 @@ export const FactoryPage: React.FC = () => {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id } = state as FactoryPageState;
+  const { projectDir, instance, id, dirty: _dirty } = state as FactoryPageState;
 
+  const [dirty, setDirty] = useState(_dirty);
   const [configuration, setConfiguration] = useState(instance.configuration);
   const [templates, setTemplates] = useState(instance.templates);
   const [generations, setGenerations] = useState(instance.generations);
@@ -151,13 +153,14 @@ export const FactoryPage: React.FC = () => {
     [generations]
   );
 
-  const onSave = () => {
-    writeProjectInstance(projectDir, {
+  const onSave = async () => {
+    await writeProjectInstance(projectDir, {
       ...instance,
       configuration,
       templates,
       generations,
     });
+    setDirty(false);
   };
 
   const onConfiguration = () => {
@@ -171,6 +174,7 @@ export const FactoryPage: React.FC = () => {
           generations,
         },
         id,
+        dirty,
       },
     });
   };
@@ -187,6 +191,7 @@ export const FactoryPage: React.FC = () => {
         },
         id,
         templateId,
+        dirty,
       },
     });
   };
@@ -203,6 +208,7 @@ export const FactoryPage: React.FC = () => {
         },
         id,
         templateId,
+        dirty,
       },
     });
   };
@@ -219,6 +225,7 @@ export const FactoryPage: React.FC = () => {
         },
         id,
         generationId,
+        dirty,
       },
     });
   };
@@ -234,6 +241,7 @@ export const FactoryPage: React.FC = () => {
           generations,
         },
         id,
+        dirty,
       },
     });
   };
@@ -249,6 +257,7 @@ export const FactoryPage: React.FC = () => {
           generations,
         },
         id,
+        dirty,
       },
     });
   };
@@ -338,6 +347,7 @@ export const FactoryPage: React.FC = () => {
         bundles,
       },
     ]);
+    setDirty(true);
   };
 
   return (
@@ -430,7 +440,9 @@ export const FactoryPage: React.FC = () => {
         <Flex height="100%" direction="column" justifyContent="space-between">
           <Flex direction="column" gap="size-100">
             <Flex gap="size-100" alignItems="center">
-              <Heading level={1}>{configuration.name}</Heading>
+              <Heading level={1}>
+                {dirty && "*"} {configuration.name}
+              </Heading>
 
               <ActionButton onPress={onConfiguration}>
                 <Settings />

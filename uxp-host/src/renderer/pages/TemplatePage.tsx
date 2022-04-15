@@ -29,6 +29,7 @@ interface TemplatePageState {
   instance: Instance;
   id: string;
   templateId?: string;
+  dirty: boolean;
 }
 
 export function TemplatePage() {
@@ -36,8 +37,16 @@ export function TemplatePage() {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id, templateId } = state as TemplatePageState;
+  const {
+    projectDir,
+    instance,
+    id,
+    templateId,
+    dirty: _dirty,
+  } = state as TemplatePageState;
   const { configuration, templates } = instance;
+
+  const [dirty, setDirty] = useState(_dirty);
 
   const [workingId] = useState(templateId || uuid());
   const [name, setName] = useState(
@@ -71,10 +80,7 @@ export function TemplatePage() {
   const getterRef = useRef<() => NodesInstance>(null);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () =>
-      navigate("/factory", { state: { projectDir, instance, id } })
-    );
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     task("loading preview", async () => {
       if (traits.length > 0) return;
@@ -95,10 +101,12 @@ export function TemplatePage() {
     })();
 
     return () => {
-      toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
     };
   }, []);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onSave = () => {
     const { nodes, edges, renderIds, ns, ignored } = getterRef.current();
@@ -123,7 +131,7 @@ export function TemplatePage() {
     templates = JSON.parse(JSON.stringify(templates));
 
     navigate("/factory", {
-      state: { projectDir, instance: { ...instance, templates }, id },
+      state: { projectDir, instance: { ...instance, templates }, id, dirty },
     });
   };
 

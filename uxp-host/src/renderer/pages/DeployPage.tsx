@@ -29,6 +29,7 @@ interface DeployPageState {
   projectDir: string;
   instance: Instance;
   id: string;
+  dirty: boolean;
 }
 
 // TODO: Verify the contract
@@ -39,8 +40,10 @@ export function DeployPage() {
 
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id } = state as DeployPageState;
-  const { configuration, generations } = instance;
+  const { projectDir, instance, id, dirty: _dirty } = state as DeployPageState;
+  const { configuration } = instance;
+
+  const [dirty, setDirty] = useState(_dirty);
 
   const [imagesCid, setImagesCid] = useState("");
   const [metadataCid, setMetadataCid] = useState("");
@@ -58,19 +61,7 @@ export function DeployPage() {
   // useEffect(() => () => clearTimeout(timerId), [timerId]);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () =>
-      navigate("/factory", {
-        state: {
-          projectDir,
-          instance,
-          id,
-        },
-      })
-    );
-    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
-      localStorage.clear()
-    );
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     // task("loading secrets", async () => {
     //   const secrets = await loadSecrets();
@@ -84,11 +75,12 @@ export function DeployPage() {
     // })();
 
     return () => {
-      toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
-      toolbarContext.removeButton("logOut");
     };
   }, [networkKey]);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onDeploy = task("deployment", async () => {
     // setIsWorking(true);

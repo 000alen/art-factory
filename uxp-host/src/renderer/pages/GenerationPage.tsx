@@ -34,6 +34,7 @@ interface GenerationPageState {
   instance: Instance;
   id: string;
   templateId: string;
+  dirty: boolean;
 }
 
 // youtube_url
@@ -46,8 +47,16 @@ export const GenerationPage: React.FC = () => {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id, templateId } = state as GenerationPageState;
+  const {
+    projectDir,
+    instance,
+    id,
+    templateId,
+    dirty: _dirty,
+  } = state as GenerationPageState;
   const { templates } = instance;
+
+  const [dirty, setDirty] = useState(_dirty);
 
   const [templateName] = useState(
     templates.find((template) => template.id === templateId).name
@@ -64,13 +73,9 @@ export const GenerationPage: React.FC = () => {
   const [currentGeneration, setCurrentGeneration] = useState(0);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("back", "Back", <Back />, () =>
-      navigate("/factory", { state: { projectDir, instance, id } })
-    );
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     return () => {
-      toolbarContext.removeButton("close");
       toolbarContext.removeButton("back");
     };
   }, []);
@@ -99,6 +104,9 @@ export const GenerationPage: React.FC = () => {
   }, []);
 
   const updateUrlThreshold = useMemo(() => Math.ceil(n / 3), []);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onProgress = async (n: string) => {
     const updateUrl = async () =>
@@ -151,6 +159,7 @@ export const GenerationPage: React.FC = () => {
         projectDir,
         instance: { ...instance, generations },
         id,
+        dirty,
       },
     });
   };
