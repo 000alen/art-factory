@@ -43,7 +43,7 @@ import { CustomField, TaskItem } from "../components/TaskItem";
 import { AAA } from "../ipc";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 import { ArrayOf } from "../components/ArrayOf";
-import { unifyGenerations } from "../commands";
+import { removeGeneration, unifyGenerations } from "../commands";
 import { v4 as uuid } from "uuid";
 
 interface FactoryPageState {
@@ -263,22 +263,28 @@ export const FactoryPage: React.FC = () => {
   };
 
   const onTemplateAction = (message: string) => {
-    const [action, id] = message.split("_");
+    const [action, name] = message.split("_");
     switch (action) {
       case "edit":
-        onTemplate(id);
+        onTemplate(templates.find((t) => t.name === name).id);
         break;
       case "generate":
-        onGeneration(id);
+        onGeneration(templates.find((t) => t.name === name).id);
+        break;
+      case "remove":
+        onRemoveTemplateCommand(name);
         break;
     }
   };
 
   const onQualityAction = (message: string) => {
-    const [action, id] = message.split("_");
+    const [action, name] = message.split("_");
     switch (action) {
       case "edit":
-        onQuality(id);
+        onQuality(generations.find((g) => g.name === name).id);
+        break;
+      case "remove":
+        onRemoveGenerationCommand(name);
         break;
     }
   };
@@ -350,6 +356,24 @@ export const FactoryPage: React.FC = () => {
     setDirty(true);
   };
 
+  const onRemoveTemplateCommand = async (name: string) => {
+    setTemplates((prevTemplates) =>
+      prevTemplates.filter((t) => t.name !== name)
+    );
+    setDirty(true);
+  };
+
+  const onRemoveGenerationCommand = async (name: string) => {
+    await removeGeneration(
+      id,
+      generations.find((g) => g.name === name)
+    );
+    setGenerations((prevGenerations) =>
+      prevGenerations.filter((g) => g.name !== name)
+    );
+    setDirty(true);
+  };
+
   return (
     <Grid
       areas={["left right"]}
@@ -386,13 +410,13 @@ export const FactoryPage: React.FC = () => {
                     )}
                     <Heading>{template.name}</Heading>
                     <ActionGroup onAction={onTemplateAction} isJustified>
-                      <Item key={`edit_${template.id}`}>
+                      <Item key={`edit_${template.name}`}>
                         <Edit />
                       </Item>
-                      <Item key={`generate_${template.id}`}>
+                      <Item key={`generate_${template.name}`}>
                         <Hammer />
                       </Item>
-                      <Item key="close">
+                      <Item key={`remove_${template.name}`}>
                         <Close />
                       </Item>
                     </ActionGroup>
@@ -421,10 +445,10 @@ export const FactoryPage: React.FC = () => {
                     )}
                     <Heading>{generation.name}</Heading>
                     <ActionGroup onAction={onQualityAction} isJustified>
-                      <Item key={`edit_${generation.id}`}>
+                      <Item key={`edit_${generation.name}`}>
                         <Edit />
                       </Item>
-                      <Item>
+                      <Item key={`remove_${generation.name}`}>
                         <Close />
                       </Item>
                     </ActionGroup>

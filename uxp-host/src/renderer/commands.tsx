@@ -5,6 +5,7 @@ import {
   factoryGenerateCollection,
   factoryGenerateImages,
   factoryGenerateMetadata,
+  factoryRemove,
   factoryUnify,
   readProjectInstance,
   showOpenDialog,
@@ -126,4 +127,8 @@ export const unifyGenerations = async (
 ): Promise<{ collection: Collection; bundles: Bundles }> => {
   const { collection, bundles } = await factoryUnify(id, name, generations);
   return { collection, bundles };
+};
+
+export const removeGeneration = async (id: string, generation: Generation) => {
+  await factoryRemove(id, generation);
 };

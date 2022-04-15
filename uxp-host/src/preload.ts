@@ -52,6 +52,7 @@ const sendWhitelist = [
   "factoryDeployNotRevealedImage",
   "factoryDeployNotRevealedMetadata",
   "factoryUnify",
+  "factoryRemove",
   "AAA",
 ];
 
@@ -110,6 +111,8 @@ const onWhitelist = [
   "factoryDeployNotRevealedImageResult",
   "factoryDeployNotRevealedMetadataResult",
   "factoryUnifyResult",
+  "factoryRemoveResult",
+
   "AAAResult",
 ];
 

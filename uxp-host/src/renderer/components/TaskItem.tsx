@@ -136,7 +136,13 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
         <Button variant="secondary" onPress={onHideDialog}>
           Close
         </Button>
-        <Button variant="cta" onPress={() => onRun(state)}>
+        <Button
+          variant="cta"
+          onPress={() => {
+            onRun(state);
+            onHideDialog();
+          }}
+        >
           Run
         </Button>
       </ButtonGroup>

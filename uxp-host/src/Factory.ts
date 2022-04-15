@@ -763,4 +763,15 @@ export class Factory {
 
     return { collection: unifiedCollection, bundles: unifiedBundles };
   }
+
+  async remove(generation: Generation) {
+    await fs.promises.rm(path.join(this.buildDir, "images", generation.name), {
+      recursive: true,
+      force: true,
+    });
+    await fs.promises.rm(path.join(this.buildDir, "json", generation.name), {
+      recursive: true,
+      force: true,
+    });
+  }
 }

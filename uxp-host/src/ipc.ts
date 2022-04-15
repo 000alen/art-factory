@@ -458,6 +458,12 @@ ipcAsyncTask(
     await factories[id].unify(name, generations)
 );
 
+ipcAsyncTask(
+  "factoryRemove",
+  async (id: string, generation: Generation) =>
+    await factories[id].remove(generation)
+);
+
 // #endregion
 
 ipcAsyncTask("AAA", async () => {

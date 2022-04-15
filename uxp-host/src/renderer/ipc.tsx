@@ -347,6 +347,9 @@ export const factoryUnify = (
     bundles: Bundles;
   }>;
 
+export const factoryRemove = (id: string, generation: Generation) =>
+  ipcTask("factoryRemove")(id, generation);
+
 // #endregion
 
 export const AAA = () => ipcTask("AAA")() as Promise<string>;
