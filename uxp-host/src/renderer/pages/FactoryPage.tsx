@@ -10,11 +10,13 @@ import {
   Text,
   ButtonGroup,
   repeat,
+  MenuTrigger,
+  Menu,
 } from "@adobe/react-spectrum";
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ToolbarContext } from "../components/Toolbar";
-import { Instance, Trait } from "../typings";
+import { Configuration, Instance, Trait } from "../typings";
 import {
   createFactory,
   factoryComposeTraits,
@@ -37,12 +39,22 @@ import { LayerNodeComponentData } from "../components/LayerNode";
 import { Node as FlowNode } from "react-flow-renderer";
 import { MAX_SIZE } from "../constants";
 import { ImageItem } from "../components/ImageItem";
-import { TaskItem } from "../components/TaskItem";
+import { CustomField, TaskItem } from "../components/TaskItem";
+import { AAA } from "../ipc";
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
+import { ArrayOf } from "../components/ArrayOf";
+import { unifyGenerations } from "../commands";
+import { v4 as uuid } from "uuid";
 
 interface FactoryPageState {
   projectDir: string;
   instance: Instance;
   id: string;
+}
+
+interface GenerationItemProps {
+  value: string;
+  onChange: (value: string) => void;
 }
 
 export const FactoryPage: React.FC = () => {
@@ -51,16 +63,17 @@ export const FactoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { projectDir, instance, id } = state as FactoryPageState;
-  const { configuration } = instance;
+
+  const [configuration, setConfiguration] = useState(instance.configuration);
+  const [templates, setTemplates] = useState(instance.templates);
+  const [generations, setGenerations] = useState(instance.generations);
 
   const [templatesPreviews, setTemplatesPreviews] = useState<string[]>(null);
   const [generationPreviews, setGenerationPreviews] = useState<string[]>(null);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("save", "Save", <SaveFloppy />, () =>
-      writeProjectInstance(projectDir, instance)
-    );
+    toolbarContext.addButton("save", "Save", <SaveFloppy />, () => onSave());
     toolbarContext.addButton(
       "open-explorer",
       "Open in Explorer",
@@ -70,12 +83,21 @@ export const FactoryPage: React.FC = () => {
       }
     );
 
+    return () => {
+      toolbarContext.removeButton("close");
+      toolbarContext.removeButton("save");
+      toolbarContext.removeButton("open-explorer");
+    };
+  }, []);
+
+  useEffect(() => {
     task("factory", async () => {
+      // ! TODO: Update factory
       if (!(await hasFactory(id)))
         await createFactory(id, configuration, projectDir);
 
       const templatesBase64Strings = await Promise.all(
-        instance.templates.map(async ({ nodes, edges }) => {
+        templates.map(async ({ nodes, edges }) => {
           const nData = (
             getBranches(nodes, edges).map((branch) =>
               branch.slice(1, -1)
@@ -101,7 +123,7 @@ export const FactoryPage: React.FC = () => {
       );
 
       const generationBase64Strings = await Promise.all(
-        instance.generations.map(async ({ name, collection }) => {
+        generations.map(async ({ name, collection }) => {
           return collection.length > 0
             ? await factoryGetImage(id, name, collection[0])
             : null;
@@ -114,19 +136,40 @@ export const FactoryPage: React.FC = () => {
       setTemplatesPreviews(templatesUrls);
       setGenerationPreviews(generationUrls);
     })();
+  }, [templates, generations]);
 
-    return () => {
-      toolbarContext.removeButton("close");
-      toolbarContext.removeButton("save");
-      toolbarContext.removeButton("open-explorer");
-    };
-  }, []);
+  const generationItems = useMemo(
+    () =>
+      generations.map(({ name }) => ({
+        name,
+      })),
+    [generations]
+  );
+
+  const generationEmptyValue = useMemo(
+    () => generations[0].name,
+    [generations]
+  );
+
+  const onSave = () => {
+    writeProjectInstance(projectDir, {
+      ...instance,
+      configuration,
+      templates,
+      generations,
+    });
+  };
 
   const onConfiguration = () => {
     navigate("/configuration", {
       state: {
         projectDir,
-        instance,
+        instance: {
+          ...instance,
+          configuration,
+          templates,
+          generations,
+        },
         id,
       },
     });
@@ -136,7 +179,12 @@ export const FactoryPage: React.FC = () => {
     navigate("/template", {
       state: {
         projectDir,
-        instance,
+        instance: {
+          ...instance,
+          configuration,
+          templates,
+          generations,
+        },
         id,
         templateId,
       },
@@ -147,7 +195,12 @@ export const FactoryPage: React.FC = () => {
     navigate("/generation", {
       state: {
         projectDir,
-        instance,
+        instance: {
+          ...instance,
+          configuration,
+          templates,
+          generations,
+        },
         id,
         templateId,
       },
@@ -158,7 +211,12 @@ export const FactoryPage: React.FC = () => {
     navigate("/quality", {
       state: {
         projectDir,
-        instance,
+        instance: {
+          ...instance,
+          configuration,
+          templates,
+          generations,
+        },
         id,
         generationId,
       },
@@ -169,7 +227,12 @@ export const FactoryPage: React.FC = () => {
     navigate("/deploy", {
       state: {
         projectDir,
-        instance,
+        instance: {
+          ...instance,
+          configuration,
+          templates,
+          generations,
+        },
         id,
       },
     });
@@ -179,7 +242,12 @@ export const FactoryPage: React.FC = () => {
     navigate("/instance", {
       state: {
         projectDir,
-        instance,
+        instance: {
+          ...instance,
+          configuration,
+          templates,
+          generations,
+        },
         id,
       },
     });
@@ -206,6 +274,72 @@ export const FactoryPage: React.FC = () => {
     }
   };
 
+  const GenerationItem: React.FC<GenerationItemProps> = ({
+    value,
+    onChange,
+  }) => {
+    return (
+      <MenuTrigger>
+        <ActionButton width="100%">{value}</ActionButton>
+        <Menu
+          items={generationItems}
+          selectionMode="single"
+          disallowEmptySelection={true}
+          selectedKeys={[value]}
+          onSelectionChange={(selectedKeys) => {
+            const selectedKey = [...selectedKeys].shift() as string;
+            onChange(selectedKey);
+          }}
+        >
+          {({ name }) => <Item key={name}>{name}</Item>}
+        </Menu>
+      </MenuTrigger>
+    );
+  };
+
+  const resolveUnifyGenerationFields = (
+    field: CustomField,
+    value: string[],
+    onChange: (value: string[]) => void
+  ) => {
+    switch (field._type) {
+      case "generations":
+        return (
+          <ArrayOf
+            key={field.key}
+            width="100%"
+            Component={GenerationItem}
+            label="Generations"
+            heading={true}
+            emptyValue={generationEmptyValue}
+            items={value || []}
+            setItems={onChange}
+          />
+        );
+      default:
+        break;
+    }
+  };
+
+  const onUnifyGenerationsCommand = async ({ newName, generationsNames }) => {
+    const { collection, bundles } = await unifyGenerations(
+      id,
+      newName,
+      generationsNames.map((name) => generations.find((g) => g.name === name)),
+      () => {}
+    );
+
+    setGenerations((prevGenerations) => [
+      ...prevGenerations,
+      {
+        id: uuid(),
+        name: newName,
+        collection,
+        bundles,
+      },
+    ]);
+  };
+
   return (
     <Grid
       areas={["left right"]}
@@ -227,8 +361,11 @@ export const FactoryPage: React.FC = () => {
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
-              {instance.templates.map((template, i) => (
-                <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+              {templates.map((template, i) => (
+                <div
+                  key={template.id}
+                  className="relative w-48 p-3 border-1 border-solid border-white rounded"
+                >
                   <Flex direction="column" gap="size-100">
                     {templatesPreviews && templatesPreviews[i] ? (
                       <ImageItem src={templatesPreviews[i]} maxSize={192} />
@@ -259,8 +396,11 @@ export const FactoryPage: React.FC = () => {
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
-              {instance.generations.map((generation, i) => (
-                <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+              {generations.map((generation, i) => (
+                <div
+                  key={generation.id}
+                  className="relative w-48 p-3 border-1 border-solid border-white rounded"
+                >
                   <Flex direction="column" gap="size-100">
                     {generationPreviews && generationPreviews[i] ? (
                       <ImageItem src={generationPreviews[i]} maxSize={192} />
@@ -298,46 +438,37 @@ export const FactoryPage: React.FC = () => {
             </Flex>
 
             <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
-              <TaskItem task="Cost" onRun={() => {}} />
               <TaskItem
-                task="Balance of"
-                onRun={() => {}}
-                fields={[
-                  {
-                    key: "address",
-                    type: "address",
-                    label: "Address",
-                  },
-                ]}
-              />
+                name="AAA"
+                onRun={async () => {
+                  const uri = await AAA();
 
-              <TaskItem
-                task="Token of owner by index"
-                onRun={() => {}}
-                fields={[
-                  {
-                    key: "address",
-                    type: "address",
-                    label: "Address",
-                  },
-                  {
-                    key: "index",
-                    type: "int",
-                    label: "Index",
-                  },
-                ]}
+                  WalletConnectQRCodeModal.open(uri, () => {
+                    console.log("QR Code Modal closed");
+                  });
+                }}
               />
-
               <TaskItem
-                task="Token URI"
-                onRun={() => {}}
+                name="Unify generations"
+                useDialog={true}
                 fields={[
                   {
-                    key: "index",
-                    type: "int",
-                    label: "Token Index",
+                    key: "newName",
+                    type: "string",
+                    label: "Name",
+                    initial: "",
+                    value: "",
+                  },
+                  {
+                    key: "generationsNames",
+                    type: "custom",
+                    _type: "generations",
+                    label: "Generations",
+                    value: [],
                   },
                 ]}
+                resolveCustomFields={resolveUnifyGenerationFields}
+                onRun={onUnifyGenerationsCommand}
               />
             </Grid>
           </Flex>

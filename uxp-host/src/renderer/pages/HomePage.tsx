@@ -3,8 +3,6 @@ import { Flex, Heading, Button, ButtonGroup } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { newProject, openProject } from "../commands";
-import { AAA } from "../ipc";
-import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
 export function HomePage() {
   const task = useErrorHandler();
@@ -52,19 +50,6 @@ export function HomePage() {
 
         <Button variant="secondary" onPress={onOpen}>
           Open
-        </Button>
-
-        <Button
-          variant="secondary"
-          onPress={async () => {
-            const uri = await AAA();
-
-            WalletConnectQRCodeModal.open(uri, () => {
-              console.log("QR Code Modal closed");
-            });
-          }}
-        >
-          AAA
         </Button>
       </ButtonGroup>
     </Flex>

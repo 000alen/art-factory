@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import useStateRef from "react-usestateref";
 import { useNavigate, useLocation } from "react-router-dom";
-import WalletConnectProvider from "@walletconnect/web3-provider";
 import {
   TextField,
   Flex,
@@ -14,32 +13,17 @@ import {
   ContextualHelp,
   Content,
   Text,
-  ListBox,
 } from "@adobe/react-spectrum";
-import { providers } from "ethers";
 import More from "@spectrum-icons/workflow/More";
 import LogOut from "@spectrum-icons/workflow/LogOut";
 import { Networks, ContractTypes } from "../constants";
 import { ToolbarContext } from "../components/Toolbar";
-import {
-  factoryDeployAssets,
-  factoryDeployContract,
-  loadSecrets,
-} from "../actions";
 import { useErrorHandler } from "../components/ErrorHandler";
 import Close from "@spectrum-icons/workflow/Close";
 import { TriStateButton } from "../components/TriStateButton";
-import {
-  Bundles,
-  Collection,
-  Configuration,
-  Instance,
-  Network,
-} from "../typings";
+import { Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import { resolveEtherscanUrl } from "../utils";
-import { factoryUnify } from "../ipc";
-import { ArrayOf } from "../components/ArrayOf";
 
 interface DeployPageState {
   projectDir: string;
@@ -58,8 +42,6 @@ export function DeployPage() {
   const { projectDir, instance, id } = state as DeployPageState;
   const { configuration, generations } = instance;
 
-  const [secrets, setSecrets] = useState(null);
-  const [provider, setProvider] = useState(null);
   const [imagesCid, setImagesCid] = useState("");
   const [metadataCid, setMetadataCid] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
@@ -72,10 +54,6 @@ export function DeployPage() {
   const [timerId, setTimerId] = useState(null);
   const [contractAddressTooltipShown, setContractAddressTooltipShown] =
     useState(false);
-
-  const [generationsToUnify, setGenerationsToUnify] = useState<string[]>([]);
-  const [collection, setCollection] = useState<Collection>(null);
-  const [bundles, setBundles] = useState<Bundles>(null);
 
   // useEffect(() => () => clearTimeout(timerId), [timerId]);
 
@@ -152,16 +130,6 @@ export function DeployPage() {
     // await wait;
     // setDeployedDone(true);
     // setIsWorking(false);
-
-    const { collection, bundles } = await factoryUnify(
-      id,
-      generationsToUnify.map((id) =>
-        generations.find(({ name }) => name === id)
-      )
-    );
-
-    setCollection(collection);
-    setBundles(bundles);
   });
 
   const onSave = task("continue", async () => {
@@ -180,40 +148,6 @@ export function DeployPage() {
     //   },
     // });
   });
-
-  interface GenerationItemProps {
-    value: string;
-    onChange: (value: string) => void;
-  }
-
-  const generationItems = generations.map(({ name }) => ({
-    name,
-  }));
-
-  const emptyValue = generations[0].name;
-
-  const GenerationItem: React.FC<GenerationItemProps> = ({
-    value,
-    onChange,
-  }) => {
-    return (
-      <MenuTrigger>
-        <ActionButton width="100%">{value}</ActionButton>
-        <Menu
-          items={generationItems}
-          selectionMode="single"
-          disallowEmptySelection={true}
-          selectedKeys={[value]}
-          onSelectionChange={(selectedKeys) => {
-            const selectedKey = [...selectedKeys].shift() as string;
-            onChange(selectedKey);
-          }}
-        >
-          {({ name }) => <Item key={name}>{name}</Item>}
-        </Menu>
-      </MenuTrigger>
-    );
-  };
 
   return (
     <Flex
@@ -297,16 +231,6 @@ export function DeployPage() {
             )}
           </Flex>
         </Flex>
-
-        <ArrayOf
-          Component={GenerationItem}
-          label="Generations"
-          heading={true}
-          moveable={true}
-          emptyValue={emptyValue}
-          items={generationsToUnify}
-          setItems={setGenerationsToUnify}
-        />
       </Flex>
 
       <TriStateButton

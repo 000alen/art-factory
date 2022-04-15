@@ -157,9 +157,9 @@ export const Panel721: React.FC<Panel721Props> = ({
   return (
     <>
       <Flex direction="column" gap="size-100">
-        <TaskItem task="Cost" onRun={onCost} />
+        {/* <TaskItem name="Cost" onRun={onCost} />
         <TaskItem
-          task="Balance of"
+          name="Balance of"
           onRun={onBalanceOf}
           fields={[
             {
@@ -171,7 +171,7 @@ export const Panel721: React.FC<Panel721Props> = ({
         />
 
         <TaskItem
-          task="Token of owner by index"
+          name="Token of owner by index"
           onRun={onTokenOfOwnerByIndex}
           fields={[
             {
@@ -188,7 +188,7 @@ export const Panel721: React.FC<Panel721Props> = ({
         />
 
         <TaskItem
-          task="Token URI"
+          name="Token URI"
           onRun={onTokenURI}
           fields={[
             {
@@ -202,7 +202,7 @@ export const Panel721: React.FC<Panel721Props> = ({
 
       <Flex direction="column" gap="size-100">
         <TaskItem
-          task="Mint"
+          name="Mint"
           onRun={onMint}
           fields={[
             {
@@ -219,7 +219,7 @@ export const Panel721: React.FC<Panel721Props> = ({
         />
 
         <TaskItem
-          task="Set cost"
+          name="Set cost"
           onRun={onSetCost}
           fields={[
             {
@@ -231,7 +231,7 @@ export const Panel721: React.FC<Panel721Props> = ({
         />
 
         <TaskItem
-          task="Set max Mint amount"
+          name="Set max Mint amount"
           onRun={onSetMaxMintAmount}
           fields={[
             {
@@ -242,7 +242,7 @@ export const Panel721: React.FC<Panel721Props> = ({
           ]}
         />
 
-        <TaskItem task="Withdraw" onRun={onWithdraw} />
+        <TaskItem name="Withdraw" onRun={onWithdraw} /> */}
 
         {/* <TaskItem task="Sell" onRun={onSell} /> */}
       </Flex>

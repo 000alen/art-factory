@@ -454,8 +454,8 @@ ipcAsyncTask(
 
 ipcAsyncTask(
   "factoryUnify",
-  async (id: string, generations: Generation[]) =>
-    await factories[id].unify(generations)
+  async (id: string, name: string, generations: Generation[]) =>
+    await factories[id].unify(name, generations)
 );
 
 // #endregion

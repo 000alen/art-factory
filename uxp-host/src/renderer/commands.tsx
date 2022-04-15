@@ -5,6 +5,7 @@ import {
   factoryGenerateCollection,
   factoryGenerateImages,
   factoryGenerateMetadata,
+  factoryUnify,
   readProjectInstance,
   showOpenDialog,
   writeProjectInstance,
@@ -14,6 +15,7 @@ import {
   Bundles,
   BundlesInfo,
   Collection,
+  Generation,
   Instance,
   MetadataItem,
   Template,
@@ -113,5 +115,15 @@ export const generateFromTemplate = async (
   await factoryGenerateImages(id, name, collection, onProgress);
   await factoryGenerateMetadata(id, name, collection, metadataItems);
 
+  return { collection, bundles };
+};
+
+export const unifyGenerations = async (
+  id: string,
+  name: string,
+  generations: Generation[],
+  onProgress?: (name: string) => void
+): Promise<{ collection: Collection; bundles: Bundles }> => {
+  const { collection, bundles } = await factoryUnify(id, name, generations);
   return { collection, bundles };
 };

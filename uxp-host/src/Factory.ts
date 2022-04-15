@@ -65,11 +65,11 @@ export class Factory {
     if (!fs.existsSync(path.join(this.buildDir, "images", COLLECTION_DIR_NAME)))
       fs.mkdirSync(path.join(this.buildDir, "images", COLLECTION_DIR_NAME));
 
-    if (!fs.existsSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME)))
-      fs.mkdirSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME));
-
     if (!fs.existsSync(path.join(this.buildDir, "json")))
       fs.mkdirSync(path.join(this.buildDir, "json"));
+
+    if (!fs.existsSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME)))
+      fs.mkdirSync(path.join(this.buildDir, "json", COLLECTION_DIR_NAME));
 
     if (!fs.existsSync(path.join(this.buildDir, "not_revealed")))
       fs.mkdirSync(path.join(this.buildDir, "not_revealed"));
@@ -708,12 +708,18 @@ export class Factory {
     return collection;
   }
 
-  async unify(generations: Generation[]) {
+  async unify(name: string, generations: Generation[]) {
+    if (!fs.existsSync(path.join(this.buildDir, "images", name)))
+      fs.mkdirSync(path.join(this.buildDir, "images", name));
+
+    if (!fs.existsSync(path.join(this.buildDir, "json", name)))
+      fs.mkdirSync(path.join(this.buildDir, "json", name));
+
     const unifiedCollection: Collection = [];
-    const unifiedBundles: Bundles = []; // ! TODO
+    const unifiedBundles: Bundles = [];
 
     let i = 1;
-    for (const { name, collection, bundles } of generations) {
+    for (const { name: currentName, collection, bundles } of generations) {
       const mappings: Record<string, string> = {};
 
       for (const collectionItem of collection) {
@@ -723,15 +729,20 @@ export class Factory {
           path.join(
             this.buildDir,
             "images",
-            name,
+            currentName,
             `${collectionItem.name}.png`
           ),
-          path.join(this.buildDir, "images", COLLECTION_DIR_NAME, `${i}.png`)
+          path.join(this.buildDir, "images", name, `${i}.png`)
         );
 
         await fs.promises.copyFile(
-          path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
-          path.join(this.buildDir, "json", COLLECTION_DIR_NAME, `${i}.json`)
+          path.join(
+            this.buildDir,
+            "json",
+            currentName,
+            `${collectionItem.name}.json`
+          ),
+          path.join(this.buildDir, "json", name, `${i}.json`)
         );
 
         unifiedCollection.push({

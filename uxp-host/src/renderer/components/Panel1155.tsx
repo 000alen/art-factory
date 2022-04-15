@@ -93,9 +93,9 @@ export const Panel1155: React.FC<Panel1155Props> = ({
   return (
     <>
       <Flex direction="column" gap="size-100">
-        <TaskItem
+        {/* <TaskItem
           onRun={onBalanceOf}
-          task="Balance of"
+          name="Balance of"
           fields={[
             {
               key: "address",
@@ -108,12 +108,12 @@ export const Panel1155: React.FC<Panel1155Props> = ({
               label: "Id",
             },
           ]}
-          dialog={true}
+          useDialog={true}
         />
 
         <TaskItem
           onRun={onUri}
-          task="URI"
+          name="URI"
           fields={[
             {
               key: "id",
@@ -127,7 +127,7 @@ export const Panel1155: React.FC<Panel1155Props> = ({
       <Flex direction="column" gap="size-100">
         <TaskItem
           onRun={onBurn}
-          task="Burn"
+          name="Burn"
           fields={[
             {
               key: "id",
@@ -144,7 +144,7 @@ export const Panel1155: React.FC<Panel1155Props> = ({
 
         <TaskItem
           onRun={onMint}
-          task="Mint"
+          name="Mint"
           fields={[
             {
               key: "to",
@@ -166,7 +166,7 @@ export const Panel1155: React.FC<Panel1155Props> = ({
 
         <TaskItem
           onRun={onSetUri}
-          task="Set URI"
+          name="Set URI"
           fields={[
             {
               key: "id",
@@ -185,8 +185,8 @@ export const Panel1155: React.FC<Panel1155Props> = ({
       <Flex direction="column" gap="size-100">
         <TaskItem
           onRun={onBalanceOfBatch}
-          task="Balance of Batch"
-          dialog={true}
+          name="Balance of Batch"
+          useDialog={true}
           fields={[
             {
               key: "addresses",
@@ -203,8 +203,8 @@ export const Panel1155: React.FC<Panel1155Props> = ({
 
         <TaskItem
           onRun={onMintBatch}
-          task="Mint batch"
-          dialog={true}
+          name="Mint batch"
+          useDialog={true}
           fields={[
             {
               key: "ids",
@@ -217,7 +217,7 @@ export const Panel1155: React.FC<Panel1155Props> = ({
               label: "Amounts",
             },
           ]}
-        />
+        /> */}
       </Flex>
     </>
   );
