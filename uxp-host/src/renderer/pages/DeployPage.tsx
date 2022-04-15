@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import useStateRef from "react-usestateref";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -13,17 +13,19 @@ import {
   ContextualHelp,
   Content,
   Text,
+  Button,
+  ButtonGroup,
 } from "@adobe/react-spectrum";
 import More from "@spectrum-icons/workflow/More";
-import LogOut from "@spectrum-icons/workflow/LogOut";
-import { Networks, ContractTypes } from "../constants";
+import { Networks } from "../constants";
 import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
-import Close from "@spectrum-icons/workflow/Close";
-import { TriStateButton } from "../components/TriStateButton";
 import { Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
-import { resolveEtherscanUrl } from "../utils";
+import { ImageItem } from "../components/ImageItem";
+import { createProvider, factoryGetImage } from "../ipc";
+import { v4 as uuid } from "uuid";
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
 interface DeployPageState {
   projectDir: string;
@@ -41,46 +43,55 @@ export function DeployPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { projectDir, instance, id, dirty: _dirty } = state as DeployPageState;
-  const { configuration } = instance;
+  const { configuration, generations } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
+  const [generationName, setGenerationName] = useState(generations[0].name);
+  const [url, setUrl] = useState<string>(null);
 
-  const [imagesCid, setImagesCid] = useState("");
-  const [metadataCid, setMetadataCid] = useState("");
-  const [transactionHash, setTransactionHash] = useState("");
-  const [contractAddress, setContractAddress] = useState("");
-  const [abi, setAbi] = useState(null);
-  const [deployedDone, setDeployedDone, deployedDoneRef] = useStateRef(false);
   const [networkKey, setNetworkKey] = useState("rinkeby");
-
-  const [isWorking, setIsWorking] = useState(false);
-  const [timerId, setTimerId] = useState(null);
-  const [contractAddressTooltipShown, setContractAddressTooltipShown] =
-    useState(false);
-
-  // useEffect(() => () => clearTimeout(timerId), [timerId]);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    // task("loading secrets", async () => {
-    //   const secrets = await loadSecrets();
-    //   const provider = new WalletConnectProvider({
-    //     infuraId: secrets.infuraProjectId,
-    //     chainId: Networks[networkKey].id as number,
-    //   });
-
-    //   setSecrets(secrets);
-    //   setProvider(provider);
-    // })();
 
     return () => {
       toolbarContext.removeButton("back");
     };
   }, [networkKey]);
 
+  useEffect(() => {
+    task("XXX", async () => {
+      const base64String = await factoryGetImage(
+        id,
+        generationName,
+        generations.find((g) => g.name === generationName).collection[0]
+      );
+      const url = `data:image/png;base64,${base64String}`;
+
+      setUrl(url);
+    })();
+  }, [generationName]);
+
+  const generationItems = useMemo(
+    () =>
+      generations.map(({ name }) => ({
+        name,
+      })),
+    [generations]
+  );
+
   const onBack = () =>
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
+
+  const onConnect = task("connect", async () => {
+    const id = uuid();
+    const uri = await createProvider(id, ({ connected }) => {
+      WalletConnectQRCodeModal.close();
+      console.log("connected", connected);
+    });
+
+    WalletConnectQRCodeModal.open(uri, () => {});
+  });
 
   const onDeploy = task("deployment", async () => {
     // setIsWorking(true);
@@ -151,8 +162,7 @@ export function DeployPage() {
     >
       <Flex gap="size-100" alignItems="center">
         <Heading level={1} marginStart={16}>
-          Deploy {ContractTypes[configuration.contractType].name} to{" "}
-          {Networks[networkKey].name}
+          Deploy {configuration.contractType} to {Networks[networkKey].name}
         </Heading>
         <MenuTrigger>
           <ActionButton>
@@ -174,66 +184,52 @@ export function DeployPage() {
       </Flex>
 
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
+        <Flex>
+          <Flex direction="column" justifyContent="center" alignItems="center">
+            <MenuTrigger>
+              <ActionButton width="100%">{generationName}</ActionButton>
+              <Menu
+                items={generationItems}
+                selectionMode="single"
+                disallowEmptySelection={true}
+                selectedKeys={[generationName]}
+                onSelectionChange={(selectedKeys) => {
+                  const selectedKey = [...selectedKeys].shift() as string;
+                  setGenerationName(selectedKey);
+                }}
+              >
+                {({ name }) => <Item key={name}>{name}</Item>}
+              </Menu>
+            </MenuTrigger>
+            <ImageItem src={url} />
+          </Flex>
+        </Flex>
         <Flex direction="column" justifyContent="center" alignItems="center">
-          <TextField
-            width="100%"
-            isReadOnly={true}
-            value={imagesCid}
-            label="Images CID"
-          />
+          <TextField width="100%" isReadOnly={true} label="Images CID" />
 
-          <TextField
-            width="100%"
-            isReadOnly={true}
-            value={metadataCid}
-            label="Metadata CID"
-          />
+          <TextField width="100%" isReadOnly={true} label="Metadata CID" />
 
           <Flex width="100%" gap="size-100" alignItems="end">
             <TextField
               width="100%"
               isReadOnly={true}
-              value={contractAddress}
               label="Contract Address"
             />
-            {contractAddressTooltipShown && (
-              <ContextualHelp variant="help" defaultOpen>
-                <Heading>Transaction isn't loading?</Heading>
-                <Content>
-                  <Flex direction="column" gap="size-100">
-                    <Text>
-                      You can check the transaction status in Etherscan, and if
-                      it is already processed, you can choose to continue.
-                    </Text>
-                    <Link>
-                      <a
-                        href={resolveEtherscanUrl(
-                          Networks[networkKey],
-                          transactionHash
-                        )}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Transaction at Etherscan.
-                      </a>
-                    </Link>
-                  </Flex>
-                </Content>
-              </ContextualHelp>
-            )}
           </Flex>
         </Flex>
       </Flex>
 
-      <TriStateButton
-        preLabel="Deploy"
-        preAction={onDeploy}
-        loading={isWorking}
-        loadingDone={deployedDone}
-        loadingLabel="Deploying…"
-        postLabel="Save"
-        postAction={onSave}
-      />
+      <ButtonGroup align="end">
+        <Button variant="cta" onPress={onDeploy}>
+          Deploy
+        </Button>
+        <Button variant="secondary" onPress={onConnect}>
+          Connect
+        </Button>
+        <Button variant="secondary" onPress={onSave}>
+          Save
+        </Button>
+      </ButtonGroup>
     </Flex>
   );
 }

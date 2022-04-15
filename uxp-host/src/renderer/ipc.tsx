@@ -14,7 +14,7 @@ declare global {
 }
 // #endregion
 
-import { v4 as uuid } from "uuid";
+import { stringify, v4 as uuid } from "uuid";
 import {
   Bundles,
   BundlesInfo,
@@ -352,4 +352,45 @@ export const factoryRemove = (id: string, generation: Generation) =>
 
 // #endregion
 
-export const AAA = () => ipcTask("AAA")() as Promise<string>;
+// #region Provider
+export const createProvider = (
+  id: string,
+  callback: ({ connected }: { connected: boolean }) => void
+) =>
+  new Promise<string>((resolve) => {
+    const onCreateProviderUri = ({
+      id: _id,
+      uri,
+    }: {
+      id: string;
+      uri: string;
+    }) => {
+      if (_id !== id) return;
+      window.ipcRenderer.removeListener(
+        "createProviderUri",
+        onCreateProviderUri
+      );
+      resolve(uri);
+    };
+
+    const onCreateProviderResult = ({
+      id: _id,
+      connected,
+    }: {
+      id: string;
+      connected: boolean;
+    }) => {
+      if (_id !== id) return;
+      window.ipcRenderer.removeListener(
+        "createProviderResult",
+        onCreateProviderResult
+      );
+      callback({ connected });
+    };
+
+    window.ipcRenderer.on("createProviderUri", onCreateProviderUri);
+    window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
+    window.ipcRenderer.send("createProvider", id);
+  });
+
+// #endregion

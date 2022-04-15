@@ -91,7 +91,7 @@ export function TemplatePage() {
         )
       );
 
-      // ! TODO URLS ARE NOT USED
+      // ! TODO: Urls are not used
       const traitsAndBase64Strings = await Promise.all(
         layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
       );
@@ -152,6 +152,7 @@ export function TemplatePage() {
       initialRenderIds={initialRenderIds}
       initialNs={initialNs}
       initialIgnored={initialIgnored}
+      setDirty={setDirty}
     >
       <Flex
         UNSAFE_className="overflow-hidden"
@@ -169,7 +170,7 @@ export function TemplatePage() {
           <TextField
             position="absolute"
             top={0}
-            right={0}
+            left={0}
             label="Name"
             value={name}
             onChange={setName}
@@ -182,7 +183,7 @@ export function TemplatePage() {
             variant="cta"
             onPress={onSave}
           >
-            Save
+            {dirty && "*"} Save
           </Button>
         </Nodes>
       </Flex>

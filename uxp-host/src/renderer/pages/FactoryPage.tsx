@@ -40,7 +40,6 @@ import { Node as FlowNode } from "react-flow-renderer";
 import { MAX_SIZE } from "../constants";
 import { ImageItem } from "../components/ImageItem";
 import { CustomField, TaskItem } from "../components/TaskItem";
-import { AAA } from "../ipc";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 import { ArrayOf } from "../components/ArrayOf";
 import { removeGeneration, unifyGenerations } from "../commands";
@@ -149,7 +148,7 @@ export const FactoryPage: React.FC = () => {
   );
 
   const generationEmptyValue = useMemo(
-    () => generations[0].name,
+    () => (generations.length > 0 ? generations[0].name : null),
     [generations]
   );
 
@@ -266,14 +265,11 @@ export const FactoryPage: React.FC = () => {
     const [action, name] = message.split("_");
     switch (action) {
       case "edit":
-        onTemplate(templates.find((t) => t.name === name).id);
-        break;
+        return onTemplate(templates.find((t) => t.name === name).id);
       case "generate":
-        onGeneration(templates.find((t) => t.name === name).id);
-        break;
+        return onGeneration(templates.find((t) => t.name === name).id);
       case "remove":
-        onRemoveTemplateCommand(name);
-        break;
+        return onRemoveTemplateCommand(name);
     }
   };
 
@@ -281,11 +277,9 @@ export const FactoryPage: React.FC = () => {
     const [action, name] = message.split("_");
     switch (action) {
       case "edit":
-        onQuality(generations.find((g) => g.name === name).id);
-        break;
+        return onQuality(generations.find((g) => g.name === name).id);
       case "remove":
-        onRemoveGenerationCommand(name);
-        break;
+        return onRemoveGenerationCommand(name);
     }
   };
 
@@ -474,16 +468,6 @@ export const FactoryPage: React.FC = () => {
             </Flex>
 
             <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
-              <TaskItem
-                name="AAA"
-                onRun={async () => {
-                  const uri = await AAA();
-
-                  WalletConnectQRCodeModal.open(uri, () => {
-                    console.log("QR Code Modal closed");
-                  });
-                }}
-              />
               <TaskItem
                 name="Unify generations"
                 useDialog={true}

@@ -53,7 +53,10 @@ const sendWhitelist = [
   "factoryDeployNotRevealedMetadata",
   "factoryUnify",
   "factoryRemove",
-  "AAA",
+
+  "createProvider",
+  "createProviderUri",
+  "createProviderResult",
 ];
 
 const onWhitelist = [
@@ -113,7 +116,9 @@ const onWhitelist = [
   "factoryUnifyResult",
   "factoryRemoveResult",
 
-  "AAAResult",
+  "createProvider",
+  "createProviderUri",
+  "createProviderResult",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

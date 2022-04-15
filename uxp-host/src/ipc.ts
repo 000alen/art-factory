@@ -466,42 +466,58 @@ ipcAsyncTask(
 
 // #endregion
 
-ipcAsyncTask("AAA", async () => {
+// #region Provider
+const providers: Record<string, WalletConnectProvider> = {};
+
+/*
+-> createProvider
+<- createProviderUri
+<- createProviderResult (connected | error)
+*/
+ipcMain.on("createProvider", async (event, id: string) => {
   const connector = new NodeWalletConnect(
     {
       bridge: "https://bridge.walletconnect.org",
     },
     {
+      // ! TODO
       clientMeta: {
+        name: "Art Factory",
         description: "Art Factory",
         url: "https://nodejs.org/en/",
         icons: ["https://nodejs.org/static/images/logo.svg"],
-        name: "WalletConnect",
       },
     }
   );
 
-  const provider = new WalletConnectProvider({
-    connector,
-    infuraId: getInfuraProjectId() as string,
+  connector.on("connect", (error, payload) => {
+    if (error) {
+      event.reply("createProviderResult", { id, connected: false });
+    } else {
+      const provider = new WalletConnectProvider({
+        connector,
+        infuraId: getInfuraProjectId() as string,
+      });
+      providers[id] = provider;
+      event.reply("createProviderResult", { id, connected: true });
+    }
   });
 
-  // @ts-ignore
-  const web3 = new Web3(provider);
-
-  try {
-    const seaport = new OpenSeaPort(web3.currentProvider, {
-      networkName: Network.Rinkeby,
-    });
-    const asset = await seaport.api.getAsset({
-      tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60",
-      tokenId: "1",
-    });
-    console.log(asset);
-  } catch (e) {
-    console.error(e);
-  }
-
   await connector.createSession();
-  return connector.uri;
+  const uri = connector.uri;
+  event.reply("createProviderUri", { id, uri });
 });
+// #endregion
+
+// try {
+//   const seaport = new OpenSeaPort(web3.currentProvider, {
+//     networkName: Network.Rinkeby,
+//   });
+//   const asset = await seaport.api.getAsset({
+//     tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60",
+//     tokenId: "1",
+//   });
+//   console.log(asset);
+// } catch (e) {
+//   console.error(e);
+// }

@@ -35,46 +35,61 @@ export function ConfigurationPage() {
   const { configuration } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
+  const [availableLayers, setAvailableLayers] = useState(configuration.layers);
 
-  // ConfigurationBase
-  const [name, setName] = useState(configuration.name);
-  const [description, setDescription] = useState(configuration.description);
-  const [symbol, setSymbol] = useState(configuration.symbol);
+  const [name, _setName] = useState(configuration.name);
+  const [description, _setDescription] = useState(configuration.description);
+  const [symbol, _setSymbol] = useState(configuration.symbol);
 
   const [originalWidth] = useState(configuration.width);
   const [originalHeight] = useState(configuration.height);
-  const [width, setWidth] = useState(configuration.width);
-  const [height, setHeight] = useState(configuration.height);
-  const [generateBackground, setGenerateBackground] = useState(
+  const [width, _setWidth] = useState(configuration.width);
+  const [height, _setHeight] = useState(configuration.height);
+  const [generateBackground, _setGenerateBackground] = useState(
     configuration.generateBackground
   );
   const [defaultBackground, _setDefaultBackground] = useState(
-    parseColor("#ffffff")
-  ); // ! TODO: use configuration.defaultBackground
-  const [contractType, setContractType] = useState(configuration.contractType);
-  const [cost, setCost] = useState(configuration.cost);
-  const [maxMintAmount, setMaxMintAmount] = useState(
+    parseColor(
+      `rgba(${configuration.defaultBackground.r}, ${configuration.defaultBackground.g}, ${configuration.defaultBackground.b}, ${configuration.defaultBackground.a})`
+    )
+  );
+  const [contractType, _setContractType] = useState(configuration.contractType);
+  const [cost, _setCost] = useState(configuration.cost);
+  const [maxMintAmount, _setMaxMintAmount] = useState(
     configuration.maxMintAmount
   );
+  const [layers, _setLayers] = useState(configuration.layers);
 
-  const [availableLayers, setAvailableLayers] = useState(configuration.layers);
-  const [layers, setLayers] = useState(configuration.layers);
+  const setter =
+    <T,>(set: (v: T | ((v: T) => T)) => void) =>
+    (v: T | ((v: T) => T)) => {
+      set(v);
+      setDirty(true);
+    };
+
+  const setName = setter(_setName);
+  const setDescription = setter(_setDescription);
+  const setSymbol = setter(_setSymbol);
+  const setWidth = setter(_setWidth);
+  const setHeight = setter(_setHeight);
+  const setGenerateBackground = setter(_setGenerateBackground);
+  const setDefaultBackground = setter(_setDefaultBackground);
+  const setContractType = setter(_setContractType);
+  const setCost = setter(_setCost);
+  const setMaxMintAmount = setter(_setMaxMintAmount);
+  const setLayers = setter(_setLayers);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
-    task("available layers", async () => {
-      setAvailableLayers(await readProjectAvailableLayers(projectDir));
-    })();
+    task("available layers", async () =>
+      setAvailableLayers(await readProjectAvailableLayers(projectDir))
+    )();
 
     return () => {
       toolbarContext.removeButton("back");
     };
   }, []);
-
-  const setDefaultBackground = (color: any) => {
-    _setDefaultBackground(color);
-  };
 
   const onBack = () =>
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
@@ -120,7 +135,7 @@ export function ConfigurationPage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Heading level={1}>Configuration</Heading>
+      <Heading level={1}>{dirty && "*"} Configuration</Heading>
 
       <Flex gap="size-100" justifyContent="space-evenly">
         <ConfigurationBase

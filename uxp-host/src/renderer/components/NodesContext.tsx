@@ -30,7 +30,10 @@ import {
 import { LayerNode, LayerNodeComponentData } from "./LayerNode";
 import { RenderNode, RenderNodeComponentData } from "./RenderNode";
 import { BundleNode, BundleNodeComponentData } from "./BundleNode";
-import { NotRevealedNode, NotRevealedNodeComponentData } from "./NotRevealedNode";
+import {
+  NotRevealedNode,
+  NotRevealedNodeComponentData,
+} from "./NotRevealedNode";
 import { RootNode } from "./RootNode";
 import { CustomEdge } from "./CustomEdge";
 
@@ -46,6 +49,8 @@ interface NodesContextProviderProps {
   initialRenderIds?: Record<string, string>;
   initialNs?: Record<string, number>;
   initialIgnored?: string[];
+
+  setDirty: (dirty: boolean) => void;
 }
 
 interface INodesContext {
@@ -96,13 +101,14 @@ export function useNodes(
   initialEdges?: FlowEdge[],
   initialRenderIds?: Record<string, string>,
   initialNs?: Record<string, number>,
-  initialIgnored?: string[]
+  initialIgnored?: string[],
+  setDirty?: (dirty: boolean) => void
 ) {
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
   const [nodes, setNodes, _onNodesChange] = useNodesState(DEFAULT_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, _onEdgesChange] = useEdgesState([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [composedUrls, setComposedUrls] = useState<Record<string, string>>({});
   const [renderIds, setRenderIds] = useState<Record<string, string>>(
@@ -131,12 +137,19 @@ export function useNodes(
     }));
   }, [setter, nodes, edges, urls, composedUrls, renderIds, ns, ignored]);
 
-  const onNodesChange = (changes: FlowNodeChange[]) =>
+  const onNodesChange = (changes: FlowNodeChange[]) => {
     _onNodesChange(
       changes.filter(
         (change) => !(change.type === "remove" && change.id === "root")
       )
     );
+    setDirty(true);
+  };
+
+  const onEdgesChange = (changes: FlowEdgeChange[]) => {
+    _onEdgesChange(changes);
+    setDirty(true);
+  };
 
   const onChange =
     <T,>(name: string) =>
@@ -523,6 +536,8 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   initialRenderIds,
   initialNs,
   initialIgnored,
+
+  setDirty,
 }) => {
   const value = useNodes(
     id,
@@ -533,7 +548,8 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     initialEdges,
     initialRenderIds,
     initialNs,
-    initialIgnored
+    initialIgnored,
+    setDirty
   );
 
   return (
