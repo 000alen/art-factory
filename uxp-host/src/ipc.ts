@@ -28,8 +28,6 @@ import {
 } from "./typings";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import Web3 from "web3";
-import { OpenSeaPort, Network } from "./opensea";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -318,28 +316,24 @@ ipcTaskWithProgress(
   async (
     onProgress: (name: string) => void,
     id: string,
-    name: string,
-    collection: Collection,
-    metadataItems: MetadataItem[]
+    generation: Generation,
+    items: MetadataItem[]
   ) => {
-    await factories[id].generateMetadata(
-      name,
-      collection,
-      metadataItems,
-      onProgress
-    );
+    await factories[id].generateMetadata(generation, items, onProgress);
     return true;
   }
 );
 
 ipcAsyncTask(
   "factoryDeployImages",
-  async (id: string) => await factories[id].deployImages()
+  async (id: string, generation: Generation) =>
+    await factories[id].deployImages(generation)
 );
 
 ipcAsyncTask(
   "factoryDeployMetadata",
-  async (id: string) => await factories[id].deployMetadata()
+  async (id: string, generation: Generation) =>
+    await factories[id].deployMetadata(generation)
 );
 
 ipcTaskWithRequestId(
@@ -365,26 +359,20 @@ ipcTaskWithRequestId(
   "factoryGetImage",
   async (
     id: string,
-    name: string,
-    collectionItem: CollectionItem,
+    generation: Generation,
+    item: CollectionItem,
     maxSize?: number
   ) => {
-    const buffer = await factories[id].getImage(name, collectionItem, maxSize);
+    const buffer = await factories[id].getImage(generation, item, maxSize);
     return buffer.toString("base64");
   }
 );
 
 ipcAsyncTask(
   "factoryGetRandomImage",
-  async (
-    id: string,
-    name: string,
-    collection: Collection,
-    maxSize?: number
-  ) => {
+  async (id: string, generation: Generation, maxSize?: number) => {
     const [collectionItem, buffer] = await factories[id].getRandomImage(
-      name,
-      collection,
+      generation,
       maxSize
     );
     return [collectionItem, buffer.toString("base64")];
@@ -392,64 +380,27 @@ ipcAsyncTask(
 );
 
 ipcAsyncTask(
-  "factoryRewriteImage",
-  async (id: string, collectionItem: CollectionItem, dataUrl: string) => {
-    await factories[id].rewriteImage(collectionItem, dataUrl);
-    return true;
-  }
-);
-
-ipcAsyncTask(
   "factoryRemoveCollectionItems",
-  async (
-    id: string,
-    name: string,
-    collection: Collection,
-    bundles: Bundles,
-    collectionItems: Collection
-  ) =>
-    await factories[id].removeCollectionItems(
-      name,
-      collection,
-      bundles,
-      collectionItems
-    )
+  async (id: string, generation: Generation, items: Collection) =>
+    await factories[id].removeItems(generation, items)
 );
 
 ipcAsyncTask(
   "factoryRegenerateCollectionItems",
-  async (
-    id: string,
-    name: string,
-    collection: Collection,
-    collectionItems: Collection
-  ) =>
-    await factories[id].regenerateCollectionItems(
-      name,
-      collection,
-      collectionItems
-    )
-);
-
-ipcAsyncTask(
-  "factoryGenerateNotRevealedImage",
-  async (id: string, traits: Trait[]) =>
-    await factories[id].generateNotRevealedImage(traits)
-);
-
-ipcAsyncTask(
-  "factoryGenerateNotRevealedMetadata",
-  async (id: string) => await factories[id].generateNotRevealedMetadata()
+  async (id: string, generation: Generation, items: Collection) =>
+    await factories[id].regenerateItems(generation, items)
 );
 
 ipcAsyncTask(
   "factoryDeployNotRevealedImage",
-  async (id: string) => await factories[id].deployNotRevealedImage()
+  async (id: string, generation: Generation) =>
+    await factories[id].deployNotRevealedImage(generation)
 );
 
 ipcAsyncTask(
   "factoryDeployNotRevealedMetadata",
-  async (id: string) => await factories[id].deployNotRevealedMetadata()
+  async (id: string, generation: Generation) =>
+    await factories[id].deployNotRevealedMetadata(generation)
 );
 
 ipcAsyncTask(

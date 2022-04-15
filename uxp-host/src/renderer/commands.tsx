@@ -69,54 +69,55 @@ export const generateFromTemplate = async (
   template: Template,
   onProgress?: (name: string) => void
 ): Promise<{ collection: Collection; bundles: Bundles }> => {
-  const { nodes, edges, ns, ignored } = template;
+  // const { nodes, edges, ns, ignored } = template;
 
-  const nData = (
-    getBranches(nodes, edges).map((branch) =>
-      branch.slice(1, -1)
-    ) as FlowNode<LayerNodeComponentData>[][]
-  ).map((branch) => branch.map((node) => node.data));
-  let keys = nData
-    .map((branch) =>
-      branch.map((data) => ({
-        ...data.trait,
-        id: data.id,
-      }))
-    )
-    .map(hash);
+  // const nData = (
+  //   getBranches(nodes, edges).map((branch) =>
+  //     branch.slice(1, -1)
+  //   ) as FlowNode<LayerNodeComponentData>[][]
+  // ).map((branch) => branch.map((node) => node.data));
+  // let keys = nData
+  //   .map((branch) =>
+  //     branch.map((data) => ({
+  //       ...data.trait,
+  //       id: data.id,
+  //     }))
+  //   )
+  //   .map(hash);
 
-  const nTraits: Trait[][] = nData
-    .map((branch) =>
-      branch.map((data) => ({
-        ...data.trait,
-        id: data.id,
-        opacity: data.opacity,
-        blending: data.blending,
-      }))
-    )
-    .filter((_, i) => !ignored.includes(keys[i]));
+  // const nTraits: Trait[][] = nData
+  //   .map((branch) =>
+  //     branch.map((data) => ({
+  //       ...data.trait,
+  //       id: data.id,
+  //       opacity: data.opacity,
+  //       blending: data.blending,
+  //     }))
+  //   )
+  //   .filter((_, i) => !ignored.includes(keys[i]));
 
-  keys = keys.filter((key) => !ignored.includes(key));
+  // keys = keys.filter((key) => !ignored.includes(key));
 
-  const bundlesInfo: BundlesInfo = nodes
-    .filter((node) => node.type === "bundleNode")
-    .map((node) => node.data)
-    .map((data) => ({
-      name: data.name,
-      ids: data.ids,
-    }));
+  // const bundlesInfo: BundlesInfo = nodes
+  //   .filter((node) => node.type === "bundleNode")
+  //   .map((node) => node.data)
+  //   .map((data) => ({
+  //     name: data.name,
+  //     ids: data.ids,
+  //   }));
 
-  const { collection, bundles } = await factoryGenerateCollection(
-    id,
-    keys,
-    nTraits,
-    ns,
-    bundlesInfo
-  );
-  await factoryGenerateImages(id, name, collection, onProgress);
-  await factoryGenerateMetadata(id, name, collection, metadataItems);
+  // const { collection, bundles } = await factoryGenerateCollection(
+  //   id,
+  //   keys,
+  //   nTraits,
+  //   ns,
+  //   bundlesInfo
+  // );
+  // await factoryGenerateImages(id, name, collection, onProgress);
+  // await factoryGenerateMetadata(id, name, collection, metadataItems);
 
-  return { collection, bundles };
+  // return { collection, bundles };
+  return { collection: [], bundles: [] };
 };
 
 export const unifyGenerations = async (

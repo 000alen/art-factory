@@ -222,24 +222,22 @@ export const factoryGenerateImages = (
 
 export const factoryGenerateMetadata = (
   id: string,
-  name: string,
-  collection: Collection,
-  metadataItems: MetadataItem[],
+  generation: Generation,
+  items: MetadataItem[],
   onProgress?: (name: string) => void
 ) =>
   ipcTaskWithProgress("factoryGenerateMetadata")(
     onProgress,
     id,
-    name,
-    collection,
-    metadataItems
+    generation,
+    items
   );
 
-export const factoryDeployImages = (id: string) =>
-  ipcTask("factoryDeployImages")(id);
+export const factoryDeployImages = (id: string, generation: Generation) =>
+  ipcTask("factoryDeployImages")(id, generation);
 
-export const factoryDeployMetadata = (id: string) =>
-  ipcTask("factoryDeployMetadata")(id);
+export const factoryDeployMetadata = (id: string, generation: Generation) =>
+  ipcTask("factoryDeployMetadata")(id, generation);
 
 export const factoryGetTraitImage = (
   id: string,
@@ -265,77 +263,57 @@ export const factoryGetRandomTraitImage = (
 
 export const factoryGetImage = (
   id: string,
-  name: string,
-  collectionItem: CollectionItem,
+  generation: Generation,
+  item: CollectionItem,
   maxSize?: number
 ) =>
   ipcTaskWithRequestId("factoryGetImage")(
     id,
-    name,
-    collectionItem,
+    generation,
+    item,
     maxSize
   ) as Promise<string>;
 
 export const factoryGetRandomImage = (
   id: string,
-  name: string,
-  collection: Collection,
+  generation: Generation,
   maxSize?: number
 ) =>
-  ipcTask("factoryGetRandomImage")(id, name, collection, maxSize) as Promise<
+  ipcTask("factoryGetRandomImage")(id, generation, maxSize) as Promise<
     [CollectionItem, string]
   >;
 
-export const factoryRewriteImage = (
-  id: string,
-  collectionItem: CollectionItem,
-  dataUrl: string
-) =>
-  ipcTask("factoryRewriteImage")(
-    id,
-    collectionItem,
-    dataUrl
-  ) as Promise<string>;
-
 export const factoryRemoveCollectionItems = (
   id: string,
-  name: string,
-  collection: Collection,
-  bundles: Bundles,
-  collectionItems: Collection
+  generation: Generation,
+  items: Collection
 ) =>
   ipcTask("factoryRemoveCollectionItems")(
     id,
-    name,
-    collection,
-    bundles,
-    collectionItems
+    generation,
+    items
   ) as Promise<Collection>;
 
 export const factoryRegenerateCollectionItems = (
   id: string,
-  name: string,
-  collection: Collection,
-  collectionItems: Collection
+  generation: Generation,
+  items: Collection
 ) =>
   ipcTask("factoryRegenerateCollectionItems")(
     id,
-    name,
-    collection,
-    collectionItems
+    generation,
+    items
   ) as Promise<Collection>;
 
-export const factoryGenerateNotRevealedImage = (id: string, traits: Trait[]) =>
-  ipcTask("factoryGenerateNotRevealedImage")(id, traits);
+export const factoryDeployNotRevealedImage = (
+  id: string,
+  generation: Generation
+) => ipcTask("factoryDeployNotRevealedImage")(id, generation);
 
-export const factoryGenerateNotRevealedMetadata = (id: string) =>
-  ipcTask("factoryGenerateNotRevealedMetadata")(id);
-
-export const factoryDeployNotRevealedImage = (id: string) =>
-  ipcTask("factoryDeployNotRevealedImage")(id);
-
-export const factoryDeployNotRevealedMetadata = (id: string) =>
-  ipcTask("factoryDeployNotRevealedMetadata")(id);
+export const factoryDeployNotRevealedMetadata = (
+  id: string,
+  generation: Generation
+) => ipcTask("factoryDeployNotRevealedMetadata")(id, generation);
 
 export const factoryUnify = (
   id: string,

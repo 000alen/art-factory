@@ -40,36 +40,36 @@ export const factoryDeployAssets = async (
 ) => {
   let imagesCid, metadataCid, notRevealedImageCid, notRevealedMetadataCid;
 
-  await factoryLoadSecrets(id, secrets);
+  // await factoryLoadSecrets(id, secrets);
 
-  try {
-    imagesCid = partialDeploy
-      ? partialDeploy.imagesCid
-      : await factoryDeployImages(id);
+  // try {
+  //   imagesCid = partialDeploy
+  //     ? partialDeploy.imagesCid
+  //     : await factoryDeployImages(id);
 
-    if (!partialDeploy) await factoryGenerateMetadata(id, name, collection, []);
+  //   if (!partialDeploy) await factoryGenerateMetadata(id, name, collection, []);
 
-    metadataCid = partialDeploy
-      ? partialDeploy.metadataCid
-      : await factoryDeployMetadata(id);
+  //   metadataCid = partialDeploy
+  //     ? partialDeploy.metadataCid
+  //     : await factoryDeployMetadata(id);
 
-    notRevealedImageCid =
-      configuration.contractType === "721_reveal_pause"
-        ? ((await factoryDeployNotRevealedImage(id)) as string)
-        : undefined;
+  //   notRevealedImageCid =
+  //     configuration.contractType === "721_reveal_pause"
+  //       ? ((await factoryDeployNotRevealedImage(id)) as string)
+  //       : undefined;
 
-    notRevealedMetadataCid =
-      configuration.contractType === "721_reveal_pause"
-        ? ((await factoryDeployNotRevealedMetadata(id)) as string)
-        : undefined;
-  } catch (error) {
-    throw FormattedError(4, "Could not deploy assets", {
-      // collection,
-      imagesCid,
-      metadataCid,
-      message: error.message,
-    });
-  }
+  //   notRevealedMetadataCid =
+  //     configuration.contractType === "721_reveal_pause"
+  //       ? ((await factoryDeployNotRevealedMetadata(id)) as string)
+  //       : undefined;
+  // } catch (error) {
+  //   throw FormattedError(4, "Could not deploy assets", {
+  //     // collection,
+  //     imagesCid,
+  //     metadataCid,
+  //     message: error.message,
+  //   });
+  // }
 
   return {
     imagesCid,

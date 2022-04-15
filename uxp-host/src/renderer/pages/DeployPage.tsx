@@ -61,10 +61,11 @@ export function DeployPage() {
 
   useEffect(() => {
     task("XXX", async () => {
+      const generation = generations.find((g) => g.name === generationName);
       const base64String = await factoryGetImage(
         id,
-        generationName,
-        generations.find((g) => g.name === generationName).collection[0]
+        generation,
+        generation.collection[0]
       );
       const url = `data:image/png;base64,${base64String}`;
 

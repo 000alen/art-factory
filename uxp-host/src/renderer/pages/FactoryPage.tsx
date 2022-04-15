@@ -124,9 +124,9 @@ export const FactoryPage: React.FC = () => {
       );
 
       const generationBase64Strings = await Promise.all(
-        generations.map(async ({ name, collection }) => {
-          return collection.length > 0
-            ? await factoryGetImage(id, name, collection[0])
+        generations.map(async (generation) => {
+          return generation.collection.length > 0
+            ? await factoryGetImage(id, generation, generation.collection[0])
             : null;
         })
       );

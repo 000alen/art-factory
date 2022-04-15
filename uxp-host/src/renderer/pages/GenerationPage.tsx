@@ -109,17 +109,7 @@ export const GenerationPage: React.FC = () => {
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onProgress = async (n: string) => {
-    const updateUrl = async () =>
-      setUrl(
-        `data:image/png;base64,${await factoryGetImage(id, name, {
-          name: n,
-        } as CollectionItem)}`
-      );
-
-    setCurrentGeneration((prevGeneration) => {
-      if (prevGeneration % updateUrlThreshold === 0) updateUrl();
-      return prevGeneration + 1;
-    });
+    setCurrentGeneration((prevGeneration) => prevGeneration + 1);
   };
 
   const onGenerate = task("generation", async () => {

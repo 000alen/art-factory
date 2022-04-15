@@ -71,17 +71,13 @@ export const QualityPage = () => {
 
   const [dirty, setDirty] = useState(_dirty);
 
-  const [name] = useState(
-    generations.find((generation) => generation.id === generationId).name
+  const [_generation] = useState(
+    generations.find((generation) => generation.id === generationId)
   );
 
-  const [collection, setCollection] = useState<Collection>(
-    generations.find((generation) => generation.id === generationId).collection
-  );
-
-  const [bundles, setBundles] = useState<Bundles>(
-    generations.find((generation) => generation.id === generationId).bundles
-  );
+  const [name] = useState(_generation.name);
+  const [collection, setCollection] = useState(_generation.collection);
+  const [bundles, setBundles] = useState(_generation.bundles);
 
   const [collectionFiltersInfo, setCollectionFiltersInfo] = useState<Filters>(
     {}
@@ -126,7 +122,7 @@ export const QualityPage = () => {
       if (filteredCollection.some((item) => item.name === itemName)) {
         const url = `data:image/png;base64,${await factoryGetImage(
           id,
-          name,
+          _generation,
           collection.find((collectionItem) => collectionItem.name === itemName),
           MAX_SIZE
         )}`;
@@ -187,7 +183,7 @@ export const QualityPage = () => {
             ] as CollectionItem;
             const url = `data:image/png;base64,${await factoryGetImage(
               id,
-              name,
+              _generation,
               collectionItem,
               MAX_SIZE
             )}`;
@@ -228,7 +224,7 @@ export const QualityPage = () => {
             );
             const base64Strings = await Promise.all(
               collectionItems.map((collectionItem) =>
-                factoryGetImage(id, name, collectionItem, MAX_SIZE)
+                factoryGetImage(id, _generation, collectionItem, MAX_SIZE)
               )
             );
             const urls = base64Strings.map(
@@ -306,8 +302,7 @@ export const QualityPage = () => {
   const onRegenerateRepeated = async () => {
     const _collection = await factoryRegenerateCollectionItems(
       id,
-      name,
-      collection,
+      _generation,
       computeRepeatedCollection()
     );
     setCollection(_collection);
@@ -369,8 +364,7 @@ export const QualityPage = () => {
   const onRegenerate = async (i: number) => {
     const _collection = await factoryRegenerateCollectionItems(
       id,
-      name,
-      collection,
+      _generation,
       [filteredCollection[i]]
     );
     setCollection(_collection);
@@ -401,9 +395,7 @@ export const QualityPage = () => {
     );
     const _collection = await factoryRemoveCollectionItems(
       id,
-      name,
-      collection,
-      bundles,
+      _generation,
       _collectionItemsToRemove
     );
 

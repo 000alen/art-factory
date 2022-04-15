@@ -261,31 +261,6 @@ export class Factory {
     return { collection, bundles };
   }
 
-  async generateNotRevealedImage(traits: Trait[]) {
-    const item = {
-      name: "not_revealed",
-      traits: traits.map((trait) =>
-        choose(this.traitsByLayerName.get(trait.name))
-      ),
-    };
-    await this.generateImage(item, "not_revealed");
-  }
-
-  async generateNotRevealedMetadata() {
-    const metadata = {
-      name: this.configuration.name,
-      description: this.configuration.description,
-      image: `ipfs://${this.notRevealedImageCid}`,
-      edition: "not_revealed",
-      date: Date.now(),
-    };
-
-    await fs.promises.writeFile(
-      path.join(this.buildDir, "not_revealed", `not_revealed.json`),
-      JSON.stringify(metadata)
-    );
-  }
-
   computeMaxCombinations(layers: Layer[]) {
     return layers.reduce(
       (combinations, layer) =>
@@ -337,14 +312,9 @@ export class Factory {
     );
   }
 
-  async generateImage(
-    collectionItem: CollectionItem,
-    folder: string = "images"
-  ) {
+  async generateImage(item: CollectionItem, folder: string = "images") {
     const keys = await Promise.all(
-      collectionItem.traits.map(
-        async (trait) => await this._ensureTraitBuffer(trait)
-      )
+      item.traits.map(async (trait) => await this._ensureTraitBuffer(trait))
     );
 
     const buffers = keys.map((key) => this.traitsBuffer.get(key));
@@ -370,7 +340,7 @@ export class Factory {
       },
     })
       .composite(
-        collectionItem.traits.map(
+        item.traits.map(
           ({ blending }, i) => ({
             input: buffers[i],
             blend: (blending === "normal" ? "over" : blending) as Blend,
@@ -379,7 +349,7 @@ export class Factory {
         )
       )
       .png()
-      .toFile(path.join(this.buildDir, folder, `${collectionItem.name}.png`));
+      .toFile(path.join(this.buildDir, folder, `${item.name}.png`));
   }
 
   async generateImages(
@@ -399,11 +369,12 @@ export class Factory {
   }
 
   async generateMetadata(
-    name: string,
-    collection: Collection,
+    generation: Generation,
     metadataItems: MetadataItem[],
     callback?: (name: string) => void
   ) {
+    const { name, collection } = generation;
+
     if (!fs.existsSync(path.join(this.buildDir, "json", name)))
       fs.mkdirSync(path.join(this.buildDir, "json", name));
 
@@ -438,10 +409,12 @@ export class Factory {
   }
 
   async hydrateMetadata(
-    name: string,
-    collection: Collection,
+    generation: Generation,
+    imagesCid: string,
     callback?: (name: string) => void
   ) {
+    const { name, collection } = generation;
+
     if (!fs.existsSync(path.join(this.buildDir, "json", name)))
       fs.mkdirSync(path.join(this.buildDir, "json", name));
 
@@ -453,7 +426,7 @@ export class Factory {
           "utf8"
         )
       );
-      metadata["image"] = `ipfs://${this.imagesCid}/${collectionItem.name}.png`;
+      metadata["image"] = `ipfs://${imagesCid}/${collectionItem.name}.png`;
 
       metadatas.push(metadata);
 
@@ -469,68 +442,44 @@ export class Factory {
     );
   }
 
-  async deployImages() {
-    if (this.imagesCid) return this.imagesCid;
-
-    const imagesDir = path.join(this.buildDir, "images");
-
-    const { IpfsHash } = await pinDirectoryToIPFS(
-      this.secrets.pinataApiKey,
-      this.secrets.pinataSecretApiKey,
-      imagesDir
-    );
-    this.imagesCid = IpfsHash;
-
-    return this.imagesCid;
-  }
-
-  async deployNotRevealedImage() {
-    if (this.notRevealedImageCid) return this.notRevealedImageCid;
-
-    const notRevealedDir = path.join(this.buildDir, "not_revealed");
-
+  async deployNotRevealedImage(generation: Generation) {
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(notRevealedDir, "not_revealed.png")
+      path.join(this.buildDir, "json", generation.name, "1.png") // ? INFO: hardcoded
     );
 
-    this.notRevealedImageCid = IpfsHash;
-
-    return this.notRevealedImageCid;
+    return IpfsHash;
   }
 
-  async deployMetadata() {
-    if (this.metadataCid) return this.metadataCid;
-
-    if (!this.imagesCid) return;
-
-    const jsonDir = path.join(this.buildDir, "json");
-
-    const { IpfsHash } = await pinDirectoryToIPFS(
-      this.secrets.pinataApiKey,
-      this.secrets.pinataSecretApiKey,
-      jsonDir
-    );
-    this.metadataCid = IpfsHash;
-
-    return this.metadataCid;
-  }
-
-  async deployNotRevealedMetadata() {
-    if (this.notRevealedMetadataCid) return this.notRevealedMetadataCid;
-
-    const notRevealedDir = path.join(this.buildDir, "not_revealed");
-
+  async deployNotRevealedMetadata(generation: Generation) {
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(notRevealedDir, "not_revealed.json")
+      path.join(this.buildDir, "json", generation.name, "1.json") // ? INFO: hardcoded
     );
 
-    this.notRevealedMetadataCid = IpfsHash;
+    return IpfsHash;
+  }
 
-    return this.notRevealedMetadataCid;
+  async deployImages(generation: Generation) {
+    const { IpfsHash } = await pinDirectoryToIPFS(
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretApiKey,
+      path.join(this.buildDir, "images", generation.name)
+    );
+
+    return IpfsHash;
+  }
+
+  async deployMetadata(generation: Generation) {
+    const { IpfsHash } = await pinDirectoryToIPFS(
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretApiKey,
+      path.join(this.buildDir, "json", generation.name)
+    );
+
+    return IpfsHash;
   }
 
   async getTraitImage(trait: Trait, maxSize?: number) {
@@ -545,73 +494,57 @@ export class Factory {
     return [trait, await this.getTraitImage(trait, maxSize)];
   }
 
-  async rewriteTraitImage(trait: Trait, dataUrl: string) {
-    await fs.promises.writeFile(
-      path.join(trait.basePath, trait.fileName),
-      Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
-    );
-  }
-
   async getImage(
-    name: string,
-    collectionItem: CollectionItem,
+    generation: Generation,
+    item: CollectionItem,
     maxSize?: number
   ) {
     const buffer = await restrictImage(
       await fs.promises.readFile(
-        path.join(this.buildDir, "images", name, `${collectionItem.name}.png`)
+        path.join(this.buildDir, "images", generation.name, `${item.name}.png`)
       ),
       maxSize
     );
     return buffer;
   }
 
-  async getRandomImage(name: string, collection: Collection, maxSize?: number) {
-    const collectionItem =
-      collection[Math.floor(Math.random() * collection.length)];
-    return [collectionItem, await this.getImage(name, collectionItem, maxSize)];
+  async getRandomImage(generation: Generation, maxSize?: number) {
+    const { collection } = generation;
+    const item = collection[Math.floor(Math.random() * collection.length)];
+    return [item, await this.getImage(generation, item, maxSize)];
   }
 
-  async rewriteImage(collectionItem: CollectionItem, dataUrl: string) {
-    await fs.promises.writeFile(
-      path.join(this.buildDir, "images", `${collectionItem.name}.png`),
-      Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
-    );
-  }
-
-  async getMetadata(collectionItem: CollectionItem) {
+  async getMetadata(generation: Generation, item: CollectionItem) {
     const metadata = await fs.promises.readFile(
-      path.join(this.buildDir, "json", `${collectionItem.name}.json`)
+      path.join(this.buildDir, "json", generation.name, `${item.name}.json`),
+      "utf8"
     );
-    return JSON.parse(metadata.toString());
+    return JSON.parse(metadata);
   }
 
-  async getRandomMetadata(name: string, collection: Collection) {
-    const collectionItem =
-      collection[Math.floor(Math.random() * collection.length)];
-    return [collectionItem, await this.getMetadata(collectionItem)];
+  async getRandomMetadata(generation: Generation) {
+    const { collection } = generation;
+    const item = collection[Math.floor(Math.random() * collection.length)];
+    return [item, await this.getMetadata(generation, item)];
   }
 
-  async removeCollectionItems(
-    name: string,
-    collection: Collection,
-    bundles: Bundles,
-    collectionItemsToRemove: Collection
-  ) {
+  async removeItems(generation: Generation, items: Collection) {
+    let { name, collection, bundles } = generation;
+
     await Promise.all(
-      collectionItemsToRemove.map(async (itemToRemove) => {
+      items.map(async (item) => {
         await fs.promises.rm(
-          path.join(this.buildDir, "images", name, `${itemToRemove.name}.png`)
+          path.join(this.buildDir, "images", name, `${item.name}.png`)
         );
         await fs.promises.rm(
-          path.join(this.buildDir, "json", name, `${itemToRemove.name}.json`)
+          path.join(this.buildDir, "json", name, `${item.name}.json`)
         );
       })
     );
 
     collection = collection.filter(
       (item) =>
-        !collectionItemsToRemove.some((itemToRemove) => {
+        !items.some((itemToRemove) => {
           return item.name === itemToRemove.name;
         })
     );
@@ -619,10 +552,7 @@ export class Factory {
     bundles = bundles.map(({ name, ids }) => ({
       name,
       ids: ids.filter(
-        (ids) =>
-          !ids.some((id) =>
-            collectionItemsToRemove.some((item) => item.name === id)
-          )
+        (ids) => !ids.some((id) => items.some((item) => item.name === id))
       ),
     }));
 
@@ -683,22 +613,18 @@ export class Factory {
     return collection;
   }
 
-  async regenerateCollectionItems(
-    name: string,
-    collection: Collection,
-    collectionItemsToRegenerate: Collection
-  ) {
-    const newCollectionItems: Collection = collectionItemsToRegenerate.map(
-      ({ name, traits }) => ({
-        name,
-        traits: traits.map((trait) =>
-          choose(this.traitsByLayerName.get(trait.name))
-        ),
-      })
-    );
-    await this.generateImages(name, newCollectionItems);
+  async regenerateItems(generation: Generation, items: Collection) {
+    let { name, collection } = generation;
+
+    const newItems: Collection = items.map(({ name, traits }) => ({
+      name,
+      traits: traits.map((trait) =>
+        choose(this.traitsByLayerName.get(trait.name))
+      ),
+    }));
+    await this.generateImages(name, newItems);
     const newCollectionItemsByName = new Map(
-      newCollectionItems.map((item) => [item.name, item])
+      newItems.map((item) => [item.name, item])
     );
     collection = collection.map((collectionItem) =>
       newCollectionItemsByName.has(collectionItem.name)
