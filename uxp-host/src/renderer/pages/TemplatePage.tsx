@@ -1,27 +1,18 @@
-import React, {
-  useState,
-  useContext,
-  useEffect,
-  useCallback,
-  useRef,
-} from "react";
-import { Sidebar } from "../components/NodesPageSidebar";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
-import {
-  Nodes,
-  NodesContextProvider,
-  NodesInstance,
-} from "../components/NodesContext";
-import { useErrorHandler } from "../components/ErrorHandler";
-import { ToolbarContext } from "../components/Toolbar";
-import { Trait } from "../typings";
-import { MAX_SIZE } from "../constants";
-import { Instance } from "../typings";
-import { Button, Flex, TextField } from "@adobe/react-spectrum";
 import { v4 as uuid } from "uuid";
-import Close from "@spectrum-icons/workflow/Close";
+
+import { Button, Flex, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
+import Close from "@spectrum-icons/workflow/Close";
+
+import { useErrorHandler } from "../components/ErrorHandler";
+import { Nodes, NodesContextProvider, NodesInstance } from "../components/NodesContext";
+import { Sidebar } from "../components/NodesPageSidebar";
+import { ToolbarContext } from "../components/Toolbar";
+import { MAX_SIZE } from "../constants";
+import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
+import { Instance, Trait } from "../typings";
 import { spacedName } from "../utils";
 
 interface TemplatePageState {

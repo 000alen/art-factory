@@ -1,12 +1,14 @@
-import path from "path";
+import axios from "axios";
+import FormData from "form-data";
 import fs from "fs";
 import imageSize from "image-size";
-import { Trait } from "./typings";
+import path from "path";
 import sharp from "sharp";
-import FormData from "form-data";
-import axios from "axios";
-import { NAMESPACE, RARITY_DELIMITER } from "./constants";
+import solc from "solc";
 import { v5 as uuidv5 } from "uuid";
+
+import { NAMESPACE, RARITY_DELIMITER } from "./constants";
+import { Trait } from "./typings";
 
 export function rarity(elementName: string) {
   let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
@@ -24,22 +26,6 @@ export function append(a: any[], b: any[]) {
 
 export function layersNames(inputDir: string) {
   return fs.readdirSync(inputDir).filter((file) => !file.startsWith("."));
-}
-
-export function name(inputDir: string) {
-  return path.basename(inputDir);
-}
-
-export function sizeOf(inputDir: string) {
-  const layer = fs
-    .readdirSync(inputDir)
-    .filter((file) => !file.startsWith("."))[0];
-  const layerElement = fs
-    .readdirSync(path.join(inputDir, layer))
-    .filter((file) => !file.startsWith("."))[0];
-
-  const { width, height } = imageSize(path.join(inputDir, layer, layerElement));
-  return { width, height };
 }
 
 export const capitalize = (string: string) =>
@@ -181,3 +167,76 @@ export function replaceAll(
 
 export const hash = (object: any): string =>
   uuidv5(JSON.stringify(object), NAMESPACE);
+
+export async function getContract(name: string) {
+  const content = await fs.promises.readFile(
+    path.join(__dirname, "contracts", `${name}.sol`),
+    {
+      encoding: "utf8",
+    }
+  );
+  const input = {
+    language: "Solidity",
+    sources: {
+      [name]: {
+        content,
+      },
+    },
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["*"],
+        },
+      },
+    },
+  };
+  return JSON.parse(solc.compile(JSON.stringify(input)));
+}
+
+export async function getContractSource(name) {
+  await fs.promises.readFile(path.join(__dirname, "contracts", `${name}.sol`), {
+    encoding: "utf8",
+  });
+}
+
+import {
+  Edge as FlowEdge,
+  getOutgoers,
+  Node as FlowNode,
+} from "react-flow-renderer";
+
+export function getBranches(
+  nodes: FlowNode[],
+  edges: FlowEdge[]
+): FlowNode[][] {
+  const root = nodes.find((node) => node.type === "rootNode");
+
+  const stack: {
+    node: FlowNode;
+    path: FlowNode[];
+  }[] = [
+    {
+      node: root,
+      path: [root],
+    },
+  ];
+
+  const savedPaths = [];
+  while (stack.length > 0) {
+    const { node, path } = stack.pop();
+    const neighbors = getOutgoers(node, nodes, edges);
+
+    if (node.type === "renderNode") {
+      savedPaths.push(path);
+    } else {
+      for (const neighbor of neighbors) {
+        stack.push({
+          node: neighbor,
+          path: [...path, neighbor],
+        });
+      }
+    }
+  }
+
+  return savedPaths;
+}

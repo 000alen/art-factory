@@ -8,51 +8,20 @@ import { AbstractProvider } from "web3-core/types";
 import { Contract } from "web3-eth-contract";
 import { WyvernProtocol } from "wyvern-js";
 import {
-  AnnotatedFunctionABI,
-  FunctionInputKind,
-  FunctionOutputKind,
-  Network,
-  Schema,
-  StateMutability,
+    AnnotatedFunctionABI, FunctionInputKind, FunctionOutputKind, Network, Schema, StateMutability
 } from "wyvern-schemas/dist/types";
+
 import {
-  ENJIN_ADDRESS,
-  ENJIN_COIN_ADDRESS,
-  INVERSE_BASIS_POINT,
-  MAX_EXPIRATION_MONTHS,
-  MERKLE_VALIDATOR_MAINNET,
-  MERKLE_VALIDATOR_RINKEBY,
-  NULL_ADDRESS,
-  NULL_BLOCK_HASH,
+    ENJIN_ADDRESS, ENJIN_COIN_ADDRESS, INVERSE_BASIS_POINT, MAX_EXPIRATION_MONTHS,
+    MERKLE_VALIDATOR_MAINNET, MERKLE_VALIDATOR_RINKEBY, NULL_ADDRESS, NULL_BLOCK_HASH
 } from "../constants";
 import { ERC1155 } from "../contracts";
 import { ERC1155Abi } from "../typechain/contracts/ERC1155Abi";
 import {
-  Asset,
-  AssetEvent,
-  ECSignature,
-  OpenSeaAccount,
-  OpenSeaAsset,
-  OpenSeaAssetBundle,
-  OpenSeaAssetContract,
-  OpenSeaCollection,
-  OpenSeaFungibleToken,
-  OpenSeaTraitStats,
-  OpenSeaUser,
-  Order,
-  OrderJSON,
-  OrderSide,
-  SaleKind,
-  Transaction,
-  TxnCallback,
-  UnhashedOrder,
-  UnsignedOrder,
-  Web3Callback,
-  WyvernAsset,
-  WyvernBundle,
-  WyvernFTAsset,
-  WyvernNFTAsset,
-  WyvernSchemaName,
+    Asset, AssetEvent, ECSignature, OpenSeaAccount, OpenSeaAsset, OpenSeaAssetBundle,
+    OpenSeaAssetContract, OpenSeaCollection, OpenSeaFungibleToken, OpenSeaTraitStats, OpenSeaUser,
+    Order, OrderJSON, OrderSide, SaleKind, Transaction, TxnCallback, UnhashedOrder, UnsignedOrder,
+    Web3Callback, WyvernAsset, WyvernBundle, WyvernFTAsset, WyvernNFTAsset, WyvernSchemaName
 } from "../types";
 
 export { WyvernProtocol };

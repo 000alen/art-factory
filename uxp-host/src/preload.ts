@@ -40,10 +40,6 @@ const sendWhitelist = [
   "createProvider",
   "createProviderUri",
   "createProviderResult",
-
-  "XXX",
-  "XXXResult",
-  "XXXUri",
 ];
 
 const onWhitelist = [
@@ -88,10 +84,6 @@ const onWhitelist = [
   "createProvider",
   "createProviderUri",
   "createProviderResult",
-
-  "XXX",
-  "XXXResult",
-  "XXXUri",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

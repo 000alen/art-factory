@@ -1,5 +1,7 @@
-import { Flex, Text, View } from "@adobe/react-spectrum";
 import React, { useEffect, useState } from "react";
+
+import { Flex, Text, View } from "@adobe/react-spectrum";
+
 import { MAX_SIZE } from "../constants";
 import { factoryComposeTraits, factoryGetTraitImage } from "../ipc";
 // import { DEFAULT_BLENDING, DEFAULT_OPACITY } from "../constants";

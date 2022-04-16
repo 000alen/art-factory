@@ -3,13 +3,11 @@ import * as ethABI from "ethereumjs-abi";
 import { WyvernProtocol } from "wyvern-js";
 import { WyvernAtomicizerContract } from "wyvern-js/lib/abi_gen/wyvern_atomicizer";
 import { HowToCall, Network, ReplacementEncoder } from "wyvern-js/lib/types";
-import {
-  AnnotatedFunctionABI,
-  FunctionInputKind,
-  Schema,
-} from "wyvern-schemas/dist/types";
+import { AnnotatedFunctionABI, FunctionInputKind, Schema } from "wyvern-schemas/dist/types";
+
 import { proxyABI, proxyAssertABI } from "../abi/Proxy";
 import { OrderSide, WyvernAsset } from "../types";
+
 export { AbiType } from "wyvern-schemas";
 
 export interface LimitedCallSpec {

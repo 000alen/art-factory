@@ -1,3 +1,4 @@
+import { DEFAULT_BACKGROUND } from "./constants";
 import {
   adjectives,
   animals,
@@ -5,7 +6,12 @@ import {
   uniqueNamesGenerator,
 } from "unique-names-generator";
 import { v4 as uuid, v5 as uuidv5 } from "uuid";
-import { NAMESPACE, Networks } from "./constants";
+import {
+  getOutgoers,
+  Node as FlowNode,
+  Edge as FlowEdge,
+} from "react-flow-renderer";
+import { DEFAULT_COST, DEFAULT_MAX_MINT_AMOUNT, NAMESPACE } from "./constants";
 import { Configuration, ContractType, Instance } from "./typings";
 
 const spacedNameConfiguration = {
@@ -49,14 +55,9 @@ export const createConfiguration = (): Configuration => ({
   width: 500,
   height: 500,
   generateBackground: true,
-  defaultBackground: {
-    r: 255,
-    g: 255,
-    b: 255,
-    a: 1,
-  },
-  cost: 0,
-  maxMintAmount: 0,
+  defaultBackground: DEFAULT_BACKGROUND,
+  cost: DEFAULT_COST,
+  maxMintAmount: DEFAULT_MAX_MINT_AMOUNT,
   layers: [] as string[],
 });
 
@@ -66,3 +67,39 @@ export const createInstance = (): Instance => ({
   templates: [],
   generations: [],
 });
+
+export function getBranches(
+  nodes: FlowNode[],
+  edges: FlowEdge[]
+): FlowNode[][] {
+  const root = nodes.find((node) => node.type === "rootNode");
+
+  const stack: {
+    node: FlowNode;
+    path: FlowNode[];
+  }[] = [
+    {
+      node: root,
+      path: [root],
+    },
+  ];
+
+  const savedPaths = [];
+  while (stack.length > 0) {
+    const { node, path } = stack.pop();
+    const neighbors = getOutgoers(node, nodes, edges);
+
+    if (node.type === "renderNode") {
+      savedPaths.push(path);
+    } else {
+      for (const neighbor of neighbors) {
+        stack.push({
+          node: neighbor,
+          path: [...path, neighbor],
+        });
+      }
+    }
+  }
+
+  return savedPaths;
+}

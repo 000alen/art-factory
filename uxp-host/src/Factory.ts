@@ -1,7 +1,18 @@
+import {
+  ContractFactory,
+  providers as ethersProviders,
+  Signer,
+  utils,
+} from "ethers";
 import fs from "fs";
-import path from "path";
 import imageSize from "image-size";
+import path from "path";
+import { Node as FlowNode } from "react-flow-renderer";
 import sharp, { Blend } from "sharp";
+import { v4 as uuid } from "uuid";
+
+import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
+import { providers } from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -18,6 +29,7 @@ import {
 import {
   append,
   choose,
+  getContract,
   hash,
   pinDirectoryToIPFS,
   pinFileToIPFS,
@@ -26,46 +38,8 @@ import {
   removeRarity,
   replaceAll,
   restrictImage,
+  getBranches,
 } from "./utils";
-import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
-import { getBranches } from "./nodesUtils";
-import { Node as FlowNode } from "react-flow-renderer";
-import { v4 as uuid } from "uuid";
-import { ContractFactory, Signer, utils } from "ethers";
-import solc from "solc";
-import { providers as ethersProviders } from "ethers";
-import { providers } from "./ipc";
-
-export async function getContract(name: string) {
-  const content = await fs.promises.readFile(
-    path.join(__dirname, "contracts", `${name}.sol`),
-    {
-      encoding: "utf8",
-    }
-  );
-  const input = {
-    language: "Solidity",
-    sources: {
-      [name]: {
-        content,
-      },
-    },
-    settings: {
-      outputSelection: {
-        "*": {
-          "*": ["*"],
-        },
-      },
-    },
-  };
-  return JSON.parse(solc.compile(JSON.stringify(input)));
-}
-
-export async function getContractSource(name) {
-  await fs.promises.readFile(path.join(__dirname, "contracts", `${name}.sol`), {
-    encoding: "utf8",
-  });
-}
 
 export class Factory {
   buildDir: string;
@@ -677,27 +651,26 @@ export class Factory {
     generation: Generation,
     notRevealedGeneration?: Generation
   ) {
-    console.log("A");
+    const {
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+    } = await this.deployAssets(generation, notRevealedGeneration);
 
-    // const {
-    //   imagesCid,
-    //   metadataCid,
-    //   notRevealedImageCid,
-    //   notRevealedMetadataCid,
-    // } = await this.deployAssets(generation, notRevealedGeneration);
-    // console.log(
-    //   imagesCid,
-    //   metadataCid,
-    //   notRevealedImageCid,
-    //   notRevealedMetadataCid
-    // );
+    console.log(
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid
+    );
 
     const { contractAddress, abi, compilerVersion, transactionHash, wait } =
       await this.deployContract(
         providerId,
         generation,
-        "metadataCid",
-        "notRevealedMetadataCid"
+        metadataCid,
+        notRevealedMetadataCid
       );
 
     console.log("C", contractAddress, compilerVersion);
@@ -707,10 +680,10 @@ export class Factory {
     console.log("D");
 
     return {
-      imagesCid: "imagesCid",
-      metadataCid: "metadataCid",
-      notRevealedImageCid: "notRevealedImageCid",
-      notRevealedMetadataCid: "notRevealedMetadataCid",
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
       contractAddress,
       abi,
       compilerVersion,

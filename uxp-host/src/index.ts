@@ -4,10 +4,11 @@
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
-import { app, shell, BrowserWindow } from "electron";
 import "./ipc";
 import "./server";
 import "./store";
+
+import { app, BrowserWindow, shell } from "electron";
 
 const gotTheLock = app.requestSingleInstanceLock();
 

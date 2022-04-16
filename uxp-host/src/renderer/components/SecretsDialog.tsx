@@ -1,29 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
-  Flex,
-  ContextualHelp,
-  Footer,
-  Link,
-  Dialog,
-  Heading,
-  Divider,
-  Content,
-  Text,
-  ButtonGroup,
-  Button,
-  Form,
-  TextField,
+    Button, ButtonGroup, Content, ContextualHelp, Dialog, Divider, Flex, Footer, Form, Heading,
+    Link, Text, TextField
 } from "@adobe/react-spectrum";
+
 import {
-  getInfuraProjectId,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setPinataApiKey,
-  setPinataSecretApiKey,
-  setInfuraProjectId,
-  getEtherscanApiKey,
-  setEtherscanApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getPinataApiKey, getPinataSecretApiKey,
+    setEtherscanApiKey, setInfuraProjectId, setPinataApiKey, setPinataSecretApiKey
 } from "../ipc";
 import { useErrorHandler } from "./ErrorHandler";
 

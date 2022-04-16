@@ -1,18 +1,10 @@
 import React from "react";
 
-import {
-  View,
-  ActionButton,
-  Flex,
-  Item,
-  Heading,
-  ActionGroup,
-} from "@adobe/react-spectrum";
-
+import { ActionButton, ActionGroup, Flex, Heading, Item, View } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
-import Remove from "@spectrum-icons/workflow/Remove";
-import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
+import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
+import Remove from "@spectrum-icons/workflow/Remove";
 
 interface ArrayItemProps {
   Component: React.ComponentType<any> | Function;

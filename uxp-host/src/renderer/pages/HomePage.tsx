@@ -1,8 +1,10 @@
 import React from "react";
-import { Flex, Heading, Button, ButtonGroup } from "@adobe/react-spectrum";
 import { useNavigate } from "react-router-dom";
-import { useErrorHandler } from "../components/ErrorHandler";
+
+import { Button, ButtonGroup, Flex, Heading } from "@adobe/react-spectrum";
+
 import { newProject, openProject } from "../commands";
+import { useErrorHandler } from "../components/ErrorHandler";
 
 export function HomePage() {
   const task = useErrorHandler();

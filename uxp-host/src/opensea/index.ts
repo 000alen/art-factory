@@ -1,7 +1,8 @@
 /* eslint-disable import/no-unused-modules */
 import { OpenSeaAPI } from "./api";
 import { OpenSeaPort } from "./seaport";
-import { Network, EventData, EventType } from "./types";
+import { EventData, EventType, Network } from "./types";
+
 export { orderToJSON, orderFromJSON, WyvernProtocol } from "./utils/utils";
 export {
   encodeCall,

@@ -15,6 +15,7 @@ declare global {
 // #endregion
 
 import { v4 as uuid } from "uuid";
+
 import {
   Bundles,
   BundlesInfo,
@@ -132,12 +133,6 @@ export const showOpenDialog = (options: any) =>
     filePaths: string[];
   }>;
 
-export const getContract = (name: string) =>
-  ipcTask("getContract")(name) as Promise<any>;
-
-export const getContractSource = (name: string) =>
-  ipcTask("getContractSource")(name);
-
 export const openInExplorer = (...paths: string[]) =>
   ipcTask("openInExplorer")(paths);
 // #endregion
@@ -163,9 +158,6 @@ export const createFactory = (
   configuration: Partial<Configuration>,
   projectDir: string
 ) => ipcTask("createFactory")(id, configuration, projectDir);
-
-export const factoryLoadSecrets = (id: string, secrets: Secrets) =>
-  ipcTask("factoryLoadSecrets")(id, secrets);
 
 export const factoryGetLayerByName = (id: string, layerName: string) =>
   ipcTaskWithRequestId("factoryGetLayerByName")(
@@ -360,40 +352,4 @@ export const createProvider = (
     window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
     window.ipcRenderer.send("createProvider", id);
   });
-
-export const XXX = (
-  callback: ({
-    error,
-    connected,
-    done,
-  }: {
-    error?: boolean;
-    connected?: boolean;
-    done?: boolean;
-  }) => void
-) =>
-  new Promise<string>((resolve) => {
-    const onXXXUri = ({ uri }: { uri: string }) => {
-      window.ipcRenderer.removeListener("XXXUri", onXXXUri);
-      resolve(uri);
-    };
-
-    const onXXXResult = ({
-      error,
-      connected,
-      done,
-    }: {
-      error?: boolean;
-      connected?: boolean;
-      done?: boolean;
-    }) => {
-      window.ipcRenderer.removeListener("XXXResult", onXXXResult);
-      callback({ error, connected, done });
-    };
-
-    window.ipcRenderer.on("XXXUri", onXXXUri);
-    window.ipcRenderer.on("XXXResult", onXXXResult);
-    window.ipcRenderer.send("XXX");
-  });
-
 // #endregion

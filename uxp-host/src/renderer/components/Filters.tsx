@@ -1,11 +1,7 @@
-import {
-  Button,
-  Checkbox,
-  Heading,
-  SearchField,
-  View,
-} from "@adobe/react-spectrum";
 import React from "react";
+
+import { Button, Checkbox, Heading, SearchField, View } from "@adobe/react-spectrum";
+
 import { Bundles } from "../typings";
 
 type Filters = Record<string, string[]>;

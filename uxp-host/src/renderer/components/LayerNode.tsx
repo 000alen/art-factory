@@ -1,20 +1,16 @@
 import React, { memo, useEffect, useState } from "react";
-import {
-  MenuTrigger,
-  ActionButton,
-  Menu,
-  Item,
-  Flex,
-  Slider,
-  Heading,
-} from "@adobe/react-spectrum";
-import { ImageItem } from "./ImageItem";
-import { Trait } from "../typings";
-import { Handles } from "./Handles";
-import { capitalize, hash } from "../utils";
-import Refresh from "@spectrum-icons/workflow/Refresh";
-import { useForceUpdate } from "../hooks/useForceUpdate";
 import { useNodes } from "react-flow-renderer";
+
+import {
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, Slider
+} from "@adobe/react-spectrum";
+import Refresh from "@spectrum-icons/workflow/Refresh";
+
+import { useForceUpdate } from "../hooks/useForceUpdate";
+import { Trait } from "../typings";
+import { capitalize, hash } from "../utils";
+import { Handles } from "./Handles";
+import { ImageItem } from "./ImageItem";
 
 export interface LayerNodeComponentData {
   urls?: Record<string, string>;

@@ -1,12 +1,7 @@
-import {
-  Button,
-  Flex,
-  Grid,
-  NumberField,
-  repeat,
-  View,
-} from "@adobe/react-spectrum";
 import React from "react";
+
+import { Button, Flex, Grid, NumberField, repeat, View } from "@adobe/react-spectrum";
+
 import { PAGE_N } from "../constants";
 import { Collection } from "../typings";
 import { setter } from "./Gallery";

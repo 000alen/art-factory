@@ -1,29 +1,17 @@
-import React, { useState, useContext, useEffect } from "react";
-import {
-  Flex,
-  Heading,
-  ProgressBar,
-  View,
-  Text,
-  ActionButton,
-  Link,
-} from "@adobe/react-spectrum";
-import { OutputItem } from "../components/OutputItem";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Networks } from "../constants";
-import { Contract, providers } from "ethers";
 
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import Copy from "@spectrum-icons/workflow/Copy";
-import Close from "@spectrum-icons/workflow/Close";
-
-import { Panel721 } from "../components/Panel721";
-import { chopAddress } from "../utils";
-import LogOut from "@spectrum-icons/workflow/LogOut";
-import { ToolbarContext } from "../components/Toolbar";
-import { useErrorHandler } from "../components/ErrorHandler";
-import { Instance } from "../typings";
+import { ActionButton, Flex, Heading, ProgressBar, Text, View } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
+import Copy from "@spectrum-icons/workflow/Copy";
+
+import { useErrorHandler } from "../components/ErrorHandler";
+import { OutputItem } from "../components/OutputItem";
+import { Panel721 } from "../components/Panel721";
+import { ToolbarContext } from "../components/Toolbar";
+import { Networks } from "../constants";
+import { Instance } from "../typings";
+import { chopAddress } from "../utils";
 
 interface InstancePageState {
   projectDir: string;
@@ -53,20 +41,6 @@ export function InstancePage() {
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    // task("loading secrets", async () => {
-    //   const secrets = await loadSecrets();
-    //   const provider = new WalletConnectProvider({
-    //     infuraId: secrets.infuraProjectId,
-    //     chainId: Networks[network].id,
-    //   });
-    //   await provider.enable();
-    //   const web3Provider = new providers.Web3Provider(provider);
-    //   const signer = web3Provider.getSigner();
-    //   const contract = new Contract(contractAddress, abi, signer);
-
-    //   setContract(contract);
-    // })();
 
     return () => {
       toolbarContext.removeButton("back");

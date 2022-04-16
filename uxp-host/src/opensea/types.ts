@@ -2,12 +2,9 @@
 import BigNumber from "bignumber.js";
 import { AbiItem } from "web3-utils";
 import {
-  ECSignature,
-  HowToCall,
-  Network,
-  Order as WyvernOrder,
-  WyvernProtocolConfig,
+    ECSignature, HowToCall, Network, Order as WyvernOrder, WyvernProtocolConfig
 } from "wyvern-js/lib/types";
+
 import type { Token } from "wyvern-schemas/dist/types";
 
 export { HowToCall, Network };

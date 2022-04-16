@@ -1,12 +1,7 @@
-import {
-  Flex,
-  Grid,
-  Heading,
-  NumberField,
-  repeat,
-  View,
-} from "@adobe/react-spectrum";
 import React from "react";
+
+import { Flex, Grid, Heading, NumberField, repeat, View } from "@adobe/react-spectrum";
+
 import { PAGE_N } from "../constants";
 import { BundleItem } from "../pages/QualityPage";
 import { Bundles } from "../typings";

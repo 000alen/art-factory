@@ -1,7 +1,9 @@
-import React, { useState, createContext, useContext } from "react";
-import { Flex, DialogTrigger, ActionButton, Text } from "@adobe/react-spectrum";
-import { SecretsDialog } from "./SecretsDialog";
+import React, { createContext, useContext, useState } from "react";
+
+import { ActionButton, DialogTrigger, Flex, Text } from "@adobe/react-spectrum";
 import Settings from "@spectrum-icons/workflow/Settings";
+
+import { SecretsDialog } from "./SecretsDialog";
 
 interface ButtonItemProps {
   label: string;

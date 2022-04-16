@@ -1,5 +1,7 @@
 import { WyvernProtocol } from "wyvern-js";
+
 import { NULL_ADDRESS } from "./constants";
+
 import type { Order } from "./types";
 
 export const MAX_ERROR_LENGTH = 120;

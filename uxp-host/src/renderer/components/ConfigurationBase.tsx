@@ -1,16 +1,11 @@
 import React from "react";
+
 import {
-  Flex,
-  TextField,
-  NumberField,
-  Switch,
-  TextArea,
-  RadioGroup,
-  Radio,
-  Slider,
+    Flex, NumberField, Radio, RadioGroup, Slider, Switch, TextArea, TextField
 } from "@adobe/react-spectrum";
-import { ColorPicker } from "./ColorPicker";
+
 import { ContractType } from "../typings";
+import { ColorPicker } from "./ColorPicker";
 
 interface ConfigurationBaseProps {
   name: string;

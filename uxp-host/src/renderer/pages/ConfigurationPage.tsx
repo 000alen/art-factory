@@ -1,18 +1,18 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button, Flex, Heading, ButtonGroup } from "@adobe/react-spectrum";
+
+import { Button, ButtonGroup, Flex, Heading } from "@adobe/react-spectrum";
+import { parseColor } from "@react-stately/color";
+import Back from "@spectrum-icons/workflow/Back";
+import Close from "@spectrum-icons/workflow/Close";
 
 import { Configuration721 } from "../components/Configuration721";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
-import { ToolbarContext } from "../components/Toolbar";
-import { parseColor } from "@react-stately/color";
-import { Configuration, Instance } from "../typings";
-
-import Back from "@spectrum-icons/workflow/Back";
-import Close from "@spectrum-icons/workflow/Close";
-import { readProjectAvailableLayers } from "../ipc";
 import { useErrorHandler } from "../components/ErrorHandler";
+import { ToolbarContext } from "../components/Toolbar";
+import { readProjectAvailableLayers } from "../ipc";
+import { Configuration, Instance } from "../typings";
 
 interface ConfigurationPageState {
   projectDir: string;

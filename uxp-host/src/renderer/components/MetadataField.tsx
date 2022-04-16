@@ -1,5 +1,6 @@
-import { Flex, TextField } from "@adobe/react-spectrum";
 import React from "react";
+
+import { Flex, TextField } from "@adobe/react-spectrum";
 
 interface MetadataFieldProps {
   value: { key: string; value: string };

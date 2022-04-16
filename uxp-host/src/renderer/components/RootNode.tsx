@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { Handle, Position } from "react-flow-renderer";
+
 import { Text } from "@adobe/react-spectrum";
 
 export const RootNode: React.FC = memo(() => {

@@ -1,36 +1,27 @@
-import {
-  ActionGroup,
-  // ActionGroup,
-  Button,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  TextField,
-  View,
-} from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useErrorHandler } from "../components/ErrorHandler";
-import { ToolbarContext } from "../components/Toolbar";
-import { UXPContext } from "../components/UXPContext";
-import { Bundles, Collection, CollectionItem, Instance } from "../typings";
+
 import {
-  factoryGetImage,
-  factoryRegenerateItems,
-  factoryRemoveItems,
-  openInExplorer,
-} from "../ipc";
-import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
-import { ImageItem } from "../components/ImageItem";
-import { hash } from "../utils";
-import { Gallery } from "../components/Gallery";
-import { Filters } from "../components/Filters";
+    ActionGroup, Button, Flex, Grid, Heading, Item, TextField, View
+} from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
 import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import Close from "@spectrum-icons/workflow/Close";
 import Folder from "@spectrum-icons/workflow/Folder";
+
+import { useErrorHandler } from "../components/ErrorHandler";
+import { Filters } from "../components/Filters";
+import { Gallery } from "../components/Gallery";
+import { ImageItem } from "../components/ImageItem";
+import { ToolbarContext } from "../components/Toolbar";
+import { UXPContext } from "../components/UXPContext";
+import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
+import {
+    factoryGetImage, factoryRegenerateItems, factoryRemoveItems, openInExplorer
+} from "../ipc";
+import { Bundles, Collection, CollectionItem, Instance } from "../typings";
+import { hash } from "../utils";
 
 interface QualityPageState {
   projectDir: string;

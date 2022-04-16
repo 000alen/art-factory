@@ -1,33 +1,34 @@
-import { Flex, Heading, Text, TextField } from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { Node as FlowNode } from "react-flow-renderer";
 import { useLocation, useNavigate } from "react-router-dom";
+import { v4 as uuid } from "uuid";
+
+import { Flex, Heading, Text, TextField } from "@adobe/react-spectrum";
+import Back from "@spectrum-icons/workflow/Back";
+import Close from "@spectrum-icons/workflow/Close";
+
+import { generate } from "../commands";
+import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
+import { ImageItem } from "../components/ImageItem";
+import { LayerNodeComponentData } from "../components/LayerNode";
+import { MetadataField } from "../components/MetadataField";
 import { ToolbarContext } from "../components/Toolbar";
+import { TriStateButton } from "../components/TriStateButton";
+import {
+  factoryGenerateImages,
+  factoryGenerateMetadata,
+  factoryGetImage,
+  factoryMakeGeneration,
+} from "../ipc";
 import {
   BundlesInfo,
   CollectionItem,
   Instance,
   MetadataItem,
+  Trait,
 } from "../typings";
-import Back from "@spectrum-icons/workflow/Back";
-import Close from "@spectrum-icons/workflow/Close";
-import { getBranches } from "../nodesUtils";
-import { LayerNodeComponentData } from "../components/LayerNode";
-import { Trait } from "../typings";
-import {
-  factoryMakeGeneration,
-  factoryGenerateImages,
-  factoryGenerateMetadata,
-  factoryGetImage,
-} from "../ipc";
-import { hash, spacedName } from "../utils";
-import { Node as FlowNode } from "react-flow-renderer";
-import { v4 as uuid } from "uuid";
-import { TriStateButton } from "../components/TriStateButton";
-import { ArrayOf } from "../components/ArrayOf";
-import { MetadataField } from "../components/MetadataField";
-import { ImageItem } from "../components/ImageItem";
-import { generate } from "../commands";
+import { hash, spacedName, getBranches } from "../utils";
 
 interface GenerationPageState {
   projectDir: string;

@@ -1,35 +1,18 @@
 // import "isomorphic-unfetch";
 import _ from "lodash";
 import * as QueryString from "query-string";
+
 import {
-  API_BASE_MAINNET,
-  API_BASE_RINKEBY,
-  API_PATH,
-  ORDERBOOK_PATH,
-  ORDERBOOK_VERSION,
-  SITE_HOST_MAINNET,
-  SITE_HOST_RINKEBY,
+    API_BASE_MAINNET, API_BASE_RINKEBY, API_PATH, ORDERBOOK_PATH, ORDERBOOK_VERSION,
+    SITE_HOST_MAINNET, SITE_HOST_RINKEBY
 } from "./constants";
 import {
-  Network,
-  OpenSeaAPIConfig,
-  OpenSeaAsset,
-  OpenSeaAssetBundle,
-  OpenSeaAssetBundleQuery,
-  OpenSeaAssetQuery,
-  OpenSeaFungibleToken,
-  OpenSeaFungibleTokenQuery,
-  Order,
-  OrderbookResponse,
-  OrderJSON,
-  OrderQuery,
+    Network, OpenSeaAPIConfig, OpenSeaAsset, OpenSeaAssetBundle, OpenSeaAssetBundleQuery,
+    OpenSeaAssetQuery, OpenSeaFungibleToken, OpenSeaFungibleTokenQuery, Order, OrderbookResponse,
+    OrderJSON, OrderQuery
 } from "./types";
 import {
-  assetBundleFromJSON,
-  assetFromJSON,
-  delay,
-  orderFromJSON,
-  tokenFromJSON,
+    assetBundleFromJSON, assetFromJSON, delay, orderFromJSON, tokenFromJSON
 } from "./utils/utils";
 
 export class OpenSeaAPI {

@@ -1,20 +1,21 @@
-import { HomePage } from "./pages/HomePage";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
-import { Flex, StatusLight } from "@adobe/react-spectrum";
-import { QualityPage } from "./pages/QualityPage";
-import { DeployPage } from "./pages/DeployPage";
-import { ConfigurationPage } from "./pages/ConfigurationPage";
-import { InstancePage } from "./pages/InstancePage";
-import { NotFoundPage } from "./pages/NotFoundPage";
-import { TemplatePage } from "./pages/TemplatePage";
-
 import React, { useContext } from "react";
+import { HashRouter as Router, Route, Routes } from "react-router-dom";
+
+import { Flex, StatusLight } from "@adobe/react-spectrum";
+
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { GenericDialogProvider } from "./components/GenericDialog";
 import { Toolbar, ToolbarProvider } from "./components/Toolbar";
 import { UXPContext } from "./components/UXPContext";
-import { GenericDialogProvider } from "./components/GenericDialog";
+import { ConfigurationPage } from "./pages/ConfigurationPage";
+import { DeployPage } from "./pages/DeployPage";
 import { FactoryPage } from "./pages/FactoryPage";
 import { GenerationPage } from "./pages/GenerationPage";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import { HomePage } from "./pages/HomePage";
+import { InstancePage } from "./pages/InstancePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { QualityPage } from "./pages/QualityPage";
+import { TemplatePage } from "./pages/TemplatePage";
 
 export function App() {
   const { connectionStatus } = useContext(UXPContext);

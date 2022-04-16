@@ -1,17 +1,18 @@
+import { Node as FlowNode } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
+
 import { LayerNodeComponentData } from "./components/LayerNode";
 import {
   ensureProjectStructure,
-  factoryMakeGeneration,
   factoryGenerateImages,
   factoryGenerateMetadata,
+  factoryMakeGeneration,
   factoryRemove,
   factoryUnify,
   readProjectInstance,
   showOpenDialog,
   writeProjectInstance,
 } from "./ipc";
-import { getBranches } from "./nodesUtils";
 import {
   Bundles,
   BundlesInfo,
@@ -22,8 +23,7 @@ import {
   Template,
   Trait,
 } from "./typings";
-import { createInstance, hash } from "./utils";
-import { Node as FlowNode } from "react-flow-renderer";
+import { createInstance, hash, getBranches } from "./utils";
 
 export interface LoadedInstance {
   projectDir: string;

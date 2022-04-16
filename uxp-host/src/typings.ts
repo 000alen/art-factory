@@ -1,4 +1,4 @@
-import { Node as FlowNode, Edge as FlowEdge } from "react-flow-renderer";
+import { Edge as FlowEdge, Node as FlowNode } from "react-flow-renderer";
 
 export enum ContractType {
   ERC721 = "721",

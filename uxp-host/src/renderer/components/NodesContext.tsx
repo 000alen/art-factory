@@ -1,37 +1,19 @@
-import React, { useCallback, useEffect } from "react";
-import { createContext, useState, useContext, useRef } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import ReactFlow, {
-  addEdge,
-  Controls,
-  Background,
-  BackgroundVariant,
-  Node as FlowNode,
-  Edge as FlowEdge,
-  Connection as FlowConnection,
-  NodeChange as FlowNodeChange,
-  EdgeChange as FlowEdgeChange,
-  ReactFlowInstance,
-  useNodesState,
-  useEdgesState,
+    addEdge, Background, BackgroundVariant, Connection as FlowConnection, Controls,
+    Edge as FlowEdge, EdgeChange as FlowEdgeChange, Node as FlowNode, NodeChange as FlowNodeChange,
+    ReactFlowInstance, useEdgesState, useNodesState
 } from "react-flow-renderer";
+
+import { DEFAULT_BLENDING, DEFAULT_NODES, DEFAULT_OPACITY, MAX_SIZE } from "../constants";
+import { factoryComposeTraits, factoryComputeMaxCombinations, factoryGetTraitImage } from "../ipc";
 import { Trait } from "../typings";
 import { dashedName, getId, hash, spacedName } from "../utils";
-import {
-  DEFAULT_BLENDING,
-  DEFAULT_NODES,
-  DEFAULT_OPACITY,
-  MAX_SIZE,
-} from "../constants";
-import {
-  factoryComposeTraits,
-  factoryComputeMaxCombinations,
-  factoryGetTraitImage,
-} from "../ipc";
+import { BundleNode, BundleNodeComponentData } from "./BundleNode";
+import { CustomEdge } from "./CustomEdge";
 import { LayerNode, LayerNodeComponentData } from "./LayerNode";
 import { RenderNode, RenderNodeComponentData } from "./RenderNode";
-import { BundleNode, BundleNodeComponentData } from "./BundleNode";
 import { RootNode } from "./RootNode";
-import { CustomEdge } from "./CustomEdge";
 
 interface NodesContextProviderProps {
   id: string;

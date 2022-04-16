@@ -1,5 +1,5 @@
-import React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+
 import { Trait } from "../typings";
 import { SocketContext } from "./SocketContext";
 

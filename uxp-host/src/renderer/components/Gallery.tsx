@@ -1,17 +1,9 @@
-import {
-  Button,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  NumberField,
-  repeat,
-  TabList,
-  TabPanels,
-  Tabs,
-  View,
-} from "@adobe/react-spectrum";
 import React from "react";
+
+import {
+    Button, Flex, Grid, Heading, Item, NumberField, repeat, TabList, TabPanels, Tabs, View
+} from "@adobe/react-spectrum";
+
 import { BundleItem } from "../pages/QualityPage";
 import { Bundles, Collection } from "../typings";
 import { GalleryBundles } from "./GalleryBundles";

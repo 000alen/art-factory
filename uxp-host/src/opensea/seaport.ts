@@ -7,69 +7,34 @@ import Web3 from "web3";
 import { WyvernProtocol } from "wyvern-js";
 import * as WyvernSchemas from "wyvern-schemas";
 import { Schema } from "wyvern-schemas/dist/types";
+
 import { OpenSeaAPI } from "./api";
 import {
-  CHEEZE_WIZARDS_BASIC_TOURNAMENT_ADDRESS,
-  CHEEZE_WIZARDS_BASIC_TOURNAMENT_RINKEBY_ADDRESS,
-  CHEEZE_WIZARDS_GUILD_ADDRESS,
-  CHEEZE_WIZARDS_GUILD_RINKEBY_ADDRESS,
-  CK_ADDRESS,
-  CK_RINKEBY_ADDRESS,
-  DECENTRALAND_ESTATE_ADDRESS,
-  DEFAULT_BUYER_FEE_BASIS_POINTS,
-  DEFAULT_GAS_INCREASE_FACTOR,
-  DEFAULT_MAX_BOUNTY,
-  DEFAULT_SELLER_FEE_BASIS_POINTS,
-  DEFAULT_WRAPPED_NFT_LIQUIDATION_UNISWAP_SLIPPAGE_IN_BASIS_POINTS,
-  EIP_712_ORDER_TYPES,
-  EIP_712_WYVERN_DOMAIN_NAME,
-  EIP_712_WYVERN_DOMAIN_VERSION,
-  ENJIN_COIN_ADDRESS,
-  INVERSE_BASIS_POINT,
-  MANA_ADDRESS,
-  MAX_EXPIRATION_MONTHS,
-  MIN_EXPIRATION_MINUTES,
-  NULL_ADDRESS,
-  NULL_BLOCK_HASH,
-  OPENSEA_FEE_RECIPIENT,
-  OPENSEA_SELLER_BOUNTY_BASIS_POINTS,
-  ORDER_MATCHING_LATENCY_SECONDS,
-  RPC_URL_PATH,
-  SELL_ORDER_BATCH_SIZE,
-  STATIC_CALL_CHEEZE_WIZARDS_ADDRESS,
-  STATIC_CALL_CHEEZE_WIZARDS_RINKEBY_ADDRESS,
-  STATIC_CALL_DECENTRALAND_ESTATES_ADDRESS,
-  STATIC_CALL_TX_ORIGIN_ADDRESS,
-  STATIC_CALL_TX_ORIGIN_RINKEBY_ADDRESS,
-  UNISWAP_FACTORY_ADDRESS_MAINNET,
-  UNISWAP_FACTORY_ADDRESS_RINKEBY,
-  WRAPPED_NFT_FACTORY_ADDRESS_MAINNET,
-  WRAPPED_NFT_FACTORY_ADDRESS_RINKEBY,
-  WRAPPED_NFT_LIQUIDATION_PROXY_ADDRESS_MAINNET,
-  WRAPPED_NFT_LIQUIDATION_PROXY_ADDRESS_RINKEBY,
+    CHEEZE_WIZARDS_BASIC_TOURNAMENT_ADDRESS, CHEEZE_WIZARDS_BASIC_TOURNAMENT_RINKEBY_ADDRESS,
+    CHEEZE_WIZARDS_GUILD_ADDRESS, CHEEZE_WIZARDS_GUILD_RINKEBY_ADDRESS, CK_ADDRESS,
+    CK_RINKEBY_ADDRESS, DECENTRALAND_ESTATE_ADDRESS, DEFAULT_BUYER_FEE_BASIS_POINTS,
+    DEFAULT_GAS_INCREASE_FACTOR, DEFAULT_MAX_BOUNTY, DEFAULT_SELLER_FEE_BASIS_POINTS,
+    DEFAULT_WRAPPED_NFT_LIQUIDATION_UNISWAP_SLIPPAGE_IN_BASIS_POINTS, EIP_712_ORDER_TYPES,
+    EIP_712_WYVERN_DOMAIN_NAME, EIP_712_WYVERN_DOMAIN_VERSION, ENJIN_COIN_ADDRESS,
+    INVERSE_BASIS_POINT, MANA_ADDRESS, MAX_EXPIRATION_MONTHS, MIN_EXPIRATION_MINUTES, NULL_ADDRESS,
+    NULL_BLOCK_HASH, OPENSEA_FEE_RECIPIENT, OPENSEA_SELLER_BOUNTY_BASIS_POINTS,
+    ORDER_MATCHING_LATENCY_SECONDS, RPC_URL_PATH, SELL_ORDER_BATCH_SIZE,
+    STATIC_CALL_CHEEZE_WIZARDS_ADDRESS, STATIC_CALL_CHEEZE_WIZARDS_RINKEBY_ADDRESS,
+    STATIC_CALL_DECENTRALAND_ESTATES_ADDRESS, STATIC_CALL_TX_ORIGIN_ADDRESS,
+    STATIC_CALL_TX_ORIGIN_RINKEBY_ADDRESS, UNISWAP_FACTORY_ADDRESS_MAINNET,
+    UNISWAP_FACTORY_ADDRESS_RINKEBY, WRAPPED_NFT_FACTORY_ADDRESS_MAINNET,
+    WRAPPED_NFT_FACTORY_ADDRESS_RINKEBY, WRAPPED_NFT_LIQUIDATION_PROXY_ADDRESS_MAINNET,
+    WRAPPED_NFT_LIQUIDATION_PROXY_ADDRESS_RINKEBY
 } from "./constants";
 import {
-  CanonicalWETH,
-  CheezeWizardsBasicTournament,
-  DecentralandEstates,
-  ERC20,
-  ERC721,
-  getMethod,
-  StaticCheckDecentralandEstates,
-  StaticCheckTxOrigin,
-  UniswapFactory,
-  WrappedNFT,
-  WrappedNFTFactory,
-  WrappedNFTLiquidationProxy,
-  StaticCheckCheezeWizards,
-  UniswapExchange,
+    CanonicalWETH, CheezeWizardsBasicTournament, DecentralandEstates, ERC20, ERC721, getMethod,
+    StaticCheckCheezeWizards, StaticCheckDecentralandEstates, StaticCheckTxOrigin, UniswapExchange,
+    UniswapFactory, WrappedNFT, WrappedNFTFactory, WrappedNFTLiquidationProxy
 } from "./contracts";
+import { MAX_ERROR_LENGTH, requireOrderCalldataCanMatch, requireOrdersCanMatch } from "./debugging";
 import {
-  MAX_ERROR_LENGTH,
-  requireOrderCalldataCanMatch,
-  requireOrdersCanMatch,
-} from "./debugging";
-import { CheezeWizardsBasicTournamentAbi } from "./typechain/contracts/CheezeWizardsBasicTournamentAbi";
+    CheezeWizardsBasicTournamentAbi
+} from "./typechain/contracts/CheezeWizardsBasicTournamentAbi";
 import { DecentralandEstatesAbi } from "./typechain/contracts/DecentralandEstatesAbi";
 import { ERC1155Abi } from "./typechain/contracts/ERC1155Abi";
 import { ERC721v3Abi } from "./typechain/contracts/ERC721v3Abi";
@@ -78,64 +43,22 @@ import { UniswapFactoryAbi } from "./typechain/contracts/UniswapFactoryAbi";
 import { WrappedNFTAbi } from "./typechain/contracts/WrappedNFTAbi";
 import { WrappedNFTFactoryAbi } from "./typechain/contracts/WrappedNFTFactoryAbi";
 import {
-  Asset,
-  ComputedFees,
-  ECSignature,
-  EventData,
-  EventType,
-  FeeMethod,
-  HowToCall,
-  Network,
-  OpenSeaAPIConfig,
-  OpenSeaAsset,
-  OpenSeaFungibleToken,
-  Order,
-  OrderSide,
-  PartialReadonlyContractAbi,
-  RawWyvernOrderJSON,
-  SaleKind,
-  TokenStandardVersion,
-  UnhashedOrder,
-  UnsignedOrder,
-  WyvernAsset,
-  WyvernAtomicMatchParameters,
-  WyvernFTAsset,
-  WyvernNFTAsset,
-  WyvernSchemaName,
+    Asset, ComputedFees, ECSignature, EventData, EventType, FeeMethod, HowToCall, Network,
+    OpenSeaAPIConfig, OpenSeaAsset, OpenSeaFungibleToken, Order, OrderSide,
+    PartialReadonlyContractAbi, RawWyvernOrderJSON, SaleKind, TokenStandardVersion, UnhashedOrder,
+    UnsignedOrder, WyvernAsset, WyvernAtomicMatchParameters, WyvernFTAsset, WyvernNFTAsset,
+    WyvernSchemaName
 } from "./types";
 import {
-  encodeAtomicizedBuy,
-  encodeAtomicizedSell,
-  encodeAtomicizedTransfer,
-  encodeBuy,
-  encodeCall,
-  encodeProxyCall,
-  encodeSell,
-  encodeTransferCall,
+    encodeAtomicizedBuy, encodeAtomicizedSell, encodeAtomicizedTransfer, encodeBuy, encodeCall,
+    encodeProxyCall, encodeSell, encodeTransferCall
 } from "./utils/schema";
 import {
-  annotateERC20TransferABI,
-  annotateERC721TransferABI,
-  assignOrdersToSides,
-  confirmTransaction,
-  delay,
-  estimateCurrentPrice,
-  estimateGas,
-  getCurrentGasPrice,
-  getNonCompliantApprovalAddress,
-  getOrderHash,
-  getTransferFeeSettings,
-  getWyvernAsset,
-  getWyvernBundle,
-  makeBigNumber,
-  merkleValidatorByNetwork,
-  onDeprecated,
-  orderToJSON,
-  rawCall,
-  sendRawTransaction,
-  signTypedDataAsync,
-  validateAndFormatWalletAddress,
-  getMaxOrderExpirationTimestamp,
+    annotateERC20TransferABI, annotateERC721TransferABI, assignOrdersToSides, confirmTransaction,
+    delay, estimateCurrentPrice, estimateGas, getCurrentGasPrice, getMaxOrderExpirationTimestamp,
+    getNonCompliantApprovalAddress, getOrderHash, getTransferFeeSettings, getWyvernAsset,
+    getWyvernBundle, makeBigNumber, merkleValidatorByNetwork, onDeprecated, orderToJSON, rawCall,
+    sendRawTransaction, signTypedDataAsync, validateAndFormatWalletAddress
 } from "./utils/utils";
 
 export class OpenSeaPort {

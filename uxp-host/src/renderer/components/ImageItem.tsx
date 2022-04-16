@@ -1,5 +1,6 @@
-import { Button, Text } from "@adobe/react-spectrum";
 import React from "react";
+
+import { Button, Text } from "@adobe/react-spectrum";
 
 interface ImageItemAction {
   label: string;

@@ -1,17 +1,20 @@
-import { ipcMain, dialog, shell } from "electron";
-import path from "path";
-import { Factory, getContract } from "./Factory";
-import { capitalize, layersNames } from "./utils";
+import { dialog, ipcMain, shell } from "electron";
 import fs from "fs";
+import path from "path";
+
+import NodeWalletConnect from "@walletconnect/node";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+
+import { Factory } from "./Factory";
 import {
-  setPinataApiKey,
-  getPinataApiKey,
-  setPinataSecretApiKey,
-  getPinataSecretApiKey,
-  setInfuraProjectId,
-  getInfuraProjectId,
-  setEtherscanApiKey,
   getEtherscanApiKey,
+  getInfuraProjectId,
+  getPinataApiKey,
+  getPinataSecretApiKey,
+  setEtherscanApiKey,
+  setInfuraProjectId,
+  setPinataApiKey,
+  setPinataSecretApiKey,
 } from "./store";
 import {
   Collection,
@@ -24,9 +27,7 @@ import {
   Template,
   Trait,
 } from "./typings";
-import NodeWalletConnect from "@walletconnect/node";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import { ContractFactory, providers as ethersProviders, utils } from "ethers";
+import { capitalize, layersNames } from "./utils";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -175,11 +176,6 @@ ipcTask(
     return true;
   }
 );
-
-ipcTask("factoryLoadSecrets", (id: string, secrets: Secrets) => {
-  factories[id].loadSecrets(secrets);
-  return true;
-});
 
 ipcTaskWithRequestId("factoryGetLayerByName", (id: string, layerName: string) =>
   factories[id].getLayerByName(layerName)
@@ -347,7 +343,7 @@ ipcMain.on("createProvider", async (event, id: string) => {
     }
   );
 
-  connector.on("connect", (error, payload) => {
+  connector.on("connect", async (error, payload) => {
     if (error) {
       event.reply("createProviderResult", { id, connected: false });
     } else {
@@ -356,11 +352,8 @@ ipcMain.on("createProvider", async (event, id: string) => {
         infuraId: getInfuraProjectId() as string,
         chainId: 4,
       });
+      await provider.enable();
       providers[id] = provider;
-
-      const { accounts, chainId } = payload.params[0];
-
-      console.log(accounts, chainId);
 
       event.reply("createProviderResult", { id, connected: true });
     }
@@ -371,84 +364,4 @@ ipcMain.on("createProvider", async (event, id: string) => {
   event.reply("createProviderUri", { id, uri });
 });
 
-ipcMain.on("XXX", async (event) => {
-  const connector = new NodeWalletConnect(
-    {
-      bridge: "https://bridge.walletconnect.org",
-    },
-    {
-      clientMeta: {
-        name: "Art Factory",
-        description: "Art Factory",
-        url: "https://nodejs.org/en/",
-        icons: ["https://nodejs.org/static/images/logo.svg"],
-      },
-    }
-  );
-
-  connector.on("connect", async (error, payload) => {
-    if (error) {
-      event.reply("XXXResult", { error: true });
-    } else {
-      const provider = new WalletConnectProvider({
-        connector,
-        infuraId: getInfuraProjectId() as string,
-        chainId: 4,
-      });
-
-      await provider.enable();
-
-      console.log("provider");
-
-      event.reply("XXXResult", { connected: true });
-
-      const web3Provider = new ethersProviders.Web3Provider(provider);
-
-      console.log("web3Provider");
-
-      const signer = web3Provider.getSigner();
-
-      console.log("signer");
-
-      const { contracts } = await getContract("721");
-
-      console.log("contracts");
-
-      const { NFT } = contracts["721"];
-      const metadata = JSON.parse(NFT.metadata);
-      const { version: compilerVersion } = metadata.compiler;
-      const { abi, evm } = NFT;
-      const { bytecode } = evm;
-      const contractFactory = new ContractFactory(abi, bytecode, signer);
-
-      console.log("contractFactory");
-
-      const contract = await contractFactory.deploy(
-        "TEST",
-        "TEST",
-        "TEST",
-        utils.parseEther("0.05"),
-        5,
-        10
-      );
-
-      console.log("contract");
-
-      const contractAddress = contract.address;
-      const transactionHash = contract.deployTransaction.hash;
-
-      console.log({
-        contractAddress,
-        compilerVersion,
-        transactionHash,
-      });
-
-      event.reply("XXXResult", { done: true });
-    }
-  });
-
-  await connector.createSession();
-  const uri = connector.uri;
-  event.reply("XXXUri", { uri });
-});
 // #endregion

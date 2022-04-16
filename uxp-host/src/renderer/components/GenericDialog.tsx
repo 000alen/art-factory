@@ -1,12 +1,7 @@
-import React, { useState, createContext, useContext, ReactNode } from "react";
+import React, { createContext, ReactNode, useContext, useState } from "react";
+
 import {
-  Dialog,
-  Heading,
-  Divider,
-  Content,
-  ButtonGroup,
-  Button,
-  DialogTrigger,
+    Button, ButtonGroup, Content, Dialog, DialogTrigger, Divider, Heading
 } from "@adobe/react-spectrum";
 
 interface GenericDialogProviderProps {

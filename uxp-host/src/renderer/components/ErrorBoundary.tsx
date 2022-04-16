@@ -1,6 +1,7 @@
-import { Heading, Text } from "@adobe/react-spectrum";
 import React from "react";
 import { Link } from "react-router-dom";
+
+import { Heading, Text } from "@adobe/react-spectrum";
 
 interface ErrorBoundaryProps {}
 

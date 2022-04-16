@@ -1,29 +1,30 @@
 import React, { memo, useEffect, useState } from "react";
 import {
-  NumberField,
-  Text,
-  Flex,
-  Heading,
-  ActionButton,
-  MenuTrigger,
-  Menu,
-  Item,
-} from "@adobe/react-spectrum";
-import { DEFAULT_N } from "../constants";
-import { Trait } from "../typings";
-import { hash } from "../utils";
-import {
   Handle,
+  Node as FlowNode,
   Position,
   useEdges,
   useNodes,
-  Node as FlowNode,
 } from "react-flow-renderer";
+
+import {
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  Text,
+} from "@adobe/react-spectrum";
 import Refresh from "@spectrum-icons/workflow/Refresh";
-import { useForceUpdate } from "../hooks/useForceUpdate";
-import { getBranches } from "../nodesUtils";
-import { LayerNodeComponentData } from "./LayerNode";
 import Remove from "@spectrum-icons/workflow/Remove";
+
+import { DEFAULT_N } from "../constants";
+import { useForceUpdate } from "../hooks/useForceUpdate";
+import { Trait } from "../typings";
+import { hash, getBranches } from "../utils";
+import { LayerNodeComponentData } from "./LayerNode";
 
 export interface RenderNodeComponentData {
   composedUrls?: Record<string, string>;

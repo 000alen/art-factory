@@ -31,5 +31,12 @@ export const DEFAULT_NODES = [
 
 export const PAGE_N = 25;
 export const RARITY_DELIMITER = "#";
-export const DEFAULT_BACKGROUND = "#ffffff";
+export const DEFAULT_BACKGROUND = {
+  r: 255,
+  g: 255,
+  b: 255,
+  a: 1,
+};
+export const DEFAULT_COST = 0.05;
+export const DEFAULT_MAX_MINT_AMOUNT = 20;
 export const BUILD_DIR_NAME = ".build";

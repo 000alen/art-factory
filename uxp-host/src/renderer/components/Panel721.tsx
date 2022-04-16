@@ -1,8 +1,11 @@
-import React from "react";
-import { Flex } from "@adobe/react-spectrum";
-import { TaskItem } from "./TaskItem";
 import { Contract, utils } from "ethers";
+import React from "react";
+
+import { Flex } from "@adobe/react-spectrum";
+
 import { chopAddress } from "../utils";
+import { TaskItem } from "./TaskItem";
+
 // import { OpenSeaPort } from "opensea-js";
 
 interface Panel721Props {

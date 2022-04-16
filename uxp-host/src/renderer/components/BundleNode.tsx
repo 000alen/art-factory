@@ -1,3 +1,6 @@
+import React, { memo, useEffect, useState } from "react";
+import { Node as FlowNode, useEdges, useNodes } from "react-flow-renderer";
+
 import {
   ActionButton,
   Flex,
@@ -8,16 +11,14 @@ import {
   Text,
   TextField,
 } from "@adobe/react-spectrum";
-import React, { memo, useEffect, useState } from "react";
-import { ImageItem } from "./ImageItem";
-import { useForceUpdate } from "../hooks/useForceUpdate";
-import { useEdges, useNodes, Node as FlowNode } from "react-flow-renderer";
-import { getBranches } from "../nodesUtils";
-import { LayerNodeComponentData } from "./LayerNode";
-import { arrayDifference, chooseN, hash } from "../utils";
 import Add from "@spectrum-icons/workflow/Add";
-import Remove from "@spectrum-icons/workflow/Remove";
 import Refresh from "@spectrum-icons/workflow/Refresh";
+import Remove from "@spectrum-icons/workflow/Remove";
+
+import { useForceUpdate } from "../hooks/useForceUpdate";
+import { arrayDifference, chooseN, hash, getBranches } from "../utils";
+import { ImageItem } from "./ImageItem";
+import { LayerNodeComponentData } from "./LayerNode";
 
 export interface BundleNodeComponentData {
   composedUrls?: Record<string, string>;

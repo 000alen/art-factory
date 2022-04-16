@@ -1,31 +1,20 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
-import useStateRef from "react-usestateref";
-import { useNavigate, useLocation } from "react-router-dom";
-import {
-  TextField,
-  Flex,
-  Heading,
-  MenuTrigger,
-  Menu,
-  Item,
-  ActionButton,
-  Link,
-  ContextualHelp,
-  Content,
-  Text,
-  Button,
-  ButtonGroup,
-} from "@adobe/react-spectrum";
-import More from "@spectrum-icons/workflow/More";
-import { Networks } from "../constants";
-import { ToolbarContext } from "../components/Toolbar";
-import { useErrorHandler } from "../components/ErrorHandler";
-import { Instance } from "../typings";
-import Back from "@spectrum-icons/workflow/Back";
-import { ImageItem } from "../components/ImageItem";
-import { createProvider, factoryDeploy, factoryGetImage, XXX } from "../ipc";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
+
+import {
+    ActionButton, Button, ButtonGroup, Flex, Heading, Item, Menu, MenuTrigger, TextField
+} from "@adobe/react-spectrum";
+import Back from "@spectrum-icons/workflow/Back";
+import More from "@spectrum-icons/workflow/More";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
+
+import { useErrorHandler } from "../components/ErrorHandler";
+import { ImageItem } from "../components/ImageItem";
+import { ToolbarContext } from "../components/Toolbar";
+import { Networks } from "../constants";
+import { createProvider, factoryDeploy, factoryGetImage } from "../ipc";
+import { Deployment, Instance, Network } from "../typings";
 
 interface DeployPageState {
   projectDir: string;
@@ -45,10 +34,20 @@ export function DeployPage() {
 
   const [dirty, setDirty] = useState(_dirty);
   const [providerId, setProviderId] = useState<string>(null);
+  const [connected, setConnected] = useState(false);
   const [generationName, setGenerationName] = useState(generations[0].name);
   const [url, setUrl] = useState<string>(null);
 
   const [networkKey, setNetworkKey] = useState("rinkeby");
+
+  const [imagesCid, setImagesCid] = useState<string>(null);
+  const [metadataCid, setMetadataCid] = useState<string>(null);
+  const [notRevealedImageCid, setNotRevealedImageCid] = useState<string>(null);
+  const [notRevealedMetadataCid, setNotRevealedMetadataCid] =
+    useState<string>(null);
+  const [contractAddress, setContractAddress] = useState<string>(null);
+  const [abi, setAbi] = useState<any>(null);
+  const [compilerVersion, setCompilerVersion] = useState<string>(null);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -87,65 +86,56 @@ export function DeployPage() {
     const providerId = uuid();
     const uri = await createProvider(providerId, ({ connected }) => {
       WalletConnectQRCodeModal.close();
-      console.log(connected);
+      setConnected(connected);
     });
     WalletConnectQRCodeModal.open(uri, () => {});
     setProviderId(providerId);
   });
 
   const onDeploy = task("deployment", async () => {
-    // const {
-    //   imagesCid,
-    //   metadataCid,
-    //   notRevealedImageCid,
-    //   notRevealedMetadataCid,
-    //   contractAddress,
-    //   abi,
-    //   compilerVersion,
-    //   transactionHash,
-    // } = await factoryDeploy(
-    //   id,
-    //   providerId,
-    //   generations.find((g) => g.name === generationName)
-    // );
+    const {
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+      contractAddress,
+      abi,
+      compilerVersion,
+    } = await factoryDeploy(
+      id,
+      providerId,
+      generations.find((g) => g.name === generationName)
+    );
 
-    // console.log(
-    //   imagesCid,
-    //   metadataCid,
-    //   notRevealedImageCid,
-    //   notRevealedMetadataCid,
-    //   contractAddress
-    // );
-
-    const uri = await XXX(({ error, connected, done }) => {
-      if (error) {
-        WalletConnectQRCodeModal.close();
-        console.log("error");
-      } else if (connected) {
-        WalletConnectQRCodeModal.close();
-        console.log("connected");
-      } else if (done) {
-        console.log("done");
-      }
-    });
-    WalletConnectQRCodeModal.open(uri, () => {});
+    setImagesCid(imagesCid);
+    setMetadataCid(metadataCid);
+    setNotRevealedImageCid(notRevealedImageCid);
+    setNotRevealedMetadataCid(notRevealedMetadataCid);
+    setContractAddress(contractAddress);
+    setAbi(abi);
+    setCompilerVersion(compilerVersion);
   });
 
   const onSave = task("continue", async () => {
-    // navigate("/instance", {
-    //   state: {
-    //     id,
-    //     collection,
-    //     inputDir,
-    //     outputDir,
-    //     configuration,
-    //     imagesCid,
-    //     metadataCid,
-    //     network: networkKey,
-    //     contractAddress,
-    //     abi,
-    //   },
-    // });
+    const deployment: Deployment = {
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+      contractAddress,
+      abi,
+      compilerVersion,
+      network: Network.RINKEBY,
+    };
+
+    navigate("/factory", {
+      state: {
+        projectDir,
+        instance: { ...instance, deployment, frozen: true },
+        id,
+        dirty: true,
+      },
+    });
   });
 
   return (
