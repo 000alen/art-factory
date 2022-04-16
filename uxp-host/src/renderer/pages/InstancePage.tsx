@@ -1,7 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { ActionButton, Flex, Heading, ProgressBar, Text, View } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Heading,
+  ProgressBar,
+  Text,
+  View,
+} from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
 
@@ -12,6 +19,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { Networks } from "../constants";
 import { Instance } from "../typings";
 import { chopAddress } from "../utils";
+import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 
 interface InstancePageState {
   projectDir: string;
@@ -36,7 +44,6 @@ export function InstancePage() {
   const [dirty, setDirty] = useState(_dirty);
 
   const [isWorking, setIsWorking] = useState(false);
-  const [contract, setContract] = useState(null);
   const [outputs, setOutputs] = useState([]);
 
   useEffect(() => {
@@ -97,7 +104,14 @@ export function InstancePage() {
           <Panel721
             {...{
               task: _task,
-              contract,
+              contractAddress: deployment.contractAddress,
+              addOutput,
+            }}
+          />
+        ) : configuration.contractType === "721_reveal_pause" ? (
+          <Panel721_reveal_pause
+            {...{
+              task: _task,
               contractAddress: deployment.contractAddress,
               addOutput,
             }}

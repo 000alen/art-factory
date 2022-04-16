@@ -2,12 +2,15 @@ import React from "react";
 
 import { Flex } from "@adobe/react-spectrum";
 
-interface Panel721Props {
+interface Panel721_reveal_pauseProps {
   task: (name: string, callback: (...args: any[]) => void) => () => void;
   addOutput: (output: any) => void;
 }
 
-export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
+export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
+  task,
+  addOutput,
+}) => {
   const onCost = task("cost", async () => {
     // const cost = await contract.cost();
     // addOutput({

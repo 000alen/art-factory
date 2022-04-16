@@ -2,22 +2,19 @@ import React from "react";
 
 import { Flex, Heading, NumberField } from "@adobe/react-spectrum";
 
-interface Configuration721Props {
+interface Configuration721_reveal_pauseProps {
   cost: number;
   setCost: (cost: number) => void;
   maxMintAmount: number;
   setMaxMintAmount: (maxMintAmount: number) => void;
 }
 
-export const Configuration721: React.FC<Configuration721Props> = ({
-  cost,
-  setCost,
-  maxMintAmount,
-  setMaxMintAmount,
-}) => {
+export const Configuration721_reveal_pause: React.FC<
+  Configuration721_reveal_pauseProps
+> = ({ cost, setCost, maxMintAmount, setMaxMintAmount }) => {
   return (
     <Flex direction="column" gap="size-100">
-      <Heading>ERC721 configuration</Heading>
+      <Heading>ERC721_reveal_pause configuration</Heading>
       <NumberField
         label="Cost"
         value={cost}

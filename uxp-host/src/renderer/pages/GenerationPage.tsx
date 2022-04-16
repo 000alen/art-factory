@@ -1,34 +1,19 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Node as FlowNode } from "react-flow-renderer";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import { Flex, Heading, Text, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
-import Close from "@spectrum-icons/workflow/Close";
 
-import { generate } from "../commands";
+import { computeTemplateN, generate, getTemplatePreview } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
-import { LayerNodeComponentData } from "../components/LayerNode";
 import { MetadataField } from "../components/MetadataField";
 import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import {
-  factoryGenerateImages,
-  factoryGenerateMetadata,
-  factoryGetImage,
-  factoryMakeGeneration,
-} from "../ipc";
-import {
-  BundlesInfo,
-  CollectionItem,
-  Instance,
-  MetadataItem,
-  Trait,
-} from "../typings";
-import { hash, spacedName, getBranches } from "../utils";
+import { Instance, MetadataItem } from "../typings";
+import { spacedName } from "../utils";
 
 interface GenerationPageState {
   projectDir: string;
@@ -37,11 +22,6 @@ interface GenerationPageState {
   templateId: string;
   dirty: boolean;
 }
-
-// youtube_url
-// animation_url
-// background_color
-// external_url
 
 export const GenerationPage: React.FC = () => {
   const toolbarContext = useContext(ToolbarContext);
@@ -59,8 +39,8 @@ export const GenerationPage: React.FC = () => {
 
   const [dirty, setDirty] = useState(_dirty);
 
-  const [templateName] = useState(
-    templates.find((template) => template.id === templateId).name
+  const [template] = useState(
+    templates.find((template) => template.id === templateId)
   );
 
   const [name, setName] = useState(spacedName());
@@ -70,7 +50,8 @@ export const GenerationPage: React.FC = () => {
   const [isWorking, setIsWorking] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
   const [metadataItems, setMetadataItems] = useState<MetadataItem[]>([]);
-  const [url, setUrl] = useState(null);
+  const [url, setUrl] = useState<string>(null);
+  const [n, setN] = useState<number>(null);
   const [currentGeneration, setCurrentGeneration] = useState(0);
 
   useEffect(() => {
@@ -81,37 +62,26 @@ export const GenerationPage: React.FC = () => {
     };
   }, []);
 
-  const n = useMemo(() => {
-    const { nodes, edges, ns, ignored } = templates.find(
-      (nodes) => nodes.id === templateId
-    );
-
-    const nData = (
-      getBranches(nodes, edges).map((branch) =>
-        branch.slice(1, -1)
-      ) as FlowNode<LayerNodeComponentData>[][]
-    ).map((branch) => branch.map((node) => node.data));
-    let keys = nData
-      .map((branch) =>
-        branch.map((data) => ({
-          ...data.trait,
-          id: data.id,
-        }))
-      )
-      .map(hash);
-
-    keys = keys.filter((key) => !ignored.includes(key));
-    return keys.reduce((acc, key) => ns[key] + acc, 0);
+  useEffect(() => {
+    task("preview", async () => {
+      setUrl(
+        await getTemplatePreview(
+          id,
+          templates.find((template) => template.id === templateId)
+        )
+      );
+      setN(
+        await computeTemplateN(
+          templates.find((nodes) => nodes.id === templateId)
+        )
+      );
+    })();
   }, []);
-
-  const updateUrlThreshold = useMemo(() => Math.ceil(n / 3), []);
 
   const onBack = () =>
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
-  const onProgress = async (n: string) => {
-    setCurrentGeneration((prevGeneration) => prevGeneration + 1);
-  };
+  const onProgress = async () => setCurrentGeneration((p) => p + 1);
 
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
@@ -133,6 +103,7 @@ export const GenerationPage: React.FC = () => {
     setCollection(collection);
     setBundles(bundles);
 
+    setDirty(true);
     setIsWorking(false);
     setGenerationDone(true);
   });
@@ -167,9 +138,18 @@ export const GenerationPage: React.FC = () => {
 
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" justifyContent="center" alignItems="center">
-          <Heading>{templateName}</Heading>
-          <Text>{n}</Text>
-          <ImageItem src={url} />
+          <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+            <Flex direction="column" gap="size-100">
+              {url ? (
+                <ImageItem src={url} maxSize={192} />
+              ) : (
+                <div className="w-48 h-48 flex justify-center items-center">
+                  <Text>Nothing to see here</Text>
+                </div>
+              )}
+              <Heading>{template.name}</Heading>
+            </Flex>
+          </div>
         </Flex>
 
         <ArrayOf
@@ -195,7 +175,7 @@ export const GenerationPage: React.FC = () => {
         loadingLabel="Generating…"
         loadingMaxValue={n}
         loadingValue={currentGeneration}
-        postLabel="Save"
+        postLabel={`${dirty ? "* " : ""}Save`}
         postAction={onSave}
       />
     </Flex>

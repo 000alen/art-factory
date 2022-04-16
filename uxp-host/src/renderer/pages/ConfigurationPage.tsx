@@ -13,6 +13,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { readProjectAvailableLayers } from "../ipc";
 import { Configuration, Instance } from "../typings";
+import { Configuration721_reveal_pause } from "../components/Configuration721_reveal_pause";
 
 interface ConfigurationPageState {
   projectDir: string;
@@ -66,7 +67,6 @@ export function ConfigurationPage() {
       set(v);
       setDirty(true);
     };
-
   const setName = setter(_setName);
   const setDescription = setter(_setDescription);
   const setSymbol = setter(_setSymbol);
@@ -82,13 +82,15 @@ export function ConfigurationPage() {
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
-    task("available layers", async () =>
-      setAvailableLayers(await readProjectAvailableLayers(projectDir))
-    )();
-
     return () => {
       toolbarContext.removeButton("back");
     };
+  }, []);
+
+  useEffect(() => {
+    task("available layers", async () =>
+      setAvailableLayers(await readProjectAvailableLayers(projectDir))
+    )();
   }, []);
 
   const onBack = () =>
@@ -161,14 +163,25 @@ export function ConfigurationPage() {
           }}
         />
 
-        <Configuration721
-          {...{
-            cost,
-            setCost,
-            maxMintAmount,
-            setMaxMintAmount,
-          }}
-        />
+        {contractType === "721" ? (
+          <Configuration721
+            {...{
+              cost,
+              setCost,
+              maxMintAmount,
+              setMaxMintAmount,
+            }}
+          />
+        ) : contractType === "721_reveal_pause" ? (
+          <Configuration721_reveal_pause
+            {...{
+              cost,
+              setCost,
+              maxMintAmount,
+              setMaxMintAmount,
+            }}
+          />
+        ) : null}
 
         <ConfigurationLayers
           {...{

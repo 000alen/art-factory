@@ -1,5 +1,0 @@
-\src\Factory.ts:47 - getContractSource
-\src\typings.ts:112 - Instance
-\src\renderer\constants.tsx:33 - RARITY_DELIMITER
-\src\renderer\ipc.tsx:167 - factoryGetTraitsByLayerName
-\src\renderer\ipc.tsx:272 - factoryGetRandomImage

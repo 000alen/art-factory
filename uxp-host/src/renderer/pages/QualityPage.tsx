@@ -2,7 +2,14 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-    ActionGroup, Button, Flex, Grid, Heading, Item, TextField, View
+  ActionGroup,
+  Button,
+  Flex,
+  Grid,
+  Heading,
+  Item,
+  TextField,
+  View,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
@@ -18,7 +25,10 @@ import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
-    factoryGetImage, factoryRegenerateItems, factoryRemoveItems, openInExplorer
+  factoryGetImage,
+  factoryRegenerateItems,
+  factoryRemoveItems,
+  openInExplorer,
 } from "../ipc";
 import { Bundles, Collection, CollectionItem, Instance } from "../typings";
 import { hash } from "../utils";
@@ -353,11 +363,9 @@ export const QualityPage = () => {
   const onSelect = (i: number) => setSelectedCollectionItem(i);
 
   const onRegenerate = async (i: number) => {
-    const _collection = await factoryRegenerateItems(
-      id,
-      _generation,
-      [filteredCollection[i]]
-    );
+    const _collection = await factoryRegenerateItems(id, _generation, [
+      filteredCollection[i],
+    ]);
     setCollection(_collection);
     setFilteredCollection((p) => [...p]);
   };
@@ -411,8 +419,8 @@ export const QualityPage = () => {
   return (
     <Grid
       UNSAFE_className="overflow-hidden"
-      areas={["filters gallery viewer right"]}
-      columns={["1fr", "3fr", "4fr", "1fr"]}
+      areas={["filters gallery right"]}
+      columns={["1fr", "4fr", "1fr"]}
       rows={["auto"]}
       height="100%"
       gap="size-100"
@@ -466,7 +474,7 @@ export const QualityPage = () => {
         />
       </View>
 
-      <View gridArea="viewer">
+      {/* <View gridArea="viewer">
         <Flex
           direction="column"
           height="100%"
@@ -506,7 +514,7 @@ export const QualityPage = () => {
             </Item>
           </ActionGroup>
         </Flex>
-      </View>
+      </View> */}
 
       <View gridArea="right">
         <Flex

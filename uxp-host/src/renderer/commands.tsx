@@ -1,11 +1,14 @@
-import { Node as FlowNode } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
-
 import { LayerNodeComponentData } from "./components/LayerNode";
+import { MAX_SIZE } from "./constants";
+import { Node as FlowNode } from "react-flow-renderer";
+
 import {
   ensureProjectStructure,
+  factoryComposeTraits,
   factoryGenerateImages,
   factoryGenerateMetadata,
+  factoryGetImage,
   factoryMakeGeneration,
   factoryRemove,
   factoryUnify,
@@ -15,7 +18,6 @@ import {
 } from "./ipc";
 import {
   Bundles,
-  BundlesInfo,
   Collection,
   Generation,
   Instance,
@@ -23,7 +25,7 @@ import {
   Template,
   Trait,
 } from "./typings";
-import { createInstance, hash, getBranches } from "./utils";
+import { createInstance, getBranches, hash } from "./utils";
 
 export interface LoadedInstance {
   projectDir: string;
@@ -87,4 +89,66 @@ export const unifyGenerations = async (
 
 export const removeGeneration = async (id: string, generation: Generation) => {
   await factoryRemove(id, generation);
+};
+
+export const getTemplatePreview = async (id: string, template: Template) => {
+  const { nodes, edges } = template;
+
+  const nData = (
+    getBranches(nodes, edges).map((branch) =>
+      branch.slice(1, -1)
+    ) as FlowNode<LayerNodeComponentData>[][]
+  ).map((branch) => branch.map((node) => node.data));
+  const nTraits: Trait[][] = nData.map((branch) =>
+    branch.map((data) => ({
+      ...data.trait,
+      id: data.id,
+      opacity: data.opacity,
+      blending: data.blending,
+    }))
+  );
+  const traits = nTraits.shift();
+  return traits
+    ? `data:image/png;base64,${await factoryComposeTraits(
+        id,
+        traits,
+        MAX_SIZE
+      )}`
+    : null;
+};
+
+export const getGenerationPreview = async (
+  id: string,
+  generation: Generation
+) => {
+  return generation.collection.length > 0
+    ? `data:image/png;base64,${await factoryGetImage(
+        id,
+        generation,
+        generation.collection[0]
+      )}`
+    : null;
+};
+
+export const computeTemplateN = async (template: Template) => {
+  const { nodes, edges, ns, ignored } = template;
+
+  const nData = (
+    getBranches(nodes, edges).map((branch) =>
+      branch.slice(1, -1)
+    ) as FlowNode<LayerNodeComponentData>[][]
+  ).map((branch) => branch.map((node) => node.data));
+
+  const n = nData
+    .map((branch) =>
+      branch.map((data) => ({
+        ...data.trait,
+        id: data.id,
+      }))
+    )
+    .map(hash)
+    .filter((key) => !ignored.includes(key))
+    .reduce((acc, key) => ns[key] + acc, 0);
+
+  return n;
 };

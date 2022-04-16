@@ -26,7 +26,12 @@ import Hammer from "@spectrum-icons/workflow/Hammer";
 import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 import Settings from "@spectrum-icons/workflow/Settings";
 
-import { removeGeneration, unifyGenerations } from "../commands";
+import {
+  getGenerationPreview,
+  getTemplatePreview,
+  removeGeneration,
+  unifyGenerations,
+} from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
@@ -79,9 +84,7 @@ export const FactoryPage: React.FC = () => {
       "open-explorer",
       "Open in Explorer",
       <Folder />,
-      () => {
-        openInExplorer(projectDir);
-      }
+      () => openInExplorer(projectDir)
     );
 
     return () => {
@@ -92,50 +95,21 @@ export const FactoryPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    task("factory", async () => {
-      // ! TODO: Update factory
+    task("factory initialization & preview", async () => {
+      // TODO: Update factory
       if (!(await hasFactory(id)))
         await createFactory(id, configuration, projectDir);
 
-      const templatesBase64Strings = await Promise.all(
-        templates.map(async ({ nodes, edges }) => {
-          const nData = (
-            getBranches(nodes, edges).map((branch) =>
-              branch.slice(1, -1)
-            ) as FlowNode<LayerNodeComponentData>[][]
-          ).map((branch) => branch.map((node) => node.data));
-          const nTraits: Trait[][] = nData.map((branch) =>
-            branch.map((data) => ({
-              ...data.trait,
-              id: data.id,
-              opacity: data.opacity,
-              blending: data.blending,
-            }))
-          );
-          const traits = nTraits.shift();
-
-          return traits
-            ? await factoryComposeTraits(id, traits, MAX_SIZE)
-            : null;
-        })
+      setTemplatesPreviews(
+        await Promise.all(
+          templates.map((template) => getTemplatePreview(id, template))
+        )
       );
-      const templatesUrls = templatesBase64Strings.map((base64String) =>
-        base64String ? `data:image/png;base64,${base64String}` : null
+      setGenerationPreviews(
+        await Promise.all(
+          generations.map((generation) => getGenerationPreview(id, generation))
+        )
       );
-
-      const generationBase64Strings = await Promise.all(
-        generations.map(async (generation) => {
-          return generation.collection.length > 0
-            ? await factoryGetImage(id, generation, generation.collection[0])
-            : null;
-        })
-      );
-      const generationUrls = generationBase64Strings.map((base64String) =>
-        base64String ? `data:image/png;base64,${base64String}` : null
-      );
-
-      setTemplatesPreviews(templatesUrls);
-      setGenerationPreviews(generationUrls);
     })();
   }, [templates, generations]);
 

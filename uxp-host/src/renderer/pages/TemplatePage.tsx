@@ -1,18 +1,26 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import { Button, Flex, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
-import Close from "@spectrum-icons/workflow/Close";
 
 import { useErrorHandler } from "../components/ErrorHandler";
-import { Nodes, NodesContextProvider, NodesInstance } from "../components/NodesContext";
+import {
+  Nodes,
+  NodesContextProvider,
+  NodesInstance,
+} from "../components/NodesContext";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { ToolbarContext } from "../components/Toolbar";
-import { MAX_SIZE } from "../constants";
-import { factoryGetLayerByName, factoryGetRandomTraitImage } from "../ipc";
-import { Instance, Trait } from "../typings";
+import { factoryGetTraitsByLayerName } from "../ipc";
+import { Instance } from "../typings";
 import { spacedName } from "../utils";
 
 interface TemplatePageState {
@@ -73,27 +81,23 @@ export function TemplatePage() {
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
-    task("loading preview", async () => {
-      if (traits.length > 0) return;
-
-      const layers = await Promise.all(
-        configuration.layers.map(
-          async (layerName) => await factoryGetLayerByName(id, layerName)
-        )
-      );
-
-      // ! TODO: Urls are not used
-      const traitsAndBase64Strings = await Promise.all(
-        layers.map((layer) => factoryGetRandomTraitImage(id, layer, MAX_SIZE))
-      );
-
-      const _traits: Trait[] = traitsAndBase64Strings.map(([trait]) => trait);
-      setTraits(_traits);
-    })();
-
     return () => {
       toolbarContext.removeButton("back");
     };
+  }, []);
+
+  useEffect(() => {
+    task("preview", async () => {
+      if (traits.length > 0) return;
+
+      setTraits(
+        await Promise.all(
+          configuration.layers.map(async (layerName) =>
+            (await factoryGetTraitsByLayerName(id, layerName)).shift()
+          )
+        )
+      );
+    })();
   }, []);
 
   const onBack = () =>
@@ -174,7 +178,7 @@ export function TemplatePage() {
             variant="cta"
             onPress={onSave}
           >
-            {dirty && "*"} Save
+            {dirty && "* "}Save
           </Button>
         </Nodes>
       </Flex>
