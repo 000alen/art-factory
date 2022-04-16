@@ -1,7 +1,14 @@
 import React from "react";
 
 import {
-    Button, ButtonGroup, Content, ContextualHelp, Flex, Heading, ProgressBar, Text
+  Button,
+  ButtonGroup,
+  Content,
+  ContextualHelp,
+  Flex,
+  Heading,
+  ProgressBar,
+  Text,
 } from "@adobe/react-spectrum";
 
 interface TriStateButtonProps {
@@ -14,11 +21,13 @@ interface TriStateButtonProps {
   loadingValue?: number;
   loading: boolean;
   loadingDone: boolean;
-  loadingTime?: number;
 
   postLabel: string;
   postAction: () => void;
   postDisabled?: boolean;
+  postTooltip?: boolean;
+  postTooltipHeading?: string;
+  postTooltipText?: string;
 }
 
 export const TriStateButton: React.FC<TriStateButtonProps> = ({
@@ -31,11 +40,14 @@ export const TriStateButton: React.FC<TriStateButtonProps> = ({
   loadingValue,
   loading,
   loadingDone,
-  loadingTime,
 
   postLabel,
   postAction,
   postDisabled,
+
+  postTooltip,
+  postTooltipHeading,
+  postTooltipText,
 }) => {
   return loading ? (
     <Flex marginBottom={8} marginX={8} justifyContent="end">
@@ -55,12 +67,12 @@ export const TriStateButton: React.FC<TriStateButtonProps> = ({
     <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
       {loadingDone ? (
         <Flex gap="size-100" alignItems="center">
-          {loadingTime && (
+          {postTooltip && (
             <ContextualHelp variant="info" defaultOpen>
-              <Heading>Time elapsed</Heading>
+              <Heading>{postTooltipHeading}</Heading>
               <Content>
                 <Flex direction="column" gap="size-100">
-                  <Text>{loadingTime} ms</Text>
+                  <Text>{postTooltipText}</Text>
                 </Flex>
               </Content>
             </ContextualHelp>

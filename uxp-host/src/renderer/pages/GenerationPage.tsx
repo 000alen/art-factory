@@ -14,6 +14,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
 import { Instance, MetadataItem } from "../typings";
 import { spacedName } from "../utils";
+import moment from "moment";
 
 interface GenerationPageState {
   projectDir: string;
@@ -53,6 +54,7 @@ export const GenerationPage: React.FC = () => {
   const [url, setUrl] = useState<string>(null);
   const [n, setN] = useState<number>(null);
   const [currentGeneration, setCurrentGeneration] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState<string>(null);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -86,9 +88,7 @@ export const GenerationPage: React.FC = () => {
   const onGenerate = task("generation", async () => {
     setIsWorking(true);
 
-    const template = templates.find((nodes) => nodes.id === templateId);
-
-    const a = performance.now();
+    const start = moment(performance.now());
     const { collection, bundles } = await generate(
       id,
       name,
@@ -96,13 +96,12 @@ export const GenerationPage: React.FC = () => {
       template,
       onProgress
     );
-    const b = performance.now();
+    const end = moment(performance.now());
+    const diff = end.diff(start);
 
-    console.log(b - a);
-
+    setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
     setCollection(collection);
     setBundles(bundles);
-
     setDirty(true);
     setIsWorking(false);
     setGenerationDone(true);
@@ -177,6 +176,9 @@ export const GenerationPage: React.FC = () => {
         loadingValue={currentGeneration}
         postLabel={`${dirty ? "* " : ""}Save`}
         postAction={onSave}
+        postTooltip={true}
+        postTooltipHeading="Elapsed time"
+        postTooltipText={elapsedTime}
       />
     </Flex>
   );
