@@ -28,6 +28,7 @@ import {
   Trait,
 } from "./typings";
 import { capitalize, layersNames } from "./utils";
+import { BUILD_DIR_NAME } from "./constants";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -142,14 +143,14 @@ export const factories: Record<string, Factory> = {};
 ipcAsyncTask("readProjectInstance", async (projectDir: string) =>
   JSON.parse(
     await fs.promises.readFile(
-      path.join(projectDir, ".build", "instance.json"),
+      path.join(projectDir, BUILD_DIR_NAME, "instance.json"),
       "utf8"
     )
   )
 );
 
 ipcAsyncTask("ensureProjectStructure", async (projectDir: string) => {
-  const buildDir = path.join(projectDir, ".build");
+  const buildDir = path.join(projectDir, BUILD_DIR_NAME);
   if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir);
 });
 
@@ -157,7 +158,7 @@ ipcAsyncTask(
   "writeProjectInstance",
   async (projectDir: string, instance: any) =>
     await fs.promises.writeFile(
-      path.join(projectDir, ".build", "instance.json"),
+      path.join(projectDir, BUILD_DIR_NAME, "instance.json"),
       JSON.stringify(instance)
     )
 );

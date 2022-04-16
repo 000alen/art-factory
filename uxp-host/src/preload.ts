@@ -43,14 +43,14 @@ const sendWhitelist = [
 ];
 
 const onWhitelist = [
-  "getPinataApiKey",
-  "getPinataSecretApiKey",
-  "getInfuraProjectId",
-  "getEtherscanApiKey",
-  "setPinataApiKey",
-  "setPinataSecretApiKey",
-  "setInfuraProjectId",
-  "setEtherscanApiKey",
+  "getPinataApiKeyResult",
+  "getPinataSecretApiKeyResult",
+  "getInfuraProjectIdResult",
+  "getEtherscanApiKeyResult",
+  "setPinataApiKeyResult",
+  "setPinataSecretApiKeyResult",
+  "setInfuraProjectIdResult",
+  "setEtherscanApiKeyResult",
 
   "showOpenDialogResult",
   "openInExplorerResult",
