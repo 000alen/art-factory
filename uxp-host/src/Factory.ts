@@ -31,6 +31,42 @@ import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
 import { getBranches } from "./nodesUtils";
 import { Node as FlowNode } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
+import { ContractFactory, Signer, utils } from "ethers";
+import solc from "solc";
+import { providers as ethersProviders } from "ethers";
+import { providers } from "./ipc";
+
+export async function getContract(name: string) {
+  const content = await fs.promises.readFile(
+    path.join(__dirname, "contracts", `${name}.sol`),
+    {
+      encoding: "utf8",
+    }
+  );
+  const input = {
+    language: "Solidity",
+    sources: {
+      [name]: {
+        content,
+      },
+    },
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["*"],
+        },
+      },
+    },
+  };
+  return JSON.parse(solc.compile(JSON.stringify(input)));
+}
+
+export async function getContractSource(name) {
+  await fs.promises.readFile(path.join(__dirname, "contracts", `${name}.sol`), {
+    encoding: "utf8",
+  });
+}
+
 export class Factory {
   buildDir: string;
 
@@ -463,189 +499,11 @@ export class Factory {
       );
     }
 
-    await fs.promises.writeFile(
-      path.join(this.buildDir, "json", "metadata.json"),
-      JSON.stringify(metadatas)
-    );
+    // await fs.promises.writeFile(
+    //   path.join(this.buildDir, "json", "metadata.json"),
+    //   JSON.stringify(metadatas)
+    // );
   }
-
-  // factoryDeployAssets = async (
-  //   id: string,
-  //   secrets: Secrets,
-  //   name: string,
-  //   collection: Collection,
-  //   configuration: Configuration,
-  //   partialDeploy: any
-  // ) => {
-  //   let imagesCid, metadataCid, notRevealedImageCid, notRevealedMetadataCid;
-
-  //   // await factoryLoadSecrets(id, secrets);
-
-  //   // try {
-  //   //   imagesCid = partialDeploy
-  //   //     ? partialDeploy.imagesCid
-  //   //     : await factoryDeployImages(id);
-
-  //   //   if (!partialDeploy) await factoryGenerateMetadata(id, name, collection, []);
-
-  //   //   metadataCid = partialDeploy
-  //   //     ? partialDeploy.metadataCid
-  //   //     : await factoryDeployMetadata(id);
-
-  //   //   notRevealedImageCid =
-  //   //     configuration.contractType === "721_reveal_pause"
-  //   //       ? ((await factoryDeployNotRevealedImage(id)) as string)
-  //   //       : undefined;
-
-  //   //   notRevealedMetadataCid =
-  //   //     configuration.contractType === "721_reveal_pause"
-  //   //       ? ((await factoryDeployNotRevealedMetadata(id)) as string)
-  //   //       : undefined;
-  //   // } catch (error) {
-  //   //   throw FormattedError(4, "Could not deploy assets", {
-  //   //     // collection,
-  //   //     imagesCid,
-  //   //     metadataCid,
-  //   //     message: error.message,
-  //   //   });
-  //   // }
-
-  //   return {
-  //     imagesCid,
-  //     metadataCid,
-  //     notRevealedImageCid,
-  //     notRevealedMetadataCid,
-  //   };
-  // };
-
-  // deploy721 = async (
-  //   contractFactory: ContractFactory,
-  //   configuration: Configuration,
-  //   metadataCid: string
-  // ) =>
-  //   await contractFactory.deploy(
-  //     configuration.name,
-  //     configuration.symbol,
-  //     `ipfs://${metadataCid}/`,
-  //     utils.parseEther(`${configuration.cost}`),
-  //     10, // configuration.n, // ! TODO
-  //     configuration.maxMintAmount
-  //   );
-
-  // deploy721_reveal_pause = async (
-  //   contractFactory: ContractFactory,
-  //   configuration: Configuration,
-  //   metadataCid: string,
-  //   notRevealedImageCid: string
-  // ) =>
-  //   await contractFactory.deploy(
-  //     configuration.name,
-  //     configuration.symbol,
-  //     `ipfs://${metadataCid}/`,
-  //     `ipfs://${notRevealedImageCid}`,
-  //     utils.parseEther(`${configuration.cost}`),
-  //     10, // configuration.n, // ! TODO
-  //     configuration.maxMintAmount
-  //   );
-
-  // factoryDeployContract = async (
-  //   id: string,
-  //   configuration: Configuration,
-  //   network: Network,
-  //   signer: Signer,
-  //   metadataCid: string,
-  //   notRevealedMetadataCid: string
-  // ) => {
-  //   let contracts;
-  //   try {
-  //     ({ contracts } = await getContract(configuration.contractType));
-  //   } catch (error) {
-  //     throw FormattedError(5, "Could not get contract", {
-  //       message: error.message,
-  //     });
-  //   }
-
-  //   const { NFT } = contracts[configuration.contractType];
-  //   const metadata = JSON.parse(NFT.metadata);
-  //   const { version: compilerVersion } = metadata.compiler;
-
-  //   const { abi } = NFT;
-  //   const { evm } = NFT;
-  //   const { bytecode } = evm;
-  //   const contractFactory = new ContractFactory(abi, bytecode, signer);
-
-  //   let contract;
-  //   try {
-  //     contract =
-  //       configuration.contractType === ContractType.ERC721
-  //         ? await deploy721(contractFactory, configuration, metadataCid)
-  //         : configuration.contractType === ContractType.ERC721_REVEAL_PAUSE
-  //         ? await deploy721_reveal_pause(
-  //             contractFactory,
-  //             configuration,
-  //             metadataCid,
-  //             notRevealedMetadataCid
-  //           )
-  //         : null;
-  //     // : await deploy1155(
-  //     //     contractFactory,
-  //     //     configuration as Configuration1155,
-  //     //     metadataCid
-  //     //   );
-  //   } catch (error) {
-  //     throw FormattedError(6, "Could not deploy contract", {
-  //       // configuration,
-  //       message: error.message,
-  //     });
-  //   }
-
-  //   const contractAddress = contract.address;
-  //   const transactionHash = contract.deployTransaction.hash;
-
-  //   return {
-  //     contractAddress,
-  //     abi,
-  //     compilerVersion,
-  //     transactionHash,
-  //     wait: contract.deployTransaction.wait(),
-  //   };
-  // };
-
-  // ipcAsyncTask("getContract", async (name) => {
-  //   const content = await fs.promises.readFile(
-  //     path.join(__dirname, "contracts", `${name}.sol`),
-  //     {
-  //       encoding: "utf8",
-  //     }
-  //   );
-  //   const input = {
-  //     language: "Solidity",
-  //     sources: {
-  //       [name]: {
-  //         content,
-  //       },
-  //     },
-  //     settings: {
-  //       outputSelection: {
-  //         "*": {
-  //           "*": ["*"],
-  //         },
-  //       },
-  //     },
-  //   };
-  //   return JSON.parse(solc.compile(JSON.stringify(input)));
-  // });
-
-  // ipcAsyncTask(
-  //   "getContractSource",
-  //   async (name) =>
-  //     await fs.promises.readFile(
-  //       path.join(__dirname, "contracts", `${name}.sol`),
-  //       {
-  //         encoding: "utf8",
-  //       }
-  //     )
-  // );
 
   async deployNotRevealedImage(generation: Generation) {
     const { IpfsHash } = await pinFileToIPFS(
@@ -685,6 +543,179 @@ export class Factory {
     );
 
     return IpfsHash;
+  }
+
+  async deployAssets(
+    generation: Generation,
+    notRevealedGeneration?: Generation
+  ) {
+    console.log("A.1");
+    const imagesCid = await this.deployImages(generation);
+    console.log("A.2");
+    await this.hydrateMetadata(generation, imagesCid);
+
+    console.log("A.3");
+    const metadataCid = await this.deployMetadata(generation);
+
+    console.log("A.4");
+    const notRevealedImageCid =
+      this.configuration.contractType === "721_reveal_pause"
+        ? await this.deployNotRevealedImage(notRevealedGeneration)
+        : undefined;
+
+    console.log("A.5");
+    const notRevealedMetadataCid =
+      this.configuration.contractType === "721_reveal_pause"
+        ? await this.deployNotRevealedMetadata(notRevealedGeneration)
+        : undefined;
+
+    console.log("A.6");
+
+    return {
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+    };
+  }
+
+  async deployContract721(
+    generation: Generation,
+    contractFactory: ContractFactory,
+    metadataCid: string
+  ) {
+    return await contractFactory.deploy(
+      this.configuration.name,
+      this.configuration.symbol,
+      `ipfs://${metadataCid}/`,
+      utils.parseEther(`${this.configuration.cost}`),
+      generation.collection.length,
+      this.configuration.maxMintAmount
+    );
+  }
+
+  async deployContract721_reveal_pause(
+    generation: Generation,
+    contractFactory: ContractFactory,
+    metadataCid: string,
+    notRevealedImageCid: string
+  ) {
+    return await contractFactory.deploy(
+      this.configuration.name,
+      this.configuration.symbol,
+      `ipfs://${metadataCid}/`,
+      `ipfs://${notRevealedImageCid}`,
+      utils.parseEther(`${this.configuration.cost}`),
+      generation.collection.length,
+      this.configuration.maxMintAmount
+    );
+  }
+
+  async deployContract(
+    providerId: string,
+    generation: Generation,
+    metadataCid: string,
+    notRevealedMetadataCid: string
+  ) {
+    console.log("B.1");
+    const web3Provider = new ethersProviders.Web3Provider(
+      providers[providerId]
+    );
+    console.log("B.2");
+
+    const signer = web3Provider.getSigner();
+    console.log("B.3");
+
+    const { contracts } = await getContract(this.configuration.contractType);
+    console.log("B.4");
+    const { NFT } = contracts[this.configuration.contractType];
+    console.log("B.5");
+    const metadata = JSON.parse(NFT.metadata);
+    console.log("B.6");
+    const { version: compilerVersion } = metadata.compiler;
+    console.log("B.7");
+    const { abi, evm } = NFT;
+    console.log("B.8");
+    const { bytecode } = evm;
+    console.log("B.9");
+    const contractFactory = new ContractFactory(abi, bytecode, signer);
+
+    console.log("B.10");
+
+    const contract = await this.deployContract721(
+      generation,
+      contractFactory,
+      metadataCid
+    );
+    // this.configuration.contractType === "721"
+    //   ? await this.deployContract721(generation, contractFactory, metadataCid)
+    //   : this.configuration.contractType === "721_reveal_pause"
+    //   ? await this.deployContract721_reveal_pause(
+    //       generation,
+    //       contractFactory,
+    //       metadataCid,
+    //       notRevealedMetadataCid
+    //     )
+    //   : null;
+
+    console.log("B.11");
+
+    const contractAddress = contract.address;
+    const transactionHash = contract.deployTransaction.hash;
+
+    return {
+      contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+      wait: contract.deployTransaction.wait(),
+    };
+  }
+
+  async deploy(
+    providerId: string,
+    generation: Generation,
+    notRevealedGeneration?: Generation
+  ) {
+    console.log("A");
+
+    // const {
+    //   imagesCid,
+    //   metadataCid,
+    //   notRevealedImageCid,
+    //   notRevealedMetadataCid,
+    // } = await this.deployAssets(generation, notRevealedGeneration);
+    // console.log(
+    //   imagesCid,
+    //   metadataCid,
+    //   notRevealedImageCid,
+    //   notRevealedMetadataCid
+    // );
+
+    const { contractAddress, abi, compilerVersion, transactionHash, wait } =
+      await this.deployContract(
+        providerId,
+        generation,
+        "metadataCid",
+        "notRevealedMetadataCid"
+      );
+
+    console.log("C", contractAddress, compilerVersion);
+
+    await wait;
+
+    console.log("D");
+
+    return {
+      imagesCid: "imagesCid",
+      metadataCid: "metadataCid",
+      notRevealedImageCid: "notRevealedImageCid",
+      notRevealedMetadataCid: "notRevealedMetadataCid",
+      contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+    };
   }
 
   async getTraitImage(trait: Trait, maxSize?: number) {

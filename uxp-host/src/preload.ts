@@ -27,22 +27,23 @@ const sendWhitelist = [
   "factoryComposeTraits",
   "factoryGenerateImages",
   "factoryGenerateMetadata",
-  "factoryDeployImages",
-  "factoryDeployMetadata",
+  "factoryDeploy",
   "factoryGetTraitImage",
   "factoryGetRandomTraitImage",
   "factoryGetImage",
   "factoryGetRandomImage",
   "factoryRemoveItems",
   "factoryRegenerateItems",
-  "factoryDeployNotRevealedImage",
-  "factoryDeployNotRevealedMetadata",
   "factoryUnify",
   "factoryRemove",
 
   "createProvider",
   "createProviderUri",
   "createProviderResult",
+
+  "XXX",
+  "XXXResult",
+  "XXXUri",
 ];
 
 const onWhitelist = [
@@ -74,22 +75,23 @@ const onWhitelist = [
   "factoryGenerateImagesResult",
   "factoryGenerateMetadataProgress",
   "factoryGenerateMetadataResult",
-  "factoryDeployImagesResult",
-  "factoryDeployMetadataResult",
+  "factoryDeployResult",
   "factoryGetTraitImageResult",
   "factoryGetRandomTraitImageResult",
   "factoryGetImageResult",
   "factoryGetRandomImageResult",
   "factoryRemoveItemsResult",
   "factoryRegenerateItemsResult",
-  "factoryDeployNotRevealedImageResult",
-  "factoryDeployNotRevealedMetadataResult",
   "factoryUnifyResult",
   "factoryRemoveResult",
 
   "createProvider",
   "createProviderUri",
   "createProviderResult",
+
+  "XXX",
+  "XXXResult",
+  "XXXUri",
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

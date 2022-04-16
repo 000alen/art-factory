@@ -23,7 +23,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { Instance } from "../typings";
 import Back from "@spectrum-icons/workflow/Back";
 import { ImageItem } from "../components/ImageItem";
-import { createProvider, factoryGetImage } from "../ipc";
+import { createProvider, factoryDeploy, factoryGetImage, XXX } from "../ipc";
 import { v4 as uuid } from "uuid";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
@@ -34,8 +34,6 @@ interface DeployPageState {
   dirty: boolean;
 }
 
-// TODO: Verify the contract
-// https://docs.opensea.io/docs/metadata-standards
 export function DeployPage() {
   const toolbarContext = useContext(ToolbarContext);
   const task = useErrorHandler();
@@ -87,53 +85,50 @@ export function DeployPage() {
 
   const onConnect = task("connect", async () => {
     const providerId = uuid();
-    const uri = await createProvider(providerId, ({ connected }) =>
-      WalletConnectQRCodeModal.close()
-    );
+    const uri = await createProvider(providerId, ({ connected }) => {
+      WalletConnectQRCodeModal.close();
+      console.log(connected);
+    });
     WalletConnectQRCodeModal.open(uri, () => {});
     setProviderId(providerId);
   });
 
   const onDeploy = task("deployment", async () => {
-    // setIsWorking(true);
-    // await provider.enable();
-    // const web3Provider = new providers.Web3Provider(provider);
-    // const signer = await web3Provider.getSigner();
     // const {
     //   imagesCid,
     //   metadataCid,
     //   notRevealedImageCid,
     //   notRevealedMetadataCid,
-    // } = await factoryDeployAssets(
+    //   contractAddress,
+    //   abi,
+    //   compilerVersion,
+    //   transactionHash,
+    // } = await factoryDeploy(
     //   id,
-    //   secrets,
-    //   "LOREM", // ! TODO
-    //   collection,
-    //   configuration,
-    //   partialDeploy
+    //   providerId,
+    //   generations.find((g) => g.name === generationName)
     // );
-    // setImagesCid(imagesCid);
-    // setMetadataCid(metadataCid);
-    // const { contractAddress, abi, transactionHash, wait } =
-    //   await factoryDeployContract(
-    //     id,
-    //     configuration,
-    //     Network.RINKEBY,
-    //     // networkKey === "rinkeby" ? ,
-    //     signer,
-    //     metadataCid,
-    //     notRevealedMetadataCid
-    //   );
-    // setContractAddress(contractAddress);
-    // setAbi(abi);
-    // setTransactionHash(transactionHash);
-    // const timerId = setTimeout(() => {
-    //   if (!deployedDoneRef.current) setContractAddressTooltipShown(true);
-    // }, 30 * 1000);
-    // setTimerId(timerId);
-    // await wait;
-    // setDeployedDone(true);
-    // setIsWorking(false);
+
+    // console.log(
+    //   imagesCid,
+    //   metadataCid,
+    //   notRevealedImageCid,
+    //   notRevealedMetadataCid,
+    //   contractAddress
+    // );
+
+    const uri = await XXX(({ error, connected, done }) => {
+      if (error) {
+        WalletConnectQRCodeModal.close();
+        console.log("error");
+      } else if (connected) {
+        WalletConnectQRCodeModal.close();
+        console.log("connected");
+      } else if (done) {
+        console.log("done");
+      }
+    });
+    WalletConnectQRCodeModal.open(uri, () => {});
   });
 
   const onSave = task("continue", async () => {

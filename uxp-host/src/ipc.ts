@@ -1,8 +1,7 @@
 import { ipcMain, dialog, shell } from "electron";
 import path from "path";
-import solc from "solc";
-import { Factory } from "./Factory";
-import { capitalize, layersNames, name, sizeOf } from "./utils";
+import { Factory, getContract } from "./Factory";
+import { capitalize, layersNames } from "./utils";
 import fs from "fs";
 import {
   setPinataApiKey,
@@ -15,8 +14,6 @@ import {
   getEtherscanApiKey,
 } from "./store";
 import {
-  Bundles,
-  BundlesInfo,
   Collection,
   CollectionItem,
   Configuration,
@@ -29,6 +26,7 @@ import {
 } from "./typings";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { ContractFactory, providers as ethersProviders, utils } from "ethers";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -238,15 +236,22 @@ ipcTaskWithProgress(
 );
 
 ipcAsyncTask(
-  "factoryDeployImages",
-  async (id: string, generation: Generation) =>
-    await factories[id].deployImages(generation)
-);
-
-ipcAsyncTask(
-  "factoryDeployMetadata",
-  async (id: string, generation: Generation) =>
-    await factories[id].deployMetadata(generation)
+  "factoryDeploy",
+  async (
+    id: string,
+    providerId: string,
+    generation: Generation,
+    notRevealedGeneration: Generation
+  ) => {
+    const factory = factories[id];
+    factory.loadSecrets({
+      pinataApiKey: getPinataApiKey() as string,
+      pinataSecretApiKey: getPinataSecretApiKey() as string,
+      infuraProjectId: getInfuraProjectId() as string,
+      etherscanApiKey: getEtherscanApiKey() as string,
+    });
+    return await factory.deploy(providerId, generation, notRevealedGeneration);
+  }
 );
 
 ipcTaskWithRequestId(
@@ -305,18 +310,6 @@ ipcAsyncTask(
 );
 
 ipcAsyncTask(
-  "factoryDeployNotRevealedImage",
-  async (id: string, generation: Generation) =>
-    await factories[id].deployNotRevealedImage(generation)
-);
-
-ipcAsyncTask(
-  "factoryDeployNotRevealedMetadata",
-  async (id: string, generation: Generation) =>
-    await factories[id].deployNotRevealedMetadata(generation)
-);
-
-ipcAsyncTask(
   "factoryUnify",
   async (id: string, name: string, generations: Generation[]) =>
     await factories[id].unify(name, generations)
@@ -361,8 +354,14 @@ ipcMain.on("createProvider", async (event, id: string) => {
       const provider = new WalletConnectProvider({
         connector,
         infuraId: getInfuraProjectId() as string,
+        chainId: 4,
       });
       providers[id] = provider;
+
+      const { accounts, chainId } = payload.params[0];
+
+      console.log(accounts, chainId);
+
       event.reply("createProviderResult", { id, connected: true });
     }
   });
@@ -372,17 +371,84 @@ ipcMain.on("createProvider", async (event, id: string) => {
   event.reply("createProviderUri", { id, uri });
 });
 
-// try {
-//   const seaport = new OpenSeaPort(web3.currentProvider, {
-//     networkName: Network.Rinkeby,
-//   });
-//   const asset = await seaport.api.getAsset({
-//     tokenAddress: "0xb33184A84279E7f44A7c30990831F85BCF248C60",
-//     tokenId: "1",
-//   });
-//   console.log(asset);
-// } catch (e) {
-//   console.error(e);
-// }
+ipcMain.on("XXX", async (event) => {
+  const connector = new NodeWalletConnect(
+    {
+      bridge: "https://bridge.walletconnect.org",
+    },
+    {
+      clientMeta: {
+        name: "Art Factory",
+        description: "Art Factory",
+        url: "https://nodejs.org/en/",
+        icons: ["https://nodejs.org/static/images/logo.svg"],
+      },
+    }
+  );
 
+  connector.on("connect", async (error, payload) => {
+    if (error) {
+      event.reply("XXXResult", { error: true });
+    } else {
+      const provider = new WalletConnectProvider({
+        connector,
+        infuraId: getInfuraProjectId() as string,
+        chainId: 4,
+      });
+
+      await provider.enable();
+
+      console.log("provider");
+
+      event.reply("XXXResult", { connected: true });
+
+      const web3Provider = new ethersProviders.Web3Provider(provider);
+
+      console.log("web3Provider");
+
+      const signer = web3Provider.getSigner();
+
+      console.log("signer");
+
+      const { contracts } = await getContract("721");
+
+      console.log("contracts");
+
+      const { NFT } = contracts["721"];
+      const metadata = JSON.parse(NFT.metadata);
+      const { version: compilerVersion } = metadata.compiler;
+      const { abi, evm } = NFT;
+      const { bytecode } = evm;
+      const contractFactory = new ContractFactory(abi, bytecode, signer);
+
+      console.log("contractFactory");
+
+      const contract = await contractFactory.deploy(
+        "TEST",
+        "TEST",
+        "TEST",
+        utils.parseEther("0.05"),
+        5,
+        10
+      );
+
+      console.log("contract");
+
+      const contractAddress = contract.address;
+      const transactionHash = contract.deployTransaction.hash;
+
+      console.log({
+        contractAddress,
+        compilerVersion,
+        transactionHash,
+      });
+
+      event.reply("XXXResult", { done: true });
+    }
+  });
+
+  await connector.createSession();
+  const uri = connector.uri;
+  event.reply("XXXUri", { uri });
+});
 // #endregion

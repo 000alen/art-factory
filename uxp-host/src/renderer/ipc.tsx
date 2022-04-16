@@ -221,11 +221,27 @@ export const factoryGenerateMetadata = (
     items
   );
 
-export const factoryDeployImages = (id: string, generation: Generation) =>
-  ipcTask("factoryDeployImages")(id, generation);
-
-export const factoryDeployMetadata = (id: string, generation: Generation) =>
-  ipcTask("factoryDeployMetadata")(id, generation);
+export const factoryDeploy = (
+  id: string,
+  providerId: string,
+  generation: Generation,
+  notRevealedGeneration?: Generation
+) =>
+  ipcTask("factoryDeploy")(
+    id,
+    providerId,
+    generation,
+    notRevealedGeneration
+  ) as Promise<{
+    imagesCid: string;
+    metadataCid: string;
+    notRevealedImageCid?: string;
+    notRevealedMetadataCid?: string;
+    contractAddress: string;
+    abi: any;
+    compilerVersion: string;
+    transactionHash: string;
+  }>;
 
 export const factoryGetTraitImage = (
   id: string,
@@ -289,16 +305,6 @@ export const factoryRegenerateItems = (
     items
   ) as Promise<Collection>;
 
-export const factoryDeployNotRevealedImage = (
-  id: string,
-  generation: Generation
-) => ipcTask("factoryDeployNotRevealedImage")(id, generation);
-
-export const factoryDeployNotRevealedMetadata = (
-  id: string,
-  generation: Generation
-) => ipcTask("factoryDeployNotRevealedMetadata")(id, generation);
-
 export const factoryUnify = (
   id: string,
   name: string,
@@ -353,6 +359,41 @@ export const createProvider = (
     window.ipcRenderer.on("createProviderUri", onCreateProviderUri);
     window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
     window.ipcRenderer.send("createProvider", id);
+  });
+
+export const XXX = (
+  callback: ({
+    error,
+    connected,
+    done,
+  }: {
+    error?: boolean;
+    connected?: boolean;
+    done?: boolean;
+  }) => void
+) =>
+  new Promise<string>((resolve) => {
+    const onXXXUri = ({ uri }: { uri: string }) => {
+      window.ipcRenderer.removeListener("XXXUri", onXXXUri);
+      resolve(uri);
+    };
+
+    const onXXXResult = ({
+      error,
+      connected,
+      done,
+    }: {
+      error?: boolean;
+      connected?: boolean;
+      done?: boolean;
+    }) => {
+      window.ipcRenderer.removeListener("XXXResult", onXXXResult);
+      callback({ error, connected, done });
+    };
+
+    window.ipcRenderer.on("XXXUri", onXXXUri);
+    window.ipcRenderer.on("XXXResult", onXXXResult);
+    window.ipcRenderer.send("XXX");
   });
 
 // #endregion

@@ -116,7 +116,6 @@
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^8.0.1",
     "ethers": "^5.6.0",
-    "fabricjs-react": "^1.0.8",
     "form-data": "^4.0.0",
     "https-browserify": "^1.0.0",
     "image-size": "^1.0.1",
