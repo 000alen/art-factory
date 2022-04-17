@@ -41,6 +41,7 @@ import {
 } from "../ipc";
 import { Instance } from "../typings";
 import Copy from "@spectrum-icons/workflow/Copy";
+import Zoom from "react-medium-image-zoom";
 
 interface FactoryPageState {
   projectDir: string;
@@ -360,7 +361,9 @@ export const FactoryPage: React.FC = () => {
                 >
                   <Flex direction="column" gap="size-100">
                     {templatesPreviews && templatesPreviews[i] ? (
-                      <ImageItem src={templatesPreviews[i]} maxSize={192} />
+                      <Zoom>
+                        <ImageItem src={templatesPreviews[i]} maxSize={192} />
+                      </Zoom>
                     ) : (
                       <div className="w-48 h-48 flex justify-center items-center">
                         <Text>Nothing to see here</Text>
@@ -395,7 +398,9 @@ export const FactoryPage: React.FC = () => {
                 >
                   <Flex direction="column" gap="size-100">
                     {generationPreviews && generationPreviews[i] ? (
-                      <ImageItem src={generationPreviews[i]} maxSize={192} />
+                      <Zoom>
+                        <ImageItem src={generationPreviews[i]} maxSize={192} />
+                      </Zoom>
                     ) : (
                       <div className="w-48 h-48 flex justify-center items-center">
                         <Text>Nothing to see here</Text>

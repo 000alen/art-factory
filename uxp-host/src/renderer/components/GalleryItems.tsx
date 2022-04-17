@@ -17,6 +17,7 @@ import { PAGE_N } from "../constants";
 import { Collection } from "../typings";
 import { setter } from "./Gallery";
 import { ImageItem } from "./ImageItem";
+import Zoom from "react-medium-image-zoom";
 
 interface Item {
   name: string;
@@ -59,30 +60,32 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
             </Button>
           </div>
         ) : (
-          <ImageItem
-            key={i}
-            name={name}
-            src={url}
-            maxSize={175}
-            actions={[
-              {
-                label: "Edit",
-                onClick: () => onEdit(i),
-              },
-              {
-                label: "Remove",
-                onClick: () => onRemove(name),
-              },
-              {
-                label: "Select",
-                onClick: () => onSelect(i),
-              },
-              {
-                label: "Regenerate",
-                onClick: () => onRegenerate(i),
-              },
-            ]}
-          />
+          <Zoom>
+            <ImageItem
+              key={i}
+              name={name}
+              src={url}
+              maxSize={175}
+              // actions={[
+              //   {
+              //     label: "Edit",
+              //     onClick: () => onEdit(i),
+              //   },
+              //   {
+              //     label: "Remove",
+              //     onClick: () => onRemove(name),
+              //   },
+              //   {
+              //     label: "Select",
+              //     onClick: () => onSelect(i),
+              //   },
+              //   {
+              //     label: "Regenerate",
+              //     onClick: () => onRegenerate(i),
+              //   },
+              // ]}
+            />
+          </Zoom>
         )
       )}
     </Grid>

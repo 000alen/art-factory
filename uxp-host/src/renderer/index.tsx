@@ -1,4 +1,5 @@
 import "@spectrum-css/fieldlabel/dist/index-vars.css";
+import "react-medium-image-zoom/dist/styles.css";
 import "./index.css";
 
 import React from "react";
