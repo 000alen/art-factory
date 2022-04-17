@@ -46,10 +46,16 @@ export function DeployPage() {
 
   const [dirty, setDirty] = useState(_dirty);
   const [url, setUrl] = useState<string>(null);
+  const [notRevealedUrl, setNotRevealedUrl] = useState<string>(null);
 
   const [generation, setGeneration] = useState(generations[0]);
+  const [notRevealedGeneration, setNotRevealedGeneration] = useState(
+    generations[1]
+  );
   const [generationName, setGenerationName] = useState(generation.name);
-
+  const [notRevealedGenerationName, setNotRevealedGenerationName] = useState(
+    notRevealedGeneration.name
+  );
   const [networkKey, setNetworkKey] = useState("rinkeby");
 
   const [imagesCid, setImagesCid] = useState<string>(null);
@@ -80,6 +86,16 @@ export function DeployPage() {
       setGeneration(generation);
     })();
   }, [generationName]);
+
+  useEffect(() => {
+    task("preview", async () => {
+      const notRevealedGeneration = generations.find(
+        (g) => g.name === notRevealedGenerationName
+      );
+      setNotRevealedUrl(await getGenerationPreview(id, notRevealedGeneration));
+      setNotRevealedGeneration(notRevealedGeneration);
+    })();
+  }, [notRevealedGenerationName]);
 
   const generationItems = useMemo(
     () =>
@@ -180,12 +196,17 @@ export function DeployPage() {
       </Flex>
 
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
-        <Flex>
-          <Flex direction="column" justifyContent="center" alignItems="center">
-            <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+        <Flex
+          direction="row"
+          gap="size-100"
+          justifyContent="center"
+          alignItems="center"
+        >
+          {configuration.contractType === "721_reveal_pause" && (
+            <div className="relative w-48 p-3 border-1 border-dashed border-white rounded">
               <Flex direction="column" gap="size-100">
-                {url ? (
-                  <ImageItem src={url} maxSize={192} />
+                {notRevealedUrl ? (
+                  <ImageItem src={notRevealedUrl} maxSize={192} />
                 ) : (
                   <div className="w-48 h-48 flex justify-center items-center">
                     <Text>Nothing to see here</Text>
@@ -193,15 +214,17 @@ export function DeployPage() {
                 )}
 
                 <MenuTrigger>
-                  <ActionButton width="100%">{generationName}</ActionButton>
+                  <ActionButton width="100%">
+                    {notRevealedGenerationName}
+                  </ActionButton>
                   <Menu
                     items={generationItems}
                     selectionMode="single"
                     disallowEmptySelection={true}
-                    selectedKeys={[generationName]}
+                    selectedKeys={[notRevealedGenerationName]}
                     onSelectionChange={(selectedKeys) => {
                       const selectedKey = [...selectedKeys].shift() as string;
-                      setGenerationName(selectedKey);
+                      setNotRevealedGenerationName(selectedKey);
                     }}
                   >
                     {({ name }) => <Item key={name}>{name}</Item>}
@@ -209,20 +232,76 @@ export function DeployPage() {
                 </MenuTrigger>
               </Flex>
             </div>
-          </Flex>
+          )}
+
+          <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+            <Flex direction="column" gap="size-100">
+              {url ? (
+                <ImageItem src={url} maxSize={192} />
+              ) : (
+                <div className="w-48 h-48 flex justify-center items-center">
+                  <Text>Nothing to see here</Text>
+                </div>
+              )}
+
+              <MenuTrigger>
+                <ActionButton width="100%">{generationName}</ActionButton>
+                <Menu
+                  items={generationItems}
+                  selectionMode="single"
+                  disallowEmptySelection={true}
+                  selectedKeys={[generationName]}
+                  onSelectionChange={(selectedKeys) => {
+                    const selectedKey = [...selectedKeys].shift() as string;
+                    setGenerationName(selectedKey);
+                  }}
+                >
+                  {({ name }) => <Item key={name}>{name}</Item>}
+                </Menu>
+              </MenuTrigger>
+            </Flex>
+          </div>
         </Flex>
+
         <Flex direction="column" justifyContent="center" alignItems="center">
-          <TextField width="100%" isReadOnly={true} label="Images CID" />
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            label="Images CID"
+            value={imagesCid}
+          />
 
-          <TextField width="100%" isReadOnly={true} label="Metadata CID" />
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            label="Metadata CID"
+            value={metadataCid}
+          />
 
-          <Flex width="100%" gap="size-100" alignItems="end">
-            <TextField
-              width="100%"
-              isReadOnly={true}
-              label="Contract Address"
-            />
-          </Flex>
+          {configuration.contractType === "721_reveal_pause" && (
+            <>
+              <TextField
+                width="100%"
+                isReadOnly={true}
+                label="Not Revealed Image CID"
+                value={notRevealedImageCid}
+              />
+
+              <TextField
+                width="100%"
+                isReadOnly={true}
+                label="Not Revealed Metadata CID"
+                value={notRevealedMetadataCid}
+              />
+            </>
+          )}
+
+          <TextField
+            width="100%"
+            isReadOnly={true}
+            label="Contract Address"
+            value={contractAddress}
+          />
         </Flex>
       </Flex>
 

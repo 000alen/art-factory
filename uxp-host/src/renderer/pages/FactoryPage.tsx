@@ -464,17 +464,10 @@ export const FactoryPage: React.FC = () => {
                 resolveCustomFields={resolveUnifyGenerationFields}
                 onRun={onUnifyGenerationsCommand}
               />
+              <TaskItem name="Deploy" onRun={onDeploy} />
+              <TaskItem name="Instance" onRun={onInstance} />
             </Grid>
           </Flex>
-
-          <ButtonGroup align="end">
-            <Button variant="cta" margin="size-100" onPress={onDeploy}>
-              Deploy
-            </Button>
-            <Button variant="cta" margin="size-100" onPress={onInstance}>
-              Instance
-            </Button>
-          </ButtonGroup>
         </Flex>
       </View>
     </Grid>

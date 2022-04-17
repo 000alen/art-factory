@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Flex } from "@adobe/react-spectrum";
+import { TaskItem } from "./TaskItem";
 
 interface Panel721Props {
   task: (name: string, callback: (...args: any[]) => void) => () => void;
@@ -8,115 +9,34 @@ interface Panel721Props {
 }
 
 export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
-  const onCost = task("cost", async () => {
-    // const cost = await contract.cost();
-    // addOutput({
-    //   title: "Cost",
-    //   text: utils.formatUnits(cost.toString(), "ether"),
-    //   isCopiable: true,
-    // });
-  });
+  const onCost = task("cost", async () => {});
 
-  const onBalanceOf = task("balance of", async ({ address }) => {
-    // if (!address) return;
-    // const balance = await contract.balanceOf(address);
-    // addOutput({
-    //   title: `Balance of ${chopAddress(address)}`,
-    //   text: balance.toString(),
-    //   isCopiable: true,
-    // });
-  });
+  const onBalanceOf = task("balance of", async ({ address }) => {});
 
   const onTokenOfOwnerByIndex = task(
     "token of owner by index",
-    async ({ address, index }) => {
-      // if (!address || !index) return;
-      // const n = await contract.tokenOfOwnerByIndex(address, index);
-      // addOutput({
-      //   title: "Token of owner by index",
-      //   text: n.toString(),
-      //   isCopiable: true,
-      // });
-    }
+    async ({ address, index }) => {}
   );
 
-  const onTokenURI = task("token URI", async ({ index }) => {
-    // if (!index) return;
-    // const uri = await contract.tokenURI(index);
-    // addOutput({
-    //   title: "Token URI",
-    //   text: uri,
-    //   isCopiable: true,
-    // });
-  });
+  const onTokenURI = task("token URI", async ({ index }) => {});
 
-  const onMint = task("mint", async ({ payable, mint }) => {
-    // if (!payable || !mint) return;
-    // let tx = await contract.mint(mint, {
-    //   value: utils.parseEther(payable),
-    // });
-    // await tx.wait();
-    // addOutput({
-    //   title: "Minted",
-    //   text: mint.toString(),
-    //   isCopiable: true,
-    // });
-  });
+  const onMint = task("mint", async ({ payable, mint }) => {});
 
-  const onSetCost = task("set cost", async ({ cost }) => {
-    // if (!cost) return;
-    // let tx = await contract.setCost(utils.parseEther(cost));
-    // await tx.wait();
-    // addOutput({
-    //   title: "Cost set",
-    //   text: cost.toString(),
-    //   isCopiable: true,
-    // });
-  });
+  const onSetCost = task("set cost", async ({ cost }) => {});
 
-  const onSetMaxMintAmount = task("set max mint amount", async ({ amount }) => {
-    // if (!amount) return;
-    // let tx = await contract.setMaxMintAmount(utils.parseEther(amount));
-    // await tx.wait();
-    // addOutput({
-    //   title: "Max mint amount set",
-    //   text: amount.toString(),
-    //   isCopiable: true,
-    // });
-  });
+  const onSetMaxMintAmount = task(
+    "set max mint amount",
+    async ({ amount }) => {}
+  );
 
-  const onWithdraw = task("withdraw", async () => {
-    // const tx = await contract.withdraw();
-    // await tx.wait();
-    // addOutput({
-    //   title: "Withdrawn",
-    //   text: "true",
-    //   isCopiable: true,
-    // });
-  });
+  const onWithdraw = task("withdraw", async () => {});
 
-  const onSell = task("sell", async () => {
-    // const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);
-    // const auction = await seaport.createSellOrder({
-    //   expirationTime,
-    //   accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
-    //   startAmount: 1,
-    //   asset: {
-    //     tokenId: "1",
-    //     tokenAddress: contract.address,
-    //   },
-    // });
-    // addOutput({
-    //   title: "Sell order created",
-    //   text: "true",
-    //   isCopiable: true,
-    // });
-  });
+  const onSell = task("sell", async () => {});
 
   return (
     <>
       <Flex direction="column" gap="size-100">
-        {/* <TaskItem name="Cost" onRun={onCost} />
+        <TaskItem name="Cost" onRun={onCost} />
         <TaskItem
           name="Balance of"
           onRun={onBalanceOf}
@@ -125,6 +45,7 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
               key: "address",
               type: "address",
               label: "Address",
+              value: "",
             },
           ]}
         />
@@ -137,11 +58,16 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
               key: "address",
               type: "address",
               label: "Address",
+              value: "",
             },
             {
               key: "index",
               type: "int",
               label: "Index",
+              initial: 0,
+              min: 0,
+              max: Infinity,
+              value: 0,
             },
           ]}
         />
@@ -154,6 +80,10 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
               key: "index",
               type: "int",
               label: "Token Index",
+              initial: 0,
+              min: 0,
+              max: Infinity,
+              value: 0,
             },
           ]}
         />
@@ -168,11 +98,17 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
               key: "payable",
               type: "string",
               label: "Payable amount",
+              initial: "",
+              value: "",
             },
             {
               key: "mint",
               type: "int",
               label: "Mint amount",
+              initial: 0,
+              min: 0,
+              max: Infinity,
+              value: 0,
             },
           ]}
         />
@@ -185,6 +121,8 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
               key: "cost",
               type: "string",
               label: "Cost",
+              initial: "",
+              value: "",
             },
           ]}
         />
@@ -197,13 +135,17 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
               key: "amount",
               type: "int",
               label: "Amount",
+              initial: 0,
+              min: 0,
+              max: Infinity,
+              value: 0,
             },
           ]}
         />
 
-        <TaskItem name="Withdraw" onRun={onWithdraw} /> */}
+        <TaskItem name="Withdraw" onRun={onWithdraw} />
 
-        {/* <TaskItem task="Sell" onRun={onSell} /> */}
+        <TaskItem name="Sell" onRun={onSell} />
       </Flex>
     </>
   );
