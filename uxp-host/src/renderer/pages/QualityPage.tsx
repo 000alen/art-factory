@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   ActionGroup,
   Button,
+  ButtonGroup,
   Flex,
   Grid,
   Heading,
@@ -419,13 +420,14 @@ export const QualityPage = () => {
   return (
     <Grid
       UNSAFE_className="overflow-hidden"
-      areas={["filters gallery right"]}
+      areas={["left center right"]}
       columns={["1fr", "4fr", "1fr"]}
       rows={["auto"]}
       height="100%"
       gap="size-100"
+      margin="size-100"
     >
-      <View gridArea="filters" overflow="auto">
+      <View UNSAFE_className="p-2 space-y-2" gridArea="left" overflow="auto">
         <Filters
           {...{
             addStringFilter,
@@ -447,7 +449,7 @@ export const QualityPage = () => {
         />
       </View>
 
-      <View gridArea="gallery" overflow="auto">
+      <View UNSAFE_className="p-2 space-y-2" gridArea="center" overflow="auto">
         <Gallery
           {...{
             filteredCollection,
@@ -474,80 +476,32 @@ export const QualityPage = () => {
         />
       </View>
 
-      {/* <View gridArea="viewer">
-        <Flex
-          direction="column"
-          height="100%"
-          gap="size-100"
-          justifyContent="center"
-          alignItems="center"
-        >
-          {collectionItems.length > 0 && (
-            <div className="w-[90%]">
-              <ImageItem
-                name={collectionItems[selectedCollectionItem].name}
-                src={collectionItems[selectedCollectionItem].url}
-                actions={[
-                  {
-                    label: "Edit",
-                    onClick: () => onEdit(selectedCollectionItem),
-                  },
-                  {
-                    label: "Remove",
-                    onClick: () =>
-                      onRemove(collectionItems[selectedCollectionItem].name),
-                  },
-                  {
-                    label: "Regenerate",
-                    onClick: () => onRegenerate(selectedCollectionItem),
-                  },
-                ]}
-              />
-            </div>
-          )}
-          <ActionGroup onAction={onAction}>
-            <Item key="back">
-              <ChevronLeft />
-            </Item>
-            <Item key="forward">
-              <ChevronRight />
-            </Item>
-          </ActionGroup>
-        </Flex>
-      </View> */}
-
-      <View gridArea="right">
-        <Flex
-          height="100%"
-          direction="column"
-          justifyContent="space-between"
-          alignItems="end"
-        >
-          <View maxHeight="90vh" overflow="auto">
-            {collectionItems.length > 0 && filteredCollection.length > 0 && (
-              <>
-                <Heading>
-                  {collectionItems[selectedCollectionItem].name}
-                </Heading>
-                {filteredCollection[selectedCollectionItem].traits.map(
-                  ({ name, value }, i) => (
-                    <TextField
-                      key={i}
-                      label={name}
-                      value={value}
-                      isReadOnly={true}
-                    />
-                  )
-                )}
-              </>
+      <View UNSAFE_className="p-2 space-y-2" gridArea="right" overflow="auto">
+        {collectionItems.length > 0 && filteredCollection.length > 0 && (
+          <>
+            <Heading zIndex={1001} position="sticky" top={0}>
+              {collectionItems[selectedCollectionItem].name}
+            </Heading>
+            {filteredCollection[selectedCollectionItem].traits.map(
+              ({ name, value }, i) => (
+                <TextField
+                  width="100%"
+                  key={i}
+                  label={name}
+                  value={value}
+                  isReadOnly={true}
+                />
+              )
             )}
-          </View>
-          <Button
-            variant="cta"
-            marginBottom="size-100"
-            marginEnd="size-100"
-            onPress={onSave}
-          >
+          </>
+        )}
+        <Flex
+          zIndex={1001}
+          position="sticky"
+          bottom={0}
+          direction="row-reverse"
+        >
+          <Button variant="cta" onPress={onSave}>
             Save
           </Button>
         </Flex>

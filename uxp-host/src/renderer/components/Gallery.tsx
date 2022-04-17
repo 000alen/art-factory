@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 
 import {
-    Button, Flex, Grid, Heading, Item, NumberField, repeat, TabList, TabPanels, Tabs, View
+  Button,
+  Flex,
+  Grid,
+  Heading,
+  Item,
+  NumberField,
+  repeat,
+  TabList,
+  TabPanels,
+  Tabs,
+  View,
 } from "@adobe/react-spectrum";
 
 import { BundleItem } from "../pages/QualityPage";
@@ -9,6 +19,7 @@ import { Bundles, Collection } from "../typings";
 import { GalleryBundles } from "./GalleryBundles";
 import { GalleryItems } from "./GalleryItems";
 import { ImageItem } from "./ImageItem";
+import { PAGE_N } from "../constants";
 
 export type setter<T> = (value: T | ((p: T) => T)) => void;
 
@@ -61,14 +72,76 @@ export const Gallery: React.FC<GalleryProps> = ({
   bundlesItems,
   bundlesFilters,
   bundlesCursor,
-}) => (
-  <Tabs>
-    <TabList>
-      <Item key="items">Items</Item>
-      <Item key="bundles">Bundles</Item>
-    </TabList>
-    <TabPanels>
-      <Item key="items">
+}) => {
+  const [selectedKey, setSelectedKey] = useState("items");
+
+  return (
+    <>
+      <Flex
+        zIndex={1001}
+        position="sticky"
+        top={0}
+        gap="size-100"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Tabs
+          isQuiet={true}
+          selectedKey={selectedKey}
+          onSelectionChange={(selectedKey) =>
+            setSelectedKey(selectedKey as string)
+          }
+        >
+          <TabList>
+            <Item key="items">Items</Item>
+            <Item key="bundles">Bundles</Item>
+          </TabList>
+        </Tabs>
+
+        <Flex
+          width="100%"
+          gap="size-100"
+          justifyContent="end"
+          alignItems="center"
+        >
+          Page{" "}
+          <NumberField
+            aria-label="page"
+            value={
+              selectedKey === "items"
+                ? page
+                : selectedKey === "bundles"
+                ? bundlesPage
+                : 0
+            }
+            minValue={1}
+            maxValue={
+              selectedKey === "items"
+                ? maxPage
+                : selectedKey === "bundles"
+                ? bundlesMaxPage
+                : 0
+            }
+            onChange={(value: number) => {
+              if (selectedKey === "items") {
+                setCursor((value - 1) * PAGE_N);
+                setPage(value);
+              } else if (selectedKey === "bundles") {
+                setBundlesCursor((value - 1) * PAGE_N);
+                setBundlesPage(value);
+              }
+            }}
+          />{" "}
+          of{" "}
+          {selectedKey === "items"
+            ? maxPage
+            : selectedKey === "bundles"
+            ? bundlesMaxPage
+            : 0}
+        </Flex>
+      </Flex>
+
+      {selectedKey === "items" ? (
         <GalleryItems
           {...{
             filteredCollection,
@@ -85,22 +158,14 @@ export const Gallery: React.FC<GalleryProps> = ({
             onRegenerate,
           }}
         />
-      </Item>
-
-      <Item key="bundles">
+      ) : selectedKey === "bundles" ? (
         <GalleryBundles
           {...{
-            filteredBundles,
-            bundlesPage,
-            bundlesMaxPage,
-            setBundlesCursor,
-            setBundlesPage,
             bundlesItems,
-            bundlesFilters,
             bundlesCursor,
           }}
         />
-      </Item>
-    </TabPanels>
-  </Tabs>
-);
+      ) : null}
+    </>
+  );
+};

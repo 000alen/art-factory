@@ -24,12 +24,12 @@ export const DEFAULT_NODES = [
   {
     id: "root",
     type: "rootNode",
-    position: { x: 0, y: 0 },
+    position: { x: 200, y: 200 },
     data: {},
   },
 ];
 
-export const PAGE_N = 25;
+export const PAGE_N = 50;
 export const RARITY_DELIMITER = "#";
 export const DEFAULT_BACKGROUND = {
   r: 255,

@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   ActionButton,
+  Button,
+  ButtonGroup,
   Flex,
   Heading,
   ProgressBar,
@@ -43,6 +45,8 @@ export function InstancePage() {
 
   const [dirty, setDirty] = useState(_dirty);
 
+  const [error] = useState(!deployment);
+
   const [isWorking, setIsWorking] = useState(false);
   const [outputs, setOutputs] = useState([]);
 
@@ -65,9 +69,8 @@ export function InstancePage() {
     setOutputs((prevOutputs) => [...prevOutputs, output]);
   };
 
-  const onCopy = () => {
+  const onCopy = () =>
     navigator.clipboard.writeText(deployment.contractAddress);
-  };
 
   const _task =
     (name: string, callback: (...args: any[]) => void) =>
@@ -85,74 +88,87 @@ export function InstancePage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Flex justifyContent="space-between" alignItems="center">
-        <Flex gap="size-100" alignItems="center">
-          <Heading level={1} marginStart={16}>
-            <pre className="inline">
-              {chopAddress(deployment.contractAddress)}
-            </pre>{" "}
-            at {Networks[deployment.network].name}
-          </Heading>
-          <ActionButton onPress={onCopy}>
-            <Copy />
-          </ActionButton>
-        </Flex>
-      </Flex>
-
-      <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
-        {configuration.contractType === "721" ? (
-          <Panel721
-            {...{
-              task: _task,
-              contractAddress: deployment.contractAddress,
-              addOutput,
-            }}
-          />
-        ) : configuration.contractType === "721_reveal_pause" ? (
-          <Panel721_reveal_pause
-            {...{
-              task: _task,
-              contractAddress: deployment.contractAddress,
-              addOutput,
-            }}
-          />
-        ) : null}
-
-        <View>
-          <label className="spectrum-FieldLabel">Output</label>
-
-          <View
-            width="30vw"
-            height="100%"
-            padding="size-100"
-            overflow="auto"
-            borderWidth="thin"
-            borderColor="dark"
-            borderRadius="medium"
-          >
-            <Flex direction="column" gap="size-100">
-              {outputs.map(({ title, text, isCopiable }, i) => (
-                <OutputItem
-                  key={i}
-                  title={title}
-                  text={text}
-                  isCopiable={isCopiable}
-                />
-              ))}
+      {error ? (
+        <>
+          <Heading level={1}>You need to deploy a contract first</Heading>
+          <ButtonGroup align="end">
+            <Button variant="cta" onPress={onBack}>
+              Back
+            </Button>
+          </ButtonGroup>
+        </>
+      ) : (
+        <>
+          <Flex justifyContent="space-between" alignItems="center">
+            <Flex gap="size-100" alignItems="center">
+              <Heading level={1} marginStart={16}>
+                <pre className="inline">
+                  {chopAddress(deployment.contractAddress)}
+                </pre>{" "}
+                at {Networks[deployment.network].name}
+              </Heading>
+              <ActionButton onPress={onCopy}>
+                <Copy />
+              </ActionButton>
             </Flex>
-          </View>
-        </View>
-      </Flex>
+          </Flex>
 
-      <Flex marginBottom={8} marginX={8} justifyContent="space-between">
-        <Text>Made with love by KODKOD ❤️</Text>
+          <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
+            {configuration.contractType === "721" ? (
+              <Panel721
+                {...{
+                  task: _task,
+                  contractAddress: deployment.contractAddress,
+                  addOutput,
+                }}
+              />
+            ) : configuration.contractType === "721_reveal_pause" ? (
+              <Panel721_reveal_pause
+                {...{
+                  task: _task,
+                  contractAddress: deployment.contractAddress,
+                  addOutput,
+                }}
+              />
+            ) : null}
 
-        <ProgressBar
-          UNSAFE_className={isWorking ? "opacity-100" : "opacity-0"}
-          label="Loading…"
-          isIndeterminate
-        />
-      </Flex>
+            <View>
+              <label className="spectrum-FieldLabel">Output</label>
+
+              <View
+                width="30vw"
+                height="100%"
+                padding="size-100"
+                overflow="auto"
+                borderWidth="thin"
+                borderColor="dark"
+                borderRadius="medium"
+              >
+                <Flex direction="column" gap="size-100">
+                  {outputs.map(({ title, text, isCopiable }, i) => (
+                    <OutputItem
+                      key={i}
+                      title={title}
+                      text={text}
+                      isCopiable={isCopiable}
+                    />
+                  ))}
+                </Flex>
+              </View>
+            </View>
+          </Flex>
+
+          <Flex marginBottom={8} marginX={8} justifyContent="space-between">
+            <Text>Made with love by KODKOD ❤️</Text>
+
+            <ProgressBar
+              UNSAFE_className={isWorking ? "opacity-100" : "opacity-0"}
+              label="Loading…"
+              isIndeterminate
+            />
+          </Flex>
+        </>
+      )}
     </Flex>
   );
 }

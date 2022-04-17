@@ -1,6 +1,12 @@
 import React from "react";
 
-import { Button, Checkbox, Heading, SearchField, View } from "@adobe/react-spectrum";
+import {
+  Button,
+  Checkbox,
+  Heading,
+  SearchField,
+  View,
+} from "@adobe/react-spectrum";
 
 import { Bundles } from "../typings";
 
@@ -42,8 +48,11 @@ export const Filters: React.FC<FiltersProps> = ({
   removeFilter,
 }) => {
   return (
-    <View>
+    <>
       <SearchField
+        zIndex={1001}
+        position="sticky"
+        top={0}
         onSubmit={(query: string) => {
           if (query !== "") addStringFilter(query);
           else removeStringFilter();
@@ -113,6 +122,6 @@ export const Filters: React.FC<FiltersProps> = ({
           </div>
         </details>
       ))}
-    </View>
+    </>
   );
 };
