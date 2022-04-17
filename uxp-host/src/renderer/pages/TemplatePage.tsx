@@ -163,6 +163,7 @@ export function TemplatePage() {
         />
         <Nodes>
           <TextField
+            zIndex={1001}
             position="absolute"
             top={0}
             left={0}

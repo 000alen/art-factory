@@ -15,7 +15,6 @@ import Add from "@spectrum-icons/workflow/Add";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import { useForceUpdate } from "../hooks/useForceUpdate";
 import { arrayDifference, chooseN, hash, getBranches } from "../utils";
 import { ImageItem } from "./ImageItem";
 import { LayerNodeComponentData } from "./LayerNode";
@@ -38,7 +37,6 @@ interface BundleNodeProps {
 }
 
 export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
-  const [forceUpdate, x] = useForceUpdate();
   const [nodes, edges] = [useNodes(), useEdges()];
 
   const [cacheKey, setCacheKey] = useState<string>(null);
@@ -79,7 +77,7 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
     }
 
     setCacheKey(currentCacheKey);
-  }, [nodes, edges, x]);
+  }, [nodes, edges]);
 
   const renderItem = (key: string, i: number) => {
     const renderId = data.renderIds[key];
@@ -137,17 +135,12 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
   return (
     <Flex direction="column" gap="size-100">
       <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all">
-        <Flex gap="size-100">
-          <TextField
-            width="100%"
-            aria-label="Name"
-            value={data.name}
-            onChange={(value: string) => data.onChangeBundleName(id, value)}
-          />
-          <ActionButton onPress={() => forceUpdate()}>
-            <Refresh />
-          </ActionButton>
-        </Flex>
+        <TextField
+          width="100%"
+          aria-label="Name"
+          value={data.name}
+          onChange={(value: string) => data.onChangeBundleName(id, value)}
+        />
       </div>
 
       <div className="w-48 p-3 border-1 border-solid border-white rounded">

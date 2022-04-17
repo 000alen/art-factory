@@ -2,11 +2,16 @@ import React, { memo, useEffect, useState } from "react";
 import { useNodes } from "react-flow-renderer";
 
 import {
-    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, Slider
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  Slider,
 } from "@adobe/react-spectrum";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 
-import { useForceUpdate } from "../hooks/useForceUpdate";
 import { Trait } from "../typings";
 import { capitalize, hash } from "../utils";
 import { Handles } from "./Handles";
@@ -32,7 +37,6 @@ interface LayerNodeProps {
 }
 
 export const LayerNode: React.FC<LayerNodeProps> = memo(({ id, data }) => {
-  const [forceUpdate, x] = useForceUpdate();
   const nodes = useNodes();
 
   const [layerIds, setLayerIds] = useState<string[]>([]);
@@ -46,7 +50,7 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(({ id, data }) => {
       )
       .map((node) => (node.data as LayerNodeComponentData).id);
     setLayerIds(layerIds);
-  }, [nodes, x]);
+  }, [nodes]);
 
   useEffect(() => {
     const key = hash(data.trait);
@@ -54,7 +58,7 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(({ id, data }) => {
     if (!(key in data.urls)) data.requestUrl(data.trait);
 
     setKey(key);
-  }, [data.trait, x]);
+  }, [data.trait]);
 
   const url = data.urls[key];
 
@@ -66,25 +70,20 @@ export const LayerNode: React.FC<LayerNodeProps> = memo(({ id, data }) => {
   return (
     <Flex direction="column" gap="size-100">
       <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all">
-        <Flex gap="size-100">
-          <MenuTrigger>
-            <ActionButton width="100%">{data.id}</ActionButton>
-            <Menu
-              items={layerIdsItems}
-              selectionMode="single"
-              disallowEmptySelection={true}
-              selectedKeys={[data.id]}
-              onSelectionChange={(selectedKeys) =>
-                data.onChangeLayerId(id, [...selectedKeys].shift() as string)
-              }
-            >
-              {({ id, name }) => <Item key={id}>{name}</Item>}
-            </Menu>
-          </MenuTrigger>
-          <ActionButton onPress={() => forceUpdate()}>
-            <Refresh />
-          </ActionButton>
-        </Flex>
+        <MenuTrigger>
+          <ActionButton width="100%">{data.id}</ActionButton>
+          <Menu
+            items={layerIdsItems}
+            selectionMode="single"
+            disallowEmptySelection={true}
+            selectedKeys={[data.id]}
+            onSelectionChange={(selectedKeys) =>
+              data.onChangeLayerId(id, [...selectedKeys].shift() as string)
+            }
+          >
+            {({ id, name }) => <Item key={id}>{name}</Item>}
+          </Menu>
+        </MenuTrigger>
       </div>
 
       <div className="relative w-48 p-3 border-1 border-solid border-white rounded">

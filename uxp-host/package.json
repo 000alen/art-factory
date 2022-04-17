@@ -113,6 +113,7 @@
     "assert": "^2.0.0",
     "axios": "^0.26.1",
     "copy-webpack-plugin": "^10.2.4",
+    "custom-electron-titlebar": "^4.1.0",
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^8.0.1",
     "ethers": "^5.6.0",

@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+// import { Titlebar } from "custom-electron-titlebar";
 
 const sendWhitelist = [
   "getPinataApiKey",
@@ -85,6 +86,10 @@ const onWhitelist = [
   "createProviderUri",
   "createProviderResult",
 ];
+
+// window.addEventListener("DOMContentLoaded", () => {
+//   new Titlebar();
+// });
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
   send: (channel: string, ...args: any[]) => {

@@ -1,13 +1,10 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Node as FlowNode } from "react-flow-renderer";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
   ActionButton,
   ActionGroup,
-  Button,
-  ButtonGroup,
   Flex,
   Grid,
   Heading,
@@ -23,7 +20,6 @@ import Close from "@spectrum-icons/workflow/Close";
 import Edit from "@spectrum-icons/workflow/Edit";
 import Folder from "@spectrum-icons/workflow/Folder";
 import Hammer from "@spectrum-icons/workflow/Hammer";
-import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 import Settings from "@spectrum-icons/workflow/Settings";
 
 import {
@@ -35,20 +31,16 @@ import {
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
-import { LayerNodeComponentData } from "../components/LayerNode";
 import { CustomField, TaskItem } from "../components/TaskItem";
 import { ToolbarContext } from "../components/Toolbar";
-import { MAX_SIZE } from "../constants";
 import {
   createFactory,
-  factoryComposeTraits,
-  factoryGetImage,
   hasFactory,
   openInExplorer,
   writeProjectInstance,
 } from "../ipc";
-import { getBranches } from "../utils";
-import { Instance, Trait } from "../typings";
+import { Instance } from "../typings";
+import Copy from "@spectrum-icons/workflow/Copy";
 
 interface FactoryPageState {
   projectDir: string;
@@ -79,7 +71,6 @@ export const FactoryPage: React.FC = () => {
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("save", "Save", <SaveFloppy />, () => onSave());
     toolbarContext.addButton(
       "open-explorer",
       "Open in Explorer",
@@ -89,7 +80,6 @@ export const FactoryPage: React.FC = () => {
 
     return () => {
       toolbarContext.removeButton("close");
-      toolbarContext.removeButton("save");
       toolbarContext.removeButton("open-explorer");
     };
   }, []);
@@ -416,6 +406,9 @@ export const FactoryPage: React.FC = () => {
                       <Item key={`edit_${generation.name}`}>
                         <Edit />
                       </Item>
+                      <Item>
+                        <Copy />
+                      </Item>
                       <Item key={`remove_${generation.name}`}>
                         <Close />
                       </Item>
@@ -442,6 +435,7 @@ export const FactoryPage: React.FC = () => {
             </Flex>
 
             <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
+              <TaskItem name="Save" onRun={onSave} />
               <TaskItem
                 name="Unify generations"
                 useDialog={true}

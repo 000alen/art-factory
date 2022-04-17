@@ -9,6 +9,13 @@ import "./server";
 import "./store";
 
 import { app, BrowserWindow, shell } from "electron";
+// import {
+//   setupTitlebar,
+//   attachTitlebarToWindow,
+//   // @ts-ignore
+// } from "custom-electron-titlebar/main";
+
+// setupTitlebar();
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -30,6 +37,7 @@ const createWindow = (): void => {
     minHeight: 1024,
     width: 1024,
     height: 1024,
+    // titleBarStyle: "hidden",
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -45,6 +53,8 @@ const createWindow = (): void => {
     shell.openExternal(url);
     return { action: "deny" };
   });
+
+  // attachTitlebarToWindow(mainWindow);
 };
 
 app.on(

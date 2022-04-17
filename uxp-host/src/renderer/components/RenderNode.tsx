@@ -21,7 +21,6 @@ import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
 import { DEFAULT_N } from "../constants";
-import { useForceUpdate } from "../hooks/useForceUpdate";
 import { Trait } from "../typings";
 import { hash, getBranches } from "../utils";
 import { LayerNodeComponentData } from "./LayerNode";
@@ -73,7 +72,6 @@ export const ImageItem: React.FC<ImageItemProps> = ({
 };
 
 export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
-  const [forceUpdate, x] = useForceUpdate();
   const [nodes, edges] = [useNodes(), useEdges()];
 
   const [cacheKey, setCacheKey] = useState<string>(null);
@@ -158,25 +156,19 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
   return (
     <Flex direction="column" gap="size-100">
       <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
-        <Flex gap="size-100">
-          <MenuTrigger>
-            <ActionButton width="100%">Hidden</ActionButton>
-            <Menu
-              items={ignoredItems}
-              selectionMode="single"
-              onSelectionChange={(selectedKeys) => {
-                const selectedKey = [...selectedKeys].shift() as string;
-                data.updateIgnored(nTraits[keys.indexOf(selectedKey)], false);
-              }}
-            >
-              {({ id, name }) => <Item key={id}>{name}</Item>}
-            </Menu>
-          </MenuTrigger>
-
-          <ActionButton onPress={() => forceUpdate()}>
-            <Refresh />
-          </ActionButton>
-        </Flex>
+        <MenuTrigger>
+          <ActionButton width="100%">Hidden</ActionButton>
+          <Menu
+            items={ignoredItems}
+            selectionMode="single"
+            onSelectionChange={(selectedKeys) => {
+              const selectedKey = [...selectedKeys].shift() as string;
+              data.updateIgnored(nTraits[keys.indexOf(selectedKey)], false);
+            }}
+          >
+            {({ id, name }) => <Item key={id}>{name}</Item>}
+          </Menu>
+        </MenuTrigger>
       </div>
 
       <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
