@@ -1,12 +1,17 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { Heading, Text, View, Flex, Divider, Button } from "@adobe/react-spectrum";
+import {
+  Heading,
+  Text,
+  View,
+  Flex,
+  Divider,
+  Button,
+} from "@adobe/react-spectrum";
 
 import Bug from "@spectrum-icons/workflow/Bug";
 import Home from "@spectrum-icons/workflow/Home";
-
-
 
 interface ErrorBoundaryProps {}
 
@@ -17,23 +22,23 @@ interface ErrorBoundaryState {
 
 const GoHomeButton: React.FC<{
   onPress: () => void;
-}> = ({onPress}) => {
+}> = ({ onPress, ...rest }) => {
   const navigate = useNavigate();
-  
+
   const _onPress = () => {
     onPress();
-    navigate("/")
-  }
+    navigate("/");
+  };
 
-  return <>
-    <Button variant="cta" marginY="size-100" onPress={_onPress}>
-      <Flex alignItems="center">
-        <Home margin="size-100" />
+  return (
+    <>
+      <Button variant="cta" alignSelf="end" onPress={_onPress} {...rest}>
+        <Home />
         <Text> Go home!</Text>
-      </Flex>
-    </Button>
-  </>
-}
+      </Button>
+    </>
+  );
+};
 
 // ! TODO
 export class ErrorBoundary extends React.Component<
@@ -52,32 +57,48 @@ export class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <Flex UNSAFE_className="h-screen">
-          <View margin="auto">
+        <Flex
+          direction="column"
+          height="100%"
+          gap="size-100"
+          justifyContent="center"
+          alignContent="center"
+        >
+          <Flex gap="size-100" justifyContent="center" alignItems="center">
+            <Bug />
+            <Heading level={1}> Something went wrong...</Heading>
+          </Flex>
 
-            <Flex alignItems="center">
-              <Bug margin="size-100"/>
-              <Heading level={1}> Something went wrong...</Heading>
-            </Flex>
-
+          <Flex
+            width="size-6000"
+            gap="size-100"
+            direction="column"
+            justifyContent="center"
+            alignItems="center"
+            alignSelf="center"
+          >
             <View
+              UNSAFE_className="space-y-2"
+              width="size-6000"
+              padding="size-250"
               borderWidth="thin"
               borderColor="dark"
               borderRadius="medium"
-              padding="size-250"
-              width="size-6000"
+              justifySelf="center"
             >
-              <Heading level={3} >Error log</Heading>
-              <Divider marginY="size-100"/>
+              <Heading level={3} marginBottom={-2}>
+                Error log
+              </Heading>
+              <Divider marginBottom={2} />
               <Text>{this.state.error.message}</Text>
             </View>
 
-            <Flex justifyContent="right">
-              <GoHomeButton onPress={()=> {
-                this.setState({hasError: false});
-              }}/>
-            </Flex>
-          </View>
+            <GoHomeButton
+              onPress={() => {
+                this.setState({ hasError: false });
+              }}
+            />
+          </Flex>
         </Flex>
       );
     }
