@@ -12,6 +12,7 @@ import {
   factoryMakeGeneration,
   factoryRegenerateItems,
   factoryRemove,
+  factoryReplaceItems,
   factoryUnify,
   readProjectInstance,
   showOpenDialog,
@@ -167,4 +168,19 @@ export const replaceItems = async (
   id: string,
   generation: Generation,
   _with: Collection
-) => {};
+) => {
+  const _generation = await factoryReplaceItems(id, generation, _with);
+  return _generation;
+};
+
+export const computeGenerationRepeats = (generation: Generation) => {
+  const { collection } = generation;
+  const keys = new Set<string>();
+  const repeats: Collection = [];
+  for (const { name, traits } of collection) {
+    const key = hash(traits);
+    if (keys.has(key)) repeats.push({ name, traits });
+    else keys.add(key);
+  }
+  return repeats;
+};

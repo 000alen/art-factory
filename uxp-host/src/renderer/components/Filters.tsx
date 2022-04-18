@@ -6,16 +6,15 @@ type Filters = Record<string, string[]>;
 
 interface FiltersProps {
   setStringFilter: (v: string) => void;
-  collectionRepeatedFilter: boolean;
-  addRepeatedFilter: () => void;
-  removeRepeatedFilter: () => void;
+  repeatedFilter: boolean;
+  setRepeatedFilter: (v: boolean) => void;
   onRegenerateRepeated: () => void;
   onRemoveRepeated: () => void;
   bundlesFiltersInfo: string[];
   bundlesFilters: string[];
   addBundlesFilter: (bundle: string) => void;
   removeBundlesFilter: (bundle: string) => void;
-  collectionFiltersInfo: Filters;
+  filtersInfo: Filters;
   hasFilter: (name: string, value: string) => boolean;
   addFilter: (name: string, value: string) => void;
   removeFilter: (name: string, value: string) => void;
@@ -23,16 +22,15 @@ interface FiltersProps {
 
 export const Filters: React.FC<FiltersProps> = ({
   setStringFilter,
-  collectionRepeatedFilter,
-  addRepeatedFilter,
-  removeRepeatedFilter,
+  repeatedFilter,
+  setRepeatedFilter,
   onRegenerateRepeated,
   onRemoveRepeated,
   bundlesFiltersInfo,
   bundlesFilters,
   addBundlesFilter,
   removeBundlesFilter,
-  collectionFiltersInfo,
+  filtersInfo,
   hasFilter,
   addFilter,
   removeFilter,
@@ -50,13 +48,7 @@ export const Filters: React.FC<FiltersProps> = ({
         <summary>
           <Heading UNSAFE_className="inline-block">Repeated</Heading>
         </summary>
-        <Checkbox
-          isSelected={collectionRepeatedFilter}
-          onChange={(isSelected) => {
-            if (isSelected) addRepeatedFilter();
-            else removeRepeatedFilter();
-          }}
-        >
+        <Checkbox isSelected={repeatedFilter} onChange={setRepeatedFilter}>
           Repeated
         </Checkbox>
         <Button variant="secondary" onPress={onRegenerateRepeated}>
@@ -87,7 +79,7 @@ export const Filters: React.FC<FiltersProps> = ({
         </div>
       </details>
 
-      {Object.entries(collectionFiltersInfo).map(([name, values], i) => (
+      {Object.entries(filtersInfo).map(([name, values], i) => (
         <details key={i}>
           <summary>
             <Heading UNSAFE_className="inline-block">{name}</Heading>

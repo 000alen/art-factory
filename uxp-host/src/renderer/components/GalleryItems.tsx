@@ -7,18 +7,11 @@ import {
   Grid,
   Heading,
   Item,
-  NumberField,
   repeat,
-  TabList,
-  Tabs,
   Text,
-  View,
 } from "@adobe/react-spectrum";
 import { useEvent } from "react-use";
 
-import { PAGE_N } from "../constants";
-import { Collection } from "../typings";
-import { setter } from "./Gallery";
 import { ImageItem } from "./ImageItem";
 import { Controlled as ControlledZoom } from "react-medium-image-zoom";
 import Close from "@spectrum-icons/workflow/Close";
@@ -31,18 +24,18 @@ interface Item {
 }
 
 interface GalleryItemsProps {
-  selectedCollectionItem: number;
+  selectedItem: number;
   items: Item[];
   itemsToRemove: string[];
+  onRemove: (name: string) => void;
   onUndoRemove: (name: string) => void;
   onEdit: (i: number) => void;
-  onRemove: (name: string) => void;
   onSelect: (i: number) => void;
   onRegenerate: (i: number) => void;
 }
 
 export const GalleryItems: React.FC<GalleryItemsProps> = ({
-  selectedCollectionItem,
+  selectedItem: selectedCollectionItem,
   items,
   itemsToRemove,
   onUndoRemove,
