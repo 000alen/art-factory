@@ -333,7 +333,6 @@ export const FactoryPage: React.FC = () => {
     setDirty(true);
   };
 
-  //throw new Error("Lorem ipsum dolor sit amet consectetur adipisicing elit. Veniam dolorum nobis vero, distinctio consequuntur laborum non incidunt ad nostrum eaque quae illum rem unde voluptatem suscipit ex nisi amet quaerat!");
   return (
     <Grid
       areas={["left right"]}

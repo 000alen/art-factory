@@ -1,6 +1,8 @@
 import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Heading, Text, View, Flex, Divider, Button } from "@adobe/react-spectrum";
+
 import Bug from "@spectrum-icons/workflow/Bug";
 import Home from "@spectrum-icons/workflow/Home";
 
@@ -11,6 +13,26 @@ interface ErrorBoundaryProps {}
 interface ErrorBoundaryState {
   error: Error;
   hasError: boolean;
+}
+
+const GoHomeButton: React.FC<{
+  onPress: () => void;
+}> = ({onPress}) => {
+  const navigate = useNavigate();
+  
+  const _onPress = () => {
+    onPress();
+    navigate("/")
+  }
+
+  return <>
+    <Button variant="cta" marginY="size-100" onPress={_onPress}>
+      <Flex alignItems="center">
+        <Home margin="size-100" />
+        <Text> Go home!</Text>
+      </Flex>
+    </Button>
+  </>
 }
 
 // ! TODO
@@ -51,14 +73,9 @@ export class ErrorBoundary extends React.Component<
             </View>
 
             <Flex justifyContent="right">
-              <Button variant="cta" marginY="size-100" onPress={() => {
-                this.setState({ hasError: false })} 
-              }>
-                <Flex alignItems="center">
-                  <Home margin="size-100" />
-                  <Text> Go home!</Text>
-                </Flex>
-              </Button>
+              <GoHomeButton onPress={()=> {
+                this.setState({hasError: false});
+              }}/>
             </Flex>
           </View>
         </Flex>
