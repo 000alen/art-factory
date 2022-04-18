@@ -307,6 +307,12 @@ ipcAsyncTask(
 );
 
 ipcAsyncTask(
+  "factoryReplaceItems",
+  async (id: string, generation: Generation, _with: Collection) =>
+    await factories[id].replaceItems(generation, _with)
+);
+
+ipcAsyncTask(
   "factoryUnify",
   async (id: string, name: string, generations: Generation[]) =>
     await factories[id].unify(name, generations)

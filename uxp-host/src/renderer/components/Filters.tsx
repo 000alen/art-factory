@@ -1,39 +1,29 @@
 import React from "react";
 
-import {
-  Button,
-  Checkbox,
-  Heading,
-  SearchField,
-  View,
-} from "@adobe/react-spectrum";
-
-import { Bundles } from "../typings";
+import { Button, Checkbox, Heading, SearchField } from "@adobe/react-spectrum";
 
 type Filters = Record<string, string[]>;
 
 interface FiltersProps {
-  repeatedFilter: boolean;
+  setStringFilter: (v: string) => void;
+  collectionRepeatedFilter: boolean;
   addRepeatedFilter: () => void;
   removeRepeatedFilter: () => void;
   onRegenerateRepeated: () => void;
   onRemoveRepeated: () => void;
-  addStringFilter: (query: string) => void;
-  removeStringFilter: () => void;
   bundlesFiltersInfo: string[];
   bundlesFilters: string[];
   addBundlesFilter: (bundle: string) => void;
   removeBundlesFilter: (bundle: string) => void;
-  filtersInfo: Filters;
+  collectionFiltersInfo: Filters;
   hasFilter: (name: string, value: string) => boolean;
   addFilter: (name: string, value: string) => void;
   removeFilter: (name: string, value: string) => void;
 }
 
 export const Filters: React.FC<FiltersProps> = ({
-  addStringFilter,
-  removeStringFilter,
-  repeatedFilter,
+  setStringFilter,
+  collectionRepeatedFilter,
   addRepeatedFilter,
   removeRepeatedFilter,
   onRegenerateRepeated,
@@ -42,7 +32,7 @@ export const Filters: React.FC<FiltersProps> = ({
   bundlesFilters,
   addBundlesFilter,
   removeBundlesFilter,
-  filtersInfo,
+  collectionFiltersInfo,
   hasFilter,
   addFilter,
   removeFilter,
@@ -53,10 +43,7 @@ export const Filters: React.FC<FiltersProps> = ({
         zIndex={1001}
         position="sticky"
         top={0}
-        onSubmit={(query: string) => {
-          if (query !== "") addStringFilter(query);
-          else removeStringFilter();
-        }}
+        onSubmit={setStringFilter}
       />
 
       <details className="space-x-2 space-y-2">
@@ -64,7 +51,7 @@ export const Filters: React.FC<FiltersProps> = ({
           <Heading UNSAFE_className="inline-block">Repeated</Heading>
         </summary>
         <Checkbox
-          isSelected={repeatedFilter}
+          isSelected={collectionRepeatedFilter}
           onChange={(isSelected) => {
             if (isSelected) addRepeatedFilter();
             else removeRepeatedFilter();
@@ -100,7 +87,7 @@ export const Filters: React.FC<FiltersProps> = ({
         </div>
       </details>
 
-      {Object.entries(filtersInfo).map(([name, values], i) => (
+      {Object.entries(collectionFiltersInfo).map(([name, values], i) => (
         <details key={i}>
           <summary>
             <Heading UNSAFE_className="inline-block">{name}</Heading>

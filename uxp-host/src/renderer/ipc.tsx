@@ -295,17 +295,24 @@ export const factoryRegenerateItems = (
     id,
     generation,
     items
-  ) as Promise<Collection>;
+  ) as Promise<Generation>;
+
+export const factoryReplaceItems = (
+  id: string,
+  generation: Generation,
+  _with: Collection
+) =>
+  ipcTask("factoryReplaceItems")(
+    id,
+    generation,
+    _with
+  ) as Promise<Generation>;
 
 export const factoryUnify = (
   id: string,
   name: string,
   generations: Generation[]
-) =>
-  ipcTask("factoryUnify")(id, name, generations) as Promise<{
-    collection: Collection;
-    bundles: Bundles;
-  }>;
+) => ipcTask("factoryUnify")(id, name, generations) as Promise<Generation>;
 
 export const factoryRemove = (id: string, generation: Generation) =>
   ipcTask("factoryRemove")(id, generation);

@@ -1,3 +1,5 @@
+export const METADATA_FIELDS = ["external_url", "animation_url", "youtube_url"];
+
 export const Networks: Record<string, any> = {
   mainnet: {
     name: "Mainnet",

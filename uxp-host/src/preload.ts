@@ -35,6 +35,7 @@ const sendWhitelist = [
   "factoryGetRandomImage",
   "factoryRemoveItems",
   "factoryRegenerateItems",
+  "factoryReplaceItems",
   "factoryUnify",
   "factoryRemove",
 
@@ -79,6 +80,7 @@ const onWhitelist = [
   "factoryGetRandomImageResult",
   "factoryRemoveItemsResult",
   "factoryRegenerateItemsResult",
+  "factoryReplaceItemsResult",
   "factoryUnifyResult",
   "factoryRemoveResult",
 

@@ -27,12 +27,19 @@ import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
   factoryGetImage,
-  factoryRegenerateItems,
+  factoryGetTraitsByLayerName,
   factoryRemoveItems,
   openInExplorer,
 } from "../ipc";
-import { Bundles, Collection, CollectionItem, Instance } from "../typings";
+import {
+  Bundles,
+  Collection,
+  CollectionItem,
+  Instance,
+  Trait,
+} from "../typings";
 import { hash } from "../utils";
+import { regenerateItems } from "../commands";
 
 interface QualityPageState {
   projectDir: string;
@@ -81,6 +88,7 @@ export const QualityPage = () => {
   const [collection, setCollection] = useState(_generation.collection);
   const [bundles, setBundles] = useState(_generation.bundles);
 
+  const [traits, setTraits] = useState<Record<string, Trait[]>>(null);
   const [collectionFiltersInfo, setCollectionFiltersInfo] = useState<Filters>(
     {}
   );
@@ -98,8 +106,7 @@ export const QualityPage = () => {
   >([]);
   const [collectionRepeatedFilter, setCollectionRepeatedFilter] =
     useState<boolean>(false);
-  const [collectionStringFilter, setCollectionStringFilter] =
-    useState<string>(null);
+  const [stringFilter, setStringFilter] = useState<string>(null);
 
   const [bundlesFiltersInfo, setBundlesFiltersInfo] = useState<string[]>([]);
   const [bundlesFilters, setBundlesFilters] = useState<string[]>([]);
@@ -109,6 +116,22 @@ export const QualityPage = () => {
   const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
   const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
 
+  useEffect(() => {
+    task("XXX", async () => {
+      setTraits(
+        Object.fromEntries(
+          await Promise.all(
+            configuration.layers.map(async (layerName) => [
+              layerName,
+              await factoryGetTraitsByLayerName(id, layerName),
+            ])
+          )
+        )
+      );
+    });
+  }, []);
+
+  // ? Toolbar setup
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
     toolbarContext.addButton(
@@ -120,6 +143,14 @@ export const QualityPage = () => {
       }
     );
 
+    return () => {
+      toolbarContext.removeButton("back");
+      toolbarContext.removeButton("open-explorer");
+    };
+  }, []);
+
+  // ? UXP setup
+  useEffect(() => {
     const uxpReload = async ({ name: itemName }: { name: string }) => {
       if (filteredCollection.some((item) => item.name === itemName)) {
         const url = `data:image/png;base64,${await factoryGetImage(
@@ -130,16 +161,14 @@ export const QualityPage = () => {
         )}`;
         reload(itemName, url);
       }
-    };
 
-    return () => {
-      toolbarContext.removeButton("back");
-      toolbarContext.removeButton("open-explorer");
-
-      uxpContext.off("uxp-reload", uxpReload);
+      return () => {
+        uxpContext.off("uxp-reload", uxpReload);
+      };
     };
   }, []);
 
+  // ? Collection setup
   useEffect(() => {
     const filtersInfo: Filters = {};
     for (const { traits } of collection)
@@ -151,28 +180,46 @@ export const QualityPage = () => {
     setCollectionFiltersInfo(filtersInfo);
   }, [collection]);
 
+  // ? Bundles setup
   useEffect(() => {
-    const filtersInfo: string[] = [];
+    const bundlesFiltersInfo: string[] = [];
     for (const { name } of bundles)
-      if (!filtersInfo.includes(name)) filtersInfo.push(name);
-    setBundlesFiltersInfo(filtersInfo);
+      if (!bundlesFiltersInfo.includes(name)) bundlesFiltersInfo.push(name);
+    setBundlesFiltersInfo(bundlesFiltersInfo);
   }, [bundles]);
 
+  // ? Collection filtering
   useEffect(() => {
-    let filteredCollection = [...collection];
-    for (const [name, values] of Object.entries(collectionFilters)) {
-      if (values.length === 0) continue;
-      filteredCollection = filteredCollection.filter(({ traits }) =>
-        traits.some(({ name: n, value: v }) => n === name && values.includes(v))
-      );
-    }
+    const filteredCollection = Object.entries(collectionFilters)
+      .reduce((filtered, [name, values]) => {
+        if (values.length === 0) return filtered;
+        else
+          return filtered.filter(({ traits }) =>
+            traits.some(
+              ({ name: n, value: v }) => n === name && values.includes(v)
+            )
+          );
+      }, collection)
+      .filter(({ name }) => name.includes(stringFilter));
 
     setCollectionCursor(0);
     setCollectionPage(1);
     setSelectedCollectionItem(0);
     setCollectionMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
-  }, [collectionFilters]);
+  }, [collectionFilters, stringFilter]);
+
+  // ? Bundles filtering
+  useEffect(() => {
+    const filteredBundles = bundles
+      .filter(({ name }) => bundlesFilters.includes(name))
+      .filter(({ name }) => name.includes(stringFilter));
+
+    setBundlesCursor(0);
+    setBundlesPage(1);
+    setBundlesMaxPage(Math.ceil(filteredBundles.length / PAGE_N));
+    setFilteredBundles(filteredBundles);
+  }, [bundlesFilters, stringFilter]);
 
   useEffect(() => {
     task("loading previews", async () => {
@@ -197,17 +244,6 @@ export const QualityPage = () => {
       setCollectionItems(items);
     })();
   }, [filteredCollection, collectionCursor]);
-
-  useEffect(() => {
-    let filteredBundles = bundles.filter(({ name }) =>
-      bundlesFilters.includes(name)
-    );
-
-    setBundlesCursor(0);
-    setBundlesPage(1);
-    setBundlesMaxPage(Math.ceil(filteredBundles.length / PAGE_N));
-    setFilteredBundles(filteredBundles);
-  }, [bundlesFilters]);
 
   useEffect(() => {
     task("loading bundles previews", async () => {
@@ -302,7 +338,7 @@ export const QualityPage = () => {
   };
 
   const onRegenerateRepeated = async () => {
-    const _collection = await factoryRegenerateItems(
+    const { collection: _collection } = await regenerateItems(
       id,
       _generation,
       computeRepeatedCollection()
@@ -314,26 +350,6 @@ export const QualityPage = () => {
 
   const onRemoveRepeated = () => {
     computeRepeatedCollection().forEach(({ name }) => onRemove(name));
-  };
-
-  const computeCollectionQuery = (query: string) => {
-    return collection.filter(({ name }) => name.includes(query));
-  };
-
-  const addStringFilter = (query: string) => {
-    const filteredCollection = computeCollectionQuery(query);
-
-    setCollectionStringFilter(query);
-    setCollectionCursor(0);
-    setCollectionPage(1);
-    setSelectedCollectionItem(0);
-    setCollectionMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
-    setFilteredCollection(filteredCollection);
-  };
-
-  const removeStringFilter = () => {
-    setCollectionStringFilter(null);
-    setCollectionFilters((prevFilters) => ({ ...prevFilters }));
   };
 
   const addBundlesFilter = (bundle: string) =>
@@ -364,28 +380,11 @@ export const QualityPage = () => {
   const onSelect = (i: number) => setSelectedCollectionItem(i);
 
   const onRegenerate = async (i: number) => {
-    const _collection = await factoryRegenerateItems(id, _generation, [
+    const { collection: _collection } = await regenerateItems(id, _generation, [
       filteredCollection[i],
     ]);
     setCollection(_collection);
     setFilteredCollection((p) => [...p]);
-  };
-
-  const onAction = (action: string) => {
-    switch (action) {
-      case "back":
-        setSelectedCollectionItem((prevSelectedItem) =>
-          Math.max(0, prevSelectedItem - 1)
-        );
-        break;
-      case "forward":
-        setSelectedCollectionItem((prevSelectedItem) =>
-          Math.min(collectionItems.length - 1, prevSelectedItem + 1)
-        );
-        break;
-      default:
-        break;
-    }
   };
 
   const onSave = task("filtering", async () => {
@@ -430,9 +429,8 @@ export const QualityPage = () => {
       <View UNSAFE_className="p-2 space-y-2" gridArea="left" overflow="auto">
         <Filters
           {...{
-            addStringFilter,
-            removeStringFilter,
-            repeatedFilter: collectionRepeatedFilter,
+            setStringFilter,
+            collectionRepeatedFilter,
             addRepeatedFilter,
             removeRepeatedFilter,
             onRegenerateRepeated,
@@ -441,7 +439,7 @@ export const QualityPage = () => {
             bundlesFilters,
             addBundlesFilter,
             removeBundlesFilter,
-            filtersInfo: collectionFiltersInfo,
+            collectionFiltersInfo,
             hasFilter,
             addFilter,
             removeFilter,
@@ -452,13 +450,14 @@ export const QualityPage = () => {
       <View UNSAFE_className="p-2 space-y-2" gridArea="center" overflow="auto">
         <Gallery
           {...{
+            selectedCollectionItem,
             filteredCollection,
-            page: collectionPage,
-            maxPage: collectionMaxPage,
-            setCursor: setCollectionCursor,
-            setPage: setCollectionPage,
-            items: collectionItems,
-            itemsToRemove: collectionItemsToRemove,
+            collectionPage,
+            collectionMaxPage,
+            setCollectionCursor,
+            setCollectionPage,
+            collectionItems,
+            collectionItemsToRemove,
             onUndoRemove,
             onEdit,
             onRemove,
@@ -480,7 +479,7 @@ export const QualityPage = () => {
         {collectionItems.length > 0 && filteredCollection.length > 0 && (
           <>
             <Heading zIndex={1001} position="sticky" top={0}>
-              {collectionItems[selectedCollectionItem].name}
+              {filteredCollection[selectedCollectionItem].name}
             </Heading>
             {filteredCollection[selectedCollectionItem].traits.map(
               ({ name, value }, i) => (
@@ -501,9 +500,10 @@ export const QualityPage = () => {
           bottom={0}
           direction="row-reverse"
         >
-          <Button variant="cta" onPress={onSave}>
+          <Button variant="cta">Replace</Button>
+          {/* <Button variant="cta" onPress={onSave}>
             Save
-          </Button>
+          </Button> */}
         </Flex>
       </View>
     </Grid>

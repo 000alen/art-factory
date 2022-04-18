@@ -10,6 +10,7 @@ import {
   factoryGenerateMetadata,
   factoryGetImage,
   factoryMakeGeneration,
+  factoryRegenerateItems,
   factoryRemove,
   factoryUnify,
   readProjectInstance,
@@ -70,7 +71,7 @@ export const generate = async (
   metadataItems: MetadataItem[],
   template: Template,
   onProgress?: (name: string) => void
-): Promise<{ collection: Collection; bundles: Bundles }> => {
+): Promise<Generation> => {
   const generation = await factoryMakeGeneration(id, name, template);
   await factoryGenerateImages(id, generation, onProgress);
   await factoryGenerateMetadata(id, generation, metadataItems);
@@ -82,9 +83,9 @@ export const unifyGenerations = async (
   name: string,
   generations: Generation[],
   onProgress?: (name: string) => void
-): Promise<{ collection: Collection; bundles: Bundles }> => {
-  const { collection, bundles } = await factoryUnify(id, name, generations);
-  return { collection, bundles };
+): Promise<Generation> => {
+  const generation = await factoryUnify(id, name, generations);
+  return generation;
 };
 
 export const removeGeneration = async (id: string, generation: Generation) => {
@@ -152,3 +153,18 @@ export const computeTemplateN = async (template: Template) => {
 
   return n;
 };
+
+export const regenerateItems = async (
+  id: string,
+  generation: Generation,
+  items: Collection
+) => {
+  const _generation = await factoryRegenerateItems(id, generation, items);
+  return _generation;
+};
+
+export const replaceItems = async (
+  id: string,
+  generation: Generation,
+  _with: Collection
+) => {};

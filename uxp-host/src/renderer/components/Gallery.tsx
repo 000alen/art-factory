@@ -1,24 +1,11 @@
 import React, { useState } from "react";
 
-import {
-  Button,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  NumberField,
-  repeat,
-  TabList,
-  TabPanels,
-  Tabs,
-  View,
-} from "@adobe/react-spectrum";
+import { Flex, Item, NumberField, TabList, Tabs } from "@adobe/react-spectrum";
 
 import { BundleItem } from "../pages/QualityPage";
 import { Bundles, Collection } from "../typings";
 import { GalleryBundles } from "./GalleryBundles";
 import { GalleryItems } from "./GalleryItems";
-import { ImageItem } from "./ImageItem";
 import { PAGE_N } from "../constants";
 
 export type setter<T> = (value: T | ((p: T) => T)) => void;
@@ -29,13 +16,14 @@ interface Item {
 }
 
 interface GalleryProps {
+  selectedCollectionItem: number;
   filteredCollection: Collection;
-  page: number;
-  maxPage: number;
-  setCursor: setter<number>;
-  setPage: setter<number>;
-  items: Item[];
-  itemsToRemove: string[];
+  collectionPage: number;
+  collectionMaxPage: number;
+  setCollectionCursor: setter<number>;
+  setCollectionPage: setter<number>;
+  collectionItems: Item[];
+  collectionItemsToRemove: string[];
   onUndoRemove: (name: string) => void;
   onEdit: (i: number) => void;
   onRemove: (name: string) => void;
@@ -52,13 +40,14 @@ interface GalleryProps {
 }
 
 export const Gallery: React.FC<GalleryProps> = ({
+  selectedCollectionItem,
   filteredCollection,
-  page,
-  maxPage,
-  setCursor,
-  setPage,
-  items,
-  itemsToRemove,
+  collectionPage,
+  collectionMaxPage,
+  setCollectionCursor,
+  setCollectionPage,
+  collectionItems,
+  collectionItemsToRemove,
   onUndoRemove,
   onEdit,
   onRemove,
@@ -109,7 +98,7 @@ export const Gallery: React.FC<GalleryProps> = ({
             aria-label="page"
             value={
               selectedKey === "items"
-                ? page
+                ? collectionPage
                 : selectedKey === "bundles"
                 ? bundlesPage
                 : 0
@@ -117,15 +106,15 @@ export const Gallery: React.FC<GalleryProps> = ({
             minValue={1}
             maxValue={
               selectedKey === "items"
-                ? maxPage
+                ? collectionMaxPage
                 : selectedKey === "bundles"
                 ? bundlesMaxPage
                 : 0
             }
             onChange={(value: number) => {
               if (selectedKey === "items") {
-                setCursor((value - 1) * PAGE_N);
-                setPage(value);
+                setCollectionCursor((value - 1) * PAGE_N);
+                setCollectionPage(value);
               } else if (selectedKey === "bundles") {
                 setBundlesCursor((value - 1) * PAGE_N);
                 setBundlesPage(value);
@@ -134,7 +123,7 @@ export const Gallery: React.FC<GalleryProps> = ({
           />{" "}
           of{" "}
           {selectedKey === "items"
-            ? maxPage
+            ? collectionMaxPage
             : selectedKey === "bundles"
             ? bundlesMaxPage
             : 0}
@@ -144,13 +133,14 @@ export const Gallery: React.FC<GalleryProps> = ({
       {selectedKey === "items" ? (
         <GalleryItems
           {...{
+            selectedCollectionItem,
             filteredCollection,
-            page,
-            maxPage,
-            setCursor,
-            setPage,
-            items,
-            itemsToRemove,
+            page: collectionPage,
+            maxPage: collectionMaxPage,
+            setCursor: setCollectionCursor,
+            setPage: setCollectionPage,
+            items: collectionItems,
+            itemsToRemove: collectionItemsToRemove,
             onUndoRemove,
             onEdit,
             onRemove,

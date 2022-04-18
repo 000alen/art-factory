@@ -2,7 +2,13 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
-import { Flex, Heading, Text, TextField } from "@adobe/react-spectrum";
+import {
+  Flex,
+  Heading,
+  NumberField,
+  Text,
+  TextField,
+} from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
 import { computeTemplateN, generate, getTemplatePreview } from "../commands";
@@ -15,6 +21,7 @@ import { TriStateButton } from "../components/TriStateButton";
 import { Instance, MetadataItem } from "../typings";
 import { spacedName } from "../utils";
 import moment from "moment";
+import { METADATA_FIELDS } from "../constants";
 
 interface GenerationPageState {
   projectDir: string;
@@ -36,7 +43,7 @@ export const GenerationPage: React.FC = () => {
     templateId,
     dirty: _dirty,
   } = state as GenerationPageState;
-  const { templates } = instance;
+  const { configuration, templates } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
 
@@ -44,6 +51,7 @@ export const GenerationPage: React.FC = () => {
     templates.find((template) => template.id === templateId)
   );
 
+  const [price, setPrice] = useState(configuration.cost);
   const [name, setName] = useState(spacedName());
   const [collection, setCollection] = useState(null);
   const [bundles, setBundles] = useState(null);
@@ -151,11 +159,22 @@ export const GenerationPage: React.FC = () => {
           </div>
         </Flex>
 
+        <Flex direction="column" gap="size-100">
+          <Heading>Collection configuration</Heading>
+          <NumberField
+            label="Price"
+            value={price}
+            onChange={setPrice}
+            minValue={0.01}
+            step={0.01}
+          />
+        </Flex>
+
         <ArrayOf
           Component={MetadataField}
           label="Metadata"
           heading={true}
-          emptyValue={{ key: "", value: "" }}
+          emptyValue={{ key: METADATA_FIELDS[0], value: "" }}
           items={metadataItems}
           setItems={setMetadataItems}
         >

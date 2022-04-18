@@ -361,7 +361,7 @@ export const FactoryPage: React.FC = () => {
                 >
                   <Flex direction="column" gap="size-100">
                     {templatesPreviews && templatesPreviews[i] ? (
-                      <Zoom>
+                      <Zoom overlayBgColorEnd="rgba(30, 30, 30, 0.5)">
                         <ImageItem src={templatesPreviews[i]} maxSize={192} />
                       </Zoom>
                     ) : (
@@ -398,7 +398,7 @@ export const FactoryPage: React.FC = () => {
                 >
                   <Flex direction="column" gap="size-100">
                     {generationPreviews && generationPreviews[i] ? (
-                      <Zoom>
+                      <Zoom overlayBgColorEnd="rgba(30, 30, 30, 0.5)">
                         <ImageItem src={generationPreviews[i]} maxSize={192} />
                       </Zoom>
                     ) : (
@@ -465,6 +465,8 @@ export const FactoryPage: React.FC = () => {
               />
               <TaskItem name="Deploy" onRun={onDeploy} />
               <TaskItem name="Instance" onRun={onInstance} />
+              <TaskItem name="Import from files" onRun={() => {}} />
+              <TaskItem name="Reload generation" onRun={() => {}} />
             </Grid>
           </Flex>
         </Flex>

@@ -30,12 +30,12 @@ export const GalleryBundles: React.FC<GalleryBundlesProps> = ({
         <div key={i}>
           <Heading>{`${bundleName} ${bundlesCursor + i + 1}`}</Heading>
           <Grid
-            columns={repeat("auto-fit", "175px")}
+            columns={repeat("auto-fit", "220px")}
             gap="size-100"
             justifyContent="center"
           >
             {names.map((name, j) => (
-              <ImageItem key={j} src={urls[j]} maxSize={175} />
+              <ImageItem key={j} src={urls[j]} maxSize={192} />
             ))}
           </Grid>
         </div>

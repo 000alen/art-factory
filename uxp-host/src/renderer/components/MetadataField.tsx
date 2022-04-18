@@ -1,6 +1,14 @@
 import React from "react";
 
-import { Flex, TextField } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Item,
+  Menu,
+  MenuTrigger,
+  TextField,
+} from "@adobe/react-spectrum";
+import { METADATA_FIELDS } from "../constants";
 
 interface MetadataFieldProps {
   value: { key: string; value: string };
@@ -13,14 +21,27 @@ export const MetadataField: React.FC<MetadataFieldProps> = ({
 }) => {
   const { key: k, value: v } = value;
 
+  const items = METADATA_FIELDS.map((field) => ({
+    id: field,
+    name: field,
+  }));
+
   return (
     <Flex gap="size-100" width="100%">
-      <TextField
-        isQuiet
-        width="50%"
-        value={k}
-        onChange={(k: string) => onChange({ key: k, value: v })}
-      />
+      <MenuTrigger>
+        <ActionButton width="50%">{k}</ActionButton>
+        <Menu
+          items={items}
+          selectionMode="single"
+          disallowEmptySelection={true}
+          selectedKeys={[k]}
+          onSelectionChange={(selectedKeys) =>
+            onChange({ key: [...selectedKeys].shift() as string, value: v })
+          }
+        >
+          {({ id, name }) => <Item key={id}>{name}</Item>}
+        </Menu>
+      </MenuTrigger>
       {":"}
       <TextField
         width="100%"
