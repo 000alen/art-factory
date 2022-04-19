@@ -47,6 +47,7 @@ import {
 import { GalleryBundles } from "../components/GalleryBundles";
 import { GalleryItems } from "../components/GalleryItems";
 import { Properties } from "../components/Properties";
+import { Loading } from "../components/Loading";
 
 interface QualityPageState {
   projectDir: string;
@@ -77,6 +78,9 @@ export const QualityPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const task = useErrorHandler();
+
+  const [working, setWorking] = useState(false);
+  const [workingTitle, setWorkingTitle] = useState("");
 
   const {
     projectDir,
@@ -308,6 +312,8 @@ export const QualityPage = () => {
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onSave = task("filtering", async () => {
+    setWorkingTitle("Saving...");
+    setWorking(true);
     const _collection = await factoryRemoveItems(
       id,
       generation,
@@ -319,6 +325,8 @@ export const QualityPage = () => {
         ? { ...generation, collection: _collection }
         : generation
     );
+
+    setWorking(false);
 
     navigate("/factory", {
       state: {
@@ -378,25 +386,33 @@ export const QualityPage = () => {
     );
 
   const onRegenerateRepeated = async () => {
+    setWorkingTitle("Regenerating repeated...");
+    setWorking(true);
     const { collection: _collection } = await regenerateItems(
       id,
       { ...generation, collection },
       computeGenerationRepeats(generation)
     );
     setCollection(_collection);
+    setWorking(false);
   };
 
   const onRegenerate = async (i: number) => {
+    setWorkingTitle("Regenerating item...");
+    setWorking(true);
     const { collection: _collection } = await regenerateItems(
       id,
       { ...generation, collection },
       [filteredCollection[i]]
     );
     setCollection(_collection);
+    setWorking(false);
   };
 
   // TODO: Not working
   const onReplace = async (i: number, traits: Trait[]) => {
+    setWorkingTitle("Replacing traits...");
+    setWorking(true);
     const { collection: _collection } = await replaceItems(
       id,
       { ...generation, collection },
@@ -408,6 +424,7 @@ export const QualityPage = () => {
       ]
     );
     setCollection(_collection);
+    setWorking(false);
   };
 
   return (
@@ -420,6 +437,8 @@ export const QualityPage = () => {
       gap="size-100"
       margin="size-100"
     >
+      {working && <Loading title={workingTitle} />}
+
       <View UNSAFE_className="p-2 space-y-2" gridArea="left" overflow="auto">
         <Filters
           {...{

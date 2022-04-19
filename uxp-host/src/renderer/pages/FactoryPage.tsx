@@ -43,6 +43,7 @@ import { Instance } from "../typings";
 import Copy from "@spectrum-icons/workflow/Copy";
 import Zoom from "react-medium-image-zoom";
 import { Preview } from "../components/Preview";
+import { Loading } from "../components/Loading";
 
 interface FactoryPageState {
   projectDir: string;
@@ -62,6 +63,9 @@ export const FactoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { projectDir, instance, id, dirty: _dirty } = state as FactoryPageState;
+
+  const [working, setWorking] = useState(false);
+  const [workingTitle, setWorkingTitle] = useState("");
 
   const [dirty, setDirty] = useState(_dirty);
   const [configuration, setConfiguration] = useState(instance.configuration);
@@ -118,7 +122,7 @@ export const FactoryPage: React.FC = () => {
     [generations]
   );
 
-  const onSave = async () => {
+  const onSave = task("save", async () => {
     await writeProjectInstance(projectDir, {
       ...instance,
       configuration,
@@ -126,7 +130,7 @@ export const FactoryPage: React.FC = () => {
       generations,
     });
     setDirty(false);
-  };
+  });
 
   const onConfiguration = () => {
     navigate("/configuration", {
@@ -296,25 +300,34 @@ export const FactoryPage: React.FC = () => {
     }
   };
 
-  const onUnifyGenerationsCommand = async ({ newName, generationsNames }) => {
-    const { collection, bundles } = await unifyGenerations(
-      id,
-      newName,
-      generationsNames.map((name) => generations.find((g) => g.name === name)),
-      () => {}
-    );
+  const onUnifyGenerationsCommand = task(
+    "unify",
 
-    setGenerations((prevGenerations) => [
-      ...prevGenerations,
-      {
-        id: uuid(),
-        name: newName,
-        collection,
-        bundles,
-      },
-    ]);
-    setDirty(true);
-  };
+    async ({ newName, generationsNames }) => {
+      setWorkingTitle("Unifying generations...");
+      setWorking(true);
+      const { collection, bundles } = await unifyGenerations(
+        id,
+        newName,
+        generationsNames.map((name) =>
+          generations.find((g) => g.name === name)
+        ),
+        () => {}
+      );
+
+      setGenerations((prevGenerations) => [
+        ...prevGenerations,
+        {
+          id: uuid(),
+          name: newName,
+          collection,
+          bundles,
+        },
+      ]);
+      setDirty(true);
+      setWorking(false);
+    }
+  );
 
   const onRemoveTemplateCommand = async (name: string) => {
     setTemplates((prevTemplates) =>
@@ -323,7 +336,9 @@ export const FactoryPage: React.FC = () => {
     setDirty(true);
   };
 
-  const onRemoveGenerationCommand = async (name: string) => {
+  const onRemoveGenerationCommand = task("remove", async (name: string) => {
+    setWorkingTitle("Removing generation...");
+    setWorking(true);
     await removeGeneration(
       id,
       generations.find((g) => g.name === name)
@@ -332,7 +347,8 @@ export const FactoryPage: React.FC = () => {
       prevGenerations.filter((g) => g.name !== name)
     );
     setDirty(true);
-  };
+    setWorking(false);
+  });
 
   return (
     <Grid
@@ -343,6 +359,8 @@ export const FactoryPage: React.FC = () => {
       gap="size-100"
       margin="size-100"
     >
+      {working && <Loading title={workingTitle} />}
+
       <View gridArea="left" overflow="auto">
         <Flex direction="column" gap="size-100">
           <Flex gap="size-100" alignItems="center">
@@ -405,49 +423,44 @@ export const FactoryPage: React.FC = () => {
       </View>
 
       <View gridArea="right">
-        <Flex height="100%" direction="column" justifyContent="space-between">
-          <Flex direction="column" gap="size-100">
-            <Flex gap="size-100" alignItems="center">
-              <Heading level={1}>
-                {dirty && "*"} {configuration.name}
-              </Heading>
-
-              <ActionButton onPress={onConfiguration}>
-                <Settings />
-              </ActionButton>
-            </Flex>
-
-            <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
-              <TaskItem name="Save" onRun={onSave} />
-              <TaskItem
-                name="Unify generations"
-                useDialog={true}
-                fields={[
-                  {
-                    key: "newName",
-                    type: "string",
-                    label: "Name",
-                    initial: "",
-                    value: "",
-                  },
-                  {
-                    key: "generationsNames",
-                    type: "custom",
-                    _type: "generations",
-                    label: "Generations",
-                    value: [],
-                  },
-                ]}
-                resolveCustomFields={resolveUnifyGenerationFields}
-                onRun={onUnifyGenerationsCommand}
-              />
-              <TaskItem name="Deploy" onRun={onDeploy} />
-              <TaskItem name="Instance" onRun={onInstance} />
-              <TaskItem name="Import from files" onRun={() => {}} />
-              <TaskItem name="Reload generation" onRun={() => {}} />
-            </Grid>
-          </Flex>
+        <Flex gap="size-100" alignItems="center">
+          <Heading level={1}>
+            {dirty && "*"} {configuration.name}
+          </Heading>
+          <ActionButton onPress={onConfiguration}>
+            <Settings />
+          </ActionButton>
         </Flex>
+
+        <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
+          <TaskItem name="Save" onRun={onSave} />
+          <TaskItem
+            name="Unify generations"
+            useDialog={true}
+            fields={[
+              {
+                key: "newName",
+                type: "string",
+                label: "Name",
+                initial: "",
+                value: "",
+              },
+              {
+                key: "generationsNames",
+                type: "custom",
+                _type: "generations",
+                label: "Generations",
+                value: [],
+              },
+            ]}
+            resolveCustomFields={resolveUnifyGenerationFields}
+            onRun={onUnifyGenerationsCommand}
+          />
+          <TaskItem name="Deploy" onRun={onDeploy} />
+          <TaskItem name="Instance" onRun={onInstance} />
+          <TaskItem name="Import from files" onRun={() => {}} />
+          <TaskItem name="Reload generation" onRun={() => {}} />
+        </Grid>
       </View>
     </Grid>
   );

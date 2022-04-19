@@ -17,8 +17,6 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { QualityPage } from "./pages/QualityPage";
 import { TemplatePage } from "./pages/TemplatePage";
 
-/* Temporal */ import { LoadingComponent } from "./components/LoadingComponent";
-
 export function App() {
   const { connectionStatus } = useContext(UXPContext);
 
@@ -26,7 +24,6 @@ export function App() {
     <GenericDialogProvider>
       <ToolbarProvider autoPlace={false}>
         <Router>
-          { /* <LoadingComponent title="Loading..." description="This is a test description"/> */}
           <Flex direction="column" height="100vh" gap="size-100">
             <Toolbar>
               {connectionStatus ? (

@@ -1,7 +1,7 @@
 import {
+  Contract,
   ContractFactory,
   providers as ethersProviders,
-  Signer,
   utils,
 } from "ethers";
 import fs from "fs";
@@ -12,7 +12,7 @@ import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
 
 import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
-import { providers } from "./ipc";
+import { contracts, providers } from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -940,118 +940,104 @@ export class Factory {
       force: true,
     });
   }
+
+  // #region 721 & 721_reveal_pause
+  async getCost(contractId: string) {
+    const contract = contracts[contractId];
+    const cost = await contract.cost();
+    return utils.formatUnits(cost.toString(), "ether");
+  }
+
+  async getBalanceOf(contractId: string, address: string) {
+    const contract = contracts[contractId];
+    const balance = await contract.balanceOf(address);
+    return balance.toString();
+  }
+
+  async getTokenOfOwnerByIndex(
+    contractId: string,
+    address: string,
+    index: number
+  ) {
+    const contract = contracts[contractId];
+    const n = await contract.tokenOfOwnerByIndex(address, index);
+    return n;
+  }
+
+  async getTokenUri(contractId: string, index: number) {
+    const contract = contracts[contractId];
+    const uri = await contract.tokenURI(index);
+    return uri;
+  }
+
+  async mint(contractId: string, payable: string, mint: number) {
+    const contract = contracts[contractId];
+    const tx = await contract.mint(mint, {
+      value: utils.parseEther(payable),
+    });
+    await tx.wait();
+  }
+
+  async getWalletOfOwner(contractId: string, owner: string) {
+    const contract = contracts[contractId];
+    const wallet = await contract.walletOfOwner(owner);
+    return wallet;
+  }
+
+  async setCost(contractId: string, cost: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.setCost(utils.parseEther(cost));
+    await tx.wait();
+  }
+
+  async setMaxMintAmount(contractId: string, amount: number) {
+    const contract = contracts[contractId];
+    const tx = await contract.setMaxMintAmount(amount);
+    await tx.wait();
+  }
+
+  async withdraw(contractId: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.withdraw();
+    await tx.wait();
+  }
+  // #endregion
+
+  // #region 721_reveal_pause
+  async pause(contractId: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.pause();
+    await tx.wait();
+  }
+
+  async setBaseUri(contractId: string, baseUri: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.setBaseUri(baseUri);
+    await tx.wait();
+  }
+
+  async reveal(contractId: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.reveal();
+    await tx.wait();
+  }
+  // #endregion
+
+  // const onSell = async () => {
+  //   const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);
+  //   const auction = await seaport.createSellOrder({
+  //     expirationTime,
+  //     accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
+  //     startAmount: 1,
+  //     asset: {
+  //       tokenId: "1",
+  //       tokenAddress: contract.address,
+  //     },
+  //   });
+  //   addOutput({
+  //     title: "Sell order created",
+  //     text: "true",
+  //     isCopiable: true,
+  //   });
+  // };
 }
-
-// const setup = async () => {
-//   const secrets = await loadSecrets();
-//   const provider = new WalletConnectProvider({
-//     infuraId: secrets.infuraId,
-//     chainId: Networks[network].id,
-//   });
-//   await provider.enable();
-//   const web3Provider = new providers.Web3Provider(provider);
-//   const signer = web3Provider.getSigner();
-//   const contract = new Contract(contractAddress, abi, signer);
-// };
-
-// const onCost = async () => {
-//   const cost = await contract.cost();
-//   addOutput({
-//     title: "Cost",
-//     text: utils.formatUnits(cost.toString(), "ether"),
-//     isCopiable: true,
-//   });
-// };
-
-// const onBalanceOf = async ({ address }) => {
-//   if (!address) return;
-//   const balance = await contract.balanceOf(address);
-//   addOutput({
-//     title: `Balance of ${chopAddress(address)}`,
-//     text: balance.toString(),
-//     isCopiable: true,
-//   });
-// };
-
-// const onTokenOfOwnerByIndex = async ({ address, index }) => {
-//   if (!address || !index) return;
-//   const n = await contract.tokenOfOwnerByIndex(address, index);
-//   addOutput({
-//     title: "Token of owner by index",
-//     text: n.toString(),
-//     isCopiable: true,
-//   });
-// };
-
-// const onTokenURI = async ({ index }) => {
-//   if (!index) return;
-//   const uri = await contract.tokenURI(index);
-//   addOutput({
-//     title: "Token URI",
-//     text: uri,
-//     isCopiable: true,
-//   });
-// };
-
-// const onMint = async ({ payable, mint }) => {
-//   if (!payable || !mint) return;
-//   let tx = await contract.mint(mint, {
-//     value: utils.parseEther(payable),
-//   });
-//   await tx.wait();
-//   addOutput({
-//     title: "Minted",
-//     text: mint.toString(),
-//     isCopiable: true,
-//   });
-// };
-
-// const onSetCost = async ({ cost }) => {
-//   if (!cost) return;
-//   let tx = await contract.setCost(utils.parseEther(cost));
-//   await tx.wait();
-//   addOutput({
-//     title: "Cost set",
-//     text: cost.toString(),
-//     isCopiable: true,
-//   });
-// };
-
-// const onSetMaxMintAmount = async ({ amount }) => {
-//   if (!amount) return;
-//   let tx = await contract.setMaxMintAmount(utils.parseEther(amount));
-//   await tx.wait();
-//   addOutput({
-//     title: "Max mint amount set",
-//     text: amount.toString(),
-//     isCopiable: true,
-//   });
-// };
-
-// const onWithdraw = async () => {
-//   const tx = await contract.withdraw();
-//   await tx.wait();
-//   addOutput({
-//     title: "Withdrawn",
-//     text: "true",
-//     isCopiable: true,
-//   });
-// };
-
-// const onSell = async () => {
-//   const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);
-//   const auction = await seaport.createSellOrder({
-//     expirationTime,
-//     accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
-//     startAmount: 1,
-//     asset: {
-//       tokenId: "1",
-//       tokenAddress: contract.address,
-//     },
-//   });
-//   addOutput({
-//     title: "Sell order created",
-//     text: "true",
-//     isCopiable: true,
-//   });
-// };

@@ -302,11 +302,7 @@ export const factoryReplaceItems = (
   generation: Generation,
   _with: Collection
 ) =>
-  ipcTask("factoryReplaceItems")(
-    id,
-    generation,
-    _with
-  ) as Promise<Generation>;
+  ipcTask("factoryReplaceItems")(id, generation, _with) as Promise<Generation>;
 
 export const factoryUnify = (
   id: string,
@@ -316,6 +312,56 @@ export const factoryUnify = (
 
 export const factoryRemove = (id: string, generation: Generation) =>
   ipcTask("factoryRemove")(id, generation);
+
+export const getCost = (id: string, contractId: string) =>
+  ipcTask("getCost")(id, contractId);
+
+export const getBalanceOf = (id: string, contractId: string, address: string) =>
+  ipcTask("getBalanceOf")(id, contractId, address);
+
+export const getTokenOfOwnerByIndex = (
+  id: string,
+  contractId: string,
+  address: string,
+  index: number
+) => ipcTask("getTokenOfOwnerByIndex")(id, contractId, address, index);
+
+export const getTokenUri = (id: string, contractId: string, index: number) =>
+  ipcTask("getTokenUri")(id, contractId, index);
+
+export const mint = (
+  id: string,
+  contractId: string,
+  payable: string,
+  mint: number
+) => ipcTask("mint")(id, contractId, payable, mint);
+
+export const getWalletOfOwner = (
+  id: string,
+  contractId: string,
+  owner: string
+) => ipcTask("getWalletOfOwner")(id, contractId, owner);
+
+export const setCost = (id: string, contractId: string, cost: string) =>
+  ipcTask("setCost")(id, contractId, cost);
+
+export const setMaxMintAmount = (
+  id: string,
+  contractId: string,
+  amount: number
+) => ipcTask("setMaxMintAmount")(id, contractId, amount);
+
+export const withdraw = (id: string, contractId: string) =>
+  ipcTask("withdraw")(id, contractId);
+
+export const pause = (id: string, contractId: string) =>
+  ipcTask("pause")(id, contractId);
+
+export const setBaseUri = (id: string, contractId: string, baseUri: string) =>
+  ipcTask("setBaseUri")(id, contractId, baseUri);
+
+export const reveal = (id: string, contractId: string) =>
+  ipcTask("reveal")(id, contractId);
 
 // #endregion
 
@@ -359,4 +405,20 @@ export const createProvider = (
     window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
     window.ipcRenderer.send("createProvider", id);
   });
+// #endregion
+
+// #region Contract
+export const createContract = (
+  id: string,
+  providerId: string,
+  contractAddress: string,
+  abi: any
+) =>
+  ipcTask("createContract")(
+    id,
+    providerId,
+    contractAddress,
+    abi
+  ) as Promise<string>;
+
 // #endregion

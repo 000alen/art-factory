@@ -6,8 +6,10 @@ import {
   Button,
   ButtonGroup,
   Flex,
+  Grid,
   Heading,
   ProgressBar,
+  repeat,
   Text,
   View,
 } from "@adobe/react-spectrum";
@@ -15,13 +17,16 @@ import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
 
 import { useErrorHandler } from "../components/ErrorHandler";
-import { OutputItem } from "../components/OutputItem";
+import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { ToolbarContext } from "../components/Toolbar";
 import { Networks } from "../constants";
 import { Instance } from "../typings";
 import { chopAddress } from "../utils";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
+import { v4 as uuid } from "uuid";
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
+import { createContract, createProvider } from "../ipc";
 
 interface InstancePageState {
   projectDir: string;
@@ -31,8 +36,8 @@ interface InstancePageState {
 }
 
 export function InstancePage() {
-  const toolbarContext = useContext(ToolbarContext);
   const task = useErrorHandler();
+  const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
@@ -43,12 +48,18 @@ export function InstancePage() {
   } = state as InstancePageState;
   const { configuration, deployment } = instance;
 
-  const [dirty, setDirty] = useState(_dirty);
-
   const [error] = useState(!deployment);
 
-  const [isWorking, setIsWorking] = useState(false);
-  const [outputs, setOutputs] = useState([]);
+  const [contractAddress] = useState(error ? null : deployment.contractAddress);
+  const [abi] = useState(error ? null : deployment.abi);
+  const [network] = useState(error ? null : deployment.network);
+
+  const [dirty, setDirty] = useState(_dirty);
+
+  const [working, setWorking] = useState(false);
+  const [outputs, setOutputs] = useState<OutputItemProps[]>([]);
+  const [providerId, setProviderId] = useState<string>(null);
+  const [contractId, setContractId] = useState<string>(null);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -58,8 +69,33 @@ export function InstancePage() {
     };
   }, []);
 
+  useEffect(() => {
+    task("XXX", async () => {
+      if (error) return;
+
+      const providerId = uuid();
+      const uri = await createProvider(providerId, async ({ connected }) => {
+        WalletConnectQRCodeModal.close();
+
+        const contractId = await createContract(
+          id,
+          providerId,
+          contractAddress,
+          abi
+        );
+
+        setProviderId(providerId);
+        setContractId(contractId);
+      });
+      WalletConnectQRCodeModal.open(uri, () => {});
+    })();
+  }, []);
+
   const onBack = () =>
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
+
+  const onCopy = () =>
+    navigator.clipboard.writeText(deployment.contractAddress);
 
   const addOutput = (output: {
     title: string;
@@ -69,24 +105,15 @@ export function InstancePage() {
     setOutputs((prevOutputs) => [...prevOutputs, output]);
   };
 
-  const onCopy = () =>
-    navigator.clipboard.writeText(deployment.contractAddress);
-
-  const _task =
-    (name: string, callback: (...args: any[]) => void) =>
-    async (...args: any[]) => {
-      setIsWorking(true);
-      await task(name, callback)(...args);
-      setIsWorking(false);
-    };
-
   return (
-    <Flex
-      direction="column"
+    <Grid
+      UNSAFE_className="overflow-hidden"
+      areas={["left right"]}
+      columns={["2fr", "1fr"]}
+      rows={["auto"]}
       height="100%"
-      margin="size-100"
       gap="size-100"
-      justifyContent="space-between"
+      margin="size-100"
     >
       {error ? (
         <>
@@ -99,76 +126,87 @@ export function InstancePage() {
         </>
       ) : (
         <>
-          <Flex justifyContent="space-between" alignItems="center">
-            <Flex gap="size-100" alignItems="center">
-              <Heading level={1} marginStart={16}>
-                <pre className="inline">
-                  {chopAddress(deployment.contractAddress)}
-                </pre>{" "}
-                at {Networks[deployment.network].name}
+          <View
+            UNSAFE_className="p-2 space-y-2"
+            gridArea="left"
+            overflow="auto"
+          >
+            <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
+              {configuration.contractType === "721" ? (
+                <Panel721
+                  {...{
+                    id,
+                    contractId,
+                    setWorking,
+                    addOutput,
+                  }}
+                />
+              ) : configuration.contractType === "721_reveal_pause" ? (
+                <Panel721_reveal_pause
+                  {...{
+                    id,
+                    contractId,
+                    setWorking,
+                    addOutput,
+                  }}
+                />
+              ) : null}
+            </Grid>
+          </View>
+
+          <View
+            UNSAFE_className="p-2 space-y-2"
+            gridArea="right"
+            overflow="auto"
+          >
+            <Flex
+              zIndex={1001}
+              position="sticky"
+              top={0}
+              gap="size-100"
+              alignItems="center"
+            >
+              <Heading level={1}>
+                {chopAddress(contractAddress)} at {network}
               </Heading>
               <ActionButton onPress={onCopy}>
                 <Copy />
               </ActionButton>
             </Flex>
-          </Flex>
 
-          <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
-            {configuration.contractType === "721" ? (
-              <Panel721
-                {...{
-                  task: _task,
-                  contractAddress: deployment.contractAddress,
-                  addOutput,
-                }}
-              />
-            ) : configuration.contractType === "721_reveal_pause" ? (
-              <Panel721_reveal_pause
-                {...{
-                  task: _task,
-                  contractAddress: deployment.contractAddress,
-                  addOutput,
-                }}
-              />
-            ) : null}
-
-            <View>
-              <label className="spectrum-FieldLabel">Output</label>
-
-              <View
-                width="30vw"
-                height="100%"
-                padding="size-100"
-                overflow="auto"
-                borderWidth="thin"
-                borderColor="dark"
-                borderRadius="medium"
-              >
-                <Flex direction="column" gap="size-100">
-                  {outputs.map(({ title, text, isCopiable }, i) => (
-                    <OutputItem
-                      key={i}
-                      title={title}
-                      text={text}
-                      isCopiable={isCopiable}
-                    />
-                  ))}
-                </Flex>
-              </View>
+            <View
+              padding="size-100"
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+            >
+              <Flex direction="column" gap="size-100">
+                {outputs.map(({ title, text, isCopiable }, i) => (
+                  <OutputItem
+                    key={i}
+                    title={title}
+                    text={text}
+                    isCopiable={isCopiable}
+                  />
+                ))}
+              </Flex>
             </View>
-          </Flex>
 
-          <Flex marginBottom={8} marginX={8} justifyContent="space-between">
-            <Text>Made with love by KODKOD ❤️</Text>
-
-            <ProgressBar
-              UNSAFE_className={isWorking ? "opacity-100" : "opacity-0"}
-              label="Loading…"
-              isIndeterminate
-            />
-          </Flex>
+            <Flex
+              zIndex={1001}
+              position="sticky"
+              bottom={0}
+              direction="row-reverse"
+            >
+              <ProgressBar
+                UNSAFE_className={working ? "opacity-100" : "opacity-0"}
+                label="Loading…"
+                isIndeterminate
+              />
+            </Flex>
+          </View>
         </>
       )}
-    </Flex>
+    </Grid>
   );
 }

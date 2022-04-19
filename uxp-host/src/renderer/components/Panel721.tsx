@@ -2,14 +2,37 @@ import React from "react";
 
 import { Flex } from "@adobe/react-spectrum";
 import { TaskItem } from "./TaskItem";
+import { useErrorHandler } from "./ErrorHandler";
+import { getCost } from "../ipc";
+import { OutputItemProps } from "./OutputItem";
 
 interface Panel721Props {
-  task: (name: string, callback: (...args: any[]) => void) => () => void;
-  addOutput: (output: any) => void;
+  id: string;
+  contractId: string;
+  setWorking: (working: boolean) => void;
+  addOutput: (output: OutputItemProps) => void;
 }
 
-export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
-  const onCost = task("cost", async () => {});
+export const Panel721: React.FC<Panel721Props> = ({
+  id,
+  contractId,
+  setWorking,
+  addOutput,
+}) => {
+  const task = useErrorHandler();
+
+  const onCost = task("cost", async () => {
+    setWorking(true);
+
+    const cost = await getCost(id, contractId);
+    addOutput({
+      title: "Cost",
+      text: cost.toString(),
+      isCopiable: true,
+    });
+
+    setWorking(false);
+  });
 
   const onBalanceOf = task("balance of", async ({ address }) => {});
 
@@ -35,118 +58,114 @@ export const Panel721: React.FC<Panel721Props> = ({ task, addOutput }) => {
 
   return (
     <>
-      <Flex direction="column" gap="size-100">
-        <TaskItem name="Cost" onRun={onCost} />
-        <TaskItem
-          name="Balance of"
-          onRun={onBalanceOf}
-          fields={[
-            {
-              key: "address",
-              type: "address",
-              label: "Address",
-              value: "",
-            },
-          ]}
-        />
+      <TaskItem name="Cost" onRun={onCost} />
+      <TaskItem
+        name="Balance of"
+        onRun={onBalanceOf}
+        fields={[
+          {
+            key: "address",
+            type: "address",
+            label: "Address",
+            value: "",
+          },
+        ]}
+      />
 
-        <TaskItem
-          name="Token of owner by index"
-          onRun={onTokenOfOwnerByIndex}
-          fields={[
-            {
-              key: "address",
-              type: "address",
-              label: "Address",
-              value: "",
-            },
-            {
-              key: "index",
-              type: "int",
-              label: "Index",
-              initial: 0,
-              min: 0,
-              max: Infinity,
-              value: 0,
-            },
-          ]}
-        />
+      <TaskItem
+        name="Token of owner by index"
+        onRun={onTokenOfOwnerByIndex}
+        fields={[
+          {
+            key: "address",
+            type: "address",
+            label: "Address",
+            value: "",
+          },
+          {
+            key: "index",
+            type: "int",
+            label: "Index",
+            initial: 0,
+            min: 0,
+            max: Infinity,
+            value: 0,
+          },
+        ]}
+      />
 
-        <TaskItem
-          name="Token URI"
-          onRun={onTokenURI}
-          fields={[
-            {
-              key: "index",
-              type: "int",
-              label: "Token Index",
-              initial: 0,
-              min: 0,
-              max: Infinity,
-              value: 0,
-            },
-          ]}
-        />
-      </Flex>
+      <TaskItem
+        name="Token URI"
+        onRun={onTokenURI}
+        fields={[
+          {
+            key: "index",
+            type: "int",
+            label: "Token Index",
+            initial: 0,
+            min: 0,
+            max: Infinity,
+            value: 0,
+          },
+        ]}
+      />
 
-      <Flex direction="column" gap="size-100">
-        <TaskItem
-          name="Mint"
-          onRun={onMint}
-          fields={[
-            {
-              key: "payable",
-              type: "string",
-              label: "Payable amount",
-              initial: "",
-              value: "",
-            },
-            {
-              key: "mint",
-              type: "int",
-              label: "Mint amount",
-              initial: 0,
-              min: 0,
-              max: Infinity,
-              value: 0,
-            },
-          ]}
-        />
+      <TaskItem
+        name="Mint"
+        onRun={onMint}
+        fields={[
+          {
+            key: "payable",
+            type: "string",
+            label: "Payable amount",
+            initial: "",
+            value: "",
+          },
+          {
+            key: "mint",
+            type: "int",
+            label: "Mint amount",
+            initial: 0,
+            min: 0,
+            max: Infinity,
+            value: 0,
+          },
+        ]}
+      />
 
-        <TaskItem
-          name="Set cost"
-          onRun={onSetCost}
-          fields={[
-            {
-              key: "cost",
-              type: "string",
-              label: "Cost",
-              initial: "",
-              value: "",
-            },
-          ]}
-        />
+      <TaskItem
+        name="Set cost"
+        onRun={onSetCost}
+        fields={[
+          {
+            key: "cost",
+            type: "string",
+            label: "Cost",
+            initial: "",
+            value: "",
+          },
+        ]}
+      />
 
-        <TaskItem
-          name="Set max Mint amount"
-          onRun={onSetMaxMintAmount}
-          fields={[
-            {
-              key: "amount",
-              type: "int",
-              label: "Amount",
-              initial: 0,
-              min: 0,
-              max: Infinity,
-              value: 0,
-            },
-          ]}
-        />
+      <TaskItem
+        name="Set max Mint amount"
+        onRun={onSetMaxMintAmount}
+        fields={[
+          {
+            key: "amount",
+            type: "int",
+            label: "Amount",
+            initial: 0,
+            min: 0,
+            max: Infinity,
+            value: 0,
+          },
+        ]}
+      />
 
-        <TaskItem name="Withdraw" onRun={onWithdraw} />
+      <TaskItem name="Withdraw" onRun={onWithdraw} />
 
-        <TaskItem name="Sell" onRun={onSell} />
-      </Flex>
+      <TaskItem name="Sell" onRun={onSell} />
     </>
   );
 };

@@ -29,6 +29,7 @@ import {
 } from "./typings";
 import { capitalize, layersNames } from "./utils";
 import { BUILD_DIR_NAME } from "./constants";
+import { Contract, providers as ethersProviders } from "ethers";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -324,6 +325,78 @@ ipcAsyncTask(
     await factories[id].remove(generation)
 );
 
+ipcAsyncTask(
+  "getCost",
+  async (id: string, contractId: string) =>
+    await factories[id].getCost(contractId)
+);
+
+ipcAsyncTask(
+  "getBalanceOf",
+  async (id: string, contractId: string, address: string) =>
+    await factories[id].getBalanceOf(contractId, address)
+);
+
+ipcAsyncTask(
+  "getTokenOfOwnerByIndex",
+  async (id: string, contractId: string, address: string, index: number) =>
+    await factories[id].getTokenOfOwnerByIndex(contractId, address, index)
+);
+
+ipcAsyncTask(
+  "getTokenUri",
+  async (id: string, contractId: string, index: number) =>
+    await factories[id].getTokenUri(contractId, index)
+);
+
+ipcAsyncTask(
+  "mint",
+  async (id: string, contractId: string, payable: string, mint: number) =>
+    await factories[id].mint(contractId, payable, mint)
+);
+
+ipcAsyncTask(
+  "getWalletOfOwner",
+  async (id: string, contractId: string, owner: string) =>
+    await factories[id].getWalletOfOwner(contractId, owner)
+);
+
+ipcAsyncTask(
+  "setCost",
+  async (id: string, contractId: string, cost: string) =>
+    await factories[id].setCost(contractId, cost)
+);
+
+ipcAsyncTask(
+  "setMaxMintAmount",
+  async (id: string, contractId: string, amount: number) =>
+    await factories[id].setMaxMintAmount(contractId, amount)
+);
+
+ipcAsyncTask(
+  "withdraw",
+  async (id: string, contractId: string) =>
+    await factories[id].withdraw(contractId)
+);
+
+ipcAsyncTask(
+  "pause",
+  async (id: string, contractId: string) =>
+    await factories[id].pause(contractId)
+);
+
+ipcAsyncTask(
+  "setBaseUri",
+  async (id: string, contractId: string, baseUri: string) =>
+    await factories[id].setBaseUri(contractId, baseUri)
+);
+
+ipcAsyncTask(
+  "reveal",
+  async (id: string, contractId: string) =>
+    await factories[id].reveal(contractId)
+);
+
 // #endregion
 
 // #region Provider
@@ -371,4 +444,20 @@ ipcMain.on("createProvider", async (event, id: string) => {
   event.reply("createProviderUri", { id, uri });
 });
 
+// #endregion
+
+// #region Contract
+export const contracts: Record<string, Contract> = {};
+
+ipcAsyncTask(
+  "createContract",
+  async (id: string, providerId: string, contractAddress: string, abi: any) => {
+    const web3Provider = new ethersProviders.Web3Provider(
+      providers[providerId]
+    );
+    const signer = web3Provider.getSigner();
+    const contract = new Contract(contractAddress, abi, signer);
+    contracts[id] = contract;
+  }
+);
 // #endregion

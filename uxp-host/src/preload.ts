@@ -39,9 +39,24 @@ const sendWhitelist = [
   "factoryUnify",
   "factoryRemove",
 
+  "getCost",
+  "getBalanceOf",
+  "getTokenOfOwnerByIndex",
+  "getTokenUri",
+  "mint",
+  "getWalletOfOwner",
+  "setCost",
+  "setMaxMintAmount",
+  "withdraw",
+  "pause",
+  "setBaseUri",
+  "reveal",
+
   "createProvider",
   "createProviderUri",
   "createProviderResult",
+
+  "createContract",
 ];
 
 const onWhitelist = [
@@ -84,9 +99,24 @@ const onWhitelist = [
   "factoryUnifyResult",
   "factoryRemoveResult",
 
+  "getCostResult",
+  "getBalanceOfResult",
+  "getTokenOfOwnerByIndexResult",
+  "getTokenUriResult",
+  "mintResult",
+  "getWalletOfOwnerResult",
+  "setCostResult",
+  "setMaxMintAmountResult",
+  "withdrawResult",
+  "pauseResult",
+  "setBaseUriResult",
+  "revealResult",
+
   "createProvider",
   "createProviderUri",
   "createProviderResult",
+
+  "createContractResult",
 ];
 
 // window.addEventListener("DOMContentLoaded", () => {
