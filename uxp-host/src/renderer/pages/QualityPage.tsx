@@ -18,6 +18,7 @@ import {
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Folder from "@spectrum-icons/workflow/Folder";
+import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Filters } from "../components/Filters";
@@ -119,7 +120,6 @@ export const QualityPage = () => {
   const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
   const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
 
-  // #region One-time setups
   // ? Toolbar setup
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -153,7 +153,6 @@ export const QualityPage = () => {
       );
     })();
   }, []);
-  // #endregion
 
   // #region UXP setup
   // ? UXP setup
@@ -309,22 +308,17 @@ export const QualityPage = () => {
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onSave = task("filtering", async () => {
-    const _collectionItemsToRemove: Collection = itemsToRemove.map((name) =>
-      collection.find((collectionItem) => collectionItem.name === name)
-    );
     const _collection = await factoryRemoveItems(
       id,
       generation,
-      _collectionItemsToRemove
+      itemsToRemove.map((name) => collection.find((item) => item.name === name))
     );
 
-    let generations = instance.generations.map((generation) =>
+    const generations = instance.generations.map((generation) =>
       generation.id === generationId
         ? { ...generation, collection: _collection }
         : generation
     );
-
-    generations = JSON.parse(JSON.stringify(generations));
 
     navigate("/factory", {
       state: {
@@ -335,12 +329,6 @@ export const QualityPage = () => {
       },
     });
   });
-
-  // ? TODO
-  // const reload = (name: string, url: string) =>
-  //   setItems((prevItems) =>
-  //     prevItems.map((item) => (item.name === name ? { name, url } : item))
-  //   );
 
   const onSelect = (i: number) => {
     setSelectedItem(i);
@@ -390,31 +378,36 @@ export const QualityPage = () => {
     );
 
   const onRegenerateRepeated = async () => {
-    const { collection } = await regenerateItems(
+    const { collection: _collection } = await regenerateItems(
       id,
-      generation,
+      { ...generation, collection },
       computeGenerationRepeats(generation)
     );
-    setCollection(collection);
+    setCollection(_collection);
   };
 
   const onRegenerate = async (i: number) => {
-    const { collection } = await regenerateItems(id, generation, [
-      filteredCollection[i],
-    ]);
-    setCollection(collection);
+    const { collection: _collection } = await regenerateItems(
+      id,
+      { ...generation, collection },
+      [filteredCollection[i]]
+    );
+    setCollection(_collection);
   };
 
   // TODO: Not working
   const onReplace = async (i: number, traits: Trait[]) => {
-    const { collection } = await replaceItems(id, generation, [
-      {
-        name: filteredCollection[i].name,
-        traits,
-      },
-    ]);
-
-    setCollection(collection);
+    const { collection: _collection } = await replaceItems(
+      id,
+      { ...generation, collection },
+      [
+        {
+          ...filteredCollection[i],
+          traits,
+        },
+      ]
+    );
+    setCollection(_collection);
   };
 
   return (
@@ -530,6 +523,16 @@ export const QualityPage = () => {
       </View>
 
       <View UNSAFE_className="p-2 space-y-2" gridArea="right" overflow="auto">
+        <Flex gap="size-100" alignItems="center">
+          <Heading level={1}>
+            {dirty && "*"} {configuration.name}
+          </Heading>
+
+          <ActionButton onPress={onSave}>
+            <SaveFloppy />
+          </ActionButton>
+        </Flex>
+
         <Properties
           traits={traits}
           filteredCollection={filteredCollection}

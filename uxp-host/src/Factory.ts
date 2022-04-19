@@ -730,7 +730,7 @@ export class Factory {
               "utf8"
             )
           ),
-          name: `${i + 1}`,
+          edition: `${i + 1}`,
         })
       );
 
@@ -907,7 +907,7 @@ export class Factory {
                 "utf8"
               )
             ),
-            name: `${i}`,
+            edition: `${i}`,
           })
         );
 
@@ -941,6 +941,18 @@ export class Factory {
     });
   }
 }
+
+// const setup = async () => {
+//   const secrets = await loadSecrets();
+//   const provider = new WalletConnectProvider({
+//     infuraId: secrets.infuraId,
+//     chainId: Networks[network].id,
+//   });
+//   await provider.enable();
+//   const web3Provider = new providers.Web3Provider(provider);
+//   const signer = web3Provider.getSigner();
+//   const contract = new Contract(contractAddress, abi, signer);
+// };
 
 // const onCost = async () => {
 //   const cost = await contract.cost();

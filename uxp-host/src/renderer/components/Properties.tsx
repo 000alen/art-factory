@@ -36,7 +36,15 @@ export const Properties: React.FC<PropertiesProps> = ({
 
   const onSelectedTraitsChange = (n: string, v: string) =>
     setSelectedTraits((p) =>
-      p.map((t) => (t.name === n ? { ...t, value: v } : t))
+      p.map((t) =>
+        t.name === n
+          ? {
+              ...traits[n].find((t) => t.value === v),
+              opacity: t.opacity,
+              blending: t.blending,
+            }
+          : t
+      )
     );
 
   const onReplace = () => {
@@ -51,7 +59,7 @@ export const Properties: React.FC<PropertiesProps> = ({
     <>
       {filteredCollection.length > 0 && traits && (
         <>
-          <Heading zIndex={1001} position="sticky" top={0} level={1}>
+          <Heading zIndex={1001} position="sticky" top={0} level={2}>
             {filteredCollection[selectedItem].name}
           </Heading>
           {selectedTraits &&
