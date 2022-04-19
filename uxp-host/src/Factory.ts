@@ -415,7 +415,6 @@ export class Factory {
     if (!fs.existsSync(path.join(this.buildDir, "json", name)))
       fs.mkdirSync(path.join(this.buildDir, "json", name));
 
-    const metadatas = [];
     for (const collectionItem of collection) {
       const metadata: any = {
         name: this.configuration.name,
@@ -431,18 +430,11 @@ export class Factory {
       for (const { key, value } of metadataItems)
         metadata[key] = replaceAll(value, /\${name}/, collectionItem.name);
 
-      metadatas.push(metadata);
-
       await fs.promises.writeFile(
         path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
         JSON.stringify(metadata)
       );
     }
-
-    await fs.promises.writeFile(
-      path.join(this.buildDir, "json", "metadata.json"),
-      JSON.stringify(metadatas)
-    );
   }
 
   async hydrateMetadata(
@@ -455,7 +447,6 @@ export class Factory {
     if (!fs.existsSync(path.join(this.buildDir, "json", name)))
       fs.mkdirSync(path.join(this.buildDir, "json", name));
 
-    const metadatas = [];
     for (const collectionItem of collection) {
       const metadata = JSON.parse(
         await fs.promises.readFile(
@@ -465,18 +456,11 @@ export class Factory {
       );
       metadata["image"] = `ipfs://${imagesCid}/${collectionItem.name}.png`;
 
-      metadatas.push(metadata);
-
       await fs.promises.writeFile(
         path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
         JSON.stringify(metadata)
       );
     }
-
-    // await fs.promises.writeFile(
-    //   path.join(this.buildDir, "json", "metadata.json"),
-    //   JSON.stringify(metadatas)
-    // );
   }
 
   async deployNotRevealedImage(generation: Generation) {
@@ -523,27 +507,20 @@ export class Factory {
     generation: Generation,
     notRevealedGeneration?: Generation
   ) {
-    console.log("A.1");
     const imagesCid = await this.deployImages(generation);
-    console.log("A.2");
     await this.hydrateMetadata(generation, imagesCid);
 
-    console.log("A.3");
     const metadataCid = await this.deployMetadata(generation);
 
-    console.log("A.4");
     const notRevealedImageCid =
       this.configuration.contractType === "721_reveal_pause"
         ? await this.deployNotRevealedImage(notRevealedGeneration)
         : undefined;
 
-    console.log("A.5");
     const notRevealedMetadataCid =
       this.configuration.contractType === "721_reveal_pause"
         ? await this.deployNotRevealedMetadata(notRevealedGeneration)
         : undefined;
-
-    console.log("A.6");
 
     return {
       imagesCid,
@@ -591,48 +568,31 @@ export class Factory {
     metadataCid: string,
     notRevealedMetadataCid: string
   ) {
-    console.log("B.1");
     const web3Provider = new ethersProviders.Web3Provider(
       providers[providerId]
     );
-    console.log("B.2");
 
     const signer = web3Provider.getSigner();
-    console.log("B.3");
 
     const { contracts } = await getContract(this.configuration.contractType);
-    console.log("B.4");
     const { NFT } = contracts[this.configuration.contractType];
-    console.log("B.5");
     const metadata = JSON.parse(NFT.metadata);
-    console.log("B.6");
     const { version: compilerVersion } = metadata.compiler;
-    console.log("B.7");
     const { abi, evm } = NFT;
-    console.log("B.8");
     const { bytecode } = evm;
-    console.log("B.9");
     const contractFactory = new ContractFactory(abi, bytecode, signer);
 
-    console.log("B.10");
-
-    const contract = await this.deployContract721(
-      generation,
-      contractFactory,
-      metadataCid
-    );
-    // this.configuration.contractType === "721"
-    //   ? await this.deployContract721(generation, contractFactory, metadataCid)
-    //   : this.configuration.contractType === "721_reveal_pause"
-    //   ? await this.deployContract721_reveal_pause(
-    //       generation,
-    //       contractFactory,
-    //       metadataCid,
-    //       notRevealedMetadataCid
-    //     )
-    //   : null;
-
-    console.log("B.11");
+    const contract =
+      this.configuration.contractType === "721"
+        ? await this.deployContract721(generation, contractFactory, metadataCid)
+        : this.configuration.contractType === "721_reveal_pause"
+        ? await this.deployContract721_reveal_pause(
+            generation,
+            contractFactory,
+            metadataCid,
+            notRevealedMetadataCid
+          )
+        : null;
 
     const contractAddress = contract.address;
     const transactionHash = contract.deployTransaction.hash;
@@ -658,13 +618,6 @@ export class Factory {
       notRevealedMetadataCid,
     } = await this.deployAssets(generation, notRevealedGeneration);
 
-    console.log(
-      imagesCid,
-      metadataCid,
-      notRevealedImageCid,
-      notRevealedMetadataCid
-    );
-
     const { contractAddress, abi, compilerVersion, transactionHash, wait } =
       await this.deployContract(
         providerId,
@@ -673,11 +626,7 @@ export class Factory {
         notRevealedMetadataCid
       );
 
-    console.log("C", contractAddress, compilerVersion);
-
     await wait;
-
-    console.log("D");
 
     return {
       imagesCid,
@@ -737,6 +686,7 @@ export class Factory {
     return [item, await this.getMetadata(generation, item)];
   }
 
+  // // TODO: Modify metadata
   async removeItems(generation: Generation, items: Collection) {
     let { name, collection, bundles } = generation;
 
@@ -769,6 +719,19 @@ export class Factory {
       await fs.promises.rename(
         path.join(this.buildDir, "images", name, `${item.name}.png`),
         path.join(this.buildDir, "images", name, `_${i + 1}.png`)
+      );
+
+      await fs.promises.writeFile(
+        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        JSON.stringify({
+          ...JSON.parse(
+            await fs.promises.readFile(
+              path.join(this.buildDir, "json", name, `${item.name}.json`),
+              "utf8"
+            )
+          ),
+          name: `${i + 1}`,
+        })
       );
 
       await fs.promises.rename(
@@ -822,6 +785,7 @@ export class Factory {
     return collection;
   }
 
+  // // TODO: Modify metadata
   async regenerateItems(generation: Generation, items: Collection) {
     let { name, collection } = generation;
 
@@ -832,6 +796,25 @@ export class Factory {
       ),
     }));
     await this.generateImages({ name, collection: newItems } as Generation);
+
+    for (const item of items) {
+      await fs.promises.writeFile(
+        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        JSON.stringify({
+          ...JSON.parse(
+            await fs.promises.readFile(
+              path.join(this.buildDir, "json", name, `${item.name}.json`),
+              "utf8"
+            )
+          ),
+          attributes: item.traits.map((trait) => ({
+            trait_type: trait.name,
+            value: trait.value,
+          })),
+        })
+      );
+    }
+
     const newCollectionItemsByName = new Map(
       newItems.map((item) => [item.name, item])
     );
@@ -850,6 +833,25 @@ export class Factory {
     let { name, collection } = generation;
 
     await this.generateImages({ name, collection: _with } as Generation);
+
+    for (const item of _with) {
+      await fs.promises.writeFile(
+        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        JSON.stringify({
+          ...JSON.parse(
+            await fs.promises.readFile(
+              path.join(this.buildDir, "json", name, `${item.name}.json`),
+              "utf8"
+            )
+          ),
+          attributes: item.traits.map((trait) => ({
+            trait_type: trait.name,
+            value: trait.value,
+          })),
+        })
+      );
+    }
+
     const newCollectionItemsByName = new Map(
       _with.map((item) => [item.name, item])
     );
@@ -891,14 +893,22 @@ export class Factory {
           path.join(this.buildDir, "images", name, `${i}.png`)
         );
 
-        await fs.promises.copyFile(
-          path.join(
-            this.buildDir,
-            "json",
-            currentName,
-            `${collectionItem.name}.json`
-          ),
-          path.join(this.buildDir, "json", name, `${i}.json`)
+        await fs.promises.writeFile(
+          path.join(this.buildDir, "json", name, `${i}.json`),
+          JSON.stringify({
+            ...JSON.parse(
+              await fs.promises.readFile(
+                path.join(
+                  this.buildDir,
+                  "json",
+                  name,
+                  `${collectionItem.name}.json`
+                ),
+                "utf8"
+              )
+            ),
+            name: `${i}`,
+          })
         );
 
         unifiedCollection.push({

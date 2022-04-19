@@ -27,6 +27,7 @@ import { Deployment, Instance, Network } from "../typings";
 import { getGenerationPreview } from "../commands";
 import { TriStateButton } from "../components/TriStateButton";
 import moment from "moment";
+import { Preview } from "../components/Preview";
 
 interface DeployPageState {
   projectDir: string;
@@ -235,66 +236,48 @@ export function DeployPage() {
               alignItems="center"
             >
               {configuration.contractType === "721_reveal_pause" && (
-                <div className="relative w-48 p-3 border-1 border-dashed border-white rounded">
-                  <Flex direction="column" gap="size-100">
-                    {notRevealedUrl ? (
-                      <ImageItem src={notRevealedUrl} maxSize={192} />
-                    ) : (
-                      <div className="w-48 h-48 flex justify-center items-center">
-                        <Text>Nothing to see here</Text>
-                      </div>
-                    )}
-
-                    <MenuTrigger>
-                      <ActionButton width="100%">
-                        {notRevealedGenerationName}
-                      </ActionButton>
-                      <Menu
-                        items={generationItems}
-                        selectionMode="single"
-                        disallowEmptySelection={true}
-                        selectedKeys={[notRevealedGenerationName]}
-                        onSelectionChange={(selectedKeys) => {
-                          const selectedKey = [
-                            ...selectedKeys,
-                          ].shift() as string;
-                          setNotRevealedGenerationName(selectedKey);
-                        }}
-                      >
-                        {({ name }) => <Item key={name}>{name}</Item>}
-                      </Menu>
-                    </MenuTrigger>
-                  </Flex>
-                </div>
-              )}
-
-              <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
-                <Flex direction="column" gap="size-100">
-                  {url ? (
-                    <ImageItem src={url} maxSize={192} />
-                  ) : (
-                    <div className="w-48 h-48 flex justify-center items-center">
-                      <Text>Nothing to see here</Text>
-                    </div>
-                  )}
-
+                <Preview
+                  name="Not Revealed"
+                  showName={false}
+                  url={notRevealedUrl}
+                >
                   <MenuTrigger>
-                    <ActionButton width="100%">{generationName}</ActionButton>
+                    <ActionButton width="100%">
+                      {notRevealedGenerationName}
+                    </ActionButton>
                     <Menu
                       items={generationItems}
                       selectionMode="single"
                       disallowEmptySelection={true}
-                      selectedKeys={[generationName]}
+                      selectedKeys={[notRevealedGenerationName]}
                       onSelectionChange={(selectedKeys) => {
                         const selectedKey = [...selectedKeys].shift() as string;
-                        setGenerationName(selectedKey);
+                        setNotRevealedGenerationName(selectedKey);
                       }}
                     >
                       {({ name }) => <Item key={name}>{name}</Item>}
                     </Menu>
                   </MenuTrigger>
-                </Flex>
-              </div>
+                </Preview>
+              )}
+
+              <Preview name="Revealed" showName={false} url={url}>
+                <MenuTrigger>
+                  <ActionButton width="100%">{generationName}</ActionButton>
+                  <Menu
+                    items={generationItems}
+                    selectionMode="single"
+                    disallowEmptySelection={true}
+                    selectedKeys={[generationName]}
+                    onSelectionChange={(selectedKeys) => {
+                      const selectedKey = [...selectedKeys].shift() as string;
+                      setGenerationName(selectedKey);
+                    }}
+                  >
+                    {({ name }) => <Item key={name}>{name}</Item>}
+                  </Menu>
+                </MenuTrigger>
+              </Preview>
             </Flex>
 
             <Flex

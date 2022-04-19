@@ -17,6 +17,7 @@ import { Controlled as ControlledZoom } from "react-medium-image-zoom";
 import Close from "@spectrum-icons/workflow/Close";
 import Edit from "@spectrum-icons/workflow/Edit";
 import Refresh from "@spectrum-icons/workflow/Refresh";
+import { Preview } from "./Preview";
 
 interface Item {
   name: string;
@@ -83,58 +84,41 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
       gap="size-100"
       justifyContent="center"
     >
-      {items.map(({ name, url }, i) =>
-        itemsToRemove.includes(name) ? (
-          <div
-            key={i}
-            className="w-full min-h-[192px] m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
-          >
+      {items.map(({ name, url }, i) => (
+        <Preview
+          key={i}
+          name={name}
+          url={url}
+          controlledZoom={true}
+          isZoomed={zoomed && selectedCollectionItem === i}
+          onZoomChange={(isZoomed) => {
+            if (isZoomed) {
+              onSelect(i);
+              setZoomed(true);
+              return;
+            }
+            setZoomed(false);
+          }}
+          disabled={itemsToRemove.includes(name)}
+          showOnDisabled={
             <Button variant="secondary" onPress={() => onUndoRemove(name)}>
               Undo
             </Button>
-          </div>
-        ) : (
-          <div
-            key={i}
-            className="relative w-48 p-3 border-1 border-solid border-white rounded"
-          >
-            <Flex direction="column" gap="size-100">
-              {url ? (
-                <ControlledZoom
-                  isZoomed={zoomed && selectedCollectionItem === i}
-                  onZoomChange={(isZoomed) => {
-                    if (isZoomed) {
-                      onSelect(i);
-                      setZoomed(true);
-                      return;
-                    }
-                    setZoomed(false);
-                  }}
-                  overlayBgColorEnd="rgba(30, 30, 30, 0.5)"
-                >
-                  <ImageItem src={url} maxSize={192} />
-                </ControlledZoom>
-              ) : (
-                <div className="w-48 h-48 flex justify-center items-center">
-                  <Text>Nothing to see here</Text>
-                </div>
-              )}
-              <Heading>{name}</Heading>
-              <ActionGroup onAction={onAction} isJustified>
-                <Item key={`select_${i}`}>
-                  <Edit />
-                </Item>
-                <Item key={`remove_${i}`}>
-                  <Close />
-                </Item>
-                <Item key={`regenerate_${i}`}>
-                  <Refresh />
-                </Item>
-              </ActionGroup>
-            </Flex>
-          </div>
-        )
-      )}
+          }
+        >
+          <ActionGroup onAction={onAction} isJustified>
+            <Item key={`select_${i}`}>
+              <Edit />
+            </Item>
+            <Item key={`remove_${i}`}>
+              <Close />
+            </Item>
+            <Item key={`regenerate_${i}`}>
+              <Refresh />
+            </Item>
+          </ActionGroup>
+        </Preview>
+      ))}
     </Grid>
   );
 };

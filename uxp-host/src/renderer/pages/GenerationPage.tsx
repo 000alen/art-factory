@@ -22,6 +22,7 @@ import { Instance, MetadataItem } from "../typings";
 import { spacedName } from "../utils";
 import moment from "moment";
 import { METADATA_FIELDS } from "../constants";
+import { Preview } from "../components/Preview";
 
 interface GenerationPageState {
   projectDir: string;
@@ -145,18 +146,7 @@ export const GenerationPage: React.FC = () => {
 
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" justifyContent="center" alignItems="center">
-          <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
-            <Flex direction="column" gap="size-100">
-              {url ? (
-                <ImageItem src={url} maxSize={192} />
-              ) : (
-                <div className="w-48 h-48 flex justify-center items-center">
-                  <Text>Nothing to see here</Text>
-                </div>
-              )}
-              <Heading>{template.name}</Heading>
-            </Flex>
-          </div>
+          <Preview name={template.name} url={url} />
         </Flex>
 
         <Flex direction="column" gap="size-100">

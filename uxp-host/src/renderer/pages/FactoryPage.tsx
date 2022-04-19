@@ -42,6 +42,7 @@ import {
 import { Instance } from "../typings";
 import Copy from "@spectrum-icons/workflow/Copy";
 import Zoom from "react-medium-image-zoom";
+import { Preview } from "../components/Preview";
 
 interface FactoryPageState {
   projectDir: string;
@@ -354,22 +355,13 @@ export const FactoryPage: React.FC = () => {
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
-              {templates.map((template, i) => (
-                <div
-                  key={template.id}
-                  className="relative w-48 p-3 border-1 border-solid border-white rounded"
-                >
-                  <Flex direction="column" gap="size-100">
-                    {templatesPreviews && templatesPreviews[i] ? (
-                      <Zoom overlayBgColorEnd="rgba(30, 30, 30, 0.5)">
-                        <ImageItem src={templatesPreviews[i]} maxSize={192} />
-                      </Zoom>
-                    ) : (
-                      <div className="w-48 h-48 flex justify-center items-center">
-                        <Text>Nothing to see here</Text>
-                      </div>
-                    )}
-                    <Heading>{template.name}</Heading>
+              {templatesPreviews &&
+                templates.map((template, i) => (
+                  <Preview
+                    key={i}
+                    name={template.name}
+                    url={templatesPreviews[i]}
+                  >
                     <ActionGroup onAction={onTemplateAction} isJustified>
                       <Item key={`edit_${template.name}`}>
                         <Edit />
@@ -381,9 +373,8 @@ export const FactoryPage: React.FC = () => {
                         <Close />
                       </Item>
                     </ActionGroup>
-                  </Flex>
-                </div>
-              ))}
+                  </Preview>
+                ))}
             </Flex>
           </View>
 
@@ -391,36 +382,23 @@ export const FactoryPage: React.FC = () => {
 
           <View marginX="size-200" paddingBottom="size-100" overflow="auto">
             <Flex gap="size-200">
-              {generations.map((generation, i) => (
-                <div
-                  key={generation.id}
-                  className="relative w-48 p-3 border-1 border-solid border-white rounded"
-                >
-                  <Flex direction="column" gap="size-100">
-                    {generationPreviews && generationPreviews[i] ? (
-                      <Zoom overlayBgColorEnd="rgba(30, 30, 30, 0.5)">
-                        <ImageItem src={generationPreviews[i]} maxSize={192} />
-                      </Zoom>
-                    ) : (
-                      <div className="w-48 h-48 flex justify-center items-center">
-                        <Text>Nothing to see here</Text>
-                      </div>
-                    )}
-                    <Heading>{generation.name}</Heading>
+              {generationPreviews &&
+                generations.map((generation, i) => (
+                  <Preview
+                    key={i}
+                    name={generation.name}
+                    url={generationPreviews[i]}
+                  >
                     <ActionGroup onAction={onQualityAction} isJustified>
                       <Item key={`edit_${generation.name}`}>
                         <Edit />
-                      </Item>
-                      <Item>
-                        <Copy />
                       </Item>
                       <Item key={`remove_${generation.name}`}>
                         <Close />
                       </Item>
                     </ActionGroup>
-                  </Flex>
-                </div>
-              ))}
+                  </Preview>
+                ))}
             </Flex>
           </View>
         </Flex>

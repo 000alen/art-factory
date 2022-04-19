@@ -45,6 +45,7 @@ import {
 } from "../commands";
 import { GalleryBundles } from "../components/GalleryBundles";
 import { GalleryItems } from "../components/GalleryItems";
+import { Properties } from "../components/Properties";
 
 interface QualityPageState {
   projectDir: string;
@@ -106,9 +107,6 @@ export const QualityPage = () => {
   const [items, setItems] = useState<Item[]>([]);
 
   const [selectedItem, setSelectedItem] = useState(0);
-  const [selectedItemTraits, setSelectedItemTraits] = useState<Trait[]>(
-    JSON.parse(JSON.stringify(filteredCollection[selectedItem].traits))
-  );
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
 
   const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
@@ -210,8 +208,6 @@ export const QualityPage = () => {
   useEffect(() => {
     let filteredCollection = Object.entries(filters)
       .reduce((filtered, [name, values]) => {
-        console.log(filtered, name, values);
-
         if (values.length === 0) return filtered;
         else
           return filtered.filter(({ traits }) =>
@@ -346,22 +342,9 @@ export const QualityPage = () => {
   //     prevItems.map((item) => (item.name === name ? { name, url } : item))
   //   );
 
-  // #region Selected Item
   const onSelect = (i: number) => {
     setSelectedItem(i);
-    setSelectedItemTraits(
-      JSON.parse(JSON.stringify(filteredCollection[selectedItem].traits))
-    );
   };
-
-  const onSelectedTraitChange = (name: string, value: string) => {
-    setSelectedItemTraits((prevTraits) =>
-      prevTraits.map((trait) =>
-        trait.name === name ? { ...trait, value } : trait
-      )
-    );
-  };
-  // #endregion
 
   const addFilter = (name: string, value: string) =>
     setFilters((prevFilters) =>
@@ -422,6 +405,7 @@ export const QualityPage = () => {
     setCollection(collection);
   };
 
+  // TODO: Not working
   const onReplace = async (i: number, traits: Trait[]) => {
     const { collection } = await replaceItems(id, generation, [
       {
@@ -429,6 +413,7 @@ export const QualityPage = () => {
         traits,
       },
     ]);
+
     setCollection(collection);
   };
 
@@ -545,53 +530,13 @@ export const QualityPage = () => {
       </View>
 
       <View UNSAFE_className="p-2 space-y-2" gridArea="right" overflow="auto">
-        {filteredCollection.length > 0 && traits && (
-          <>
-            <Heading zIndex={1001} position="sticky" top={0} level={1}>
-              {filteredCollection[selectedItem].name}
-            </Heading>
-            {selectedItemTraits.map(({ name, value }, i) => (
-              <>
-                <Heading>{name}</Heading>
-                <MenuTrigger>
-                  <ActionButton width="100%">{value}</ActionButton>
-                  <Menu
-                    items={traits[name].map(({ value }) => ({
-                      id: value,
-                      name: value,
-                    }))}
-                    selectionMode="single"
-                    disallowEmptySelection={true}
-                    selectedKeys={[value]}
-                    onSelectionChange={(selectedKeys) =>
-                      onSelectedTraitChange(
-                        name,
-                        [...selectedKeys].shift() as string
-                      )
-                    }
-                  >
-                    {({ id, name }) => <Item key={id}>{name}</Item>}
-                  </Menu>
-                </MenuTrigger>
-              </>
-            ))}
-          </>
-        )}
-        <ButtonGroup
-          width="100%"
-          zIndex={1001}
-          position="sticky"
-          bottom={0}
-          align="end"
-        >
-          <Button
-            variant="cta"
-            onPress={() => onReplace(selectedItem, selectedItemTraits)}
-          >
-            Replace
-          </Button>
-          <Button variant="cta">Regenerate</Button>
-        </ButtonGroup>
+        <Properties
+          traits={traits}
+          filteredCollection={filteredCollection}
+          selectedItem={selectedItem}
+          onReplace={onReplace}
+          onRegenerate={onRegenerate}
+        />
       </View>
     </Grid>
   );
