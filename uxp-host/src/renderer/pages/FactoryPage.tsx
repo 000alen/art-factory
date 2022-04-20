@@ -35,6 +35,8 @@ import { CustomField, TaskItem } from "../components/TaskItem";
 import { ToolbarContext } from "../components/Toolbar";
 import {
   createFactory,
+  factoryReloadConfiguration,
+  factoryReloadLayers,
   hasFactory,
   openInExplorer,
   writeProjectInstance,
@@ -64,11 +66,12 @@ export const FactoryPage: React.FC = () => {
   const { state } = useLocation();
   const { projectDir, instance, id, dirty: _dirty } = state as FactoryPageState;
 
+  const { configuration } = instance;
+
   const [working, setWorking] = useState(false);
   const [workingTitle, setWorkingTitle] = useState("");
 
   const [dirty, setDirty] = useState(_dirty);
-  const [configuration, setConfiguration] = useState(instance.configuration);
   const [templates, setTemplates] = useState(instance.templates);
   const [generations, setGenerations] = useState(instance.generations);
 
@@ -92,9 +95,12 @@ export const FactoryPage: React.FC = () => {
 
   useEffect(() => {
     task("factory initialization & preview", async () => {
-      // TODO: Update factory
       if (!(await hasFactory(id)))
         await createFactory(id, configuration, projectDir);
+      else {
+        await factoryReloadConfiguration(id, configuration);
+        await factoryReloadLayers(id);
+      }
 
       setTemplatesPreviews(
         await Promise.all(

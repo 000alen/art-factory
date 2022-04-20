@@ -146,7 +146,12 @@ export function DeployPage() {
         contractAddress,
         abi,
         compilerVersion,
-      } = await factoryDeploy(id, providerId, generation);
+      } = await factoryDeploy(
+        id,
+        providerId,
+        generation,
+        notRevealedGeneration
+      );
       const end = moment(performance.now());
       const diff = end.diff(start);
 
@@ -238,7 +243,7 @@ export function DeployPage() {
               {configuration.contractType === "721_reveal_pause" && (
                 <Preview
                   name="Not Revealed"
-                  showName={false}
+                  showName={true}
                   url={notRevealedUrl}
                 >
                   <MenuTrigger>
@@ -261,7 +266,7 @@ export function DeployPage() {
                 </Preview>
               )}
 
-              <Preview name="Revealed" showName={false} url={url}>
+              <Preview name="Collection" showName={true} url={url}>
                 <MenuTrigger>
                   <ActionButton width="100%">{generationName}</ActionButton>
                   <Menu

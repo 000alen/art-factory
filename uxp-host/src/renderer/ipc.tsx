@@ -159,6 +159,14 @@ export const createFactory = (
   projectDir: string
 ) => ipcTask("createFactory")(id, configuration, projectDir);
 
+export const factoryReloadConfiguration = (
+  id: string,
+  configuration: Configuration
+) => ipcTask("factoryReloadConfiguration")(id, configuration);
+
+export const factoryReloadLayers = (id: string) =>
+  ipcTask("factoryReloadLayers")(id);
+
 export const factoryGetLayerByName = (id: string, layerName: string) =>
   ipcTaskWithRequestId("factoryGetLayerByName")(
     id,

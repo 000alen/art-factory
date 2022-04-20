@@ -179,6 +179,17 @@ ipcTask(
   }
 );
 
+ipcTask(
+  "factoryReloadConfiguration",
+  (id: string, configuration: Configuration) =>
+    factories[id].reloadConfiguration(configuration)
+);
+
+ipcAsyncTask(
+  "factoryReloadLayers",
+  async (id: string) => await factories[id].reloadLayers()
+);
+
 ipcTaskWithRequestId("factoryGetLayerByName", (id: string, layerName: string) =>
   factories[id].getLayerByName(layerName)
 );

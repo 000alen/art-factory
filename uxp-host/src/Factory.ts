@@ -463,11 +463,34 @@ export class Factory {
     }
   }
 
+  async hydrateNotRevealedMetadata(
+    generation: Generation,
+    notRevealedImageCid: string,
+    callback?: (name: string) => void
+  ) {
+    const { name } = generation;
+
+    const metadata = JSON.parse(
+      await fs.promises.readFile(
+        path.join(this.buildDir, "json", name, `1.json`),
+        "utf8"
+      )
+    );
+    metadata["image"] = `ipfs://${notRevealedImageCid}/`;
+
+    await fs.promises.writeFile(
+      path.join(this.buildDir, "json", name, `1.json`),
+      JSON.stringify(metadata)
+    );
+  }
+
   async deployNotRevealedImage(generation: Generation) {
+    console.log(generation);
+
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(this.buildDir, "json", generation.name, "1.png") // ? INFO: hardcoded
+      path.join(this.buildDir, "images", generation.name, "1.png") // ? INFO: hardcoded
     );
 
     return IpfsHash;
@@ -509,14 +532,17 @@ export class Factory {
   ) {
     const imagesCid = await this.deployImages(generation);
     await this.hydrateMetadata(generation, imagesCid);
-
     const metadataCid = await this.deployMetadata(generation);
 
     const notRevealedImageCid =
       this.configuration.contractType === "721_reveal_pause"
         ? await this.deployNotRevealedImage(notRevealedGeneration)
         : undefined;
-
+    if (this.configuration.contractType === "721_reveal_pause")
+      await this.hydrateNotRevealedMetadata(
+        notRevealedGeneration,
+        notRevealedImageCid
+      );
     const notRevealedMetadataCid =
       this.configuration.contractType === "721_reveal_pause"
         ? await this.deployNotRevealedMetadata(notRevealedGeneration)
@@ -951,7 +977,7 @@ export class Factory {
   async getBalanceOf(contractId: string, address: string) {
     const contract = contracts[contractId];
     const balance = await contract.balanceOf(address);
-    return balance.toString();
+    return balance;
   }
 
   async getTokenOfOwnerByIndex(
@@ -960,8 +986,8 @@ export class Factory {
     index: number
   ) {
     const contract = contracts[contractId];
-    const n = await contract.tokenOfOwnerByIndex(address, index);
-    return n;
+    const id = await contract.tokenOfOwnerByIndex(address, index);
+    return id;
   }
 
   async getTokenUri(contractId: string, index: number) {

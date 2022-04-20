@@ -70,19 +70,15 @@ export function InstancePage() {
   }, []);
 
   useEffect(() => {
-    task("XXX", async () => {
+    task("provider & contract", async () => {
       if (error) return;
 
       const providerId = uuid();
       const uri = await createProvider(providerId, async ({ connected }) => {
         WalletConnectQRCodeModal.close();
 
-        const contractId = await createContract(
-          id,
-          providerId,
-          contractAddress,
-          abi
-        );
+        const contractId = uuid();
+        await createContract(contractId, providerId, contractAddress, abi);
 
         setProviderId(providerId);
         setContractId(contractId);
@@ -135,6 +131,7 @@ export function InstancePage() {
               {configuration.contractType === "721" ? (
                 <Panel721
                   {...{
+                    deployment,
                     id,
                     contractId,
                     setWorking,
@@ -144,6 +141,7 @@ export function InstancePage() {
               ) : configuration.contractType === "721_reveal_pause" ? (
                 <Panel721_reveal_pause
                   {...{
+                    deployment,
                     id,
                     contractId,
                     setWorking,
