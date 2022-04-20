@@ -19,6 +19,7 @@ import {
   Collection,
   CollectionItem,
   Configuration,
+  Drop,
   Generation,
   Layer,
   MetadataItem,
@@ -158,7 +159,7 @@ export class Factory {
       blending: string;
     }
 
-    const { nodes, edges, ns, ignored } = template;
+    const { nodes, edges, ns, ignored, prices } = template;
 
     const nData = (
       getBranches(nodes, edges).map((branch) =>
@@ -193,6 +194,7 @@ export class Factory {
       .map((data) => ({
         name: data.name,
         ids: data.ids,
+        price: data.price,
       }));
 
     const computeTraitsNs = (
@@ -261,6 +263,7 @@ export class Factory {
     let i = 1;
     for (const [index, traits] of nTraits.entries()) {
       const n = ns[keys[index]];
+      const price = prices[keys[index]];
 
       let nTraits = Array.from({ length: n }, () => []);
       for (const trait of traits)
@@ -269,17 +272,20 @@ export class Factory {
       const collectionItems = nTraits.map((traits) => ({
         name: `${i++}`,
         traits,
+        price,
       }));
 
       const bundle = bundlesInfo.find(({ ids }) => ids.includes(keys[index]));
 
       if (bundle !== undefined) {
         const bundleName = bundle.name;
+        const bundlePrice = bundle.price;
 
         if (!bundles.some((b) => b.name === bundleName))
           bundles.push({
             name: bundleName,
             ids: Array.from({ length: bundlesNs[bundleName] }, () => []),
+            price: bundlePrice,
           });
 
         const bundleIndex = bundles.findIndex((b) => b.name === bundleName);
@@ -295,7 +301,19 @@ export class Factory {
       collection.push(...collectionItems);
     }
 
-    return { id: uuid(), name, collection, bundles };
+    return {
+      id: uuid(),
+      name,
+      collection,
+      bundles,
+      drops: [
+        {
+          name,
+          ids: collection.map(({ name }) => name),
+          bundles: bundles.map(({ name }) => name),
+        },
+      ],
+    };
   }
 
   computeMaxCombinations(layers: Layer[]) {
@@ -712,9 +730,11 @@ export class Factory {
     return [item, await this.getMetadata(generation, item)];
   }
 
-  // // TODO: Modify metadata
-  async removeItems(generation: Generation, items: Collection) {
-    let { name, collection, bundles } = generation;
+  async removeItems(
+    generation: Generation,
+    items: Collection
+  ): Promise<Generation> {
+    let { name, collection, bundles, drops } = generation;
 
     await Promise.all(
       items.map(async (item) => {
@@ -734,11 +754,18 @@ export class Factory {
         })
     );
 
-    bundles = bundles.map(({ name, ids }) => ({
+    bundles = bundles.map(({ name, ids, price }) => ({
       name,
       ids: ids.filter(
         (ids) => !ids.some((id) => items.some((item) => item.name === id))
       ),
+      price,
+    }));
+
+    drops = drops.map(({ name, ids }) => ({
+      name,
+      ids: ids.filter((id) => items.some((item) => item.name === id)),
+      bundles: bundles.map(({ name }) => name),
     }));
 
     for (const [i, item] of collection.entries()) {
@@ -779,6 +806,17 @@ export class Factory {
       }
       bundles = _bundles;
 
+      const _drops = [];
+      for (const { name, ids } of drops) {
+        _drops.push({
+          name,
+          ids: ids.includes(item.name)
+            ? ids.map((id) => (id === item.name ? `_${i + 1}` : id))
+            : ids,
+        });
+      }
+      drops = _drops;
+
       item.name = `${i + 1}`;
     }
 
@@ -806,20 +844,36 @@ export class Factory {
         _bundles.push({ name, ids: newIds });
       }
       bundles = _bundles;
+
+      const _drops = [];
+      for (const { name, ids } of drops) {
+        _drops.push({
+          name,
+          ids: ids.includes(`_${i + 1}`)
+            ? ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
+            : ids,
+        });
+      }
+      drops = _drops;
     }
 
-    return collection;
+    return {
+      ...generation,
+      collection,
+      bundles,
+      drops,
+    };
   }
 
-  // // TODO: Modify metadata
   async regenerateItems(generation: Generation, items: Collection) {
     let { name, collection } = generation;
 
-    const newItems: Collection = items.map(({ name, traits }) => ({
+    const newItems: Collection = items.map(({ name, traits, price }) => ({
       name,
       traits: traits.map((trait) =>
         choose(this.traitsByLayerName.get(trait.name))
       ),
+      price,
     }));
     await this.generateImages({ name, collection: newItems } as Generation);
 
@@ -901,21 +955,22 @@ export class Factory {
 
     const unifiedCollection: Collection = [];
     const unifiedBundles: Bundles = [];
+    const unifiedDrops: Drop[] = [];
 
     let i = 1;
-    for (const { name: currentName, collection, bundles } of generations) {
+    for (const {
+      name: currentName,
+      collection,
+      bundles,
+      drops,
+    } of generations) {
       const mappings: Record<string, string> = {};
 
-      for (const collectionItem of collection) {
-        mappings[collectionItem.name] = `${i}`;
+      for (const item of collection) {
+        mappings[item.name] = `${i}`;
 
         await fs.promises.copyFile(
-          path.join(
-            this.buildDir,
-            "images",
-            currentName,
-            `${collectionItem.name}.png`
-          ),
+          path.join(this.buildDir, "images", currentName, `${item.name}.png`),
           path.join(this.buildDir, "images", name, `${i}.png`)
         );
 
@@ -927,8 +982,8 @@ export class Factory {
                 path.join(
                   this.buildDir,
                   "json",
-                  name,
-                  `${collectionItem.name}.json`
+                  currentName,
+                  `${item.name}.json`
                 ),
                 "utf8"
               )
@@ -938,7 +993,7 @@ export class Factory {
         );
 
         unifiedCollection.push({
-          ...collectionItem,
+          ...item,
           name: `${i}`,
         });
 
@@ -946,14 +1001,28 @@ export class Factory {
       }
 
       unifiedBundles.push(
-        ...bundles.map(({ name, ids }) => ({
+        ...bundles.map(({ name, ids, price }) => ({
           name,
           ids: ids.map((_ids) => _ids.map((id) => mappings[id])),
+          price,
+        }))
+      );
+
+      unifiedDrops.push(
+        ...drops.map(({ name, ids }) => ({
+          name,
+          ids: ids.map((id) => mappings[id]),
+          bundles: bundles.map(({ name }) => name),
         }))
       );
     }
 
-    return { name, collection: unifiedCollection, bundles: unifiedBundles };
+    return {
+      name,
+      collection: unifiedCollection,
+      bundles: unifiedBundles,
+      drops: unifiedDrops,
+    };
   }
 
   async remove(generation: Generation) {

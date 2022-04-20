@@ -8,6 +8,7 @@ import {
   Item,
   Menu,
   MenuTrigger,
+  NumberField,
   Text,
   TextField,
 } from "@adobe/react-spectrum";
@@ -27,9 +28,11 @@ export interface BundleNodeComponentData {
   prices?: Record<string, number>;
   onChangeBundleName?: (id: string, value: string) => void;
   onChangeBundleIds?: (id: string, value: string[]) => void;
+  onChangeBundlePrice?: (id: string, value: number) => void;
 
   name: string;
   ids: string[];
+  price: number;
 }
 
 interface BundleNodeProps {
@@ -146,6 +149,7 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
 
       <div className="w-48 p-3 border-1 border-solid border-white rounded">
         <Heading>{data.name}</Heading>
+
         <Flex direction="column" gap="size-300">
           {data.ids === null ? (
             <div className="h-48 flex justify-center items-center">
@@ -153,6 +157,17 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
             </div>
           ) : (
             <>
+              <NumberField
+                width="100%"
+                step={0.01}
+                minValue={0}
+                value={data.price}
+                onChange={(value: number) =>
+                  data.onChangeBundlePrice(id, value)
+                }
+                label="Price"
+              />
+
               {data.ids.map(renderItem)}
               <Flex direction="row-reverse">
                 <ActionButton

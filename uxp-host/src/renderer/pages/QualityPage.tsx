@@ -314,7 +314,7 @@ export const QualityPage = () => {
   const onSave = task("filtering", async () => {
     setWorkingTitle("Saving...");
     setWorking(true);
-    const _collection = await factoryRemoveItems(
+    const { collection: _collection, drops: _drops } = await factoryRemoveItems(
       id,
       generation,
       itemsToRemove.map((name) => collection.find((item) => item.name === name))
@@ -322,7 +322,7 @@ export const QualityPage = () => {
 
     const generations = instance.generations.map((generation) =>
       generation.id === generationId
-        ? { ...generation, collection: _collection }
+        ? { ...generation, collection: _collection, drops: _drops }
         : generation
     );
 

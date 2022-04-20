@@ -292,7 +292,7 @@ export const factoryRemoveItems = (
   generation: Generation,
   items: Collection
 ) =>
-  ipcTask("factoryRemoveItems")(id, generation, items) as Promise<Collection>;
+  ipcTask("factoryRemoveItems")(id, generation, items) as Promise<Generation>;
 
 export const factoryRegenerateItems = (
   id: string,

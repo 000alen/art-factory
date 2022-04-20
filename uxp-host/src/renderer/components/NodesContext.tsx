@@ -25,6 +25,7 @@ import {
   DEFAULT_BLENDING,
   DEFAULT_NODES,
   DEFAULT_OPACITY,
+  DEFAULT_PRICE,
   MAX_SIZE,
 } from "../constants";
 import {
@@ -195,6 +196,7 @@ export function useNodes(
   const onChangeLayerBlending = onChange<string>("blending");
   const onChangeBundleName = onChange<string>("name");
   const onChangeBundleIds = onChange<string[]>("ids");
+  const onChangeBundlePrice = onChange<number>("price");
 
   const onUpdateUrls = onUpdate<Record<string, string>>(["layerNode"], "urls");
   const onUpdateComposedUrls = onUpdate<Record<string, string>>(
@@ -391,9 +393,11 @@ export function useNodes(
           ignored,
           onChangeBundleName,
           onChangeBundleIds,
+          onChangeBundlePrice,
 
           name: spacedName(),
           ids: null,
+          price: DEFAULT_PRICE,
         } as BundleNodeComponentData;
       default:
         return {};
@@ -459,6 +463,7 @@ export function useNodes(
           prices,
           onChangeBundleName,
           onChangeBundleIds,
+          onChangeBundlePrice,
         } as BundleNodeComponentData;
       default:
         return data;

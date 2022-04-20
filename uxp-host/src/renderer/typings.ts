@@ -69,11 +69,13 @@ export interface Trait extends Layer {
 export interface CollectionItem {
   name: string;
   traits: Trait[];
+  price: number;
 }
 
 export interface BundlesInfoItem {
   name: string;
   ids: string[];
+  price: number;
 }
 
 export type BundlesInfo = BundlesInfoItem[];
@@ -81,6 +83,7 @@ export type BundlesInfo = BundlesInfoItem[];
 export interface BundleItem {
   name: string;
   ids: string[][];
+  price: number;
 }
 
 export type Collection = CollectionItem[];
@@ -92,11 +95,18 @@ export interface MetadataItem {
   value: string;
 }
 
+export interface Drop {
+  name: string;
+  ids: string[];
+  bundles: string[];
+}
+
 export interface Generation {
   id: string;
   name: string;
   collection: Collection;
   bundles: Bundles;
+  drops: Drop[];
 }
 
 export interface Deployment {
@@ -108,6 +118,7 @@ export interface Deployment {
   contractAddress: string;
   abi: any[];
   compilerVersion: string;
+  generation: Generation;
 }
 
 export interface Instance {

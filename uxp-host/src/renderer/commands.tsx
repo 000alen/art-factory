@@ -177,9 +177,9 @@ export const computeGenerationRepeats = (generation: Generation) => {
   const { collection } = generation;
   const keys = new Set<string>();
   const repeats: Collection = [];
-  for (const { name, traits } of collection) {
-    const key = hash(traits);
-    if (keys.has(key)) repeats.push({ name, traits });
+  for (const item of collection) {
+    const key = hash(item.traits);
+    if (keys.has(key)) repeats.push({ ...item });
     else keys.add(key);
   }
   return repeats;

@@ -179,6 +179,7 @@ export function DeployPage() {
       abi,
       compilerVersion,
       network: Network.RINKEBY,
+      generation: JSON.parse(JSON.stringify(generation)),
     };
 
     navigate("/factory", {

@@ -312,7 +312,7 @@ export const FactoryPage: React.FC = () => {
     async ({ newName, generationsNames }) => {
       setWorkingTitle("Unifying generations...");
       setWorking(true);
-      const { collection, bundles } = await unifyGenerations(
+      const { collection, bundles, drops } = await unifyGenerations(
         id,
         newName,
         generationsNames.map((name) =>
@@ -328,6 +328,7 @@ export const FactoryPage: React.FC = () => {
           name: newName,
           collection,
           bundles,
+          drops,
         },
       ]);
       setDirty(true);
