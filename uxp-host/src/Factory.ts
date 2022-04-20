@@ -6,6 +6,7 @@ import path from "path";
 import { Node as FlowNode } from "react-flow-renderer";
 import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
+import Web3 from "web3";
 
 import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
 import { contracts, providers } from "./ipc";
@@ -1123,11 +1124,11 @@ export class Factory {
   }
 
   async sellDrop(providerId: string, deployment: Deployment, drop: Drop) {
-    const web3Provider = new ethersProviders.Web3Provider(
-      providers[providerId]
-    );
     // @ts-ignore
-    const seaport = new OpenSeaPort(web3Provider, {
+    const web3 = new Web3(providers[providerId]);
+
+    // @ts-ignore
+    const seaport = new OpenSeaPort(web3.currentProvider, {
       networkName: Network.Rinkeby,
     });
 
@@ -1142,22 +1143,4 @@ export class Factory {
       });
     }
   }
-
-  // const onSell = async () => {
-  //   const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);
-  //   const auction = await seaport.createSellOrder({
-  //     expirationTime,
-  //     accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
-  //     startAmount: 1,
-  //     asset: {
-  //       tokenId: "1",
-  //       tokenAddress: contract.address,
-  //     },
-  //   });
-  //   addOutput({
-  //     title: "Sell order created",
-  //     text: "true",
-  //     isCopiable: true,
-  //   });
-  // };
 }
