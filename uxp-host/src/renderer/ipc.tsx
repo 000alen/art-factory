@@ -22,6 +22,8 @@ import {
   Collection,
   CollectionItem,
   Configuration,
+  Deployment,
+  Drop,
   Generation,
   Instance,
   Layer,
@@ -370,6 +372,20 @@ export const setBaseUri = (id: string, contractId: string, baseUri: string) =>
 
 export const reveal = (id: string, contractId: string) =>
   ipcTask("reveal")(id, contractId);
+
+export const mintDrop = (
+  id: string,
+  contractId: string,
+  payable: string,
+  drop: Drop
+) => ipcTask("mintDrop")(id, contractId, payable, drop);
+
+export const sellDrop = (
+  id: string,
+  providerId: string,
+  deployment: Deployment,
+  drop: Drop
+) => ipcTask("sellDrop")(id, providerId, deployment, drop);
 
 // #endregion
 

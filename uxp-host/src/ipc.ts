@@ -20,6 +20,8 @@ import {
   Collection,
   CollectionItem,
   Configuration,
+  Deployment,
+  Drop,
   Generation,
   Layer,
   MetadataItem,
@@ -406,6 +408,18 @@ ipcAsyncTask(
   "reveal",
   async (id: string, contractId: string) =>
     await factories[id].reveal(contractId)
+);
+
+ipcAsyncTask(
+  "mintDrop",
+  async (id: string, contractId: string, payable: string, drop: Drop) =>
+    await factories[id].mintDrop(contractId, payable, drop)
+);
+
+ipcAsyncTask(
+  "sellDrop",
+  async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
+    await factories[id].sellDrop(providerId, deployment, drop)
 );
 
 // #endregion

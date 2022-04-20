@@ -55,6 +55,7 @@ export const GenerationPage: React.FC = () => {
   const [name, setName] = useState(spacedName());
   const [collection, setCollection] = useState(null);
   const [bundles, setBundles] = useState(null);
+  const [drops, setDrops] = useState(null);
 
   const [isWorking, setIsWorking] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
@@ -97,7 +98,7 @@ export const GenerationPage: React.FC = () => {
     setIsWorking(true);
 
     const start = moment(performance.now());
-    const { collection, bundles } = await generate(
+    const { collection, bundles, drops } = await generate(
       id,
       name,
       metadataItems,
@@ -110,6 +111,7 @@ export const GenerationPage: React.FC = () => {
     setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
     setCollection(collection);
     setBundles(bundles);
+    setDrops(drops);
     setDirty(true);
     setIsWorking(false);
     setGenerationDone(true);
@@ -118,7 +120,7 @@ export const GenerationPage: React.FC = () => {
   const onSave = () => {
     let generations = [
       ...instance.generations,
-      { id: uuid(), name, collection, bundles },
+      { id: uuid(), name, collection, bundles, drops },
     ];
 
     generations = JSON.parse(JSON.stringify(generations));

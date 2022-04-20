@@ -1,11 +1,7 @@
-import {
-  Contract,
-  ContractFactory,
-  providers as ethersProviders,
-  utils,
-} from "ethers";
+import { ContractFactory, providers as ethersProviders, utils } from "ethers";
 import fs from "fs";
 import imageSize from "image-size";
+import { Network, OpenSeaPort } from "./opensea";
 import path from "path";
 import { Node as FlowNode } from "react-flow-renderer";
 import sharp, { Blend } from "sharp";
@@ -19,6 +15,7 @@ import {
   Collection,
   CollectionItem,
   Configuration,
+  Deployment,
   Drop,
   Generation,
   Layer,
@@ -994,10 +991,8 @@ export class Factory {
 
         unifiedCollection.push({
           ...item,
-          name: `${i}`,
+          name: `${i++}`,
         });
-
-        i++;
       }
 
       unifiedBundles.push(
@@ -1117,6 +1112,36 @@ export class Factory {
     await tx.wait();
   }
   // #endregion
+
+  async mintDrop(contractId: string, payable: string, drop: Drop) {
+    const contract = contracts[contractId];
+    const n = drop.ids.length;
+    const tx = await contract.mint(n, {
+      value: utils.parseEther(payable),
+    });
+    await tx.wait();
+  }
+
+  async sellDrop(providerId: string, deployment: Deployment, drop: Drop) {
+    const web3Provider = new ethersProviders.Web3Provider(
+      providers[providerId]
+    );
+    // @ts-ignore
+    const seaport = new OpenSeaPort(web3Provider, {
+      networkName: Network.Rinkeby,
+    });
+
+    for (const id of drop.ids) {
+      await seaport.createSellOrder({
+        asset: {
+          tokenId: id,
+          tokenAddress: deployment.contractAddress,
+        },
+        accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
+        startAmount: 3,
+      });
+    }
+  }
 
   // const onSell = async () => {
   //   const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);

@@ -135,18 +135,9 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     setWorking(false);
   });
 
-  const onWithdraw = task("withdraw", async () => {
-    setWorking(true);
+  const onMintDrop = task("mint drop", async () => {});
 
-    await withdraw(id, contractId);
-    addOutput({
-      title: "Withdraw",
-      text: "",
-      isCopiable: true,
-    });
-
-    setWorking(false);
-  });
+  const onSellDrop = task("sell drop", async () => {});
 
   const onPause = task("pause", async () => {
     setWorking(true);
@@ -174,9 +165,23 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     setWorking(false);
   });
 
+  const onWithdraw = task("withdraw", async () => {
+    setWorking(true);
+
+    await withdraw(id, contractId);
+    addOutput({
+      title: "Withdraw",
+      text: "",
+      isCopiable: true,
+    });
+
+    setWorking(false);
+  });
+
   return (
     <>
       <TaskItem name="Get minting cost" onRun={onMintingCost} />
+
       <TaskItem
         name="Balance of"
         onRun={onBalanceOf}
@@ -205,7 +210,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
       />
 
       <TaskItem
-        name="Set max Mint amount"
+        name="Set max mint amount"
         onRun={onSetMaxMintAmount}
         fields={[
           {
@@ -220,72 +225,15 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
         ]}
       />
 
-      <TaskItem
-        name="Mint"
-        onRun={onMint}
-        fields={[
-          {
-            key: "payable",
-            type: "string",
-            label: "Payable amount",
-            initial: "",
-            value: "",
-          },
-          {
-            key: "mint",
-            type: "int",
-            label: "Mint amount",
-            initial: 0,
-            min: 0,
-            max: Infinity,
-            value: 0,
-          },
-        ]}
-      />
-
-      <TaskItem
-        name="Token of owner by index"
-        onRun={onTokenOfOwnerByIndex}
-        fields={[
-          {
-            key: "address",
-            type: "address",
-            label: "Address",
-            value: "",
-          },
-          {
-            key: "index",
-            type: "int",
-            label: "Index",
-            initial: 0,
-            min: 0,
-            max: Infinity,
-            value: 0,
-          },
-        ]}
-      />
-
-      <TaskItem
-        name="Token URI"
-        onRun={onTokenUri}
-        fields={[
-          {
-            key: "index",
-            type: "int",
-            label: "Token Index",
-            initial: 0,
-            min: 0,
-            max: Infinity,
-            value: 0,
-          },
-        ]}
-      />
-
-      <TaskItem name="Withdraw" onRun={onWithdraw} />
-
       <TaskItem name="Pause" onRun={onPause} />
 
       <TaskItem name="Reveal" onRun={onReveal} />
+
+      <TaskItem name="Mint drop" onRun={onMintDrop} />
+
+      <TaskItem name="Sell drop" onRun={onSellDrop} />
+
+      <TaskItem name="Withdraw" onRun={onWithdraw} />
     </>
   );
 };

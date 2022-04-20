@@ -54,6 +54,9 @@ const sendWhitelist = [
   "setBaseUri",
   "reveal",
 
+  "mintDrop",
+  "sellDrop",
+
   "createProvider",
   "createProviderUri",
   "createProviderResult",
@@ -115,6 +118,9 @@ const onWhitelist = [
   "pauseResult",
   "setBaseUriResult",
   "revealResult",
+
+  "mintDropResult",
+  "sellDropResult",
 
   "createProvider",
   "createProviderUri",

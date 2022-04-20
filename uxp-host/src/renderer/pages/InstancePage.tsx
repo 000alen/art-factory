@@ -21,12 +21,12 @@ import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { ToolbarContext } from "../components/Toolbar";
 import { Networks } from "../constants";
-import { Instance } from "../typings";
+import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { v4 as uuid } from "uuid";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
-import { createContract, createProvider } from "../ipc";
+import { createContract, createProvider, writeProjectInstance } from "../ipc";
 
 interface InstancePageState {
   projectDir: string;
@@ -46,8 +46,9 @@ export function InstancePage() {
     id,
     dirty: _dirty,
   } = state as InstancePageState;
-  const { configuration, deployment } = instance;
+  const { configuration, deployment: _deployment } = instance;
 
+  const [deployment, setDeployment] = useState(_deployment);
   const [error] = useState(!deployment);
 
   const [contractAddress] = useState(error ? null : deployment.contractAddress);
@@ -72,14 +73,11 @@ export function InstancePage() {
   useEffect(() => {
     task("provider & contract", async () => {
       if (error) return;
-
       const providerId = uuid();
       const uri = await createProvider(providerId, async ({ connected }) => {
         WalletConnectQRCodeModal.close();
-
         const contractId = uuid();
         await createContract(contractId, providerId, contractAddress, abi);
-
         setProviderId(providerId);
         setContractId(contractId);
       });
@@ -99,6 +97,20 @@ export function InstancePage() {
     isCopiable: boolean;
   }) => {
     setOutputs((prevOutputs) => [...prevOutputs, output]);
+  };
+
+  const increaseDropNumber = async () => {
+    const newDeployment: Deployment = {
+      ...deployment,
+      dropNumber: deployment.dropNumber + 1,
+    };
+
+    await writeProjectInstance(projectDir, {
+      ...instance,
+      deployment: newDeployment,
+    });
+
+    setDeployment(newDeployment);
   };
 
   return (
@@ -133,9 +145,11 @@ export function InstancePage() {
                   {...{
                     deployment,
                     id,
+                    providerId,
                     contractId,
                     setWorking,
                     addOutput,
+                    increaseDropNumber,
                   }}
                 />
               ) : configuration.contractType === "721_reveal_pause" ? (
@@ -143,9 +157,11 @@ export function InstancePage() {
                   {...{
                     deployment,
                     id,
+                    providerId,
                     contractId,
                     setWorking,
                     addOutput,
+                    increaseDropNumber,
                   }}
                 />
               ) : null}

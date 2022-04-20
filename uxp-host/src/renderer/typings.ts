@@ -119,6 +119,7 @@ export interface Deployment {
   abi: any[];
   compilerVersion: string;
   generation: Generation;
+  dropNumber: number;
 }
 
 export interface Instance {
