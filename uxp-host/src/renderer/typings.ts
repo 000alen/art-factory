@@ -48,6 +48,7 @@ export interface Template {
   renderIds: Record<string, string>;
   ns: Record<string, number>;
   ignored: string[];
+  prices: Record<string, number>;
 }
 
 export interface Layer {

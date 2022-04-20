@@ -6,9 +6,9 @@ export enum ContractType {
 }
 
 export enum Network {
-  MAIN,
-  ROPSTEN,
-  RINKEBY,
+  MAIN = "main",
+  ROPSTEN = "ropsten",
+  RINKEBY = "rinkeby",
 }
 
 export interface Secrets {
@@ -48,6 +48,7 @@ export interface Template {
   renderIds: Record<string, string>;
   ns: Record<string, number>;
   ignored: string[];
+  prices: Record<string, number>;
 }
 
 export interface Layer {

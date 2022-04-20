@@ -20,7 +20,7 @@ import {
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import { DEFAULT_N } from "../constants";
+import { DEFAULT_N, DEFAULT_PRICE } from "../constants";
 import { Trait } from "../typings";
 import { hash, getBranches } from "../utils";
 import { LayerNodeComponentData } from "./LayerNode";
@@ -31,11 +31,13 @@ export interface RenderNodeComponentData {
   ns?: Record<string, number>;
   maxNs?: Record<string, number>;
   ignored?: string[];
+  prices?: Record<string, number>;
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
   requestMaxNs?: (traits: Trait[]) => void;
   updateNs?: (traits: Trait[], n: number) => void;
   updateIgnored?: (traits: Trait[], ignored: boolean) => void;
+  updatePrices?: (traits: Trait[], price: number) => void;
 }
 
 interface RenderNodeProps {
@@ -105,6 +107,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
       if (!(key in data.renderIds)) data.requestRenderId(nTraits[i]);
       if (!(key in data.ns)) data.updateNs(nTraits[i], DEFAULT_N);
       if (!(key in data.maxNs)) data.requestMaxNs(nTraits[i]);
+      if (!(key in data.prices)) data.updatePrices(nTraits[i], DEFAULT_PRICE);
     }
 
     setCacheKey(currentCacheKey);
@@ -117,6 +120,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     const composedUrl = data.composedUrls[key];
     const n = data.ns[key];
     const maxNs = data.maxNs[key];
+    const price = data.prices[key];
 
     return data.ignored.includes(key) ? (
       <></>
@@ -126,16 +130,22 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
           <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
         </ImageItem>
         <Heading>{renderId}</Heading>
+        <NumberField
+          width="100%"
+          step={0.01}
+          minValue={0}
+          value={price}
+          onChange={(value: number) => data.updatePrices(nTraits[i], value)}
+          label="Price"
+        />
         <Flex gap="size-100" alignItems="end">
           <NumberField
             width="100%"
             minValue={1}
-            {...{
-              label: `N (max: ${maxNs})`,
-              value: n,
-              maxValue: maxNs,
-              onChange: (value: number) => data.updateNs(nTraits[i], value),
-            }}
+            maxValue={maxNs}
+            value={n}
+            onChange={(value: number) => data.updateNs(nTraits[i], value)}
+            label={`N (max: ${maxNs})`}
           />
           <ActionButton onPress={() => data.updateIgnored(nTraits[i], true)}>
             <Remove />

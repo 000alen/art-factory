@@ -72,6 +72,9 @@ export function TemplatePage() {
       ? templates.find(({ id }) => id == templateId).ignored
       : undefined
   );
+  const [initialPrices] = useState(
+    templateId ? templates.find(({ id }) => id == templateId).prices : undefined
+  );
 
   const [traits, setTraits] = useState(
     templateId ? templates.find(({ id }) => id == templateId).traits : []
@@ -104,7 +107,8 @@ export function TemplatePage() {
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onSave = () => {
-    const { nodes, edges, renderIds, ns, ignored } = getterRef.current();
+    const { nodes, edges, renderIds, ns, ignored, prices } =
+      getterRef.current();
 
     const index = instance.templates.findIndex(
       (template) => template.id === workingId
@@ -114,12 +118,32 @@ export function TemplatePage() {
     if (index === -1)
       templates = [
         ...instance.templates,
-        { id: workingId, name, traits, nodes, edges, renderIds, ns, ignored },
+        {
+          id: workingId,
+          name,
+          traits,
+          nodes,
+          edges,
+          renderIds,
+          ns,
+          ignored,
+          prices,
+        },
       ];
     else
       templates = instance.templates.map((template) =>
         template.id === workingId
-          ? { ...template, traits, name, nodes, edges, renderIds, ns, ignored }
+          ? {
+              ...template,
+              traits,
+              name,
+              nodes,
+              edges,
+              renderIds,
+              ns,
+              ignored,
+              prices,
+            }
           : template
       );
 
@@ -147,6 +171,7 @@ export function TemplatePage() {
       initialRenderIds={initialRenderIds}
       initialNs={initialNs}
       initialIgnored={initialIgnored}
+      initialPrices={initialPrices}
       setDirty={setDirty}
     >
       <Flex

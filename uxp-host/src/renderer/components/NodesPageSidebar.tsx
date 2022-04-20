@@ -78,18 +78,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Text>Render</Text>
           </div>
         </div>
-        {contractType === "721_reveal_pause" && (
-          <div
-            onDragStart={(event) =>
-              onDragStart(event, { type: "notRevealedNode" })
-            }
-            draggable
-          >
-            <div className="w-20 h-20 p-1 border-[0.5px] border-solid border-white rounded flex justify-center items-center">
-              <Text>Not revealed</Text>
-            </div>
-          </div>
-        )}
         {urls &&
           layers.map((name, i) => (
             <div

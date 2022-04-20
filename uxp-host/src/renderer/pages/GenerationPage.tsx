@@ -44,7 +44,7 @@ export const GenerationPage: React.FC = () => {
     templateId,
     dirty: _dirty,
   } = state as GenerationPageState;
-  const { configuration, templates } = instance;
+  const { templates } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
 
@@ -52,7 +52,6 @@ export const GenerationPage: React.FC = () => {
     templates.find((template) => template.id === templateId)
   );
 
-  const [price, setPrice] = useState(configuration.cost);
   const [name, setName] = useState(spacedName());
   const [collection, setCollection] = useState(null);
   const [bundles, setBundles] = useState(null);
@@ -147,17 +146,6 @@ export const GenerationPage: React.FC = () => {
       <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" justifyContent="center" alignItems="center">
           <Preview name={template.name} url={url} />
-        </Flex>
-
-        <Flex direction="column" gap="size-100">
-          <Heading>Collection configuration</Heading>
-          <NumberField
-            label="Price"
-            value={price}
-            onChange={setPrice}
-            minValue={0.01}
-            step={0.01}
-          />
         </Flex>
 
         <ArrayOf

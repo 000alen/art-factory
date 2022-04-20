@@ -24,6 +24,7 @@ export interface BundleNodeComponentData {
   renderIds?: Record<string, string>;
   ns?: Record<string, number>;
   ignored?: string[];
+  prices?: Record<string, number>;
   onChangeBundleName?: (id: string, value: string) => void;
   onChangeBundleIds?: (id: string, value: string[]) => void;
 

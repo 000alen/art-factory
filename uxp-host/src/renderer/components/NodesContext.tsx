@@ -1,12 +1,37 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ReactFlow, {
-    addEdge, Background, BackgroundVariant, Connection as FlowConnection, Controls,
-    Edge as FlowEdge, EdgeChange as FlowEdgeChange, Node as FlowNode, NodeChange as FlowNodeChange,
-    ReactFlowInstance, useEdgesState, useNodesState
+  addEdge,
+  Background,
+  BackgroundVariant,
+  Connection as FlowConnection,
+  Controls,
+  Edge as FlowEdge,
+  EdgeChange as FlowEdgeChange,
+  Node as FlowNode,
+  NodeChange as FlowNodeChange,
+  ReactFlowInstance,
+  useEdgesState,
+  useNodesState,
 } from "react-flow-renderer";
 
-import { DEFAULT_BLENDING, DEFAULT_NODES, DEFAULT_OPACITY, MAX_SIZE } from "../constants";
-import { factoryComposeTraits, factoryComputeMaxCombinations, factoryGetTraitImage } from "../ipc";
+import {
+  DEFAULT_BLENDING,
+  DEFAULT_NODES,
+  DEFAULT_OPACITY,
+  MAX_SIZE,
+} from "../constants";
+import {
+  factoryComposeTraits,
+  factoryComputeMaxCombinations,
+  factoryGetTraitImage,
+} from "../ipc";
 import { Trait } from "../typings";
 import { dashedName, getId, hash, spacedName } from "../utils";
 import { BundleNode, BundleNodeComponentData } from "./BundleNode";
@@ -27,6 +52,7 @@ interface NodesContextProviderProps {
   initialRenderIds?: Record<string, string>;
   initialNs?: Record<string, number>;
   initialIgnored?: string[];
+  initialPrices?: Record<string, number>;
 
   setDirty: (dirty: boolean) => void;
 }
@@ -56,6 +82,7 @@ export interface NodesInstance {
   renderIds: Record<string, string>;
   ns: Record<string, number>;
   ignored: string[];
+  prices: Record<string, number>;
 }
 
 export const NODE_TYPES = {
@@ -79,6 +106,7 @@ export function useNodes(
   initialRenderIds?: Record<string, string>,
   initialNs?: Record<string, number>,
   initialIgnored?: string[],
+  initialPrices?: Record<string, number>,
   setDirty?: (dirty: boolean) => void
 ) {
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -94,6 +122,9 @@ export function useNodes(
   const [ns, setNs] = useState<Record<string, number>>(initialNs || {});
   const [maxNs, setMaxNs] = useState<Record<string, number>>({});
   const [ignored, setIgnored] = useState<string[]>(initialIgnored || []);
+  const [prices, setPrices] = useState<Record<string, number>>(
+    initialPrices || {}
+  );
 
   useEffect(() => {
     if (traits.length === 0) return; // ! TODO: Nodes don't work without traits
@@ -111,8 +142,19 @@ export function useNodes(
       renderIds,
       ns,
       ignored,
+      prices,
     }));
-  }, [setter, nodes, edges, urls, composedUrls, renderIds, ns, ignored]);
+  }, [
+    setter,
+    nodes,
+    edges,
+    urls,
+    composedUrls,
+    renderIds,
+    ns,
+    ignored,
+    prices,
+  ]);
 
   const onNodesChange = (changes: FlowNodeChange[]) => {
     _onNodesChange(
@@ -174,6 +216,10 @@ export function useNodes(
   const onUpdateIgnored = onUpdate<string[]>(
     ["renderNode", "bundleNode"],
     "ignored"
+  );
+  const onUpdatePrices = onUpdate<Record<string, number>>(
+    ["renderNode", "bundleNode"],
+    "prices"
   );
 
   const requestUrl = async (trait: Trait) => {
@@ -248,6 +294,15 @@ export function useNodes(
     });
   };
 
+  const updatePrices = async (traits: Trait[], price: number) => {
+    const key = hash(traits);
+    setPrices((prevPrices) => {
+      const newPrices = { ...prevPrices, [key]: price };
+      onUpdatePrices(newPrices);
+      return newPrices;
+    });
+  };
+
   const onConnect = useCallback(
     (connection: FlowConnection) =>
       setEdges((eds) =>
@@ -318,18 +373,21 @@ export function useNodes(
           ns,
           maxNs,
           ignored,
+          prices,
 
           requestComposedUrl,
           requestRenderId,
           requestMaxNs,
           updateNs,
           updateIgnored,
+          updatePrices,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
           composedUrls,
           renderIds,
           ns,
+          prices,
           ignored,
           onChangeBundleName,
           onChangeBundleIds,
@@ -381,12 +439,14 @@ export function useNodes(
           ns,
           maxNs,
           ignored,
+          prices,
 
           requestComposedUrl,
           requestRenderId,
           requestMaxNs,
           updateNs,
           updateIgnored,
+          updatePrices,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
@@ -396,6 +456,7 @@ export function useNodes(
           renderIds,
           ns,
           ignored,
+          prices,
           onChangeBundleName,
           onChangeBundleIds,
         } as BundleNodeComponentData;
@@ -495,6 +556,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   initialRenderIds,
   initialNs,
   initialIgnored,
+  initialPrices,
 
   setDirty,
 }) => {
@@ -508,6 +570,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     initialRenderIds,
     initialNs,
     initialIgnored,
+    initialPrices,
     setDirty
   );
 
