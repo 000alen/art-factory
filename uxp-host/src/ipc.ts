@@ -338,11 +338,11 @@ ipcAsyncTask(
     await factories[id].remove(generation)
 );
 
-ipcAsyncTask(
-  "getCost",
-  async (id: string, contractId: string) =>
-    await factories[id].getCost(contractId)
-);
+// ipcAsyncTask(
+//   "getCost",
+//   async (id: string, contractId: string) =>
+//     await factories[id].getCost(contractId)
+// );
 
 ipcAsyncTask(
   "getBalanceOf",
@@ -374,17 +374,17 @@ ipcAsyncTask(
     await factories[id].getWalletOfOwner(contractId, owner)
 );
 
-ipcAsyncTask(
-  "setCost",
-  async (id: string, contractId: string, cost: string) =>
-    await factories[id].setCost(contractId, cost)
-);
+// ipcAsyncTask(
+//   "setCost",
+//   async (id: string, contractId: string, cost: string) =>
+//     await factories[id].setCost(contractId, cost)
+// );
 
-ipcAsyncTask(
-  "setMaxMintAmount",
-  async (id: string, contractId: string, amount: number) =>
-    await factories[id].setMaxMintAmount(contractId, amount)
-);
+// ipcAsyncTask(
+//   "setMaxMintAmount",
+//   async (id: string, contractId: string, amount: number) =>
+//     await factories[id].setMaxMintAmount(contractId, amount)
+// );
 
 ipcAsyncTask(
   "withdraw",
@@ -412,8 +412,8 @@ ipcAsyncTask(
 
 ipcAsyncTask(
   "mintDrop",
-  async (id: string, contractId: string, payable: string, drop: Drop) =>
-    await factories[id].mintDrop(contractId, payable, drop)
+  async (id: string, contractId: string, drop: Drop) =>
+    await factories[id].mintDrop(contractId, drop)
 );
 
 ipcAsyncTask(

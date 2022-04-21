@@ -323,8 +323,8 @@ export const factoryUnify = (
 export const factoryRemove = (id: string, generation: Generation) =>
   ipcTask("factoryRemove")(id, generation);
 
-export const getCost = (id: string, contractId: string) =>
-  ipcTask("getCost")(id, contractId);
+// export const getCost = (id: string, contractId: string) =>
+//   ipcTask("getCost")(id, contractId);
 
 export const getBalanceOf = (id: string, contractId: string, address: string) =>
   ipcTask("getBalanceOf")(id, contractId, address);
@@ -352,14 +352,14 @@ export const getWalletOfOwner = (
   owner: string
 ) => ipcTask("getWalletOfOwner")(id, contractId, owner);
 
-export const setCost = (id: string, contractId: string, cost: string) =>
-  ipcTask("setCost")(id, contractId, cost);
+// export const setCost = (id: string, contractId: string, cost: string) =>
+//   ipcTask("setCost")(id, contractId, cost);
 
-export const setMaxMintAmount = (
-  id: string,
-  contractId: string,
-  amount: number
-) => ipcTask("setMaxMintAmount")(id, contractId, amount);
+// export const setMaxMintAmount = (
+//   id: string,
+//   contractId: string,
+//   amount: number
+// ) => ipcTask("setMaxMintAmount")(id, contractId, amount);
 
 export const withdraw = (id: string, contractId: string) =>
   ipcTask("withdraw")(id, contractId);
@@ -376,9 +376,8 @@ export const reveal = (id: string, contractId: string) =>
 export const mintDrop = (
   id: string,
   contractId: string,
-  payable: string,
   drop: Drop
-) => ipcTask("mintDrop")(id, contractId, payable, drop);
+) => ipcTask("mintDrop")(id, contractId, drop);
 
 export const sellDropBundles = (
   id: string,

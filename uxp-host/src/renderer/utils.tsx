@@ -11,7 +11,9 @@ import {
   Node as FlowNode,
   Edge as FlowEdge,
 } from "react-flow-renderer";
-import { DEFAULT_COST, DEFAULT_MAX_MINT_AMOUNT, NAMESPACE } from "./constants";
+import { 
+  // DEFAULT_COST, 
+  DEFAULT_MAX_MINT_AMOUNT, NAMESPACE } from "./constants";
 import { Configuration, ContractType, Instance } from "./typings";
 
 const spacedNameConfiguration = {
@@ -56,8 +58,8 @@ export const createConfiguration = (): Configuration => ({
   height: 500,
   generateBackground: true,
   defaultBackground: DEFAULT_BACKGROUND,
-  cost: DEFAULT_COST,
-  maxMintAmount: DEFAULT_MAX_MINT_AMOUNT,
+  // cost: DEFAULT_COST,
+  // maxMintAmount: DEFAULT_MAX_MINT_AMOUNT,
   layers: [] as string[],
 });
 

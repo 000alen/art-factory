@@ -55,10 +55,10 @@ export function ConfigurationPage() {
     )
   );
   const [contractType, _setContractType] = useState(configuration.contractType);
-  const [cost, _setCost] = useState(configuration.cost);
-  const [maxMintAmount, _setMaxMintAmount] = useState(
-    configuration.maxMintAmount
-  );
+  // const [cost, _setCost] = useState(configuration.cost);
+  // const [maxMintAmount, _setMaxMintAmount] = useState(
+  //   configuration.maxMintAmount
+  // );
   const [layers, _setLayers] = useState(configuration.layers);
 
   const setter =
@@ -75,8 +75,8 @@ export function ConfigurationPage() {
   const setGenerateBackground = setter(_setGenerateBackground);
   const setDefaultBackground = setter(_setDefaultBackground);
   const setContractType = setter(_setContractType);
-  const setCost = setter(_setCost);
-  const setMaxMintAmount = setter(_setMaxMintAmount);
+  // const setCost = setter(_setCost);
+  // const setMaxMintAmount = setter(_setMaxMintAmount);
   const setLayers = setter(_setLayers);
 
   useEffect(() => {
@@ -111,8 +111,8 @@ export function ConfigurationPage() {
         b: defaultBackground.getChannelValue("blue"),
         a: defaultBackground.getChannelValue("alpha"),
       },
-      cost,
-      maxMintAmount,
+      // cost,
+      // maxMintAmount,
       layers,
     };
 
@@ -163,25 +163,25 @@ export function ConfigurationPage() {
           }}
         />
 
-        {contractType === "721" ? (
+        {/* {contractType === "721" ? (
           <Configuration721
             {...{
-              cost,
-              setCost,
-              maxMintAmount,
-              setMaxMintAmount,
+              // cost,
+              // setCost,
+              // maxMintAmount,
+              // setMaxMintAmount,
             }}
           />
         ) : contractType === "721_reveal_pause" ? (
           <Configuration721_reveal_pause
             {...{
-              cost,
-              setCost,
-              maxMintAmount,
-              setMaxMintAmount,
+              // cost,
+              // setCost,
+              // maxMintAmount,
+              // setMaxMintAmount,
             }}
           />
-        ) : null}
+        ) : null} */}
 
         <ConfigurationLayers
           {...{

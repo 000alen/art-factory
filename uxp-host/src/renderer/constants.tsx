@@ -40,6 +40,6 @@ export const DEFAULT_BACKGROUND = {
   b: 255,
   a: 1,
 };
-export const DEFAULT_COST = 0.05;
+// export const DEFAULT_COST = 0.05;
 export const DEFAULT_MAX_MINT_AMOUNT = 20;
 export const BUILD_DIR_NAME = ".build";

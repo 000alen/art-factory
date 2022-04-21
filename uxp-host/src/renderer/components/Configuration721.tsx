@@ -3,33 +3,33 @@ import React from "react";
 import { Flex, Heading, NumberField } from "@adobe/react-spectrum";
 
 interface Configuration721Props {
-  cost: number;
-  setCost: (cost: number) => void;
-  maxMintAmount: number;
-  setMaxMintAmount: (maxMintAmount: number) => void;
+  // cost: number;
+  // setCost: (cost: number) => void;
+  // maxMintAmount: number;
+  // setMaxMintAmount: (maxMintAmount: number) => void;
 }
 
 export const Configuration721: React.FC<Configuration721Props> = ({
-  cost,
-  setCost,
-  maxMintAmount,
-  setMaxMintAmount,
+  // cost,
+  // setCost,
+  // maxMintAmount,
+  // setMaxMintAmount,
 }) => {
   return (
     <Flex direction="column" gap="size-100">
       <Heading>ERC721 configuration</Heading>
-      <NumberField
+      {/* <NumberField
         label="Cost"
         value={cost}
         onChange={setCost}
         minValue={0.01}
         step={0.01}
-      />
-      <NumberField
+      /> */}
+      {/* <NumberField
         label="Max Mint Amount"
         value={maxMintAmount}
         onChange={setMaxMintAmount}
-      />
+      /> */}
     </Flex>
   );
 };

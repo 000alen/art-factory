@@ -13,13 +13,13 @@ import {
 import { TaskItem } from "./TaskItem";
 import { useErrorHandler } from "./ErrorHandler";
 import {
-  getCost,
+  // getCost,
   mintDrop,
   pause,
   reveal,
-  sellDropItems,
-  setCost,
-  setMaxMintAmount,
+  sellDrop,
+  // setCost,
+  // setMaxMintAmount,
   withdraw,
 } from "../ipc";
 import { OutputItemProps } from "./OutputItem";
@@ -57,44 +57,44 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
   const [dropsItems] = useState(drops.map(({ name }) => ({ name })));
 
-  const onGetMintingCost = task("get minting cost", async () => {
-    setWorking(true);
+  // const onGetMintingCost = task("get minting cost", async () => {
+  //   setWorking(true);
 
-    const cost = await getCost(id, contractId);
-    addOutput({
-      title: "Cost",
-      text: cost.toString(),
-      isCopiable: true,
-    });
+  //   const cost = await getCost(id, contractId);
+  //   addOutput({
+  //     title: "Cost",
+  //     text: cost.toString(),
+  //     isCopiable: true,
+  //   });
 
-    setWorking(false);
-  });
+  //   setWorking(false);
+  // });
 
-  const onSetMintingCost = task("set minting cost", async ({ cost }) => {
-    setWorking(true);
+  // const onSetMintingCost = task("set minting cost", async ({ cost }) => {
+  //   setWorking(true);
 
-    await setCost(id, contractId, cost);
-    addOutput({
-      title: "Cost set",
-      text: cost.toString(),
-      isCopiable: true,
-    });
+  //   await setCost(id, contractId, cost);
+  //   addOutput({
+  //     title: "Cost set",
+  //     text: cost.toString(),
+  //     isCopiable: true,
+  //   });
 
-    setWorking(false);
-  });
+  //   setWorking(false);
+  // });
 
-  const onSetMaxMintAmount = task("set max mint amount", async ({ amount }) => {
-    setWorking(true);
+  // const onSetMaxMintAmount = task("set max mint amount", async ({ amount }) => {
+  //   setWorking(true);
 
-    await setMaxMintAmount(id, contractId, amount);
-    addOutput({
-      title: "Max mint amount set",
-      text: amount.toString(),
-      isCopiable: true,
-    });
+  //   await setMaxMintAmount(id, contractId, amount);
+  //   addOutput({
+  //     title: "Max mint amount set",
+  //     text: amount.toString(),
+  //     isCopiable: true,
+  //   });
 
-    setWorking(false);
-  });
+  //   setWorking(false);
+  // });
 
   const onPause = task("pause", async () => {
     setWorking(true);
@@ -125,7 +125,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const onMintDrop = task("mint drop", async () => {
     setWorking(true);
 
-    await mintDrop(id, contractId, "0.05", dropToMint);
+    await mintDrop(id, contractId, dropToMint);
 
     addOutput({
       title: "Minted",
@@ -140,7 +140,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const onSellDrop = task("sell drop", async () => {
     setWorking(true);
 
-    await sellDropItems(
+    await sellDrop(
       id,
       providerId,
       deployment,
@@ -171,7 +171,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
 
   return (
     <>
-      <TaskItem name="Get minting cost" onRun={onGetMintingCost} />
+      {/* <TaskItem name="Get minting cost" onRun={onGetMintingCost} />
 
       <TaskItem
         name="Set minting cost"
@@ -185,9 +185,9 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
             value: "",
           },
         ]}
-      />
+      /> */}
 
-      <TaskItem
+      {/* <TaskItem
         name="Set max mint amount"
         onRun={onSetMaxMintAmount}
         fields={[
@@ -201,7 +201,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
             value: 0,
           },
         ]}
-      />
+      /> */}
 
       <TaskItem name="Pause" onRun={onPause} />
 

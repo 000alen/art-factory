@@ -34,8 +34,8 @@ export interface Configuration {
   height: number;
   generateBackground: boolean;
   defaultBackground: Color;
-  cost: number;
-  maxMintAmount: number;
+  // cost: number;
+  // maxMintAmount: number;
   layers: string[];
 }
 

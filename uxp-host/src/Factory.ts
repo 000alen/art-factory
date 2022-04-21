@@ -582,9 +582,9 @@ export class Factory {
       this.configuration.name,
       this.configuration.symbol,
       `ipfs://${metadataCid}/`,
-      utils.parseEther(`${this.configuration.cost}`),
-      generation.collection.length,
-      this.configuration.maxMintAmount
+      // utils.parseEther(`${this.configuration.cost}`),
+      generation.collection.length
+      // this.configuration.maxMintAmount
     );
   }
 
@@ -599,9 +599,9 @@ export class Factory {
       this.configuration.symbol,
       `ipfs://${metadataCid}/`,
       `ipfs://${notRevealedImageCid}`,
-      utils.parseEther(`${this.configuration.cost}`),
-      generation.collection.length,
-      this.configuration.maxMintAmount
+      // utils.parseEther(`${this.configuration.cost}`),
+      generation.collection.length
+      // this.configuration.maxMintAmount
     );
   }
 
@@ -1034,11 +1034,11 @@ export class Factory {
   }
 
   // #region 721 & 721_reveal_pause
-  async getCost(contractId: string) {
-    const contract = contracts[contractId];
-    const cost = await contract.cost();
-    return utils.formatUnits(cost.toString(), "ether");
-  }
+  // async getCost(contractId: string) {
+  //   const contract = contracts[contractId];
+  //   const cost = await contract.cost();
+  //   return utils.formatUnits(cost.toString(), "ether");
+  // }
 
   async getBalanceOf(contractId: string, address: string) {
     const contract = contracts[contractId];
@@ -1076,17 +1076,17 @@ export class Factory {
     return wallet;
   }
 
-  async setCost(contractId: string, cost: string) {
-    const contract = contracts[contractId];
-    const tx = await contract.setCost(utils.parseEther(cost));
-    await tx.wait();
-  }
+  // async setCost(contractId: string, cost: string) {
+  //   const contract = contracts[contractId];
+  //   const tx = await contract.setCost(utils.parseEther(cost));
+  //   await tx.wait();
+  // }
 
-  async setMaxMintAmount(contractId: string, amount: number) {
-    const contract = contracts[contractId];
-    const tx = await contract.setMaxMintAmount(amount);
-    await tx.wait();
-  }
+  // async setMaxMintAmount(contractId: string, amount: number) {
+  //   const contract = contracts[contractId];
+  //   const tx = await contract.setMaxMintAmount(amount);
+  //   await tx.wait();
+  // }
 
   async withdraw(contractId: string) {
     const contract = contracts[contractId];
@@ -1115,12 +1115,10 @@ export class Factory {
   }
   // #endregion
 
-  async mintDrop(contractId: string, payable: string, drop: Drop) {
+  async mintDrop(contractId: string, drop: Drop) {
     const contract = contracts[contractId];
     const n = drop.ids.length;
-    const tx = await contract.mint(n, {
-      value: utils.parseEther(payable),
-    });
+    const tx = await contract.mint(n);
     await tx.wait();
   }
 
