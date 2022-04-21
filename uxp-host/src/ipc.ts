@@ -472,10 +472,10 @@ ipcMain.on("createProvider", async (event, id: string) => {
       });
       await provider.enable();
 
-      const { accounts } = payload.params[0];
+      const { accounts: _accounts } = payload.params[0];
 
       providers[id] = provider;
-      accounts[id] = accounts[0];
+      accounts[id] = _accounts[0];
 
       event.reply("createProviderResult", { id, connected: true });
     }

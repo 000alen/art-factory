@@ -15,6 +15,7 @@ import { useErrorHandler } from "./ErrorHandler";
 import {
   getCost,
   mintDrop,
+  sellDrop,
   sellDropItems,
   setCost,
   setMaxMintAmount,
@@ -112,7 +113,7 @@ export const Panel721: React.FC<Panel721Props> = ({
   const onSellDrop = task("sell drop", async () => {
     setWorking(true);
 
-    await sellDropItems(
+    await sellDrop(
       id,
       providerId,
       deployment,
