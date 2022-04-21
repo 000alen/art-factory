@@ -428,6 +428,12 @@ ipcAsyncTask(
     await factories[id].sellDropItems(providerId, deployment, drop)
 );
 
+ipcAsyncTask(
+  "sellDrop",
+  async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
+    await factories[id].sellDrop(providerId, deployment, drop)
+);
+
 // #endregion
 
 // #region Provider

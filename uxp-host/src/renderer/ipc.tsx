@@ -394,6 +394,13 @@ export const sellDropItems = (
   drop: Drop
 ) => ipcTask("sellDropItems")(id, providerId, deployment, drop);
 
+export const sellDrop = (
+  id: string,
+  providerId: string,
+  deployment: Deployment,
+  drop: Drop
+) => ipcTask("sellDrop")(id, providerId, deployment, drop);
+
 // #endregion
 
 // #region Provider

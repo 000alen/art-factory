@@ -240,3 +240,6 @@ export function getBranches(
 
   return savedPaths;
 }
+
+export const arrayDifference = <T>(a: T[], b: T[]): T[] =>
+  a.filter((x) => !b.includes(x));

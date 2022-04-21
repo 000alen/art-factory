@@ -38,6 +38,7 @@ import {
   replaceAll,
   restrictImage,
   getBranches,
+  arrayDifference,
 } from "./utils";
 
 export class Factory {
@@ -1138,6 +1139,7 @@ export class Factory {
       networkName: Network.Rinkeby,
     });
 
+    const publishedIds = [];
     for (const bundleName of drop.bundles) {
       const bundle = bundles.find((bundle) => bundle.name === bundleName);
 
@@ -1153,11 +1155,20 @@ export class Factory {
           accountAddress: accounts[providerId],
           startAmount: bundle.price,
         });
+
+        publishedIds.push(..._ids);
       }
     }
+
+    return publishedIds;
   }
 
-  async sellDropItems(providerId: string, deployment: Deployment, drop: Drop) {
+  async sellDropItems(
+    providerId: string,
+    deployment: Deployment,
+    drop: Drop,
+    publishedIds: string[] = []
+  ) {
     // @ts-ignore
     const web3 = new Web3(providers[providerId]);
 
@@ -1168,7 +1179,7 @@ export class Factory {
       networkName: Network.Rinkeby,
     });
 
-    for (const id of drop.ids) {
+    for (const id of arrayDifference(drop.ids, publishedIds)) {
       const item = collection.find((item) => item.name === id);
 
       const asset = {
@@ -1182,5 +1193,14 @@ export class Factory {
         startAmount: item.price,
       });
     }
+  }
+
+  async sellDrop(providerId: string, deployment: Deployment, drop: Drop) {
+    const publishedIds = await this.sellDropBundles(
+      providerId,
+      deployment,
+      drop
+    );
+    await this.sellDropItems(providerId, deployment, drop, publishedIds);
   }
 }
