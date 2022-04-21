@@ -9,6 +9,8 @@ import {
   Menu,
   MenuTrigger,
   NumberField,
+  Radio,
+  RadioGroup,
   Text,
   TextField,
 } from "@adobe/react-spectrum";
@@ -96,7 +98,9 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
       }));
 
     return (
-      <Flex key={i} direction="column" gap="size-100">
+      <Flex
+        UNSAFE_className="w-48"
+      key={i} direction="column" gap="size-100">
         <ImageItem src={composedUrl} maxSize={192} />
         <Flex gap="size-100">
           <MenuTrigger>
@@ -138,7 +142,8 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
 
   return (
     <Flex direction="column" gap="size-100">
-      <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all">
+      {/* <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all"> */}
+      <div className="p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all">
         <TextField
           width="100%"
           aria-label="Name"
@@ -147,9 +152,8 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
         />
       </div>
 
-      <div className="w-48 p-3 border-1 border-solid border-white rounded">
-        <Heading>{data.name}</Heading>
-
+      {/* <div className="w-48 p-3 border-1 border-solid border-white rounded"> */}
+      <div className="p-3 border-1 border-solid border-white rounded">
         <Flex direction="column" gap="size-300">
           {data.ids === null ? (
             <div className="h-48 flex justify-center items-center">
@@ -157,18 +161,40 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
             </div>
           ) : (
             <>
+              <Flex direction="row" gap="size-300">
+                {data.ids.map(renderItem)}
+              </Flex>
+
+              <Heading>{data.name}</Heading>
+
+              <RadioGroup label="Sale type">
+                <Radio value="static">Static price</Radio>
+                <Radio value="dutch">Dutch auction</Radio>
+                <Radio value="english">English auction</Radio>
+              </RadioGroup>
+
               <NumberField
-                width="100%"
+                // width="100%"
                 step={0.01}
                 minValue={0}
                 value={data.price}
                 onChange={(value: number) =>
                   data.onChangeBundlePrice(id, value)
                 }
-                label="Price"
+                label="Starting price"
               />
 
-              {data.ids.map(renderItem)}
+              <NumberField
+                // width="100%"
+                // step={0.01}
+                // minValue={0}
+                // value={data.price}
+                // onChange={(value: number) =>
+                //   data.onChangeBundlePrice(id, value)
+                // }
+                label="Ending price"
+              />
+
               <Flex direction="row-reverse">
                 <ActionButton
                   onPress={() =>

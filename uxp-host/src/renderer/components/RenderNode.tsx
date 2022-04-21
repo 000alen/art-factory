@@ -9,12 +9,15 @@ import {
 
 import {
   ActionButton,
+  Divider,
   Flex,
   Heading,
   Item,
   Menu,
   MenuTrigger,
   NumberField,
+  Radio,
+  RadioGroup,
   Text,
 } from "@adobe/react-spectrum";
 import Refresh from "@spectrum-icons/workflow/Refresh";
@@ -125,33 +128,52 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     return data.ignored.includes(key) ? (
       <></>
     ) : (
-      <Flex key={i} direction="column" gap="size-100">
-        <ImageItem src={composedUrl}>
-          <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
-        </ImageItem>
-        <Heading>{renderId}</Heading>
-        <NumberField
-          width="100%"
-          step={0.01}
-          minValue={0}
-          value={price}
-          onChange={(value: number) => data.updatePrices(nTraits[i], value)}
-          label="Price"
-        />
-        <Flex gap="size-100" alignItems="end">
+      <>
+        <Flex UNSAFE_className="w-48" key={i} direction="column" gap="size-100">
+          <ImageItem src={composedUrl}>
+            <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
+          </ImageItem>
+          <Heading>{renderId}</Heading>
+
+          <RadioGroup label="Sale type">
+            <Radio value="static">Static price</Radio>
+            <Radio value="dutch">Dutch auction</Radio>
+            <Radio value="english">English auction</Radio>
+          </RadioGroup>
+
           <NumberField
             width="100%"
-            minValue={1}
-            maxValue={maxNs}
-            value={n}
-            onChange={(value: number) => data.updateNs(nTraits[i], value)}
-            label={`N (max: ${maxNs})`}
+            step={0.01}
+            minValue={0}
+            value={price}
+            onChange={(value: number) => data.updatePrices(nTraits[i], value)}
+            label="Starting price"
           />
-          <ActionButton onPress={() => data.updateIgnored(nTraits[i], true)}>
-            <Remove />
-          </ActionButton>
+          <NumberField
+            width="100%"
+            // step={0.01}
+            // minValue={0}
+            // value={price}
+            // onChange={(value: number) => data.updatePrices(nTraits[i], value)}
+            label="Ending price"
+          />
+
+          <Flex gap="size-100" alignItems="end">
+            <NumberField
+              width="100%"
+              minValue={1}
+              maxValue={maxNs}
+              value={n}
+              onChange={(value: number) => data.updateNs(nTraits[i], value)}
+              label={`N (max: ${maxNs})`}
+            />
+            <ActionButton onPress={() => data.updateIgnored(nTraits[i], true)}>
+              <Remove />
+            </ActionButton>
+          </Flex>
         </Flex>
-      </Flex>
+        {i !== nTraits.length - 1 && <Divider orientation="vertical" />}
+      </>
     );
   };
 
@@ -165,7 +187,8 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
 
   return (
     <Flex direction="column" gap="size-100">
-      <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
+      {/* <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all"> */}
+      <div className="p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
         <MenuTrigger>
           <ActionButton width="100%">Hidden</ActionButton>
           <Menu
@@ -181,19 +204,22 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
         </MenuTrigger>
       </div>
 
-      <div className="relative w-48 p-3 border-1 border-solid border-white rounded">
+      {/* <div className="relative w-48 p-3 border-1 border-solid border-white rounded"> */}
+      <div className="relative p-3 border-1 border-solid border-white rounded">
         <Handle
-          className="w-4 h-4 left-0 translate-x-[-50%] translate-y-[-50%]"
+          className="!w-4 !h-4 !left-0 !translate-x-[-50%] !translate-y-[-50%]"
           id="renderIn"
           type="target"
           position={Position.Left}
         />
 
-        <Flex direction="column" gap="size-300">
+        {/* <Flex direction="column" gap="size-300"> */}
+        <Flex direction="row" gap="size-300">
           {visibleKeys.length > 0 ? (
             keys.map(renderItem)
           ) : (
-            <div className="h-48 flex justify-center items-center">
+            // <div className="h-48 flex justify-center items-center">
+            <div className="w-48 h-48 flex justify-center items-center">
               <Text>Nothing to render yet</Text>
             </div>
           )}
