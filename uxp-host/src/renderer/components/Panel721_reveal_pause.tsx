@@ -1,42 +1,63 @@
-import React from "react";
+import React, { useState } from "react";
 
-import { Flex } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Heading,
+  View,
+  Text,
+  MenuTrigger,
+  Menu,
+  Item,
+} from "@adobe/react-spectrum";
 import { TaskItem } from "./TaskItem";
 import { useErrorHandler } from "./ErrorHandler";
 import {
-  getBalanceOf,
   getCost,
-  getTokenOfOwnerByIndex,
-  getTokenUri,
-  mint,
+  mintDrop,
   pause,
   reveal,
-  setBaseUri,
+  sellDropItems,
   setCost,
   setMaxMintAmount,
   withdraw,
 } from "../ipc";
 import { OutputItemProps } from "./OutputItem";
 import { Deployment } from "../typings";
+import Play from "@spectrum-icons/workflow/Play";
 
 interface Panel721_reveal_pauseProps {
   deployment: Deployment;
   id: string;
+  providerId: string;
   contractId: string;
   setWorking: (working: boolean) => void;
   addOutput: (output: OutputItemProps) => void;
+  increaseDropNumber: () => void;
 }
 
 export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   deployment,
   id,
+  providerId,
   contractId,
   setWorking,
   addOutput,
+  increaseDropNumber,
 }) => {
   const task = useErrorHandler();
 
-  const onMintingCost = task("cost", async () => {
+  const { dropNumber, generation } = deployment;
+  const { drops } = generation;
+
+  const [dropToMint, setDropToMint] = useState(
+    dropNumber < drops.length ? drops[dropNumber] : null
+  );
+
+  const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
+  const [dropsItems] = useState(drops.map(({ name }) => ({ name })));
+
+  const onGetMintingCost = task("get minting cost", async () => {
     setWorking(true);
 
     const cost = await getCost(id, contractId);
@@ -49,67 +70,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     setWorking(false);
   });
 
-  const onBalanceOf = task("balance of", async ({ address }) => {
-    setWorking(true);
-
-    const balance = await getBalanceOf(id, contractId, address);
-    addOutput({
-      title: "Balance",
-      text: balance.toString(),
-      isCopiable: true,
-    });
-
-    setWorking(false);
-  });
-
-  const onTokenOfOwnerByIndex = task(
-    "token of owner by index",
-    async ({ address, index }) => {
-      setWorking(true);
-
-      const token = await getTokenOfOwnerByIndex(
-        id,
-        contractId,
-        address,
-        index
-      );
-      addOutput({
-        title: "Token of Owner by Index",
-        text: token.toString(),
-        isCopiable: true,
-      });
-
-      setWorking(false);
-    }
-  );
-
-  const onTokenUri = task("token uri", async ({ index }) => {
-    setWorking(true);
-
-    const tokenUri = await getTokenUri(id, contractId, index);
-    addOutput({
-      title: "Token URI",
-      text: tokenUri.toString(),
-      isCopiable: true,
-    });
-
-    setWorking(false);
-  });
-
-  const onMint = task("mint", async ({ payable, mint: _mint }) => {
-    setWorking(true);
-
-    await mint(id, contractId, payable, _mint);
-    addOutput({
-      title: "Minted",
-      text: _mint.toString(),
-      isCopiable: true,
-    });
-
-    setWorking(false);
-  });
-
-  const onSetMintingCost = task("set cost", async ({ cost }) => {
+  const onSetMintingCost = task("set minting cost", async ({ cost }) => {
     setWorking(true);
 
     await setCost(id, contractId, cost);
@@ -134,10 +95,6 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
 
     setWorking(false);
   });
-
-  const onMintDrop = task("mint drop", async () => {});
-
-  const onSellDrop = task("sell drop", async () => {});
 
   const onPause = task("pause", async () => {
     setWorking(true);
@@ -165,6 +122,40 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     setWorking(false);
   });
 
+  const onMintDrop = task("mint drop", async () => {
+    setWorking(true);
+
+    await mintDrop(id, contractId, "0.05", dropToMint);
+
+    addOutput({
+      title: "Minted",
+      text: "",
+      isCopiable: true,
+    });
+
+    increaseDropNumber();
+    setWorking(false);
+  });
+
+  const onSellDrop = task("sell drop", async () => {
+    setWorking(true);
+
+    await sellDropItems(
+      id,
+      providerId,
+      deployment,
+      drops.find(({ name }) => name === dropNameToSell)
+    );
+
+    addOutput({
+      title: "Listed",
+      text: "",
+      isCopiable: true,
+    });
+
+    setWorking(false);
+  });
+
   const onWithdraw = task("withdraw", async () => {
     setWorking(true);
 
@@ -180,20 +171,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
 
   return (
     <>
-      <TaskItem name="Get minting cost" onRun={onMintingCost} />
-
-      <TaskItem
-        name="Balance of"
-        onRun={onBalanceOf}
-        fields={[
-          {
-            key: "address",
-            type: "address",
-            label: "Address",
-            value: "",
-          },
-        ]}
-      />
+      <TaskItem name="Get minting cost" onRun={onGetMintingCost} />
 
       <TaskItem
         name="Set minting cost"
@@ -229,9 +207,61 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
 
       <TaskItem name="Reveal" onRun={onReveal} />
 
-      <TaskItem name="Mint drop" onRun={onMintDrop} />
+      <View
+        borderWidth="thin"
+        borderColor="dark"
+        borderRadius="medium"
+        padding="size-100"
+      >
+        <Flex direction="column" gap="size-100">
+          <Flex
+            gap="size-100"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Heading>Mint drop</Heading>
+            <ActionButton onPress={onMintDrop} isDisabled={!dropToMint}>
+              <Play />
+            </ActionButton>
+          </Flex>
+          {dropToMint && <Text>{dropToMint.name}</Text>}
+        </Flex>
+      </View>
 
-      <TaskItem name="Sell drop" onRun={onSellDrop} />
+      <View
+        borderWidth="thin"
+        borderColor="dark"
+        borderRadius="medium"
+        padding="size-100"
+      >
+        <Flex direction="column" gap="size-100">
+          <Flex
+            gap="size-100"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Heading>Sell drop</Heading>
+            <ActionButton onPress={onSellDrop}>
+              <Play />
+            </ActionButton>
+          </Flex>
+          <MenuTrigger>
+            <ActionButton width="100%">{dropNameToSell}</ActionButton>
+            <Menu
+              items={dropsItems}
+              selectionMode="single"
+              disallowEmptySelection={true}
+              selectedKeys={[dropNameToSell]}
+              onSelectionChange={(selectedKeys) => {
+                const selectedKey = [...selectedKeys].shift() as string;
+                setDropNameToSell(selectedKey);
+              }}
+            >
+              {({ name }) => <Item key={name}>{name}</Item>}
+            </Menu>
+          </MenuTrigger>
+        </Flex>
+      </View>
 
       <TaskItem name="Withdraw" onRun={onWithdraw} />
     </>

@@ -380,12 +380,19 @@ export const mintDrop = (
   drop: Drop
 ) => ipcTask("mintDrop")(id, contractId, payable, drop);
 
-export const sellDrop = (
+export const sellDropBundles = (
   id: string,
   providerId: string,
   deployment: Deployment,
   drop: Drop
-) => ipcTask("sellDrop")(id, providerId, deployment, drop);
+) => ipcTask("sellDropBundles")(id, providerId, deployment, drop);
+
+export const sellDropItems = (
+  id: string,
+  providerId: string,
+  deployment: Deployment,
+  drop: Drop
+) => ipcTask("sellDropItems")(id, providerId, deployment, drop);
 
 // #endregion
 

@@ -417,15 +417,22 @@ ipcAsyncTask(
 );
 
 ipcAsyncTask(
-  "sellDrop",
+  "sellDropBundles",
   async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
-    await factories[id].sellDrop(providerId, deployment, drop)
+    await factories[id].sellDropBundles(providerId, deployment, drop)
+);
+
+ipcAsyncTask(
+  "sellDropItems",
+  async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
+    await factories[id].sellDropItems(providerId, deployment, drop)
 );
 
 // #endregion
 
 // #region Provider
 export const providers: Record<string, WalletConnectProvider> = {};
+export const accounts: Record<string, string> = {};
 
 /*
 -> createProvider
@@ -458,7 +465,11 @@ ipcMain.on("createProvider", async (event, id: string) => {
         chainId: 4,
       });
       await provider.enable();
+
+      const { accounts } = payload.params[0];
+
       providers[id] = provider;
+      accounts[id] = accounts[0];
 
       event.reply("createProviderResult", { id, connected: true });
     }

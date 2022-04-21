@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 
-import { ActionButton, Flex, Heading, View, Text } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Heading,
+  View,
+  Text,
+  MenuTrigger,
+  Menu,
+  Item,
+} from "@adobe/react-spectrum";
 import { TaskItem } from "./TaskItem";
 import { useErrorHandler } from "./ErrorHandler";
 import {
-  getBalanceOf,
   getCost,
-  getTokenOfOwnerByIndex,
-  getTokenUri,
-  mint,
   mintDrop,
-  pause,
-  reveal,
-  sellDrop,
-  setBaseUri,
+  sellDropItems,
   setCost,
   setMaxMintAmount,
   withdraw,
@@ -45,9 +47,13 @@ export const Panel721: React.FC<Panel721Props> = ({
 
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
+
   const [dropToMint, setDropToMint] = useState(
     dropNumber < drops.length ? drops[dropNumber] : null
   );
+
+  const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
+  const [dropsItems] = useState(drops.map(({ name }) => ({ name })));
 
   const onGetMintingCost = task("get minting cost", async () => {
     setWorking(true);
@@ -106,7 +112,12 @@ export const Panel721: React.FC<Panel721Props> = ({
   const onSellDrop = task("sell drop", async () => {
     setWorking(true);
 
-    await sellDrop(id, providerId, deployment, deployment.generation.drops[0]);
+    await sellDropItems(
+      id,
+      providerId,
+      deployment,
+      drops.find(({ name }) => name === dropNameToSell)
+    );
 
     addOutput({
       title: "Listed",
@@ -114,7 +125,6 @@ export const Panel721: React.FC<Panel721Props> = ({
       isCopiable: true,
     });
 
-    // increaseDropNumber();
     setWorking(false);
   });
 
@@ -178,7 +188,7 @@ export const Panel721: React.FC<Panel721Props> = ({
             justifyContent="space-between"
           >
             <Heading>Mint drop</Heading>
-            <ActionButton onPress={onMintDrop}>
+            <ActionButton onPress={onMintDrop} isDisabled={!dropToMint}>
               <Play />
             </ActionButton>
           </Flex>
@@ -203,6 +213,21 @@ export const Panel721: React.FC<Panel721Props> = ({
               <Play />
             </ActionButton>
           </Flex>
+          <MenuTrigger>
+            <ActionButton width="100%">{dropNameToSell}</ActionButton>
+            <Menu
+              items={dropsItems}
+              selectionMode="single"
+              disallowEmptySelection={true}
+              selectedKeys={[dropNameToSell]}
+              onSelectionChange={(selectedKeys) => {
+                const selectedKey = [...selectedKeys].shift() as string;
+                setDropNameToSell(selectedKey);
+              }}
+            >
+              {({ name }) => <Item key={name}>{name}</Item>}
+            </Menu>
+          </MenuTrigger>
         </Flex>
       </View>
 

@@ -9,7 +9,7 @@ import { v4 as uuid } from "uuid";
 import Web3 from "web3";
 
 import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
-import { contracts, providers } from "./ipc";
+import { accounts, contracts, providers } from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -1123,23 +1123,63 @@ export class Factory {
     await tx.wait();
   }
 
-  async sellDrop(providerId: string, deployment: Deployment, drop: Drop) {
+  async sellDropBundles(
+    providerId: string,
+    deployment: Deployment,
+    drop: Drop
+  ) {
     // @ts-ignore
     const web3 = new Web3(providers[providerId]);
 
+    const { generation, contractAddress } = deployment;
+    const { bundles } = generation;
+
+    const seaport = new OpenSeaPort(web3.currentProvider, {
+      networkName: Network.Rinkeby,
+    });
+
+    for (const bundleName of drop.bundles) {
+      const bundle = bundles.find((bundle) => bundle.name === bundleName);
+
+      for (const _ids of bundle.ids) {
+        const assets = _ids.map((id) => ({
+          tokenId: id,
+          tokenAddress: contractAddress,
+        }));
+
+        await seaport.createBundleSellOrder({
+          assets,
+          bundleName,
+          accountAddress: accounts[providerId],
+          startAmount: bundle.price,
+        });
+      }
+    }
+  }
+
+  async sellDropItems(providerId: string, deployment: Deployment, drop: Drop) {
     // @ts-ignore
+    const web3 = new Web3(providers[providerId]);
+
+    const { generation, contractAddress } = deployment;
+    const { collection } = generation;
+
     const seaport = new OpenSeaPort(web3.currentProvider, {
       networkName: Network.Rinkeby,
     });
 
     for (const id of drop.ids) {
+      const item = collection.find((item) => item.name === id);
+
+      const asset = {
+        tokenId: id,
+        tokenAddress: contractAddress,
+      };
+
       await seaport.createSellOrder({
-        asset: {
-          tokenId: id,
-          tokenAddress: deployment.contractAddress,
-        },
-        accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
-        startAmount: 3,
+        asset,
+        accountAddress: accounts[providerId],
+        startAmount: item.price,
       });
     }
   }

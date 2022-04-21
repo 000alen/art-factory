@@ -55,7 +55,8 @@ const sendWhitelist = [
   "reveal",
 
   "mintDrop",
-  "sellDrop",
+  "sellDropBundles",
+  "sellDropItems",
 
   "createProvider",
   "createProviderUri",
@@ -120,7 +121,8 @@ const onWhitelist = [
   "revealResult",
 
   "mintDropResult",
-  "sellDropResult",
+  "sellDropBundlesResult",
+  "sellDropItemsResult",
 
   "createProvider",
   "createProviderUri",
