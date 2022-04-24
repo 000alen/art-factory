@@ -1,7 +1,6 @@
 import { ContractFactory, providers as ethersProviders, utils } from "ethers";
 import fs from "fs";
 import imageSize from "image-size";
-import { Network, OpenSeaPort } from "./opensea";
 import path from "path";
 import { Node as FlowNode } from "react-flow-renderer";
 import sharp, { Blend } from "sharp";
@@ -10,35 +9,14 @@ import Web3 from "web3";
 
 import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
 import { accounts, contracts, providerEngines, providers } from "./ipc";
+import { Network, OpenSeaPort } from "./opensea";
 import {
-  Bundles,
-  BundlesInfo,
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  Secrets,
-  Template,
-  Trait,
+    Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
+    Layer, MetadataItem, Secrets, Template, Trait
 } from "./typings";
 import {
-  append,
-  choose,
-  getContract,
-  hash,
-  pinDirectoryToIPFS,
-  pinFileToIPFS,
-  rarity,
-  readDir,
-  removeRarity,
-  replaceAll,
-  restrictImage,
-  getBranches,
-  arrayDifference,
+    append, arrayDifference, choose, getBranches, getContract, hash, pinDirectoryToIPFS,
+    pinFileToIPFS, rarity, readDir, removeRarity, replaceAll, restrictImage
 } from "./utils";
 
 export class Factory {
@@ -602,9 +580,7 @@ export class Factory {
       this.configuration.name,
       this.configuration.symbol,
       `ipfs://${metadataCid}/`,
-      // utils.parseEther(`${this.configuration.cost}`),
       generation.collection.length
-      // this.configuration.maxMintAmount
     );
   }
 
@@ -619,9 +595,7 @@ export class Factory {
       this.configuration.symbol,
       `ipfs://${metadataCid}/`,
       `ipfs://${notRevealedImageCid}`,
-      // utils.parseEther(`${this.configuration.cost}`),
       generation.collection.length
-      // this.configuration.maxMintAmount
     );
   }
 

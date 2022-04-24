@@ -17,20 +17,8 @@ declare global {
 import { v4 as uuid } from "uuid";
 
 import {
-  Bundles,
-  BundlesInfo,
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Instance,
-  Layer,
-  MetadataItem,
-  Secrets,
-  Template,
-  Trait,
+    Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
+    Instance, Layer, MetadataItem, Secrets, Template, Trait
 } from "./typings";
 import { capitalize } from "./utils";
 

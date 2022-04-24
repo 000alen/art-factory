@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Heading, View, ProgressCircle, Flex } from "@adobe/react-spectrum";
+import { Flex, Heading, ProgressCircle, View } from "@adobe/react-spectrum";
 
 interface LoadingProps {
   title: string;

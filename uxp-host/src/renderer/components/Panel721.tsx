@@ -1,23 +1,16 @@
 import React, { useState } from "react";
+import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  View,
-  Text,
-  MenuTrigger,
-  Menu,
-  Item,
-  TextField,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, Text, TextField, View
 } from "@adobe/react-spectrum";
-import { TaskItem } from "./TaskItem";
-import { useErrorHandler } from "./ErrorHandler";
-import { createProviderWithKey, mintDrop, sellDrop, withdraw } from "../ipc";
-import { OutputItemProps } from "./OutputItem";
-import { Deployment } from "../typings";
 import Play from "@spectrum-icons/workflow/Play";
-import { v4 as uuid } from "uuid";
+
+import { createProviderWithKey, mintDrop, sellDrop, withdraw } from "../ipc";
+import { Deployment } from "../typings";
+import { useErrorHandler } from "./ErrorHandler";
+import { OutputItemProps } from "./OutputItem";
+import { TaskItem } from "./TaskItem";
 
 interface Panel721Props {
   deployment: Deployment;

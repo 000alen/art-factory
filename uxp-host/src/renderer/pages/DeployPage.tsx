@@ -1,33 +1,24 @@
+import moment from "moment";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  TextField,
-  Text,
+    ActionButton, Button, ButtonGroup, Flex, Heading, Item, Menu, MenuTrigger, Text, TextField
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import More from "@spectrum-icons/workflow/More";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
+import { getGenerationPreview } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
+import { Preview } from "../components/Preview";
 import { ToolbarContext } from "../components/Toolbar";
+import { TriStateButton } from "../components/TriStateButton";
 import { Networks } from "../constants";
 import { createProvider, factoryDeploy, factoryGetImage } from "../ipc";
 import { Deployment, Instance, Network } from "../typings";
-import { getGenerationPreview } from "../commands";
-import { TriStateButton } from "../components/TriStateButton";
-import moment from "moment";
-import { Preview } from "../components/Preview";
 
 interface DeployPageState {
   projectDir: string;

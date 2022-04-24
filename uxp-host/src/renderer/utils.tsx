@@ -1,20 +1,11 @@
-import { DEFAULT_BACKGROUND } from "./constants";
-import {
-  adjectives,
-  animals,
-  colors,
-  uniqueNamesGenerator,
-} from "unique-names-generator";
+import { Edge as FlowEdge, getOutgoers, Node as FlowNode } from "react-flow-renderer";
+import { adjectives, animals, colors, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuid, v5 as uuidv5 } from "uuid";
+
 import {
-  getOutgoers,
-  Node as FlowNode,
-  Edge as FlowEdge,
-} from "react-flow-renderer";
-import { 
-  // DEFAULT_COST, 
-  DEFAULT_MAX_MINT_AMOUNT, NAMESPACE } from "./constants";
-import { Configuration, ContractType, Instance } from "./typings";
+    DEFAULT_BACKGROUND, DEFAULT_MAX_MINT_AMOUNT, NAMESPACE, RARITY_DELIMITER
+} from "./constants";
+import { Configuration, ContractType, Instance, SourceItem } from "./typings";
 
 const spacedNameConfiguration = {
   dictionaries: [colors, adjectives, animals],
@@ -27,6 +18,16 @@ const dashedNameConfiguration = {
   separator: "-",
   length: 2,
 };
+
+export function rarity(elementName: string) {
+  let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
+  if (isNaN(rarity)) rarity = 1;
+  return rarity;
+}
+
+export function removeRarity(elementName: string) {
+  return elementName.split(RARITY_DELIMITER).shift();
+}
 
 export const spacedName = () => uniqueNamesGenerator(spacedNameConfiguration);
 
@@ -58,8 +59,6 @@ export const createConfiguration = (): Configuration => ({
   height: 500,
   generateBackground: true,
   defaultBackground: DEFAULT_BACKGROUND,
-  // cost: DEFAULT_COST,
-  // maxMintAmount: DEFAULT_MAX_MINT_AMOUNT,
   layers: [] as string[],
 });
 
@@ -68,6 +67,7 @@ export const createInstance = (): Instance => ({
   configuration: createConfiguration(),
   templates: [],
   generations: [],
+  sources: [],
 });
 
 export function getBranches(
@@ -105,3 +105,15 @@ export function getBranches(
 
   return savedPaths;
 }
+
+export const makeSource = (
+  name: string,
+  partialItems: Partial<SourceItem>[]
+) => ({
+  name,
+  items: partialItems.map(({ name, photoshopTraitLayer }) => ({
+    photoshopTraitLayer,
+    name,
+    value: removeRarity(photoshopTraitLayer),
+  })),
+});

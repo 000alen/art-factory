@@ -1,39 +1,26 @@
 import { dialog, ipcMain, shell } from "electron";
+import { Contract, providers as ethersProviders } from "ethers";
 import fs from "fs";
 import path from "path";
+import Web3ProviderEngine from "web3-provider-engine";
+import RPCSubprovider from "web3-provider-engine/subproviders/rpc";
 
+import { PrivateKeyWalletSubprovider } from "@0x/subproviders";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
+import { BUILD_DIR_NAME } from "./constants";
 import { Factory } from "./Factory";
 import {
-  getEtherscanApiKey,
-  getInfuraProjectId,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setEtherscanApiKey,
-  setInfuraProjectId,
-  setPinataApiKey,
-  setPinataSecretApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getPinataApiKey, getPinataSecretApiKey,
+    setEtherscanApiKey, setInfuraProjectId, setPinataApiKey, setPinataSecretApiKey
 } from "./store";
 import {
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  Template,
-  Trait,
+    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
+    Template, Trait
 } from "./typings";
 import { capitalize, layersNames } from "./utils";
-import { BUILD_DIR_NAME } from "./constants";
-import { Contract, providers as ethersProviders } from "ethers";
-import { PrivateKeyWalletSubprovider } from "@0x/subproviders";
-import RPCSubprovider from "web3-provider-engine/subproviders/rpc";
-import Web3ProviderEngine from "web3-provider-engine";
+
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
   ipcMain.on(task, (event, ...args) => {

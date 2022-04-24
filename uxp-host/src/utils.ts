@@ -3,6 +3,7 @@ import FormData from "form-data";
 import fs from "fs";
 import imageSize from "image-size";
 import path from "path";
+import { Edge as FlowEdge, getOutgoers, Node as FlowNode } from "react-flow-renderer";
 import sharp from "sharp";
 import solc from "solc";
 import { v5 as uuidv5 } from "uuid";
@@ -31,11 +32,8 @@ export function layersNames(inputDir: string) {
 export const capitalize = (string: string) =>
   string.charAt(0).toUpperCase() + string.slice(1);
 
-export async function readDir(dir: string): Promise<string[]> {
-  return (await fs.promises.readdir(dir)).filter(
-    (file) => !file.startsWith(".")
-  );
-}
+export const readDir = async (dir: string): Promise<string[]> =>
+  (await fs.promises.readdir(dir)).filter((file) => !file.startsWith("."));
 
 export function choose(
   traits: Trait[],
@@ -198,12 +196,6 @@ export async function getContractSource(name) {
     encoding: "utf8",
   });
 }
-
-import {
-  Edge as FlowEdge,
-  getOutgoers,
-  Node as FlowNode,
-} from "react-flow-renderer";
 
 export function getBranches(
   nodes: FlowNode[],

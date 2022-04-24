@@ -7,13 +7,13 @@ import Back from "@spectrum-icons/workflow/Back";
 import Close from "@spectrum-icons/workflow/Close";
 
 import { Configuration721 } from "../components/Configuration721";
+import { Configuration721_reveal_pause } from "../components/Configuration721_reveal_pause";
 import { ConfigurationBase } from "../components/ConfigurationBase";
 import { ConfigurationLayers } from "../components/ConfigurationLayers";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { readProjectAvailableLayers } from "../ipc";
 import { Configuration, Instance } from "../typings";
-import { Configuration721_reveal_pause } from "../components/Configuration721_reveal_pause";
 
 interface ConfigurationPageState {
   projectDir: string;

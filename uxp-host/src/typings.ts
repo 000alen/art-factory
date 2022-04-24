@@ -34,8 +34,6 @@ export interface Configuration {
   height: number;
   generateBackground: boolean;
   defaultBackground: Color;
-  // cost: number;
-  // maxMintAmount: number;
   layers: string[];
 }
 
@@ -134,10 +132,22 @@ export interface Deployment {
   dropNumber: number;
 }
 
+export interface SourceItem {
+  photoshopTraitLayer: string;
+  name: string;
+  value: string;
+}
+
+export interface Source {
+  name: string;
+  items: SourceItem[];
+}
+
 export interface Instance {
   frozen: boolean;
   configuration: Configuration;
   templates: Template[];
   generations: Generation[];
   deployment?: Deployment;
+  sources: Source[];
 }

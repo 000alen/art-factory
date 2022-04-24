@@ -1,14 +1,7 @@
 import React from "react";
 
 import {
-  Button,
-  ButtonGroup,
-  Content,
-  ContextualHelp,
-  Flex,
-  Heading,
-  ProgressBar,
-  Text,
+    Button, ButtonGroup, Content, ContextualHelp, Flex, Heading, ProgressBar, Text
 } from "@adobe/react-spectrum";
 
 interface TriStateButtonProps {

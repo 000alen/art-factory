@@ -1,24 +1,12 @@
 import React from "react";
 import { PanelController } from "./controllers/PanelController";
-import { CommandController } from "./controllers/CommandController";
-import { About } from "./components/About";
 import { FactoryPanel } from "./panels/FactoryPanel";
 import { socket, SocketContext } from "./components/SocketContext";
 import { entrypoints } from "uxp";
 import { UXPContextProvider } from "./components/UXPContext";
-import "./uxpActions";
 import "./css/index.css";
 
 localStorage.clear();
-
-export const aboutController = new CommandController(
-  ({ dialog }) => <About dialog={dialog} />,
-  {
-    id: "showAbout",
-    title: "Art Factory",
-    size: { width: 480, height: 480 },
-  }
-);
 
 export const factoryController = new PanelController(
   () => (
@@ -50,9 +38,6 @@ export const factoryController = new PanelController(
 );
 
 entrypoints.setup({
-  commands: {
-    showAbout: aboutController,
-  },
   panels: {
     factory: factoryController,
   },

@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-import { Trait } from "../typings";
 import { SocketContext } from "./SocketContext";
+
+export interface Layer {
+  document: string;
+  photoshopTraitLayer: string;
+  name: string;
+  value: string;
+}
 
 interface UXPContextValue {
   connectionStatus: boolean;
@@ -11,56 +17,54 @@ interface UXPContextValue {
     width,
     height,
     name,
-    traits,
+    generation,
+    layers,
   }: {
     width: number;
     height: number;
     name: string;
-    traits: Trait[];
+    generation: string;
+    layers: Layer[];
   }) => void;
 }
 
-export const UXPContext = createContext<UXPContextValue>({
-  connectionStatus: false,
-  on: (channel: string, callback: (...args: any[]) => void) => {},
-  off: (channel: string, callback: (...args: any[]) => void) => {},
-  hostEdit: ({ name, traits }: { name: string; traits: Trait[] }) => {},
-});
+export const UXPContext = createContext<UXPContextValue>(null);
 
 export const UXPContextProvider: React.FC = ({ children }) => {
   const socket = useContext(SocketContext);
   const [connectionStatus, setConnectionStatus] = useState(false);
 
   useEffect(() => {
-    socket.on("uxp-connected", (isUXPConnected: boolean) => {
-      setConnectionStatus(isUXPConnected);
-    });
+    socket.on("uxp-connected", (connected: boolean) =>
+      setConnectionStatus(connected)
+    );
   }, [socket]);
 
-  const on = (channel: string, callback: (...args: any[]) => void) => {
+  const on = (channel: string, callback: (...args: any[]) => void) =>
     socket.on(channel, callback);
-  };
 
-  const off = (channel: string, callback: (...args: any[]) => void) => {
+  const off = (channel: string, callback: (...args: any[]) => void) =>
     socket.off(channel, callback);
-  };
 
   const hostEdit = ({
     width,
     height,
     name,
-    traits,
+    generation,
+    layers,
   }: {
     width: number;
     height: number;
     name: string;
-    traits: Trait[];
+    generation: string;
+    layers: Layer[];
   }) => {
     socket.emit("host-edit", {
       width,
       height,
       name,
-      traits,
+      generation,
+      layers,
     });
   };
 

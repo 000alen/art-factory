@@ -9,6 +9,7 @@ import "./server";
 import "./store";
 
 import { app, BrowserWindow, shell } from "electron";
+
 // import {
 //   setupTitlebar,
 //   attachTitlebarToWindow,

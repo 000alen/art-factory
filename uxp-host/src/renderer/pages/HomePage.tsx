@@ -1,3 +1,4 @@
+import moment from "moment";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -5,7 +6,6 @@ import { Button, ButtonGroup, Flex, Heading } from "@adobe/react-spectrum";
 
 import { newProject, openProject } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
-import moment from "moment";
 
 export function HomePage() {
   const task = useErrorHandler();

@@ -1,31 +1,15 @@
+import { Node as FlowNode } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
+
 import { LayerNodeComponentData } from "./components/LayerNode";
 import { MAX_SIZE } from "./constants";
-import { Node as FlowNode } from "react-flow-renderer";
-
 import {
-  ensureProjectStructure,
-  factoryComposeTraits,
-  factoryGenerateImages,
-  factoryGenerateMetadata,
-  factoryGetImage,
-  factoryMakeGeneration,
-  factoryRegenerateItems,
-  factoryRemove,
-  factoryReplaceItems,
-  factoryUnify,
-  readProjectInstance,
-  showOpenDialog,
-  writeProjectInstance,
+    ensureProjectStructure, factoryComposeTraits, factoryGenerateImages, factoryGenerateMetadata,
+    factoryGetImage, factoryMakeGeneration, factoryRegenerateItems, factoryRemove,
+    factoryReplaceItems, factoryUnify, readProjectInstance, showOpenDialog, writeProjectInstance
 } from "./ipc";
 import {
-  Bundles,
-  Collection,
-  Generation,
-  Instance,
-  MetadataItem,
-  Template,
-  Trait,
+    Bundles, Collection, Generation, Instance, MetadataItem, Template, Trait
 } from "./typings";
 import { createInstance, getBranches, hash } from "./utils";
 

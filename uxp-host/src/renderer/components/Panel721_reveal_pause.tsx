@@ -1,30 +1,15 @@
 import React, { useState } from "react";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  View,
-  Text,
-  MenuTrigger,
-  Menu,
-  Item,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, Text, View
 } from "@adobe/react-spectrum";
-import { TaskItem } from "./TaskItem";
-import { useErrorHandler } from "./ErrorHandler";
-import {
-  // getCost,
-  mintDrop,
-  pause,
-  reveal,
-  sellDrop,
-  // setCost,
-  // setMaxMintAmount,
-  withdraw,
-} from "../ipc";
-import { OutputItemProps } from "./OutputItem";
-import { Deployment } from "../typings";
 import Play from "@spectrum-icons/workflow/Play";
+
+import { mintDrop, pause, reveal, sellDrop, withdraw } from "../ipc";
+import { Deployment } from "../typings";
+import { useErrorHandler } from "./ErrorHandler";
+import { OutputItemProps } from "./OutputItem";
+import { TaskItem } from "./TaskItem";
 
 interface Panel721_reveal_pauseProps {
   deployment: Deployment;

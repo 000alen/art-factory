@@ -2,52 +2,27 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  NumberField,
-  TabList,
-  Tabs,
-  View,
+    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, Item, Menu, MenuTrigger, NumberField,
+    TabList, Tabs, View
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Folder from "@spectrum-icons/workflow/Folder";
 import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
+import { computeGenerationRepeats, regenerateItems, replaceItems } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Filters } from "../components/Filters";
+import { GalleryBundles } from "../components/GalleryBundles";
+import { GalleryItems } from "../components/GalleryItems";
+import { Loading } from "../components/Loading";
+import { Properties } from "../components/Properties";
 import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
-  factoryGetImage,
-  factoryGetTraitsByLayerName,
-  factoryRemoveItems,
-  openInExplorer,
+    factoryGetImage, factoryGetTraitsByLayerName, factoryRemoveItems, openInExplorer
 } from "../ipc";
-import {
-  Bundles,
-  Collection,
-  CollectionItem,
-  Generation,
-  Instance,
-  Trait,
-} from "../typings";
-import {
-  computeGenerationRepeats,
-  regenerateItems,
-  replaceItems,
-} from "../commands";
-import { GalleryBundles } from "../components/GalleryBundles";
-import { GalleryItems } from "../components/GalleryItems";
-import { Properties } from "../components/Properties";
-import { Loading } from "../components/Loading";
+import { Bundles, Collection, CollectionItem, Generation, Instance, Trait } from "../typings";
 
 interface QualityPageState {
   projectDir: string;
@@ -89,7 +64,7 @@ export const QualityPage = () => {
     generationId,
     dirty: _dirty,
   } = state as QualityPageState;
-  const { configuration, generations } = instance;
+  const { configuration, generations, sources } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
 
@@ -159,29 +134,44 @@ export const QualityPage = () => {
   }, []);
 
   // #region UXP setup
-  // ? UXP setup
-  // useEffect(() => {
-  //   const uxpReload = async ({ name: itemName }: { name: string }) => {
-  //     if (filteredCollection.some((item) => item.name === itemName)) {
-  //       const url = `data:image/png;base64,${await factoryGetImage(
-  //         id,
-  //         generation,
-  //         collection.find((collectionItem) => collectionItem.name === itemName),
-  //         MAX_SIZE
-  //       )}`;
-  //       reload(itemName, url);
-  //     }
-  //     return () => {
-  //       uxpContext.off("uxp-reload", uxpReload);
-  //     };
-  //   };
-  // }, []);
+  useEffect(() => {
+    const uxpReload = async () => loadPreviews();
+
+    uxpContext.on("uxp-reload", uxpReload);
+
+    return () => {
+      uxpContext.off("uxp-reload", uxpReload);
+    };
+  }, []);
 
   const onEdit = (i: number) => {
+    const { name, traits } = filteredCollection[i];
+    const traitsSources = traits.map((trait) =>
+      sources.find(({ items }) =>
+        items.some(
+          ({ name, value }) => trait.name === name && trait.value === value
+        )
+      )
+    );
+    const photoshopTraitsLayers = traits.map(
+      (trait, i) =>
+        traitsSources[i].items.find(
+          (item) => item.name === trait.name && item.value === trait.value
+        ).photoshopTraitLayer
+    );
+    const layers = traits.map((trait, i) => ({
+      document: traitsSources[i].name,
+      photoshopTraitLayer: photoshopTraitsLayers[i],
+      name: trait.name,
+      value: trait.value,
+    }));
+
     uxpContext.hostEdit({
       width: configuration.width,
       height: configuration.height,
-      ...filteredCollection[i],
+      name,
+      generation: generation.name,
+      layers,
     });
   };
 
@@ -558,6 +548,7 @@ export const QualityPage = () => {
           selectedItem={selectedItem}
           onReplace={onReplace}
           onRegenerate={onRegenerate}
+          onEdit={onEdit}
         />
       </View>
     </Grid>

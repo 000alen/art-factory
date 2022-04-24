@@ -1,51 +1,36 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import Zoom from "react-medium-image-zoom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  ActionGroup,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  repeat,
-  Text,
-  View,
+    ActionButton, ActionGroup, Flex, Grid, Heading, Item, Menu, MenuTrigger, repeat, Text, View
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import Close from "@spectrum-icons/workflow/Close";
+import Copy from "@spectrum-icons/workflow/Copy";
 import Edit from "@spectrum-icons/workflow/Edit";
 import Folder from "@spectrum-icons/workflow/Folder";
 import Hammer from "@spectrum-icons/workflow/Hammer";
 import Settings from "@spectrum-icons/workflow/Settings";
 
 import {
-  getGenerationPreview,
-  getTemplatePreview,
-  removeGeneration,
-  unifyGenerations,
+    getGenerationPreview, getTemplatePreview, removeGeneration, unifyGenerations
 } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ImageItem } from "../components/ImageItem";
+import { Loading } from "../components/Loading";
+import { Preview } from "../components/Preview";
 import { CustomField, TaskItem } from "../components/TaskItem";
 import { ToolbarContext } from "../components/Toolbar";
+import { UXPContext } from "../components/UXPContext";
 import {
-  createFactory,
-  factoryReloadConfiguration,
-  factoryReloadLayers,
-  hasFactory,
-  openInExplorer,
-  writeProjectInstance,
+    createFactory, factoryReloadConfiguration, factoryReloadLayers, hasFactory, openInExplorer,
+    writeProjectInstance
 } from "../ipc";
-import { Instance } from "../typings";
-import Copy from "@spectrum-icons/workflow/Copy";
-import Zoom from "react-medium-image-zoom";
-import { Preview } from "../components/Preview";
-import { Loading } from "../components/Loading";
+import { Instance, SourceItem } from "../typings";
+import { makeSource } from "../utils";
 
 interface FactoryPageState {
   projectDir: string;
@@ -61,6 +46,7 @@ interface GenerationItemProps {
 
 export const FactoryPage: React.FC = () => {
   const toolbarContext = useContext(ToolbarContext);
+  const uxpContext = useContext(UXPContext);
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -74,6 +60,7 @@ export const FactoryPage: React.FC = () => {
   const [dirty, setDirty] = useState(_dirty);
   const [templates, setTemplates] = useState(instance.templates);
   const [generations, setGenerations] = useState(instance.generations);
+  const [sources, setSources] = useState(instance.sources);
 
   const [templatesPreviews, setTemplatesPreviews] = useState<string[]>(null);
   const [generationPreviews, setGenerationPreviews] = useState<string[]>(null);
@@ -91,6 +78,23 @@ export const FactoryPage: React.FC = () => {
       toolbarContext.removeButton("close");
       toolbarContext.removeButton("open-explorer");
     };
+  }, []);
+
+  useEffect(() => {
+    const onUxpExport = ({
+      name,
+      items,
+    }: {
+      name: string;
+      items: Partial<SourceItem>[];
+    }) => {
+      setSources((sources) => [...sources, makeSource(name, items)]);
+      setDirty(true);
+    };
+
+    uxpContext.on("uxp-export", onUxpExport);
+
+    return () => uxpContext.off("uxp-export", onUxpExport);
   }, []);
 
   useEffect(() => {
@@ -134,6 +138,7 @@ export const FactoryPage: React.FC = () => {
       configuration,
       templates,
       generations,
+      sources,
     });
     setDirty(false);
   });
@@ -147,6 +152,7 @@ export const FactoryPage: React.FC = () => {
           configuration,
           templates,
           generations,
+          sources,
         },
         id,
         dirty,
@@ -163,6 +169,7 @@ export const FactoryPage: React.FC = () => {
           configuration,
           templates,
           generations,
+          sources,
         },
         id,
         templateId,
@@ -180,6 +187,7 @@ export const FactoryPage: React.FC = () => {
           configuration,
           templates,
           generations,
+          sources,
         },
         id,
         templateId,
@@ -197,6 +205,7 @@ export const FactoryPage: React.FC = () => {
           configuration,
           templates,
           generations,
+          sources,
         },
         id,
         generationId,
@@ -214,6 +223,7 @@ export const FactoryPage: React.FC = () => {
           configuration,
           templates,
           generations,
+          sources,
         },
         id,
         dirty,
@@ -230,6 +240,7 @@ export const FactoryPage: React.FC = () => {
           configuration,
           templates,
           generations,
+          sources,
         },
         id,
         dirty,

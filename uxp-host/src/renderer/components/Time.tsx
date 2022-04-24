@@ -1,5 +1,6 @@
-import { Flex, NumberField } from "@adobe/react-spectrum";
 import React from "react";
+
+import { Flex, NumberField } from "@adobe/react-spectrum";
 
 interface TimeProps {
   value: number;

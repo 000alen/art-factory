@@ -1,13 +1,7 @@
 import React from "react";
 
-import {
-  ActionButton,
-  Flex,
-  Item,
-  Menu,
-  MenuTrigger,
-  TextField,
-} from "@adobe/react-spectrum";
+import { ActionButton, Flex, Item, Menu, MenuTrigger, TextField } from "@adobe/react-spectrum";
+
 import { METADATA_FIELDS } from "../constants";
 
 interface MetadataFieldProps {

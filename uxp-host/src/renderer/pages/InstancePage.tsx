@@ -1,38 +1,26 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Flex,
-  Grid,
-  Heading,
-  ProgressBar,
-  repeat,
-  Text,
-  TextField,
-  View,
+    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, ProgressBar, repeat, Text, TextField,
+    View
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
 import { useErrorHandler } from "../components/ErrorHandler";
 import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
+import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { ToolbarContext } from "../components/Toolbar";
 import { Networks } from "../constants";
+import {
+    createContract, createProvider, createProviderWithKey, writeProjectInstance
+} from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
-import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
-import { v4 as uuid } from "uuid";
-import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
-import {
-  createContract,
-  createProvider,
-  createProviderWithKey,
-  writeProjectInstance,
-} from "../ipc";
 
 interface InstancePageState {
   projectDir: string;

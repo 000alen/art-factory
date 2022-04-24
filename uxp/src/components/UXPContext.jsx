@@ -1,12 +1,33 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { SocketContext } from "./SocketContext";
+import { SocketContext, socket } from "./SocketContext";
+
+import { edit } from "../commands";
+import { setItem } from "../store";
+
+const uxp = require("uxp");
+const photoshop = require("photoshop");
+const app = photoshop.app;
+const fs = uxp.storage.localFileSystem;
 
 export const UXPContext = createContext({
   connectionStatus: false,
   on: (channel, callback) => {},
   off: (channel, callback) => {},
-  uxpGenerate: (inputDir, partialConfiguration) => {},
+  uxpExport: (inputDir, partialConfiguration) => {},
   uxpReload: (name) => {},
+});
+
+socket.on("host-edit", async ({ width, height, name, generation, layers }) => {
+  setItem(name, {
+    width,
+    height,
+    name,
+    generation,
+    layers,
+  });
+  await photoshop.core.executeAsModal(
+    async () => await edit(`${generation}-${name}`, layers)
+  );
 });
 
 export function UXPContextProvider({ children }) {
@@ -25,26 +46,14 @@ export function UXPContextProvider({ children }) {
     });
   }, [socket]);
 
-  const on = (channel, callback) => {
-    socket.on(channel, callback);
-  };
+  const on = (channel, callback) => socket.on(channel, callback);
 
-  const off = (channel, callback) => {
-    socket.off(channel, callback);
-  };
+  const off = (channel, callback) => socket.off(channel, callback);
 
-  const uxpGenerate = (inputDir, partialConfiguration) => {
-    socket.emit("uxp-generate", {
-      inputDir,
-      partialConfiguration,
-    });
-  };
+  const uxpExport = ({ name, items }) =>
+    socket.emit("uxp-export", { name, items });
 
-  const uxpReload = (name) => {
-    socket.emit("uxp-reload", {
-      name,
-    });
-  };
+  const uxpReload = (name) => socket.emit("uxp-reload", { name });
 
   return (
     <UXPContext.Provider
@@ -52,7 +61,7 @@ export function UXPContextProvider({ children }) {
         connectionStatus,
         on,
         off,
-        uxpGenerate,
+        uxpExport,
         uxpReload,
       }}
     >

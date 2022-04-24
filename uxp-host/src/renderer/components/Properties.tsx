@@ -1,13 +1,9 @@
-import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-} from "@adobe/react-spectrum";
 import React, { useEffect } from "react";
+
+import {
+    ActionButton, Button, ButtonGroup, Heading, Item, Menu, MenuTrigger
+} from "@adobe/react-spectrum";
+
 import { Collection, Trait } from "../typings";
 
 interface PropertiesProps {
@@ -16,6 +12,7 @@ interface PropertiesProps {
   selectedItem: number;
   onReplace: (i: number, traits: Trait[]) => void;
   onRegenerate: (i: number) => void;
+  onEdit: (i: number) => void;
 }
 
 export const Properties: React.FC<PropertiesProps> = ({
@@ -24,6 +21,7 @@ export const Properties: React.FC<PropertiesProps> = ({
   selectedItem,
   onReplace: _onReplace,
   onRegenerate: _onRegenerate,
+  onEdit: _onEdit,
 }) => {
   const [selectedTraits, setSelectedTraits] = React.useState<Trait[]>(null);
 
@@ -53,6 +51,10 @@ export const Properties: React.FC<PropertiesProps> = ({
 
   const onRegenerate = () => {
     _onRegenerate(selectedItem);
+  };
+
+  const onEdit = () => {
+    _onEdit(selectedItem);
   };
 
   return (
@@ -101,7 +103,9 @@ export const Properties: React.FC<PropertiesProps> = ({
         <Button variant="cta" onPress={onRegenerate}>
           Regenerate
         </Button>
-        <Button variant="cta">Edit</Button>
+        <Button variant="cta" onPress={onEdit}>
+          Edit
+        </Button>
       </ButtonGroup>
     </>
   );

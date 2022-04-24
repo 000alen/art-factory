@@ -1,27 +1,19 @@
 let id = 0;
-
 export const getId = () => `${id++}`;
 
-export const setActiveDocument = (documentName) =>
-  localStorage.setItem("activeDocument", documentName);
+export const getConnectionStatus = () =>
+  localStorage.getItem("connectionStatus") || false;
 
-export const getActiveDocument = () => localStorage.getItem("activeDocument");
+export const setConnectionStatus = (connectionStatus) =>
+  localStorage.setItem("connectionStatus", connectionStatus);
 
-export const setActiveFolder = (token) =>
-  localStorage.setItem("activeFolder", token);
+export const setProjectFolderToken = (token) =>
+  localStorage.setItem("projectFolderToken", token);
 
-export const getActiveFolder = () => localStorage.getItem("activeFolder");
+export const getProjectFolderToken = () =>
+  localStorage.getItem("projectFolderToken");
 
 export const setItem = (id, item) =>
   localStorage.setItem(`item(${id})`, JSON.stringify(item));
 
 export const getItem = (id) => JSON.parse(localStorage.getItem(`item(${id})`));
-
-export const getConnectionStatus = () => {
-  const connectionStatus = localStorage.getItem("connectionStatus");
-  return connectionStatus === null ? false : connectionStatus;
-};
-
-export const setConnectionStatus = (connectionStatus) => {
-  localStorage.setItem("connectionStatus", connectionStatus);
-};

@@ -1,7 +1,9 @@
-import { Flex, Heading, Text } from "@adobe/react-spectrum";
 import React from "react";
-import { ImageItem } from "./ImageItem";
 import Zoom, { Controlled as ControlledZoom } from "react-medium-image-zoom";
+
+import { Flex, Heading, Text } from "@adobe/react-spectrum";
+
+import { ImageItem } from "./ImageItem";
 
 interface PreviewProps {
   name: string;

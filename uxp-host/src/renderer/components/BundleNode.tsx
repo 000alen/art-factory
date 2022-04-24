@@ -2,23 +2,14 @@ import React, { memo, useEffect, useState } from "react";
 import { Node as FlowNode, useEdges, useNodes } from "react-flow-renderer";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  NumberField,
-  Radio,
-  RadioGroup,
-  Text,
-  TextField,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Radio, RadioGroup, Text,
+    TextField
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import { arrayDifference, chooseN, hash, getBranches } from "../utils";
+import { arrayDifference, chooseN, getBranches, hash } from "../utils";
 import { ImageItem } from "./ImageItem";
 import { LayerNodeComponentData } from "./LayerNode";
 import { Time } from "./Time";

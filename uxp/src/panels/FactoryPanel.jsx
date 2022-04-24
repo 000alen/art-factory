@@ -1,13 +1,21 @@
 import React, { useContext, useState } from "react";
-import { hideAll, exportAll } from "../jobs";
+import { hideLayers, exportLayers } from "../commands";
 import { UXPContext } from "../components/UXPContext";
 import {
-  getActiveDocument,
-  getActiveFolder,
-  setActiveDocument,
-  setActiveFolder,
+  getProjectFolderToken,
+  setProjectFolderToken,
   getItem,
 } from "../store";
+import {
+  Heading,
+  Body,
+  Button,
+  Divider,
+  Textfield,
+  Label,
+  ActionButton,
+} from "react-uxp-spectrum";
+import { SaveFloppy } from "../components/SaveFloppy";
 
 const uxp = require("uxp");
 const photoshop = require("photoshop");
@@ -15,185 +23,56 @@ const app = photoshop.app;
 const fs = uxp.storage.localFileSystem;
 
 export const FactoryPanel = () => {
-  const { connectionStatus, uxpGenerate, uxpReload } = useContext(UXPContext);
-
-  const [activeDocument, _setActiveDocument] = useState(null);
-  const [activeFolder, _setActiveFolder] = useState(null);
-
-  const [editingId, setEditingId] = useState(null);
-  const [editingWidth, setEditingWidth] = useState(null);
-  const [editingHeight, setEditingHeight] = useState(null);
-  const [editingName, setEditingName] = useState(null);
-  const [editingTraits, setEditingTraits] = useState(null);
-
-  const onSet = async () => {
-    const job = () =>
-      new Promise((resolve) =>
-        photoshop.core.executeAsModal(async () => {
-          const doc = app.activeDocument;
-          const docName = doc.name;
-          setActiveDocument(doc.name);
-
-          const folder = await fs.getFolder();
-          const token = await fs.createPersistentToken(folder);
-          setActiveFolder(token);
-
-          resolve({ docName, token });
-        })
-      );
-
-    const { docName, token } = await job();
-
-    _setActiveDocument(docName);
-    _setActiveFolder(token);
-  };
-
-  const onSend = async () => {
-    const job = () =>
-      new Promise((resolve) =>
-        photoshop.core.executeAsModal(async () => {
-          const docName = getActiveDocument();
-          if (docName === null) {
-            await photoshop.app.showAlert("Active Document is not set.");
-            return;
-          }
-
-          const doc = app.documents.find((doc) => doc.name === docName);
-          if (doc === undefined) {
-            await photoshop.app.showAlert("Invalid Active Document.");
-            return;
-          }
-
-          const token = getActiveFolder();
-          if (token === null) {
-            await photoshop.app.showAlert("Active Folder is not set.");
-            return;
-          }
-
-          const folder = await fs.getEntryForPersistentToken(token);
-
-          await hideAll(doc);
-          await exportAll(doc, folder);
-
-          const layers = doc.layers.map((layer) => layer.name).reverse();
-          const inputDir = folder.nativePath;
-
-          resolve({ layers, inputDir });
-        })
-      );
-
-    if (connectionStatus) {
-      const { layers, inputDir } = await job();
-
-      const partialConfiguration = {
-        layers,
-      };
-
-      uxpGenerate(inputDir, partialConfiguration);
-    } else await photoshop.app.showAlert("Art Factory Host is not connected.");
-  };
-
-  const onLoad = async () => {
-    const doc = app.activeDocument;
-    const id = doc.name;
-    const item = getItem(id);
-
-    if (item !== null) {
-      const { width, height, name, traits } = item;
-
-      setEditingId(id);
-      setEditingWidth(width);
-      setEditingHeight(height);
-      setEditingName(name);
-      setEditingTraits(traits);
-    } else await photoshop.app.showAlert("Invalid Document.");
-  };
+  const { connectionStatus, uxpExport, uxpReload } = useContext(UXPContext);
 
   const onSave = async () => {
-    const job = () =>
-      new Promise((resolve) =>
-        photoshop.core.executeAsModal(async () => {
-          const doc = app.activeDocument;
-          const token = getActiveFolder();
-          const folder = await fs.getEntryForPersistentToken(token);
-          const buildFolder = await folder.getEntry(".build");
-          const imagesFolder = await buildFolder.getEntry("images");
-          const buildFile = await imagesFolder.getEntry(`${editingName}.png`);
-          await doc.resizeImage(editingWidth, editingHeight);
-          await doc.saveAs.png(buildFile);
-          resolve();
-        })
-      );
+    const doc = app.activeDocument;
+    const [generation, name] = doc.name.split("-");
+    const { width, height } = getItem(name);
 
-    await job();
-    uxpReload(editingName);
+    let projectFolder;
+    let projectFolderToken = getProjectFolderToken();
+    if (!projectFolderToken) {
+      projectFolder = await fs.getFolder();
+      projectFolderToken = await fs.createPersistentToken(projectFolder);
+      setProjectFolderToken(projectFolderToken);
+    } else
+      projectFolder = await fs.getEntryForPersistentToken(projectFolderToken);
+
+    const buildFolder = await projectFolder.getEntry(".build");
+    const imagesFolder = await buildFolder.getEntry("images");
+    const generationFolder = await imagesFolder.getEntry(generation);
+    const buildFile = await generationFolder.getEntry(`${name}.png`);
+
+    await photoshop.core.executeAsModal(async () => {
+      await doc.resizeImage(width, height);
+      await doc.saveAs.png(buildFile);
+    });
+
+    uxpReload(name);
   };
 
   const onExport = async () => {
-    const job = () =>
-      new Promise((resolve) =>
-        photoshop.core.executeAsModal(async () => {
-          const docName = getActiveDocument();
-          if (docName === null) {
-            await photoshop.app.showAlert("Active Document is not set.");
-            return;
-          }
+    const doc = app.activeDocument;
+    let projectFolder;
+    let projectFolderToken = getProjectFolderToken();
+    if (!projectFolderToken) {
+      projectFolder = await fs.getFolder();
+      projectFolderToken = await fs.createPersistentToken(projectFolder);
+      setProjectFolderToken(projectFolderToken);
+    } else
+      projectFolder = await fs.getEntryForPersistentToken(projectFolderToken);
 
-          const doc = app.documents.find((doc) => doc.name === docName);
-          if (doc === undefined) {
-            await photoshop.app.showAlert("Invalid Active Document.");
-            return;
-          }
+    const items = await photoshop.core.executeAsModal(async () => {
+      await hideLayers(doc);
+      return await exportLayers(doc, projectFolder);
+    });
 
-          const token = getActiveFolder();
-          if (token === null) {
-            await photoshop.app.showAlert("Active Folder is not set.");
-            return;
-          }
-
-          const folder = await fs.getEntryForPersistentToken(token);
-
-          await hideAll(doc);
-          await exportAll(doc, folder);
-
-          const layers = doc.layers.map((layer) => layer.name).reverse();
-          const inputDir = folder.nativePath;
-
-          resolve({ layers, inputDir });
-        })
-      );
-
-    const job1 = () =>
-      new Promise((resolve) =>
-        photoshop.core.executeAsModal(async () => {
-          // const doc = app.activeDocument;
-          // const docName = doc.name;
-          // setActiveDocument(doc.name);
-
-          const folder = await fs.getFolder();
-          const token = await fs.createPersistentToken(folder);
-          setActiveFolder(token);
-
-          resolve({ docName, token });
-        })
-      );
-
-    const { docName, token } = await job1();
-
-    _setActiveDocument(docName);
-    _setActiveFolder(token);
-
-    const { layers, inputDir } = await job();
-
-    // const partialConfiguration = {
-    //   layers,
-    // };
-    // uxpGenerate(inputDir, partialConfiguration);
-    // } else await photoshop.app.showAlert("Art Factory Host is not connected.");
+    if (connectionStatus) uxpExport({ name: doc.name, items });
   };
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col space-y-1 overflow-auto">
       <div className="flex flex-row space-x-1 items-center">
         <div
           className={`w-2 h-2 rounded-full ${
@@ -205,57 +84,38 @@ export const FactoryPanel = () => {
         </sp-body>
       </div>
 
-      <div className="flex flex-col space-y-1">
-        {/* <sp-heading className="text-white">Document</sp-heading> */}
-
-        {activeDocument && (
-          <sp-body>
-            <sp-icon name="ui:InfoSmall" size="s"></sp-icon>
-            Active Document: {activeDocument}
-          </sp-body>
-        )}
-
-        <div className="flex flex-row space-x-1 items-center">
-          <sp-button onClick={onExport}>Export</sp-button>
-
-          {/* <sp-button onClick={onSet}>Set as Active Document</sp-button>
-
-          <sp-button onClick={onSend}>Send to Art Factory Host</sp-button> */}
-        </div>
+      <div className="flex flex-row space-x-1 items-center">
+        <ActionButton onClick={onExport}>Export</ActionButton>
+        <ActionButton onClick={onSave}>
+          <SaveFloppy />
+        </ActionButton>
       </div>
 
-      <sp-divider size="large"></sp-divider>
+      {/* <Divider /> */}
 
-      <div>
-        <sp-heading className="text-white">Edition</sp-heading>
+      {/* <div className="flex flex-col">
+        <div className="flex flex-row space-x-1 items-center">
+          <Heading>Edition</Heading>
+          <ActionButton onClick={onSave}>
+            <SaveFloppy />
+          </ActionButton>
+        </div>
 
-        {editingName && (
-          <sp-body>
-            <sp-icon name="ui:InfoSmall" size="s"></sp-icon>
-            Editing: {editingName}
-          </sp-body>
-        )}
+        {editingName && <Body>Editing: {editingName}</Body>}
 
         <div className="flex flex-row space-x-1 items-center">
-          <sp-button onClick={onLoad}>Load</sp-button>
-
-          <sp-button onClick={onSave}>Save</sp-button>
+          <Button onClick={onLoad}>Load</Button>
         </div>
 
         <div>
           {editingTraits &&
             editingTraits.map((trait) => (
-              <sp-textfield
-                key={trait.name}
-                style={{ width: "100%" }}
-                value={trait.value}
-                readonly
-              >
-                <sp-label slot="label">{trait.name}</sp-label>
-              </sp-textfield>
+              <Textfield key={trait.name} value={trait.value} disabled>
+                <Label slot="label">{trait.name}</Label>
+              </Textfield>
             ))}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

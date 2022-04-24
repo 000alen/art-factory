@@ -1,15 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-  Heading,
-  Text,
-  View,
-  Flex,
-  Divider,
-  Button,
-} from "@adobe/react-spectrum";
-
+import { Button, Divider, Flex, Heading, Text, View } from "@adobe/react-spectrum";
 import Bug from "@spectrum-icons/workflow/Bug";
 import Home from "@spectrum-icons/workflow/Home";
 
