@@ -129,6 +129,69 @@ export const FactoryPanel = () => {
     uxpReload(editingName);
   };
 
+  const onExport = async () => {
+    const job = () =>
+      new Promise((resolve) =>
+        photoshop.core.executeAsModal(async () => {
+          const docName = getActiveDocument();
+          if (docName === null) {
+            await photoshop.app.showAlert("Active Document is not set.");
+            return;
+          }
+
+          const doc = app.documents.find((doc) => doc.name === docName);
+          if (doc === undefined) {
+            await photoshop.app.showAlert("Invalid Active Document.");
+            return;
+          }
+
+          const token = getActiveFolder();
+          if (token === null) {
+            await photoshop.app.showAlert("Active Folder is not set.");
+            return;
+          }
+
+          const folder = await fs.getEntryForPersistentToken(token);
+
+          await hideAll(doc);
+          await exportAll(doc, folder);
+
+          const layers = doc.layers.map((layer) => layer.name).reverse();
+          const inputDir = folder.nativePath;
+
+          resolve({ layers, inputDir });
+        })
+      );
+
+    const job1 = () =>
+      new Promise((resolve) =>
+        photoshop.core.executeAsModal(async () => {
+          // const doc = app.activeDocument;
+          // const docName = doc.name;
+          // setActiveDocument(doc.name);
+
+          const folder = await fs.getFolder();
+          const token = await fs.createPersistentToken(folder);
+          setActiveFolder(token);
+
+          resolve({ docName, token });
+        })
+      );
+
+    const { docName, token } = await job1();
+
+    _setActiveDocument(docName);
+    _setActiveFolder(token);
+
+    const { layers, inputDir } = await job();
+
+    // const partialConfiguration = {
+    //   layers,
+    // };
+    // uxpGenerate(inputDir, partialConfiguration);
+    // } else await photoshop.app.showAlert("Art Factory Host is not connected.");
+  };
+
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex flex-row space-x-1 items-center">
@@ -143,7 +206,7 @@ export const FactoryPanel = () => {
       </div>
 
       <div className="flex flex-col space-y-1">
-        <sp-heading className="text-white">Document</sp-heading>
+        {/* <sp-heading className="text-white">Document</sp-heading> */}
 
         {activeDocument && (
           <sp-body>
@@ -153,9 +216,11 @@ export const FactoryPanel = () => {
         )}
 
         <div className="flex flex-row space-x-1 items-center">
-          <sp-button onClick={onSet}>Set as Active Document</sp-button>
+          <sp-button onClick={onExport}>Export</sp-button>
 
-          <sp-button onClick={onSend}>Send to Art Factory Host</sp-button>
+          {/* <sp-button onClick={onSet}>Set as Active Document</sp-button>
+
+          <sp-button onClick={onSend}>Send to Art Factory Host</sp-button> */}
         </div>
       </div>
 
