@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, ButtonGroup, Flex, Heading } from "@adobe/react-spectrum";
 
 import { newProject, openProject } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
+import moment from "moment";
 
 export function HomePage() {
   const task = useErrorHandler();
@@ -35,6 +36,26 @@ export function HomePage() {
       },
     });
   });
+
+  useEffect(() => {
+    // const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+    // const addMonths = (input, months) => {
+    //   const date = new Date(input);
+    //   date.setDate(1);
+    //   date.setMonth(date.getMonth() + months);
+    //   date.setDate(
+    //     Math.min(
+    //       input.getDate(),
+    //       getDaysInMonth(date.getFullYear(), date.getMonth() + 1)
+    //     )
+    //   );
+    //   return date;
+    // };
+    // console.log(addMonths(new Date(), 6));
+
+    // "2018-07-22"
+    console.log(moment().add(6, "months").format("YYYY-MM-DD"));
+  }, []);
 
   return (
     <Flex

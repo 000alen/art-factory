@@ -23,10 +23,16 @@ import {
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import { DEFAULT_N, DEFAULT_PRICE } from "../constants";
+import {
+  DEFAULT_N,
+  DEFAULT_PRICE,
+  DEFAULT_SALE_TIME,
+  DEFAULT_SALE_TYPE,
+} from "../constants";
 import { Trait } from "../typings";
 import { hash, getBranches } from "../utils";
 import { LayerNodeComponentData } from "./LayerNode";
+import { Time } from "./Time";
 
 export interface RenderNodeComponentData {
   composedUrls?: Record<string, string>;
@@ -34,13 +40,21 @@ export interface RenderNodeComponentData {
   ns?: Record<string, number>;
   maxNs?: Record<string, number>;
   ignored?: string[];
-  prices?: Record<string, number>;
+
+  salesTypes?: Record<string, string>;
+  startingPrices?: Record<string, number>;
+  endingPrices?: Record<string, number>;
+  salesTimes?: Record<string, number>;
+
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
   requestMaxNs?: (traits: Trait[]) => void;
   updateNs?: (traits: Trait[], n: number) => void;
   updateIgnored?: (traits: Trait[], ignored: boolean) => void;
-  updatePrices?: (traits: Trait[], price: number) => void;
+  updateSalesTypes?: (traits: Trait[], salesType: string) => void;
+  updateStartingPrices?: (traits: Trait[], price: number) => void;
+  updateEndingPrices?: (traits: Trait[], price: number) => void;
+  updateSalesTimes?: (traits: Trait[], time: number) => void;
 }
 
 interface RenderNodeProps {
@@ -110,7 +124,14 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
       if (!(key in data.renderIds)) data.requestRenderId(nTraits[i]);
       if (!(key in data.ns)) data.updateNs(nTraits[i], DEFAULT_N);
       if (!(key in data.maxNs)) data.requestMaxNs(nTraits[i]);
-      if (!(key in data.prices)) data.updatePrices(nTraits[i], DEFAULT_PRICE);
+      if (!(key in data.salesTypes))
+        data.updateSalesTypes(nTraits[i], DEFAULT_SALE_TYPE);
+      if (!(key in data.startingPrices))
+        data.updateStartingPrices(nTraits[i], DEFAULT_PRICE);
+      if (!(key in data.endingPrices))
+        data.updateEndingPrices(nTraits[i], DEFAULT_PRICE);
+      if (!(key in data.salesTimes))
+        data.updateSalesTimes(nTraits[i], DEFAULT_SALE_TIME);
     }
 
     setCacheKey(currentCacheKey);
@@ -123,7 +144,10 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     const composedUrl = data.composedUrls[key];
     const n = data.ns[key];
     const maxNs = data.maxNs[key];
-    const price = data.prices[key];
+    const saleType = data.salesTypes[key];
+    const startingPrice = data.startingPrices[key];
+    const endingPrice = data.endingPrices[key];
+    const salesTime = data.salesTimes[key];
 
     return data.ignored.includes(key) ? (
       <></>
@@ -135,27 +159,40 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
           </ImageItem>
           <Heading>{renderId}</Heading>
 
-          <RadioGroup label="Sale type">
-            <Radio value="static">Static price</Radio>
+          <RadioGroup
+            label="Sale type"
+            value={saleType}
+            onChange={(value) => data.updateSalesTypes(nTraits[i], value)}
+          >
+            <Radio value="fixed">Fixed price</Radio>
             <Radio value="dutch">Dutch auction</Radio>
             <Radio value="english">English auction</Radio>
           </RadioGroup>
 
           <NumberField
             width="100%"
-            step={0.01}
             minValue={0}
-            value={price}
-            onChange={(value: number) => data.updatePrices(nTraits[i], value)}
+            value={startingPrice}
+            onChange={(value: number) =>
+              data.updateStartingPrices(nTraits[i], value)
+            }
             label="Starting price"
           />
           <NumberField
             width="100%"
-            // step={0.01}
-            // minValue={0}
-            // value={price}
-            // onChange={(value: number) => data.updatePrices(nTraits[i], value)}
+            minValue={0}
+            value={endingPrice}
+            onChange={(value: number) =>
+              data.updateEndingPrices(nTraits[i], value)
+            }
             label="Ending price"
+          />
+
+          <Time
+            value={salesTime}
+            onChange={(value: number) =>
+              data.updateSalesTimes(nTraits[i], value)
+            }
           />
 
           <Flex gap="size-100" alignItems="end">

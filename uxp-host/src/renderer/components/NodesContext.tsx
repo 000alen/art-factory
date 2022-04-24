@@ -26,6 +26,8 @@ import {
   DEFAULT_NODES,
   DEFAULT_OPACITY,
   DEFAULT_PRICE,
+  DEFAULT_SALE_TIME,
+  DEFAULT_SALE_TYPE,
   MAX_SIZE,
 } from "../constants";
 import {
@@ -53,7 +55,10 @@ interface NodesContextProviderProps {
   initialRenderIds?: Record<string, string>;
   initialNs?: Record<string, number>;
   initialIgnored?: string[];
-  initialPrices?: Record<string, number>;
+  initialSalesTypes?: Record<string, string>;
+  initialStartingPrices?: Record<string, number>;
+  initialEndingPrices?: Record<string, number>;
+  initialSalesTimes?: Record<string, number>;
 
   setDirty: (dirty: boolean) => void;
 }
@@ -83,7 +88,10 @@ export interface NodesInstance {
   renderIds: Record<string, string>;
   ns: Record<string, number>;
   ignored: string[];
-  prices: Record<string, number>;
+  salesTypes: Record<string, string>;
+  startingPrices: Record<string, number>;
+  endingPrices: Record<string, number>;
+  salesTimes: Record<string, number>;
 }
 
 export const NODE_TYPES = {
@@ -107,7 +115,10 @@ export function useNodes(
   initialRenderIds?: Record<string, string>,
   initialNs?: Record<string, number>,
   initialIgnored?: string[],
-  initialPrices?: Record<string, number>,
+  initialSalesTypes?: Record<string, string>,
+  initialStartingPrices?: Record<string, number>,
+  initialEndingPrices?: Record<string, number>,
+  initialSalesTimes?: Record<string, number>,
   setDirty?: (dirty: boolean) => void
 ) {
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -123,13 +134,21 @@ export function useNodes(
   const [ns, setNs] = useState<Record<string, number>>(initialNs || {});
   const [maxNs, setMaxNs] = useState<Record<string, number>>({});
   const [ignored, setIgnored] = useState<string[]>(initialIgnored || []);
-  const [prices, setPrices] = useState<Record<string, number>>(
-    initialPrices || {}
+  const [salesTypes, setSalesTypes] = useState<Record<string, string>>(
+    initialSalesTypes || {}
+  );
+  const [startingPrices, setStartingPrices] = useState<Record<string, number>>(
+    initialStartingPrices || {}
+  );
+  const [endingPrices, setEndingPrices] = useState<Record<string, number>>(
+    initialEndingPrices || {}
+  );
+  const [salesTimes, setSalesTimes] = useState<Record<string, number>>(
+    initialSalesTimes || {}
   );
 
   useEffect(() => {
-    if (traits.length === 0) return; // ! TODO: Nodes don't work without traits
-
+    if (traits.length === 0) return;
     if (initialNodes) setNodes(hydrateNodes(initialNodes));
     if (initialEdges) setEdges(hydrateEdges(initialEdges));
   }, [initialNodes, initialEdges, traits]);
@@ -143,7 +162,10 @@ export function useNodes(
       renderIds,
       ns,
       ignored,
-      prices,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
     }));
   }, [
     setter,
@@ -154,7 +176,10 @@ export function useNodes(
     renderIds,
     ns,
     ignored,
-    prices,
+    salesTypes,
+    startingPrices,
+    endingPrices,
+    salesTimes,
   ]);
 
   const onNodesChange = (changes: FlowNodeChange[]) => {
@@ -191,12 +216,50 @@ export function useNodes(
         )
       );
 
+  const update =
+    <T,>(
+      setter: (
+        v: Record<string, T> | ((v: Record<string, T>) => Record<string, T>)
+      ) => void,
+      updater: (v: Record<string, T>) => void
+    ) =>
+    (traits: Trait[], v: T) => {
+      const key = hash(traits);
+      setter((prevV) => {
+        const newV = { ...prevV, [key]: v };
+        updater(newV);
+        return newV;
+      });
+    };
+
+  const request =
+    <T,>(
+      setter: (
+        v: Record<string, T> | ((v: Record<string, T>) => Record<string, T>)
+      ) => void,
+      updater: (v: Record<string, T>) => void,
+      getter: (traits: Trait[]) => T | Promise<T>
+    ) =>
+    async (traits: Trait[]) => {
+      const key = hash(traits);
+      const v = await getter(traits);
+      setter((prevV) => {
+        const newV = { ...prevV, [key]: v };
+        updater(newV);
+        return newV;
+      });
+    };
+
   const onChangeLayerId = onChange<string>("id");
   const onChangeLayerOpacity = onChange<number>("opacity");
   const onChangeLayerBlending = onChange<string>("blending");
   const onChangeBundleName = onChange<string>("name");
+
   const onChangeBundleIds = onChange<string[]>("ids");
-  const onChangeBundlePrice = onChange<number>("price");
+  const onChangeBundleSaleType = onChange<string>("saleType");
+  const onChangeBundleStartingPrice = onChange<number>("startingPrice");
+  const onChangeBundleEndingPrice = onChange<number>("endingPrice");
+  const onChangeBundleSaleTime = onChange<number>("saleTime");
 
   const onUpdateUrls = onUpdate<Record<string, string>>(["layerNode"], "urls");
   const onUpdateComposedUrls = onUpdate<Record<string, string>>(
@@ -219,69 +282,70 @@ export function useNodes(
     ["renderNode", "bundleNode"],
     "ignored"
   );
-  const onUpdatePrices = onUpdate<Record<string, number>>(
-    ["renderNode", "bundleNode"],
-    "prices"
+  const onUpdateSalesTypes = onUpdate<Record<string, string>>(
+    ["renderNode"],
+    "salesTypes"
+  );
+  const onUpdateStartingPrices = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "startingPrices"
+  );
+  const onUpdateEndingPrices = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "endingPrices"
+  );
+  const onUpdateSalesTimes = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "salesTimes"
+  );
+
+  const updateNs = update<number>(setNs, onUpdateNs);
+  const updateSalesTypes = update<string>(setSalesTypes, onUpdateSalesTypes);
+  const updateStartingPrices = update<number>(
+    setStartingPrices,
+    onUpdateStartingPrices
+  );
+  const updateEndingPrices = update<number>(
+    setEndingPrices,
+    onUpdateEndingPrices
+  );
+  const updateSalesTimes = update<number>(setSalesTimes, onUpdateSalesTimes);
+
+  const requestComposedUrl = request(
+    setComposedUrls,
+    onUpdateComposedUrls,
+    async (traits: Trait[]) =>
+      `data:image/png;base64,${await factoryComposeTraits(
+        id,
+        traits,
+        MAX_SIZE
+      )}`
+  );
+
+  const requestRenderId = request(setRenderIds, onUpdateRenderIds, () =>
+    dashedName()
+  );
+
+  const requestMaxNs = request(
+    setMaxNs,
+    onUpdateMaxNs,
+    async (traits: Trait[]) => await factoryComputeMaxCombinations(id, traits)
   );
 
   const requestUrl = async (trait: Trait) => {
     const key = hash(trait);
-    const base64String = await factoryGetTraitImage(id, trait, MAX_SIZE);
+    const url = `data:image/png;base64,${await factoryGetTraitImage(
+      id,
+      trait,
+      MAX_SIZE
+    )}`;
     setUrls((prevUrls) => {
       const newUrls = {
         ...prevUrls,
-        [key]: `data:image/png;base64,${base64String}`,
+        [key]: url,
       };
       onUpdateUrls(newUrls);
       return newUrls;
-    });
-  };
-
-  const requestComposedUrl = async (traits: Trait[]) => {
-    const key = hash(traits);
-    const composedBase64String = await factoryComposeTraits(
-      id,
-      traits,
-      MAX_SIZE
-    );
-
-    setComposedUrls((prevComposedUrls) => {
-      const newComposedUrls = {
-        ...prevComposedUrls,
-        [key]: `data:image/png;base64,${composedBase64String}`,
-      };
-      onUpdateComposedUrls(newComposedUrls);
-      return newComposedUrls;
-    });
-  };
-
-  const requestRenderId = async (traits: Trait[]) => {
-    const key = hash(traits);
-    const renderId = dashedName();
-    setRenderIds((prevRenderIds) => {
-      const newRenderIds = { ...prevRenderIds, [key]: renderId };
-      onUpdateRenderIds(newRenderIds);
-      return newRenderIds;
-    });
-  };
-
-  const requestMaxNs = async (traits: Trait[]) => {
-    const key = hash(traits);
-    const maxNs = await factoryComputeMaxCombinations(id, traits);
-
-    setMaxNs((prevMaxNs) => {
-      const newMaxNs = { ...prevMaxNs, [key]: maxNs };
-      onUpdateMaxNs(newMaxNs);
-      return newMaxNs;
-    });
-  };
-
-  const updateNs = async (traits: Trait[], n: number) => {
-    const key = hash(traits);
-    setNs((prevNs) => {
-      const newNs = { ...prevNs, [key]: n };
-      onUpdateNs(newNs);
-      return newNs;
     });
   };
 
@@ -293,15 +357,6 @@ export function useNodes(
         : prevIgnored.filter((k) => k !== key);
       onUpdateIgnored(newIgnored);
       return newIgnored;
-    });
-  };
-
-  const updatePrices = async (traits: Trait[], price: number) => {
-    const key = hash(traits);
-    setPrices((prevPrices) => {
-      const newPrices = { ...prevPrices, [key]: price };
-      onUpdatePrices(newPrices);
-      return newPrices;
     });
   };
 
@@ -375,29 +430,41 @@ export function useNodes(
           ns,
           maxNs,
           ignored,
-          prices,
+          salesTypes,
+          startingPrices,
+          endingPrices,
+          salesTimes,
 
           requestComposedUrl,
           requestRenderId,
           requestMaxNs,
           updateNs,
           updateIgnored,
-          updatePrices,
+          updateSalesTypes,
+          updateStartingPrices,
+          updateEndingPrices,
+          updateSalesTimes,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
           composedUrls,
           renderIds,
           ns,
-          prices,
           ignored,
-          onChangeBundleName,
-          onChangeBundleIds,
-          onChangeBundlePrice,
 
           name: spacedName(),
           ids: null,
-          price: DEFAULT_PRICE,
+          saleType: DEFAULT_SALE_TYPE,
+          startingPrice: DEFAULT_PRICE,
+          endingPrice: DEFAULT_PRICE,
+          saleTime: DEFAULT_SALE_TIME,
+
+          onChangeBundleName,
+          onChangeBundleIds,
+          onChangeBundleSaleType,
+          onChangeBundleStartingPrice,
+          onChangeBundleEndingPrice,
+          onChangeBundleSaleTime,
         } as BundleNodeComponentData;
       default:
         return {};
@@ -443,14 +510,20 @@ export function useNodes(
           ns,
           maxNs,
           ignored,
-          prices,
+          salesTypes,
+          startingPrices,
+          endingPrices,
+          salesTimes,
 
           requestComposedUrl,
           requestRenderId,
           requestMaxNs,
           updateNs,
           updateIgnored,
-          updatePrices,
+          updateSalesTypes,
+          updateStartingPrices,
+          updateEndingPrices,
+          updateSalesTimes,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
@@ -460,10 +533,13 @@ export function useNodes(
           renderIds,
           ns,
           ignored,
-          prices,
+
           onChangeBundleName,
           onChangeBundleIds,
-          onChangeBundlePrice,
+          onChangeBundleSaleType,
+          onChangeBundleStartingPrice,
+          onChangeBundleEndingPrice,
+          onChangeBundleSaleTime,
         } as BundleNodeComponentData;
       default:
         return data;
@@ -561,7 +637,11 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   initialRenderIds,
   initialNs,
   initialIgnored,
-  initialPrices,
+
+  initialSalesTypes,
+  initialStartingPrices,
+  initialEndingPrices,
+  initialSalesTimes,
 
   setDirty,
 }) => {
@@ -575,7 +655,10 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     initialRenderIds,
     initialNs,
     initialIgnored,
-    initialPrices,
+    initialSalesTypes,
+    initialStartingPrices,
+    initialEndingPrices,
+    initialSalesTimes,
     setDirty
   );
 

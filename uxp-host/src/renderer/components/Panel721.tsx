@@ -9,20 +9,15 @@ import {
   MenuTrigger,
   Menu,
   Item,
+  TextField,
 } from "@adobe/react-spectrum";
 import { TaskItem } from "./TaskItem";
 import { useErrorHandler } from "./ErrorHandler";
-import {
-  // getCost,
-  mintDrop,
-  sellDrop,
-  // setCost,
-  // setMaxMintAmount,
-  withdraw,
-} from "../ipc";
+import { createProviderWithKey, mintDrop, sellDrop, withdraw } from "../ipc";
 import { OutputItemProps } from "./OutputItem";
 import { Deployment } from "../typings";
 import Play from "@spectrum-icons/workflow/Play";
+import { v4 as uuid } from "uuid";
 
 interface Panel721Props {
   deployment: Deployment;
@@ -55,44 +50,7 @@ export const Panel721: React.FC<Panel721Props> = ({
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
   const [dropsItems] = useState(drops.map(({ name }) => ({ name })));
 
-  // const onGetMintingCost = task("get minting cost", async () => {
-  //   setWorking(true);
-
-  //   const cost = await getCost(id, contractId);
-  //   addOutput({
-  //     title: "Cost",
-  //     text: cost.toString(),
-  //     isCopiable: true,
-  //   });
-
-  //   setWorking(false);
-  // });
-
-  // const onSetMintingCost = task("set minting cost", async ({ cost }) => {
-  //   setWorking(true);
-
-  //   await setCost(id, contractId, cost);
-  //   addOutput({
-  //     title: "Cost set",
-  //     text: cost.toString(),
-  //     isCopiable: true,
-  //   });
-
-  //   setWorking(false);
-  // });
-
-  // const onSetMaxMintAmount = task("set max mint amount", async ({ amount }) => {
-  //   setWorking(true);
-
-  //   await setMaxMintAmount(id, contractId, amount);
-  //   addOutput({
-  //     title: "Max mint amount set",
-  //     text: amount.toString(),
-  //     isCopiable: true,
-  //   });
-
-  //   setWorking(false);
-  // });
+  const [privateKey, setPrivateKey] = useState("");
 
   const onMintDrop = task("mint drop", async () => {
     setWorking(true);
@@ -112,9 +70,12 @@ export const Panel721: React.FC<Panel721Props> = ({
   const onSellDrop = task("sell drop", async () => {
     setWorking(true);
 
+    const providerEngineId = uuid();
+    await createProviderWithKey(providerEngineId, privateKey);
+
     await sellDrop(
       id,
-      providerId,
+      providerEngineId,
       deployment,
       drops.find(({ name }) => name === dropNameToSell)
     );
@@ -143,38 +104,6 @@ export const Panel721: React.FC<Panel721Props> = ({
 
   return (
     <>
-      {/* <TaskItem name="Get minting cost" onRun={onGetMintingCost} />
-
-      <TaskItem
-        name="Set minting cost"
-        onRun={onSetMintingCost}
-        fields={[
-          {
-            key: "cost",
-            type: "string",
-            label: "Cost",
-            initial: "",
-            value: "",
-          },
-        ]}
-      /> */}
-
-      {/* <TaskItem
-        name="Set max mint amount"
-        onRun={onSetMaxMintAmount}
-        fields={[
-          {
-            key: "amount",
-            type: "int",
-            label: "Amount",
-            initial: 0,
-            min: 0,
-            max: Infinity,
-            value: 0,
-          },
-        ]}
-      /> */}
-
       <View
         borderWidth="thin"
         borderColor="dark"
@@ -214,6 +143,12 @@ export const Panel721: React.FC<Panel721Props> = ({
             </ActionButton>
           </Flex>
           <MenuTrigger>
+            <TextField
+              label="Private key"
+              type="password"
+              value={privateKey}
+              onChange={setPrivateKey}
+            />
             <ActionButton width="100%">{dropNameToSell}</ActionButton>
             <Menu
               items={dropsItems}

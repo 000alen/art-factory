@@ -11,6 +11,7 @@ import {
   ProgressBar,
   repeat,
   Text,
+  TextField,
   View,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
@@ -26,7 +27,12 @@ import { chopAddress } from "../utils";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { v4 as uuid } from "uuid";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
-import { createContract, createProvider, writeProjectInstance } from "../ipc";
+import {
+  createContract,
+  createProvider,
+  createProviderWithKey,
+  writeProjectInstance,
+} from "../ipc";
 
 interface InstancePageState {
   projectDir: string;
@@ -74,9 +80,10 @@ export function InstancePage() {
     task("provider & contract", async () => {
       if (error) return;
       const providerId = uuid();
+      const contractId = uuid();
+
       const uri = await createProvider(providerId, async ({ connected }) => {
         WalletConnectQRCodeModal.close();
-        const contractId = uuid();
         await createContract(contractId, providerId, contractAddress, abi);
         setProviderId(providerId);
         setContractId(contractId);

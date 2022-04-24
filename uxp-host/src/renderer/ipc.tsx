@@ -373,32 +373,29 @@ export const setBaseUri = (id: string, contractId: string, baseUri: string) =>
 export const reveal = (id: string, contractId: string) =>
   ipcTask("reveal")(id, contractId);
 
-export const mintDrop = (
-  id: string,
-  contractId: string,
-  drop: Drop
-) => ipcTask("mintDrop")(id, contractId, drop);
+export const mintDrop = (id: string, contractId: string, drop: Drop) =>
+  ipcTask("mintDrop")(id, contractId, drop);
 
 export const sellDropBundles = (
   id: string,
-  providerId: string,
+  providerEngineId: string,
   deployment: Deployment,
   drop: Drop
-) => ipcTask("sellDropBundles")(id, providerId, deployment, drop);
+) => ipcTask("sellDropBundles")(id, providerEngineId, deployment, drop);
 
 export const sellDropItems = (
   id: string,
-  providerId: string,
+  providerEngineId: string,
   deployment: Deployment,
   drop: Drop
-) => ipcTask("sellDropItems")(id, providerId, deployment, drop);
+) => ipcTask("sellDropItems")(id, providerEngineId, deployment, drop);
 
 export const sellDrop = (
   id: string,
-  providerId: string,
+  providerEngineId: string,
   deployment: Deployment,
   drop: Drop
-) => ipcTask("sellDrop")(id, providerId, deployment, drop);
+) => ipcTask("sellDrop")(id, providerEngineId, deployment, drop);
 
 // #endregion
 
@@ -442,6 +439,10 @@ export const createProvider = (
     window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
     window.ipcRenderer.send("createProvider", id);
   });
+
+export const createProviderWithKey = (id: string, privateKey: string) =>
+  ipcTask("createProviderWithKey")(id, privateKey);
+
 // #endregion
 
 // #region Contract

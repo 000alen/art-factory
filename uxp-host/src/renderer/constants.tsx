@@ -19,7 +19,9 @@ export const MAX_SIZE = 500;
 export const DEFAULT_OPACITY = 1;
 export const DEFAULT_BLENDING = "normal";
 export const DEFAULT_N = 1;
+export const DEFAULT_SALE_TYPE = "fixed";
 export const DEFAULT_PRICE = 0.01;
+export const DEFAULT_SALE_TIME = 0;
 
 export const NAMESPACE = "84002a51-4399-4405-bf15-05decc67081e";
 

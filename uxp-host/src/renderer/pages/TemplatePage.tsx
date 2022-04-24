@@ -45,40 +45,35 @@ export function TemplatePage() {
   } = state as TemplatePageState;
   const { configuration, templates } = instance;
 
+  const [template] = useState(
+    templateId ? templates.find(({ id }) => id == templateId) : undefined
+  );
+
   const [dirty, setDirty] = useState(_dirty);
 
   const [workingId] = useState(templateId || uuid());
-  const [name, setName] = useState(
-    templateId
-      ? templates.find(({ id }) => id == templateId).name
-      : spacedName()
-  );
-  const [initialNodes] = useState(
-    templateId ? templates.find(({ id }) => id == templateId).nodes : undefined
-  );
-  const [initialEdges] = useState(
-    templateId ? templates.find(({ id }) => id == templateId).edges : undefined
-  );
+  const [name, setName] = useState(templateId ? template.name : spacedName());
+  const [initialNodes] = useState(templateId ? template.nodes : undefined);
+  const [initialEdges] = useState(templateId ? template.edges : undefined);
   const [initialRenderIds] = useState(
-    templateId
-      ? templates.find(({ id }) => id == templateId).renderIds
-      : undefined
+    templateId ? template.renderIds : undefined
   );
-  const [initialNs] = useState(
-    templateId ? templates.find(({ id }) => id == templateId).ns : undefined
+  const [initialNs] = useState(templateId ? template.ns : undefined);
+  const [initialIgnored] = useState(templateId ? template.ignored : undefined);
+  const [initialSalesTypes] = useState(
+    templateId ? template.salesTypes : undefined
   );
-  const [initialIgnored] = useState(
-    templateId
-      ? templates.find(({ id }) => id == templateId).ignored
-      : undefined
+  const [initialStartingPrices] = useState(
+    templateId ? template.startingPrices : undefined
   );
-  const [initialPrices] = useState(
-    templateId ? templates.find(({ id }) => id == templateId).prices : undefined
+  const [initialEndingPrices] = useState(
+    templateId ? template.endingPrices : undefined
+  );
+  const [initialSalesTimes] = useState(
+    templateId ? template.salesTimes : undefined
   );
 
-  const [traits, setTraits] = useState(
-    templateId ? templates.find(({ id }) => id == templateId).traits : []
-  );
+  const [traits, setTraits] = useState(templateId ? template.traits : []);
   const getterRef = useRef<() => NodesInstance>(null);
 
   useEffect(() => {
@@ -107,8 +102,17 @@ export function TemplatePage() {
     navigate("/factory", { state: { projectDir, instance, id, dirty } });
 
   const onSave = () => {
-    const { nodes, edges, renderIds, ns, ignored, prices } =
-      getterRef.current();
+    const {
+      nodes,
+      edges,
+      renderIds,
+      ns,
+      ignored,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
+    } = getterRef.current();
 
     const index = instance.templates.findIndex(
       (template) => template.id === workingId
@@ -127,7 +131,10 @@ export function TemplatePage() {
           renderIds,
           ns,
           ignored,
-          prices,
+          salesTypes,
+          startingPrices,
+          endingPrices,
+          salesTimes,
         },
       ];
     else
@@ -142,7 +149,10 @@ export function TemplatePage() {
               renderIds,
               ns,
               ignored,
-              prices,
+              salesTypes,
+              startingPrices,
+              endingPrices,
+              salesTimes,
             }
           : template
       );
@@ -171,7 +181,10 @@ export function TemplatePage() {
       initialRenderIds={initialRenderIds}
       initialNs={initialNs}
       initialIgnored={initialIgnored}
-      initialPrices={initialPrices}
+      initialSalesTypes={initialSalesTypes}
+      initialStartingPrices={initialStartingPrices}
+      initialEndingPrices={initialEndingPrices}
+      initialSalesTimes={initialSalesTimes}
       setDirty={setDirty}
     >
       <Flex

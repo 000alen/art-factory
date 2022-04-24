@@ -62,6 +62,7 @@ const sendWhitelist = [
   "createProvider",
   "createProviderUri",
   "createProviderResult",
+  "createProviderWithKey",
 
   "createContract",
 ];
@@ -129,6 +130,7 @@ const onWhitelist = [
   "createProvider",
   "createProviderUri",
   "createProviderResult",
+  "createProviderWithKeyResult",
 
   "createContractResult",
 ];

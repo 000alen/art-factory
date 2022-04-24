@@ -48,7 +48,10 @@ export interface Template {
   renderIds: Record<string, string>;
   ns: Record<string, number>;
   ignored: string[];
-  prices: Record<string, number>;
+  salesTypes: Record<string, string>;
+  startingPrices: Record<string, number>;
+  endingPrices: Record<string, number>;
+  salesTimes: Record<string, number>;
 }
 
 export interface Layer {
@@ -69,13 +72,19 @@ export interface Trait extends Layer {
 export interface CollectionItem {
   name: string;
   traits: Trait[];
-  price: number;
+  saleType: string;
+  startingPrice: number;
+  endingPrice: number;
+  saleTime: number;
 }
 
 export interface BundlesInfoItem {
   name: string;
   ids: string[];
-  price: number;
+  saleType: string;
+  startingPrice: number;
+  endingPrice: number;
+  saleTime: number;
 }
 
 export type BundlesInfo = BundlesInfoItem[];
@@ -83,7 +92,10 @@ export type BundlesInfo = BundlesInfoItem[];
 export interface BundleItem {
   name: string;
   ids: string[][];
-  price: number;
+  saleType: string;
+  startingPrice: number;
+  endingPrice: number;
+  saleTime: number;
 }
 
 export type Collection = CollectionItem[];
@@ -119,6 +131,7 @@ export interface Deployment {
   abi: any[];
   compilerVersion: string;
   generation: Generation;
+  dropNumber: number;
 }
 
 export interface Instance {

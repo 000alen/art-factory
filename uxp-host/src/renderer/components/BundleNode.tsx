@@ -21,20 +21,27 @@ import Remove from "@spectrum-icons/workflow/Remove";
 import { arrayDifference, chooseN, hash, getBranches } from "../utils";
 import { ImageItem } from "./ImageItem";
 import { LayerNodeComponentData } from "./LayerNode";
+import { Time } from "./Time";
 
 export interface BundleNodeComponentData {
   composedUrls?: Record<string, string>;
   renderIds?: Record<string, string>;
   ns?: Record<string, number>;
   ignored?: string[];
-  prices?: Record<string, number>;
+
   onChangeBundleName?: (id: string, value: string) => void;
   onChangeBundleIds?: (id: string, value: string[]) => void;
-  onChangeBundlePrice?: (id: string, value: number) => void;
+  onChangeBundleSaleType?: (id: string, value: string) => void;
+  onChangeBundleStartingPrice?: (id: string, value: number) => void;
+  onChangeBundleEndingPrice?: (id: string, value: number) => void;
+  onChangeBundleSaleTime?: (id: string, value: number) => void;
 
   name: string;
   ids: string[];
-  price: number;
+  saleType: string;
+  startingPrice: number;
+  endingPrice: number;
+  saleTime: number;
 }
 
 interface BundleNodeProps {
@@ -98,9 +105,7 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
       }));
 
     return (
-      <Flex
-        UNSAFE_className="w-48"
-      key={i} direction="column" gap="size-100">
+      <Flex UNSAFE_className="w-48" key={i} direction="column" gap="size-100">
         <ImageItem src={composedUrl} maxSize={192} />
         <Flex gap="size-100">
           <MenuTrigger>
@@ -167,33 +172,35 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
 
               <Heading>{data.name}</Heading>
 
-              <RadioGroup label="Sale type">
-                <Radio value="static">Static price</Radio>
+              <RadioGroup
+                label="Sale type"
+                value={data.saleType}
+                onChange={(value) => data.onChangeBundleSaleType(id, value)}
+              >
+                <Radio value="fixed">fixed price</Radio>
                 <Radio value="dutch">Dutch auction</Radio>
                 <Radio value="english">English auction</Radio>
               </RadioGroup>
 
               <NumberField
-                // width="100%"
-                step={0.01}
                 minValue={0}
-                value={data.price}
+                value={data.startingPrice}
                 onChange={(value: number) =>
-                  data.onChangeBundlePrice(id, value)
+                  data.onChangeBundleStartingPrice(id, value)
                 }
                 label="Starting price"
               />
 
               <NumberField
-                // width="100%"
-                // step={0.01}
-                // minValue={0}
-                // value={data.price}
-                // onChange={(value: number) =>
-                //   data.onChangeBundlePrice(id, value)
-                // }
+                minValue={0}
+                value={data.endingPrice}
+                onChange={(value: number) =>
+                  data.onChangeBundleEndingPrice(id, value)
+                }
                 label="Ending price"
               />
+
+              {/* <Time /> */}
 
               <Flex direction="row-reverse">
                 <ActionButton

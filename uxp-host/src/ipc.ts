@@ -25,14 +25,15 @@ import {
   Generation,
   Layer,
   MetadataItem,
-  Secrets,
   Template,
   Trait,
 } from "./typings";
 import { capitalize, layersNames } from "./utils";
 import { BUILD_DIR_NAME } from "./constants";
 import { Contract, providers as ethersProviders } from "ethers";
-
+import { PrivateKeyWalletSubprovider } from "@0x/subproviders";
+import RPCSubprovider from "web3-provider-engine/subproviders/rpc";
+import Web3ProviderEngine from "web3-provider-engine";
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
   ipcMain.on(task, (event, ...args) => {
@@ -418,20 +419,32 @@ ipcAsyncTask(
 
 ipcAsyncTask(
   "sellDropBundles",
-  async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
-    await factories[id].sellDropBundles(providerId, deployment, drop)
+  async (
+    id: string,
+    providerEngineId: string,
+    deployment: Deployment,
+    drop: Drop
+  ) => await factories[id].sellDropBundles(providerEngineId, deployment, drop)
 );
 
 ipcAsyncTask(
   "sellDropItems",
-  async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
-    await factories[id].sellDropItems(providerId, deployment, drop)
+  async (
+    id: string,
+    providerEngineId: string,
+    deployment: Deployment,
+    drop: Drop
+  ) => await factories[id].sellDropItems(providerEngineId, deployment, drop)
 );
 
 ipcAsyncTask(
   "sellDrop",
-  async (id: string, providerId: string, deployment: Deployment, drop: Drop) =>
-    await factories[id].sellDrop(providerId, deployment, drop)
+  async (
+    id: string,
+    providerEngineId: string,
+    deployment: Deployment,
+    drop: Drop
+  ) => await factories[id].sellDrop(providerEngineId, deployment, drop)
 );
 
 // #endregion
@@ -439,6 +452,7 @@ ipcAsyncTask(
 // #region Provider
 export const providers: Record<string, WalletConnectProvider> = {};
 export const accounts: Record<string, string> = {};
+export const providerEngines: Record<string, any> = {};
 
 /*
 -> createProvider
@@ -485,6 +499,28 @@ ipcMain.on("createProvider", async (event, id: string) => {
   const uri = connector.uri;
   event.reply("createProviderUri", { id, uri });
 });
+
+ipcAsyncTask(
+  "createProviderWithKey",
+  async (id: string, privateKey: string) => {
+    const privateKeyWalletSubprovider = new PrivateKeyWalletSubprovider(
+      privateKey,
+      4
+    );
+
+    const infuraRpcSubprovider = new RPCSubprovider({
+      rpcUrl: `https://rinkeby.infura.io/v3/${getInfuraProjectId()}`,
+    });
+
+    const providerEngine = new Web3ProviderEngine();
+    providerEngine.addProvider(privateKeyWalletSubprovider);
+    providerEngine.addProvider(infuraRpcSubprovider);
+    providerEngine.start();
+
+    providerEngines[id] = providerEngine;
+    accounts[id] = (await privateKeyWalletSubprovider.getAccountsAsync())[0];
+  }
+);
 
 // #endregion
 

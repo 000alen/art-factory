@@ -9,7 +9,7 @@ import { v4 as uuid } from "uuid";
 import Web3 from "web3";
 
 import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
-import { accounts, contracts, providers } from "./ipc";
+import { accounts, contracts, providerEngines, providers } from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -158,7 +158,16 @@ export class Factory {
       blending: string;
     }
 
-    const { nodes, edges, ns, ignored, prices } = template;
+    const {
+      nodes,
+      edges,
+      ns,
+      ignored,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
+    } = template;
 
     const nData = (
       getBranches(nodes, edges).map((branch) =>
@@ -190,10 +199,13 @@ export class Factory {
     const bundlesInfo: BundlesInfo = nodes
       .filter((node) => node.type === "bundleNode")
       .map((node) => node.data)
-      .map((data) => ({
-        name: data.name,
-        ids: data.ids,
-        price: data.price,
+      .map(({ name, ids, saleType, startingPrice, endingPrice, saleTime }) => ({
+        name,
+        ids,
+        saleType,
+        startingPrice,
+        endingPrice,
+        saleTime,
       }));
 
     const computeTraitsNs = (
@@ -262,7 +274,10 @@ export class Factory {
     let i = 1;
     for (const [index, traits] of nTraits.entries()) {
       const n = ns[keys[index]];
-      const price = prices[keys[index]];
+      const saleType = salesTypes[keys[index]];
+      const startingPrice = startingPrices[keys[index]];
+      const endingPrice = endingPrices[keys[index]];
+      const saleTime = salesTimes[keys[index]];
 
       let nTraits = Array.from({ length: n }, () => []);
       for (const trait of traits)
@@ -271,20 +286,25 @@ export class Factory {
       const collectionItems = nTraits.map((traits) => ({
         name: `${i++}`,
         traits,
-        price,
+        saleType,
+        startingPrice,
+        endingPrice,
+        saleTime,
       }));
 
       const bundle = bundlesInfo.find(({ ids }) => ids.includes(keys[index]));
 
       if (bundle !== undefined) {
         const bundleName = bundle.name;
-        const bundlePrice = bundle.price;
 
         if (!bundles.some((b) => b.name === bundleName))
           bundles.push({
             name: bundleName,
             ids: Array.from({ length: bundlesNs[bundleName] }, () => []),
-            price: bundlePrice,
+            saleType: bundle.saleType,
+            startingPrice: bundle.startingPrice,
+            endingPrice: bundle.endingPrice,
+            saleTime: bundle.saleTime,
           });
 
         const bundleIndex = bundles.findIndex((b) => b.name === bundleName);
@@ -753,12 +773,11 @@ export class Factory {
         })
     );
 
-    bundles = bundles.map(({ name, ids, price }) => ({
-      name,
+    bundles = bundles.map(({ ids, ...rest }) => ({
+      ...rest,
       ids: ids.filter(
         (ids) => !ids.some((id) => items.some((item) => item.name === id))
       ),
-      price,
     }));
 
     drops = drops.map(({ name, ids }) => ({
@@ -867,12 +886,11 @@ export class Factory {
   async regenerateItems(generation: Generation, items: Collection) {
     let { name, collection } = generation;
 
-    const newItems: Collection = items.map(({ name, traits, price }) => ({
-      name,
+    const newItems: Collection = items.map(({ traits, ...rest }) => ({
+      ...rest,
       traits: traits.map((trait) =>
         choose(this.traitsByLayerName.get(trait.name))
       ),
-      price,
     }));
     await this.generateImages({ name, collection: newItems } as Generation);
 
@@ -998,10 +1016,9 @@ export class Factory {
       }
 
       unifiedBundles.push(
-        ...bundles.map(({ name, ids, price }) => ({
-          name,
+        ...bundles.map(({ ids, ...rest }) => ({
+          ...rest,
           ids: ids.map((_ids) => _ids.map((id) => mappings[id])),
-          price,
         }))
       );
 
@@ -1123,17 +1140,16 @@ export class Factory {
   }
 
   async sellDropBundles(
-    providerId: string,
+    providerEngineId: string,
     deployment: Deployment,
     drop: Drop
   ) {
-    // @ts-ignore
-    const web3 = new Web3(providers[providerId]);
+    const providerEngine = providerEngines[providerEngineId];
 
     const { generation, contractAddress } = deployment;
     const { bundles } = generation;
 
-    const seaport = new OpenSeaPort(web3.currentProvider, {
+    const seaport = new OpenSeaPort(providerEngine, {
       networkName: Network.Rinkeby,
     });
 
@@ -1150,8 +1166,9 @@ export class Factory {
         await seaport.createBundleSellOrder({
           assets,
           bundleName,
-          accountAddress: accounts[providerId],
-          startAmount: bundle.price,
+          accountAddress: accounts[providerEngineId],
+          startAmount: bundle.startingPrice,
+          // endAmount: bundle.endingPrice,
         });
 
         publishedIds.push(..._ids);
@@ -1162,18 +1179,17 @@ export class Factory {
   }
 
   async sellDropItems(
-    providerId: string,
+    providerEngineId: string,
     deployment: Deployment,
     drop: Drop,
     publishedIds: string[] = []
   ) {
-    // @ts-ignore
-    const web3 = new Web3(providers[providerId]);
+    const providerEngine = providerEngines[providerEngineId];
 
     const { generation, contractAddress } = deployment;
     const { collection } = generation;
 
-    const seaport = new OpenSeaPort(web3.currentProvider, {
+    const seaport = new OpenSeaPort(providerEngine, {
       networkName: Network.Rinkeby,
     });
 
@@ -1187,18 +1203,19 @@ export class Factory {
 
       await seaport.createSellOrder({
         asset,
-        accountAddress: accounts[providerId],
-        startAmount: item.price,
+        accountAddress: accounts[providerEngineId],
+        startAmount: item.startingPrice,
+        // endAmount: item.endingPrice,
       });
     }
   }
 
-  async sellDrop(providerId: string, deployment: Deployment, drop: Drop) {
+  async sellDrop(providerEngineId: string, deployment: Deployment, drop: Drop) {
     const publishedIds = await this.sellDropBundles(
-      providerId,
+      providerEngineId,
       deployment,
       drop
     );
-    await this.sellDropItems(providerId, deployment, drop, publishedIds);
+    await this.sellDropItems(providerEngineId, deployment, drop, publishedIds);
   }
 }
