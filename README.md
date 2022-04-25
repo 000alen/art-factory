@@ -40,9 +40,9 @@
 - [ ] Refactor
 - [ ] _Testing_
 
-- [ ] Request mio: que el regenerate por filtros haga un refresh
-- [ ] Request mio: ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
-- [ ] Request mio: agregar las aristas de los nodos
+- [ ] Que el regenerate por filtros haga un refresh
+- [ ] Ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
+- [ ] Agregar las aristas de los nodos
 
 - [ ] ~~Respetar el orden de las capas de Photoshop en la aplicación~~
 - [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~

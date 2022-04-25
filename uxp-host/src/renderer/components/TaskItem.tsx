@@ -75,8 +75,18 @@ type Field =
 import React, { useState } from "react";
 
 import {
-    ActionButton, Button, ButtonGroup, Content, Dialog, DialogTrigger, Divider, Flex, Heading,
-    NumberField, TextField, View
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Content,
+  Dialog,
+  DialogTrigger,
+  Divider,
+  Flex,
+  Heading,
+  NumberField,
+  TextField,
+  View,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 import ShowMenu from "@spectrum-icons/workflow/ShowMenu";
@@ -96,10 +106,12 @@ interface TaskItemProps {
   name: string;
   fields?: Field[];
   useDialog?: boolean;
+  isDisabled?: boolean;
   resolveCustomFields?: (
     field: CustomField,
     value: any,
-    onChange: (value: any) => void
+    onChange: (value: any) => void,
+    isDisabled: boolean
   ) => any;
   onRun: (...args: any[]) => void;
 }
@@ -147,6 +159,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   fields,
   resolveCustomFields,
   useDialog,
+  isDisabled = false,
 }) => {
   const [state, setState] = useState({});
   const [dialogShown, setDialogShown] = useState(false);
@@ -168,6 +181,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       case "address":
         return (
           <TextField
+            isDisabled={isDisabled}
             key={field.key}
             label={field.label}
             placeholder="0x"
@@ -179,6 +193,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <NumberField
             key={field.key}
+            isDisabled={isDisabled}
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
             step={1}
@@ -190,6 +205,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <NumberField
             key={field.key}
+            isDisabled={isDisabled}
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
             step={field.step}
@@ -201,6 +217,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <TextField
             key={field.key}
+            isDisabled={isDisabled}
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
           />
@@ -211,6 +228,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <ArrayOf
             key={field.key}
+            isDisabled={isDisabled}
             Component={TextField}
             props={{ placeholder: "0x" }}
             label={field.label}
@@ -225,6 +243,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <ArrayOf
             key={field.key}
+            isDisabled={isDisabled}
             Component={NumberField}
             props={{
               step: 1,
@@ -243,6 +262,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <ArrayOf
             key={field.key}
+            isDisabled={isDisabled}
             Component={NumberField}
             props={{
               step: field.step,
@@ -261,6 +281,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <ArrayOf
             key={field.key}
+            isDisabled={isDisabled}
             Component={TextField}
             label={field.label}
             emptyValue={field.initial}
@@ -274,7 +295,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           resolveCustomFields(
             field,
             state[(field as CustomField).key],
-            (value) => onSet((field as CustomField).key, value)
+            (value) => onSet((field as CustomField).key, value),
+            isDisabled
           )
         );
     }
@@ -302,7 +324,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             justifyContent="space-between"
           >
             <Heading>{name}</Heading>
-            <ActionButton onPress={onPress}>
+            <ActionButton isDisabled={isDisabled} onPress={onPress}>
               {useDialog ? <ShowMenu /> : <Play />}
             </ActionButton>
           </Flex>

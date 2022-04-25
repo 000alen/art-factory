@@ -87,14 +87,14 @@ export const Panel721: React.FC<Panel721Props> = ({
     });
   });
 
-  const onWithdraw = task("withdraw", async () => {
-    await withdraw(id, contractId);
-    addOutput({
-      title: "Withdraw",
-      text: "",
-      isCopiable: true,
-    });
-  });
+  // const onWithdraw = task("withdraw", async () => {
+  //   await withdraw(id, contractId);
+  //   addOutput({
+  //     title: "Withdraw",
+  //     text: "",
+  //     isCopiable: true,
+  //   });
+  // });
 
   return (
     <>
@@ -160,7 +160,7 @@ export const Panel721: React.FC<Panel721Props> = ({
         </Flex>
       </View>
 
-      <TaskItem name="Withdraw" onRun={onWithdraw} />
+      {/* <TaskItem name="Withdraw" onRun={onWithdraw} /> */}
     </>
   );
 };

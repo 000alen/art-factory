@@ -74,6 +74,7 @@ export const FactoryPage: React.FC = () => {
   const [templates, setTemplates] = useState(instance.templates);
   const [generations, setGenerations] = useState(instance.generations);
   const [sources, setSources] = useState(instance.sources);
+  const [frozen] = useState(instance.frozen);
 
   const [dirty, setDirty] = useState(_dirty);
 
@@ -315,13 +316,15 @@ export const FactoryPage: React.FC = () => {
   const resolveUnifyGenerationFields = (
     field: CustomField,
     value: string[],
-    onChange: (value: string[]) => void
+    onChange: (value: string[]) => void,
+    isDisabled: boolean
   ) => {
     switch (field._type) {
       case "generations":
         return (
           <ArrayOf
             key={field.key}
+            isDisabled={isDisabled}
             width="100%"
             Component={GenerationItem}
             label="Generations"
@@ -399,7 +402,7 @@ export const FactoryPage: React.FC = () => {
           <Flex gap="size-100" alignItems="center">
             <Heading level={2}>Templates</Heading>
 
-            <ActionButton onPress={() => onTemplate()}>
+            <ActionButton isDisabled={frozen} onPress={() => onTemplate()}>
               <Add />
             </ActionButton>
           </Flex>
@@ -413,7 +416,19 @@ export const FactoryPage: React.FC = () => {
                     name={template.name}
                     url={templatesPreviews[i]}
                   >
-                    <ActionGroup onAction={onTemplateAction} isJustified>
+                    <ActionGroup
+                      disabledKeys={
+                        frozen
+                          ? [
+                              `edit_${template.name}`,
+                              `generate_${template.name}`,
+                              `remove_${template.name}`,
+                            ]
+                          : []
+                      }
+                      onAction={onTemplateAction}
+                      isJustified
+                    >
                       <Item key={`edit_${template.name}`}>
                         <Edit />
                       </Item>
@@ -440,7 +455,18 @@ export const FactoryPage: React.FC = () => {
                     name={generation.name}
                     url={generationPreviews[i]}
                   >
-                    <ActionGroup onAction={onQualityAction} isJustified>
+                    <ActionGroup
+                      disabledKeys={
+                        frozen
+                          ? [
+                              `edit_${generation.name}`,
+                              `remove_${generation.name}`,
+                            ]
+                          : []
+                      }
+                      onAction={onQualityAction}
+                      isJustified
+                    >
                       <Item key={`edit_${generation.name}`}>
                         <Edit />
                       </Item>
@@ -458,7 +484,7 @@ export const FactoryPage: React.FC = () => {
       <View gridArea="right">
         <Flex gap="size-100" alignItems="center">
           <Heading level={1}>
-            {dirty && "*"} {configuration.name}
+            {dirty && "*"} {frozen && "[frozen]"} {configuration.name}
           </Heading>
           <ActionButton onPress={onConfiguration}>
             <Settings />
@@ -468,6 +494,7 @@ export const FactoryPage: React.FC = () => {
         <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
           <TaskItem name="Save" onRun={onSave} />
           <TaskItem
+            isDisabled={frozen}
             name="Unify generations"
             useDialog={true}
             fields={[
@@ -489,10 +516,18 @@ export const FactoryPage: React.FC = () => {
             resolveCustomFields={resolveUnifyGenerationFields}
             onRun={onUnifyGenerationsCommand}
           />
-          <TaskItem name="Deploy" onRun={onDeploy} />
+          <TaskItem isDisabled={frozen} name="Deploy" onRun={onDeploy} />
           <TaskItem name="Instance" onRun={onInstance} />
-          <TaskItem name="Import from files" onRun={() => {}} />
-          <TaskItem name="Reload generation" onRun={() => {}} />
+          <TaskItem
+            isDisabled={frozen}
+            name="Import from files"
+            onRun={() => {}}
+          />
+          <TaskItem
+            isDisabled={frozen}
+            name="Reload generation"
+            onRun={() => {}}
+          />
         </Grid>
       </View>
     </Grid>

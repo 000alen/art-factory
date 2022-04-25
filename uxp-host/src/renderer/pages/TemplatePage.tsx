@@ -43,7 +43,7 @@ export function TemplatePage() {
     templateId,
     dirty: _dirty,
   } = state as TemplatePageState;
-  const { configuration, templates } = instance;
+  const { configuration, templates, frozen } = instance;
 
   const [template] = useState(
     templateId ? templates.find(({ id }) => id == templateId) : undefined

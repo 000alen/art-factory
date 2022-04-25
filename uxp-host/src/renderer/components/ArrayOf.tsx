@@ -1,6 +1,13 @@
 import React from "react";
 
-import { ActionButton, ActionGroup, Flex, Heading, Item, View } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  ActionGroup,
+  Flex,
+  Heading,
+  Item,
+  View,
+} from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
@@ -15,6 +22,7 @@ interface ArrayItemProps {
   onMoveDown: () => void;
   onMoveUp: () => void;
   onRemove: () => void;
+  isDisabled?: boolean;
 }
 
 export const ArrayItem: React.FC<ArrayItemProps> = ({
@@ -26,6 +34,7 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
   onMoveDown,
   onMoveUp,
   onRemove,
+  isDisabled = false,
 }) => {
   const onAction = (action: string) => {
     switch (action) {
@@ -46,11 +55,16 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
       <Component
         {...props}
         width="100%"
+        isDisabled={isDisabled}
         aria-label={value}
         value={value}
         onChange={onChange}
       />
-      <ActionGroup overflowMode="collapse" onAction={onAction}>
+      <ActionGroup
+        disabledKeys={isDisabled ? ["moveDown", "moveUp", "remove"] : []}
+        overflowMode="collapse"
+        onAction={onAction}
+      >
         {moveable && (
           <Item key="moveDown">
             <ChevronDown />
@@ -82,6 +96,7 @@ interface ArrayOfProps {
   border?: boolean;
   width?: string;
   direction?: "row" | "column";
+  isDisabled?: boolean;
 }
 
 export const ArrayOf: React.FC<ArrayOfProps> = ({
@@ -96,6 +111,7 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
   border = true,
   width = "30vw",
   direction = "column",
+  isDisabled = false,
   children,
 }) => {
   const onAdd = () => {
@@ -153,6 +169,7 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
           {items.map((item, i) => (
             <ArrayItem
               key={i}
+              isDisabled={isDisabled}
               Component={Component}
               props={props}
               value={item}
@@ -165,7 +182,7 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
           ))}
         </Flex>
       </View>
-      <ActionButton marginTop={8} onPress={onAdd}>
+      <ActionButton isDisabled={isDisabled} marginTop={8} onPress={onAdd}>
         <Add />
       </ActionButton>
     </View>

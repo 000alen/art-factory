@@ -4,13 +4,11 @@ import {
   Node as FlowNode,
   Position,
   useEdges,
-  useNodes,
+  useNodes
 } from "react-flow-renderer";
 
 import {
-  ActionButton,
-  Divider,
-  Flex,
+  ActionButton, Flex,
   Heading,
   Item,
   Menu,
@@ -18,16 +16,15 @@ import {
   NumberField,
   Radio,
   RadioGroup,
-  Text,
+  Text
 } from "@adobe/react-spectrum";
-import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
 import {
   DEFAULT_N,
   DEFAULT_PRICE,
   DEFAULT_SALE_TIME,
-  DEFAULT_SALE_TYPE,
+  DEFAULT_SALE_TYPE
 } from "../constants";
 import { Trait } from "../typings";
 import { getBranches, hash } from "../utils";
@@ -214,7 +211,6 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
             </ActionButton>
           </Flex>
         </Flex>
-        {i !== nTraits.length - 1 && <Divider orientation="vertical" />}
       </>
     );
   };

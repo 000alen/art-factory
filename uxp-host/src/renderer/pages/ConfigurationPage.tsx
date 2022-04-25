@@ -1,20 +1,29 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { Button, ButtonGroup, Flex, Heading } from "@adobe/react-spectrum";
+import {
+  Button,
+  ButtonGroup,
+  Flex,
+  Heading,
+  Item,
+  ListBox,
+  NumberField,
+  Radio,
+  RadioGroup,
+  Slider,
+  Switch,
+  TextArea,
+  TextField,
+} from "@adobe/react-spectrum";
 import { parseColor } from "@react-stately/color";
 import Back from "@spectrum-icons/workflow/Back";
-import Close from "@spectrum-icons/workflow/Close";
 
-import { Configuration721 } from "../components/Configuration721";
-import { Configuration721_reveal_pause } from "../components/Configuration721_reveal_pause";
-import { ConfigurationBase } from "../components/ConfigurationBase";
-import { ConfigurationLayers } from "../components/ConfigurationLayers";
+import { ColorPicker } from "../components/ColorPicker";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { readProjectAvailableLayers } from "../ipc";
-import { Configuration, Instance } from "../typings";
-import { useGlobalState } from "../components/GlobalState";
+import { Configuration, ContractType, Instance } from "../typings";
 
 interface ConfigurationPageState {
   projectDir: string;
@@ -35,10 +44,12 @@ export function ConfigurationPage() {
     dirty: _dirty,
   } = state as ConfigurationPageState;
 
-  const { configuration } = instance;
+  const { configuration, frozen: _frozen } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
   const [availableLayers, setAvailableLayers] = useState(configuration.layers);
+
+  const [frozen, _setFrozen] = useState(_frozen);
 
   const [name, _setName] = useState(configuration.name);
   const [description, _setDescription] = useState(configuration.description);
@@ -62,6 +73,7 @@ export function ConfigurationPage() {
   const setter =
     <T,>(set: (v: T | ((v: T) => T)) => void) =>
     (v: T | ((v: T) => T)) => {
+      if (frozen) return;
       set(v);
       setDirty(true);
     };
@@ -74,6 +86,10 @@ export function ConfigurationPage() {
   const setDefaultBackground = setter(_setDefaultBackground);
   const setContractType = setter(_setContractType);
   const setLayers = setter(_setLayers);
+  const setFrozen = (v: boolean) => {
+    _setFrozen(v);
+    setDirty(true);
+  };
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -117,11 +133,21 @@ export function ConfigurationPage() {
         instance: {
           ...instance,
           configuration,
+          frozen,
         },
         dirty,
       },
     });
   };
+
+  const onResolutionChange = (value: number) => {
+    setWidth(Math.floor(originalWidth * (value / 100)));
+    setHeight(Math.floor(originalHeight * (value / 100)));
+  };
+
+  const items = availableLayers.map((layer) => ({
+    name: layer,
+  }));
 
   return (
     <Flex
@@ -131,59 +157,108 @@ export function ConfigurationPage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Heading level={1}>{dirty && "*"} Configuration</Heading>
+      <Heading level={1}>
+        {dirty && "*"} {frozen && "[frozen]"} Configuration
+      </Heading>
 
       <Flex gap="size-100" justifyContent="space-evenly">
-        <ConfigurationBase
-          {...{
-            name,
-            setName,
-            description,
-            setDescription,
-            symbol,
-            setSymbol,
-            originalWidth,
-            originalHeight,
-            width,
-            setWidth,
-            height,
-            setHeight,
-            generateBackground,
-            setGenerateBackground,
-            defaultBackground,
-            setDefaultBackground,
-            contractType,
-            setContractType,
-          }}
-        />
-
-        {/* {contractType === "721" ? (
-          <Configuration721
-            {...{
-              // cost,
-              // setCost,
-              // maxMintAmount,
-              // setMaxMintAmount,
-            }}
+        <Flex direction="column" gap="size-100">
+          <TextField
+            isDisabled={frozen}
+            label="Name"
+            value={name}
+            onChange={setName}
           />
-        ) : contractType === "721_reveal_pause" ? (
-          <Configuration721_reveal_pause
-            {...{
-              // cost,
-              // setCost,
-              // maxMintAmount,
-              // setMaxMintAmount,
-            }}
+          <TextArea
+            isDisabled={frozen}
+            label="Description"
+            value={description}
+            onChange={setDescription}
           />
-        ) : null} */}
 
-        <ConfigurationLayers
-          {...{
-            availableLayers,
-            layers,
-            setLayers,
-          }}
-        />
+          <TextField
+            isDisabled={frozen}
+            label="Symbol"
+            value={symbol}
+            onChange={setSymbol}
+          />
+
+          <Flex direction="column">
+            <Slider
+              isDisabled={frozen}
+              label="Resolution"
+              defaultValue={100}
+              minValue={10}
+              maxValue={100}
+              onChange={onResolutionChange}
+            />
+
+            <NumberField
+              isDisabled={frozen}
+              label="Width"
+              value={width}
+              onChange={setWidth}
+              isReadOnly
+            />
+            <NumberField
+              isDisabled={frozen}
+              label="Height"
+              value={height}
+              onChange={setHeight}
+              isReadOnly
+            />
+          </Flex>
+
+          <Switch
+            isDisabled={frozen}
+            isSelected={generateBackground}
+            onChange={setGenerateBackground}
+          >
+            Generate Background
+          </Switch>
+
+          <ColorPicker
+            label="Default Background"
+            color={defaultBackground as any}
+            setColor={setDefaultBackground}
+            isDisabled={generateBackground || frozen}
+          />
+
+          <RadioGroup
+            isDisabled={frozen}
+            label="Contract type"
+            value={contractType}
+            onChange={(v) => setContractType(v as ContractType)}
+          >
+            <Radio value="721">ERC721</Radio>
+            <Radio value="721_reveal_pause">ERC721_reveal_pause</Radio>
+          </RadioGroup>
+        </Flex>
+
+        <Flex direction="column" gap="size-100">
+          <Heading>Layers</Heading>
+          <ListBox
+            disabledKeys={frozen ? availableLayers : []}
+            width="size-2400"
+            selectionMode="multiple"
+            aria-label="Pick an animal"
+            items={items}
+            defaultSelectedKeys={layers}
+            onSelectionChange={(selectedKeys) =>
+              setLayers([...selectedKeys] as string[])
+            }
+          >
+            {(item) => <Item key={item.name}>{item.name}</Item>}
+          </ListBox>
+        </Flex>
+
+        {_frozen && (
+          <Flex>
+            <Switch isSelected={frozen} onChange={setFrozen}>
+              Frozen
+            </Switch>
+          </Flex>
+        )}
       </Flex>
 
       <ButtonGroup align="end">
