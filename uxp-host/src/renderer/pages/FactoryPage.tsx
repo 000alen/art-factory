@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import Zoom from "react-medium-image-zoom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
@@ -13,12 +12,10 @@ import {
   Menu,
   MenuTrigger,
   repeat,
-  Text,
   View,
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import Close from "@spectrum-icons/workflow/Close";
-import Copy from "@spectrum-icons/workflow/Copy";
 import Edit from "@spectrum-icons/workflow/Edit";
 import Folder from "@spectrum-icons/workflow/Folder";
 import Hammer from "@spectrum-icons/workflow/Hammer";
@@ -32,7 +29,6 @@ import {
 } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { ImageItem } from "../components/ImageItem";
 import { Loading } from "../components/Loading";
 import { Preview } from "../components/Preview";
 import { CustomField, TaskItem } from "../components/TaskItem";
@@ -48,7 +44,6 @@ import {
 } from "../ipc";
 import { Instance, SourceItem } from "../typings";
 import { makeSource } from "../utils";
-import { useGlobalState } from "../components/GlobalState";
 
 interface FactoryPageState {
   projectDir: string;

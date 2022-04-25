@@ -3,19 +3,12 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
-import {
-  Flex,
-  Heading,
-  NumberField,
-  Text,
-  TextField,
-} from "@adobe/react-spectrum";
+import { Flex, Text, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
 import { computeTemplateN, generate, getTemplatePreview } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { ImageItem } from "../components/ImageItem";
 import { MetadataField } from "../components/MetadataField";
 import { Preview } from "../components/Preview";
 import { ToolbarContext } from "../components/Toolbar";
@@ -23,7 +16,6 @@ import { TriStateButton } from "../components/TriStateButton";
 import { METADATA_FIELDS } from "../constants";
 import { Instance, MetadataItem } from "../typings";
 import { spacedName } from "../utils";
-import { useGlobalState } from "../components/GlobalState";
 
 interface GenerationPageState {
   projectDir: string;

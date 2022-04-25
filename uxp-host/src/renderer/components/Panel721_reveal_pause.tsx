@@ -42,7 +42,11 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
 
-  const [dropToMint, setDropToMint] = useState(
+  // const [dropToMint, setDropToMint] = useState(
+  //   dropNumber < drops.length ? drops[dropNumber] : null
+  // );
+
+  const [dropToMint] = useState(
     dropNumber < drops.length ? drops[dropNumber] : null
   );
 

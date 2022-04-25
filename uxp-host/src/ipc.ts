@@ -12,27 +12,12 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
 import {
-  getEtherscanApiKey,
-  getInfuraProjectId,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setEtherscanApiKey,
-  setInfuraProjectId,
-  setPinataApiKey,
-  setPinataSecretApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getPinataApiKey, getPinataSecretApiKey,
+    setEtherscanApiKey, setInfuraProjectId, setPinataApiKey, setPinataSecretApiKey
 } from "./store";
 import {
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  Network,
-  Template,
-  Trait,
+    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
+    Network, Template, Trait
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
 

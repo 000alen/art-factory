@@ -3,14 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   ActionButton,
-  Button,
-  ButtonGroup,
   Flex,
   Grid,
   Heading,
   Item,
-  Menu,
-  MenuTrigger,
   NumberField,
   TabList,
   Tabs,
@@ -48,7 +44,6 @@ import {
   Instance,
   Trait,
 } from "../typings";
-import { useGlobalState } from "../components/GlobalState";
 
 interface QualityPageState {
   projectDir: string;
@@ -71,8 +66,6 @@ export interface BundleItem {
   urls: string[];
 }
 
-export type setter<T> = (value: T | ((p: T) => T)) => void;
-
 export const QualityPage = () => {
   const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
@@ -92,7 +85,8 @@ export const QualityPage = () => {
 
   const { configuration, generations, sources } = instance;
 
-  const [dirty, setDirty] = useState(_dirty);
+  // const [dirty, setDirty] = useState(_dirty);
+  const [dirty] = useState(_dirty);
 
   const [selectedTab, setSelectedTab] = useState("items");
 

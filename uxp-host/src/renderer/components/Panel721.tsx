@@ -14,11 +14,10 @@ import {
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
-import { createProviderWithKey, mintDrop, sellDrop, withdraw } from "../ipc";
+import { createProviderWithKey, mintDrop, sellDrop } from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
-import { TaskItem } from "./TaskItem";
 
 interface Panel721Props {
   deployment: Deployment;
@@ -44,7 +43,10 @@ export const Panel721: React.FC<Panel721Props> = ({
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
 
-  const [dropToMint, setDropToMint] = useState(
+  // const [dropToMint, setDropToMint] = useState(
+  //   dropNumber < drops.length ? drops[dropNumber] : null
+  // );
+  const [dropToMint] = useState(
     dropNumber < drops.length ? drops[dropNumber] : null
   );
 

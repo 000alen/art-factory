@@ -12,7 +12,6 @@ import {
   Item,
   Menu,
   MenuTrigger,
-  Text,
   TextField,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
@@ -26,7 +25,6 @@ import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
 import { createProvider, factoryDeploy } from "../ipc";
 import { Deployment, Instance, Network } from "../typings";
-import { useGlobalState } from "../components/GlobalState";
 
 interface DeployPageState {
   projectDir: string;
@@ -44,7 +42,8 @@ export function DeployPage() {
 
   const { configuration, generations } = instance;
 
-  const [dirty, setDirty] = useState(_dirty);
+  // const [dirty, setDirty] = useState(_dirty);
+  const [dirty] = useState(_dirty);
 
   const [error] = useState(
     configuration.contractType === "721"

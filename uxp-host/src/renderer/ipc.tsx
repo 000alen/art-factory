@@ -17,8 +17,6 @@ declare global {
 import { v4 as uuid } from "uuid";
 
 import {
-  Bundles,
-  BundlesInfo,
   Collection,
   CollectionItem,
   Configuration,
@@ -29,7 +27,6 @@ import {
   Layer,
   MetadataItem,
   Network,
-  Secrets,
   Template,
   Trait,
 } from "./typings";

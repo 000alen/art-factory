@@ -1,15 +1,11 @@
 import React, { useCallback, useState } from "react";
-import { Controlled as ControlledZoom } from "react-medium-image-zoom";
 import { useEvent } from "react-use";
 
-import {
-    ActionGroup, Button, Flex, Grid, Heading, Item, repeat, Text
-} from "@adobe/react-spectrum";
+import { ActionGroup, Button, Grid, Item, repeat } from "@adobe/react-spectrum";
 import Close from "@spectrum-icons/workflow/Close";
 import Edit from "@spectrum-icons/workflow/Edit";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 
-import { ImageItem } from "./ImageItem";
 import { Preview } from "./Preview";
 
 interface Item {

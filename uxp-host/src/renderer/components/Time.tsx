@@ -7,8 +7,6 @@ interface TimeProps {
   onChange: (value: number) => void;
 }
 
-const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);
-
 // value: UTC seconds
 // days = floor(value / (24 * 60 * 60))
 // hours = floor((value - days * 24 * 60 * 60) / (60 * 60))

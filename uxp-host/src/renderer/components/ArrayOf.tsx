@@ -1,13 +1,6 @@
 import React from "react";
 
-import {
-  ActionButton,
-  ActionGroup,
-  Flex,
-  Heading,
-  Item,
-  View,
-} from "@adobe/react-spectrum";
+import { ActionButton, ActionGroup, Flex, Heading, Item, View } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 import ChevronUp from "@spectrum-icons/workflow/ChevronUp";

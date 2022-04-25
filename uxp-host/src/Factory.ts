@@ -5,7 +5,6 @@ import path from "path";
 import { Node as FlowNode } from "react-flow-renderer";
 import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
-import Web3 from "web3";
 
 import {
   BUILD_DIR_NAME,
@@ -841,7 +840,8 @@ export class Factory {
       item.name = `${i + 1}`;
     }
 
-    for (const [i, item] of collection.entries()) {
+    // for (const [i, item] of collection.entries()) {
+    for (let i = 0; i < collection.length; i++) {
       await fs.promises.rename(
         path.join(this.buildDir, "images", name, `_${i + 1}.png`),
         path.join(this.buildDir, "images", name, `${i + 1}.png`)

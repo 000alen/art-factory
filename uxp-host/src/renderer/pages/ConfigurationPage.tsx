@@ -2,19 +2,8 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  Button,
-  ButtonGroup,
-  Flex,
-  Heading,
-  Item,
-  ListBox,
-  NumberField,
-  Radio,
-  RadioGroup,
-  Slider,
-  Switch,
-  TextArea,
-  TextField,
+    Button, ButtonGroup, Flex, Heading, Item, ListBox, NumberField, Radio, RadioGroup, Slider,
+    Switch, TextArea, TextField
 } from "@adobe/react-spectrum";
 import { parseColor } from "@react-stately/color";
 import Back from "@spectrum-icons/workflow/Back";

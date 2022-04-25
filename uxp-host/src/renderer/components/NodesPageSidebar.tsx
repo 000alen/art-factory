@@ -3,14 +3,10 @@ import React, { useEffect, useState } from "react";
 import { Flex, Text, View } from "@adobe/react-spectrum";
 
 import { MAX_SIZE } from "../constants";
-import { factoryComposeTraits, factoryGetTraitImage } from "../ipc";
-// import { DEFAULT_BLENDING, DEFAULT_OPACITY } from "../constants";
+import { factoryGetTraitImage } from "../ipc";
 import { Trait } from "../typings";
-import { BundleNode } from "./BundleNode";
 import { useErrorHandler } from "./ErrorHandler";
 import { ImageItem } from "./ImageItem";
-// import { LayerNode } from "./LayerNode";
-import { RenderNode } from "./RenderNode";
 
 interface SidebarProps {
   id: string;

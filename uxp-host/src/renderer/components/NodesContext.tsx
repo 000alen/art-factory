@@ -1,40 +1,15 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import ReactFlow, {
-  addEdge,
-  Background,
-  BackgroundVariant,
-  Connection as FlowConnection,
-  Controls,
-  Edge as FlowEdge,
-  EdgeChange as FlowEdgeChange,
-  Node as FlowNode,
-  NodeChange as FlowNodeChange,
-  ReactFlowInstance,
-  useEdgesState,
-  useNodesState,
+    addEdge, Background, BackgroundVariant, Connection as FlowConnection, Controls,
+    Edge as FlowEdge, EdgeChange as FlowEdgeChange, Node as FlowNode, NodeChange as FlowNodeChange,
+    ReactFlowInstance, useEdgesState, useNodesState
 } from "react-flow-renderer";
 
 import {
-  DEFAULT_BLENDING,
-  DEFAULT_NODES,
-  DEFAULT_OPACITY,
-  DEFAULT_PRICE,
-  DEFAULT_SALE_TIME,
-  DEFAULT_SALE_TYPE,
-  MAX_SIZE,
+    DEFAULT_BLENDING, DEFAULT_NODES, DEFAULT_OPACITY, DEFAULT_PRICE, DEFAULT_SALE_TIME,
+    DEFAULT_SALE_TYPE, MAX_SIZE
 } from "../constants";
-import {
-  factoryComposeTraits,
-  factoryComputeMaxCombinations,
-  factoryGetTraitImage,
-} from "../ipc";
+import { factoryComposeTraits, factoryComputeMaxCombinations, factoryGetTraitImage } from "../ipc";
 import { Trait } from "../typings";
 import { dashedName, getId, hash, spacedName } from "../utils";
 import { BundleNode, BundleNodeComponentData } from "./BundleNode";

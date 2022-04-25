@@ -11,8 +11,6 @@ import {
   Heading,
   ProgressBar,
   repeat,
-  Text,
-  TextField,
   View,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
@@ -24,15 +22,9 @@ import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { ToolbarContext } from "../components/Toolbar";
-import {
-  createContract,
-  createProvider,
-  createProviderWithKey,
-  writeProjectInstance,
-} from "../ipc";
+import { createContract, createProvider, writeProjectInstance } from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
-import { useGlobalState } from "../components/GlobalState";
 
 interface InstancePageState {
   projectDir: string;
@@ -61,7 +53,8 @@ export function InstancePage() {
   const [abi] = useState(error ? null : deployment.abi);
   const [network] = useState(error ? null : deployment.network);
 
-  const [dirty, setDirty] = useState(_dirty);
+  // const [dirty, setDirty] = useState(_dirty);
+  const [dirty] = useState(_dirty);
 
   const [working, setWorking] = useState(false);
   const [outputs, setOutputs] = useState<OutputItemProps[]>([]);

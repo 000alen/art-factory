@@ -75,18 +75,8 @@ type Field =
 import React, { useState } from "react";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Content,
-  Dialog,
-  DialogTrigger,
-  Divider,
-  Flex,
-  Heading,
-  NumberField,
-  TextField,
-  View,
+    ActionButton, Button, ButtonGroup, Content, Dialog, DialogTrigger, Divider, Flex, Heading,
+    NumberField, TextField, View
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 import ShowMenu from "@spectrum-icons/workflow/ShowMenu";

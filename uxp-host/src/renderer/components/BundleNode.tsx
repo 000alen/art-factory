@@ -15,7 +15,6 @@ import {
   TextField,
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
-import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
 import { arrayDifference, chooseN, getBranches, hash } from "../utils";
