@@ -7,12 +7,11 @@ export enum ContractType {
 
 export enum Network {
   MAIN = "main",
-  // ROPSTEN = "ropsten",
   RINKEBY = "rinkeby",
 }
 
 export enum SaleType {
-  FIXED = "fix",
+  FIXED = "fixed",
   DUTCH = "dutch",
   ENGLISH = "english",
 }

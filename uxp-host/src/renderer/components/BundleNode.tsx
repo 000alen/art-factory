@@ -175,7 +175,7 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
                 value={data.saleType}
                 onChange={(value) => data.onChangeBundleSaleType(id, value)}
               >
-                <Radio value="fixed">fixed price</Radio>
+                <Radio value="fixed">Fixed price</Radio>
                 <Radio value="dutch">Dutch auction</Radio>
                 <Radio value="english">English auction</Radio>
               </RadioGroup>
@@ -189,23 +189,23 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
                 label="Starting price"
               />
 
-              {data.saleType === "dutch" || data.saleType === "english" ? (
-                <>
-                  <NumberField
-                    minValue={0}
-                    value={data.endingPrice}
-                    onChange={(value: number) =>
-                      data.onChangeBundleEndingPrice(id, value)
-                    }
-                    label="Ending price"
-                  />
+              {data.saleType === "dutch" && (
+                <NumberField
+                  minValue={0}
+                  value={data.endingPrice}
+                  onChange={(value: number) =>
+                    data.onChangeBundleEndingPrice(id, value)
+                  }
+                  label="Ending price"
+                />
+              )}
 
-                  <Time
-                    value={data.saleTime}
-                    onChange={(value) => data.onChangeBundleSaleTime(id, value)}
-                  />
-                </>
-              ) : null}
+              {(data.saleType === "dutch" || data.saleType === "english") && (
+                <Time
+                  value={data.saleTime}
+                  onChange={(value) => data.onChangeBundleSaleTime(id, value)}
+                />
+              )}
 
               <Flex direction="row-reverse">
                 <ActionButton

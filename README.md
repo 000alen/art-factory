@@ -37,8 +37,13 @@
 - [x] UXP
 - [x] Rinkeby & Main
 - [x] Stop working on error
-- [ ] Global state
+- [-] Auctions
 - [ ] Custom sell orders
 - [ ] Research about money withdrawal
 - [ ] Import custom
 - [ ] Import from folder
+- [ ] Fees
+- [ ] Refactor
+- [ ] Testing
+
+- [ ] ~~Global state~~

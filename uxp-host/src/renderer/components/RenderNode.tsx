@@ -179,26 +179,26 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
             label="Starting price"
           />
 
-          {saleType === "dutch" || saleType === "english" ? (
-            <>
-              <NumberField
-                width="100%"
-                minValue={0}
-                value={endingPrice}
-                onChange={(value: number) =>
-                  data.updateEndingPrices(nTraits[i], value)
-                }
-                label="Ending price"
-              />
+          {saleType === "dutch" && (
+            <NumberField
+              width="100%"
+              minValue={0}
+              value={endingPrice}
+              onChange={(value: number) =>
+                data.updateEndingPrices(nTraits[i], value)
+              }
+              label="Ending price"
+            />
+          )}
 
-              <Time
-                value={salesTime}
-                onChange={(value: number) =>
-                  data.updateSalesTimes(nTraits[i], value)
-                }
-              />
-            </>
-          ) : null}
+          {(saleType === "english" || saleType === "dutch") && (
+            <Time
+              value={salesTime}
+              onChange={(value: number) =>
+                data.updateSalesTimes(nTraits[i], value)
+              }
+            />
+          )}
 
           <Flex gap="size-100" alignItems="end">
             <NumberField

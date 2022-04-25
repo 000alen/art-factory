@@ -7,16 +7,45 @@ import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
 import Web3 from "web3";
 
-import { BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY } from "./constants";
+import {
+  BUILD_DIR_NAME,
+  DEFAULT_BLENDING,
+  DEFAULT_OPACITY,
+  MAIN_WETH,
+  RINKEBY_WETH,
+} from "./constants";
 import { accounts, contracts, providerEngines, providers } from "./ipc";
 import { Network, OpenSeaPort } from "./opensea";
 import {
-    Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
-    Layer, MetadataItem, Secrets, Template, Trait
+  Bundles,
+  BundlesInfo,
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Layer,
+  MetadataItem,
+  SaleType,
+  Secrets,
+  Template,
+  Trait,
 } from "./typings";
 import {
-    append, arrayDifference, choose, getBranches, getContract, hash, pinDirectoryToIPFS,
-    pinFileToIPFS, rarity, readDir, removeRarity, replaceAll, restrictImage
+  append,
+  arrayDifference,
+  choose,
+  getBranches,
+  getContract,
+  hash,
+  pinDirectoryToIPFS,
+  pinFileToIPFS,
+  rarity,
+  readDir,
+  removeRarity,
+  replaceAll,
+  restrictImage,
 } from "./utils";
 
 export class Factory {
@@ -1156,12 +1185,35 @@ export class Factory {
         tokenAddress: contractAddress,
       };
 
-      await seaport.createSellOrder({
-        asset,
-        accountAddress: accounts[providerEngineId],
-        startAmount: item.startingPrice,
-        // endAmount: item.endingPrice,
-      });
+      switch (item.saleType) {
+        case SaleType.FIXED:
+          await seaport.createSellOrder({
+            asset,
+            accountAddress: accounts[providerEngineId],
+            startAmount: item.startingPrice,
+          });
+          break;
+        case SaleType.DUTCH:
+          await seaport.createSellOrder({
+            asset,
+            accountAddress: accounts[providerEngineId],
+            startAmount: item.startingPrice,
+            endAmount: item.endingPrice,
+            expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
+          });
+          break;
+        case SaleType.ENGLISH: // ? NOTE: Must use wETH
+          await seaport.createSellOrder({
+            asset,
+            accountAddress: accounts[providerEngineId],
+            paymentTokenAddress:
+              deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
+            startAmount: item.startingPrice,
+            expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
+            waitForHighestBid: true,
+          });
+          break;
+      }
     }
   }
 
