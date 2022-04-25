@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -10,7 +10,7 @@ import {
   MenuTrigger,
   Text,
   TextField,
-  View,
+  View
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
@@ -43,16 +43,17 @@ export const Panel721: React.FC<Panel721Props> = ({
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
 
-  // const [dropToMint, setDropToMint] = useState(
-  //   dropNumber < drops.length ? drops[dropNumber] : null
-  // );
-  const [dropToMint] = useState(
-    dropNumber < drops.length ? drops[dropNumber] : null
+  const hasUnmintedDrops = useMemo(
+    () => dropNumber < drops.length,
+    [deployment]
+  );
+
+  const dropToMint = useMemo(
+    () => (hasUnmintedDrops ? drops[dropNumber] : null),
+    [deployment, hasUnmintedDrops]
   );
 
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
-  const [dropsItems] = useState(drops.map(({ name }) => ({ name })));
-
   const [privateKey, setPrivateKey] = useState("");
 
   const onMintDrop = task("mint drop", async () => {
@@ -89,14 +90,7 @@ export const Panel721: React.FC<Panel721Props> = ({
     });
   });
 
-  // const onWithdraw = task("withdraw", async () => {
-  //   await withdraw(id, contractId);
-  //   addOutput({
-  //     title: "Withdraw",
-  //     text: "",
-  //     isCopiable: true,
-  //   });
-  // });
+  const dropsItems = drops.map(({ name }) => ({ name }));
 
   return (
     <>
@@ -161,8 +155,6 @@ export const Panel721: React.FC<Panel721Props> = ({
           </MenuTrigger>
         </Flex>
       </View>
-
-      {/* <TaskItem name="Withdraw" onRun={onWithdraw} /> */}
     </>
   );
 };

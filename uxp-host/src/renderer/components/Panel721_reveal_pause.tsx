@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { v4 as uuid } from "uuid";
 
 import {
   ActionButton,
@@ -8,11 +9,12 @@ import {
   Menu,
   MenuTrigger,
   Text,
+  TextField,
   View,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
-import { mintDrop, pause, reveal, sellDrop, withdraw } from "../ipc";
+import { createProviderWithKey, mintDrop, pause, reveal, sellDrop } from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
@@ -42,16 +44,30 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
 
-  // const [dropToMint, setDropToMint] = useState(
-  //   dropNumber < drops.length ? drops[dropNumber] : null
-  // );
+  const hasUnmintedDrops = useMemo(
+    () => dropNumber < drops.length,
+    [deployment]
+  );
 
-  const [dropToMint] = useState(
-    dropNumber < drops.length ? drops[dropNumber] : null
+  const dropToMint = useMemo(
+    () => (hasUnmintedDrops ? drops[dropNumber] : null),
+    [deployment, hasUnmintedDrops]
   );
 
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
-  const [dropsItems] = useState(drops.map(({ name }) => ({ name })));
+  const [privateKey, setPrivateKey] = useState("");
+
+  const onMintDrop = task("mint drop", async () => {
+    await mintDrop(id, contractId, dropToMint);
+
+    addOutput({
+      title: "Minted",
+      text: "",
+      isCopiable: true,
+    });
+
+    increaseDropNumber();
+  });
 
   const onPause = task("pause", async () => {
     await pause(id, contractId);
@@ -71,22 +87,17 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     });
   });
 
-  const onMintDrop = task("mint drop", async () => {
-    await mintDrop(id, contractId, dropToMint);
-
-    addOutput({
-      title: "Minted",
-      text: "",
-      isCopiable: true,
-    });
-
-    increaseDropNumber();
-  });
-
   const onSellDrop = task("sell drop", async () => {
+    const providerEngineId = uuid();
+    await createProviderWithKey(
+      providerEngineId,
+      privateKey,
+      deployment.network
+    );
+
     await sellDrop(
       id,
-      providerId,
+      providerEngineId,
       deployment,
       drops.find(({ name }) => name === dropNameToSell)
     );
@@ -98,21 +109,10 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     });
   });
 
-  const onWithdraw = task("withdraw", async () => {
-    await withdraw(id, contractId);
-    addOutput({
-      title: "Withdraw",
-      text: "",
-      isCopiable: true,
-    });
-  });
+  const dropsItems = drops.map(({ name }) => ({ name }));
 
   return (
     <>
-      <TaskItem name="Pause" onRun={onPause} />
-
-      <TaskItem name="Reveal" onRun={onReveal} />
-
       <View
         borderWidth="thin"
         borderColor="dark"
@@ -134,6 +134,10 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
         </Flex>
       </View>
 
+      <TaskItem name="Pause" onRun={onPause} />
+
+      <TaskItem name="Reveal" onRun={onReveal} />
+
       <View
         borderWidth="thin"
         borderColor="dark"
@@ -151,6 +155,12 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
               <Play />
             </ActionButton>
           </Flex>
+          <TextField
+            label="Private key"
+            type="password"
+            value={privateKey}
+            onChange={setPrivateKey}
+          />
           <MenuTrigger>
             <ActionButton width="100%">{dropNameToSell}</ActionButton>
             <Menu
@@ -168,8 +178,6 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
           </MenuTrigger>
         </Flex>
       </View>
-
-      <TaskItem name="Withdraw" onRun={onWithdraw} />
     </>
   );
 };
