@@ -3,13 +3,18 @@ import FormData from "form-data";
 import fs from "fs";
 import imageSize from "image-size";
 import path from "path";
-import { Edge as FlowEdge, getOutgoers, Node as FlowNode } from "react-flow-renderer";
+import {
+  Edge as FlowEdge,
+  getOutgoers,
+  Node as FlowNode,
+} from "react-flow-renderer";
 import sharp from "sharp";
 import solc from "solc";
 import { v5 as uuidv5 } from "uuid";
 
 import { NAMESPACE, RARITY_DELIMITER } from "./constants";
-import { Trait } from "./typings";
+import { getInfuraProjectId } from "./store";
+import { Network, Trait } from "./typings";
 
 export function rarity(elementName: string) {
   let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
@@ -235,3 +240,8 @@ export function getBranches(
 
 export const arrayDifference = <T>(a: T[], b: T[]): T[] =>
   a.filter((x) => !b.includes(x));
+
+export const getInfuraEndpoint = (network: Network) =>
+  network === "main"
+    ? `https://mainnet.infura.io/v3/${getInfuraProjectId()}`
+    : `https://rinkeby.infura.io/v3/${getInfuraProjectId()}`;

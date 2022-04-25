@@ -3,7 +3,13 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
-import { Flex, Heading, NumberField, Text, TextField } from "@adobe/react-spectrum";
+import {
+  Flex,
+  Heading,
+  NumberField,
+  Text,
+  TextField,
+} from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
 import { computeTemplateN, generate, getTemplatePreview } from "../commands";
@@ -17,27 +23,28 @@ import { TriStateButton } from "../components/TriStateButton";
 import { METADATA_FIELDS } from "../constants";
 import { Instance, MetadataItem } from "../typings";
 import { spacedName } from "../utils";
+import { useGlobalState } from "../components/GlobalState";
 
 interface GenerationPageState {
   projectDir: string;
-  instance: Instance;
   id: string;
+  instance: Instance;
   templateId: string;
   dirty: boolean;
 }
 
 export const GenerationPage: React.FC = () => {
   const toolbarContext = useContext(ToolbarContext);
-  const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
     projectDir,
-    instance,
     id,
+    instance,
     templateId,
     dirty: _dirty,
   } = state as GenerationPageState;
+
   const { templates } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
@@ -51,13 +58,15 @@ export const GenerationPage: React.FC = () => {
   const [bundles, setBundles] = useState(null);
   const [drops, setDrops] = useState(null);
 
-  const [isWorking, setIsWorking] = useState(false);
+  const [working, setWorking] = useState(false);
   const [generationDone, setGenerationDone] = useState(false);
   const [metadataItems, setMetadataItems] = useState<MetadataItem[]>([]);
   const [url, setUrl] = useState<string>(null);
   const [n, setN] = useState<number>(null);
   const [currentGeneration, setCurrentGeneration] = useState(0);
   const [elapsedTime, setElapsedTime] = useState<string>(null);
+
+  const task = useErrorHandler(setWorking);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -84,13 +93,11 @@ export const GenerationPage: React.FC = () => {
   }, []);
 
   const onBack = () =>
-    navigate("/factory", { state: { projectDir, instance, id, dirty } });
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onProgress = async () => setCurrentGeneration((p) => p + 1);
 
   const onGenerate = task("generation", async () => {
-    setIsWorking(true);
-
     const start = moment(performance.now());
     const { collection, bundles, drops } = await generate(
       id,
@@ -107,7 +114,6 @@ export const GenerationPage: React.FC = () => {
     setBundles(bundles);
     setDrops(drops);
     setDirty(true);
-    setIsWorking(false);
     setGenerationDone(true);
   });
 
@@ -122,8 +128,11 @@ export const GenerationPage: React.FC = () => {
     navigate("/factory", {
       state: {
         projectDir,
-        instance: { ...instance, generations },
         id,
+        instance: {
+          ...instance,
+          generations,
+        },
         dirty,
       },
     });
@@ -162,7 +171,7 @@ export const GenerationPage: React.FC = () => {
       <TriStateButton
         preLabel="Generate"
         preAction={onGenerate}
-        loading={isWorking}
+        loading={working}
         loadingDone={generationDone}
         loadingLabel="Generating…"
         loadingMaxValue={n}

@@ -3,8 +3,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, ProgressBar, repeat, Text, TextField,
-    View
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Grid,
+  Heading,
+  ProgressBar,
+  repeat,
+  Text,
+  TextField,
+  View,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
@@ -15,17 +24,20 @@ import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { ToolbarContext } from "../components/Toolbar";
-import { Networks } from "../constants";
 import {
-    createContract, createProvider, createProviderWithKey, writeProjectInstance
+  createContract,
+  createProvider,
+  createProviderWithKey,
+  writeProjectInstance,
 } from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
+import { useGlobalState } from "../components/GlobalState";
 
 interface InstancePageState {
   projectDir: string;
-  instance: Instance;
   id: string;
+  instance: Instance;
   dirty: boolean;
 }
 
@@ -36,8 +48,8 @@ export function InstancePage() {
   const { state } = useLocation();
   const {
     projectDir,
-    instance,
     id,
+    instance,
     dirty: _dirty,
   } = state as InstancePageState;
   const { configuration, deployment: _deployment } = instance;
@@ -70,18 +82,22 @@ export function InstancePage() {
       const providerId = uuid();
       const contractId = uuid();
 
-      const uri = await createProvider(providerId, async ({ connected }) => {
-        WalletConnectQRCodeModal.close();
-        await createContract(contractId, providerId, contractAddress, abi);
-        setProviderId(providerId);
-        setContractId(contractId);
-      });
+      const uri = await createProvider(
+        providerId,
+        network,
+        async ({ connected }) => {
+          WalletConnectQRCodeModal.close();
+          await createContract(contractId, providerId, contractAddress, abi);
+          setProviderId(providerId);
+          setContractId(contractId);
+        }
+      );
       WalletConnectQRCodeModal.open(uri, () => {});
     })();
   }, []);
 
   const onBack = () =>
-    navigate("/factory", { state: { projectDir, instance, id, dirty } });
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onCopy = () =>
     navigator.clipboard.writeText(deployment.contractAddress);

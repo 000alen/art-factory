@@ -7,8 +7,14 @@ export enum ContractType {
 
 export enum Network {
   MAIN = "main",
-  ROPSTEN = "ropsten",
+  // ROPSTEN = "ropsten",
   RINKEBY = "rinkeby",
+}
+
+export enum SaleType {
+  FIXED = "fix",
+  DUTCH = "dutch",
+  ENGLISH = "english",
 }
 
 export interface Secrets {
@@ -46,7 +52,7 @@ export interface Template {
   renderIds: Record<string, string>;
   ns: Record<string, number>;
   ignored: string[];
-  salesTypes: Record<string, string>;
+  salesTypes: Record<string, SaleType>;
   startingPrices: Record<string, number>;
   endingPrices: Record<string, number>;
   salesTimes: Record<string, number>;
@@ -70,7 +76,7 @@ export interface Trait extends Layer {
 export interface CollectionItem {
   name: string;
   traits: Trait[];
-  saleType: string;
+  saleType: SaleType;
   startingPrice: number;
   endingPrice: number;
   saleTime: number;
@@ -79,7 +85,7 @@ export interface CollectionItem {
 export interface BundlesInfoItem {
   name: string;
   ids: string[];
-  saleType: string;
+  saleType: SaleType;
   startingPrice: number;
   endingPrice: number;
   saleTime: number;
@@ -90,7 +96,7 @@ export type BundlesInfo = BundlesInfoItem[];
 export interface BundleItem {
   name: string;
   ids: string[][];
-  saleType: string;
+  saleType: SaleType;
   startingPrice: number;
   endingPrice: number;
   saleTime: number;

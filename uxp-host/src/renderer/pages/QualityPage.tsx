@@ -2,14 +2,29 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, Item, Menu, MenuTrigger, NumberField,
-    TabList, Tabs, View
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Grid,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  TabList,
+  Tabs,
+  View,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Folder from "@spectrum-icons/workflow/Folder";
 import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
-import { computeGenerationRepeats, regenerateItems, replaceItems } from "../commands";
+import {
+  computeGenerationRepeats,
+  regenerateItems,
+  replaceItems,
+} from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Filters } from "../components/Filters";
 import { GalleryBundles } from "../components/GalleryBundles";
@@ -20,14 +35,25 @@ import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
-    factoryGetImage, factoryGetTraitsByLayerName, factoryRemoveItems, openInExplorer
+  factoryGetImage,
+  factoryGetTraitsByLayerName,
+  factoryRemoveItems,
+  openInExplorer,
 } from "../ipc";
-import { Bundles, Collection, CollectionItem, Generation, Instance, Trait } from "../typings";
+import {
+  Bundles,
+  Collection,
+  CollectionItem,
+  Generation,
+  Instance,
+  Trait,
+} from "../typings";
+import { useGlobalState } from "../components/GlobalState";
 
 interface QualityPageState {
   projectDir: string;
-  instance: Instance;
   id: string;
+  instance: Instance;
   generationId: string;
   dirty: boolean;
 }
@@ -52,18 +78,18 @@ export const QualityPage = () => {
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
-  const task = useErrorHandler();
 
   const [working, setWorking] = useState(false);
   const [workingTitle, setWorkingTitle] = useState("");
 
   const {
     projectDir,
-    instance,
     id,
+    instance,
     generationId,
     dirty: _dirty,
   } = state as QualityPageState;
+
   const { configuration, generations, sources } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
@@ -98,6 +124,7 @@ export const QualityPage = () => {
   const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
   const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
   const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
+  const task = useErrorHandler(setWorking);
 
   // ? Toolbar setup
   useEffect(() => {
@@ -106,9 +133,7 @@ export const QualityPage = () => {
       "open-explorer",
       "Open in Explorer",
       <Folder />,
-      () => {
-        openInExplorer(projectDir, BUILD_DIR_NAME, "images", name);
-      }
+      () => openInExplorer(projectDir, BUILD_DIR_NAME, "images", name)
     );
 
     return () => {
@@ -144,7 +169,7 @@ export const QualityPage = () => {
     };
   }, []);
 
-  const onEdit = (i: number) => {
+  const onEdit = task("edit", async (i: number) => {
     const { name, traits } = filteredCollection[i];
     const traitsSources = traits.map((trait) =>
       sources.find(({ items }) =>
@@ -173,8 +198,7 @@ export const QualityPage = () => {
       generation: generation.name,
       layers,
     });
-  };
-
+  });
   // #endregion
 
   // ? Collection filters setup
@@ -299,11 +323,10 @@ export const QualityPage = () => {
   }, [filteredBundles, bundlesPage]);
 
   const onBack = () =>
-    navigate("/factory", { state: { projectDir, instance, id, dirty } });
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onSave = task("filtering", async () => {
     setWorkingTitle("Saving...");
-    setWorking(true);
     const { collection: _collection, drops: _drops } = await factoryRemoveItems(
       id,
       generation,
@@ -316,21 +339,20 @@ export const QualityPage = () => {
         : generation
     );
 
-    setWorking(false);
-
     navigate("/factory", {
       state: {
         projectDir,
-        instance: { ...instance, generations },
         id,
+        instance: {
+          ...instance,
+          generations,
+        },
         dirty,
       },
     });
   });
 
-  const onSelect = (i: number) => {
-    setSelectedItem(i);
-  };
+  const onSelect = (i: number) => setSelectedItem(i);
 
   const addFilter = (name: string, value: string) =>
     setFilters((prevFilters) =>
@@ -375,34 +397,28 @@ export const QualityPage = () => {
       prevItemsToRemove.filter((n) => n !== name)
     );
 
-  const onRegenerateRepeated = async () => {
+  const onRegenerateRepeated = task("regenerating repeated", async () => {
     setWorkingTitle("Regenerating repeated...");
-    setWorking(true);
     const { collection: _collection } = await regenerateItems(
       id,
       { ...generation, collection },
       computeGenerationRepeats(generation)
     );
     setCollection(_collection);
-    setWorking(false);
-  };
+  });
 
-  const onRegenerate = async (i: number) => {
+  const onRegenerate = task("regenerating", async (i: number) => {
     setWorkingTitle("Regenerating item...");
-    setWorking(true);
     const { collection: _collection } = await regenerateItems(
       id,
       { ...generation, collection },
       [filteredCollection[i]]
     );
     setCollection(_collection);
-    setWorking(false);
-  };
+  });
 
-  // TODO: Not working
-  const onReplace = async (i: number, traits: Trait[]) => {
+  const onReplace = task("replacing", async (i: number, traits: Trait[]) => {
     setWorkingTitle("Replacing traits...");
-    setWorking(true);
     const { collection: _collection } = await replaceItems(
       id,
       { ...generation, collection },
@@ -414,8 +430,7 @@ export const QualityPage = () => {
       ]
     );
     setCollection(_collection);
-    setWorking(false);
-  };
+  });
 
   return (
     <Grid

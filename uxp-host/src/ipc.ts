@@ -9,17 +9,32 @@ import { PrivateKeyWalletSubprovider } from "@0x/subproviders";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
-import { BUILD_DIR_NAME } from "./constants";
+import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
 import {
-    getEtherscanApiKey, getInfuraProjectId, getPinataApiKey, getPinataSecretApiKey,
-    setEtherscanApiKey, setInfuraProjectId, setPinataApiKey, setPinataSecretApiKey
+  getEtherscanApiKey,
+  getInfuraProjectId,
+  getPinataApiKey,
+  getPinataSecretApiKey,
+  setEtherscanApiKey,
+  setInfuraProjectId,
+  setPinataApiKey,
+  setPinataSecretApiKey,
 } from "./store";
 import {
-    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
-    Template, Trait
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Layer,
+  MetadataItem,
+  Network,
+  Template,
+  Trait,
 } from "./typings";
-import { capitalize, layersNames } from "./utils";
+import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -326,12 +341,6 @@ ipcAsyncTask(
     await factories[id].remove(generation)
 );
 
-// ipcAsyncTask(
-//   "getCost",
-//   async (id: string, contractId: string) =>
-//     await factories[id].getCost(contractId)
-// );
-
 ipcAsyncTask(
   "getBalanceOf",
   async (id: string, contractId: string, address: string) =>
@@ -446,7 +455,7 @@ export const providerEngines: Record<string, any> = {};
 <- createProviderUri
 <- createProviderResult (connected | error)
 */
-ipcMain.on("createProvider", async (event, id: string) => {
+ipcMain.on("createProvider", async (event, id: string, network: Network) => {
   const connector = new NodeWalletConnect(
     {
       bridge: "https://bridge.walletconnect.org",
@@ -469,7 +478,7 @@ ipcMain.on("createProvider", async (event, id: string) => {
       const provider = new WalletConnectProvider({
         connector,
         infuraId: getInfuraProjectId() as string,
-        chainId: 4,
+        chainId: ChainId[network],
       });
       await provider.enable();
 
@@ -489,14 +498,14 @@ ipcMain.on("createProvider", async (event, id: string) => {
 
 ipcAsyncTask(
   "createProviderWithKey",
-  async (id: string, privateKey: string) => {
+  async (id: string, privateKey: string, network: Network) => {
     const privateKeyWalletSubprovider = new PrivateKeyWalletSubprovider(
       privateKey,
-      4
+      ChainId[network]
     );
 
     const infuraRpcSubprovider = new RPCSubprovider({
-      rpcUrl: `https://rinkeby.infura.io/v3/${getInfuraProjectId()}`,
+      rpcUrl: getInfuraEndpoint(network),
     });
 
     const providerEngine = new Web3ProviderEngine();

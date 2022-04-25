@@ -17,8 +17,21 @@ declare global {
 import { v4 as uuid } from "uuid";
 
 import {
-    Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
-    Instance, Layer, MetadataItem, Secrets, Template, Trait
+  Bundles,
+  BundlesInfo,
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Instance,
+  Layer,
+  MetadataItem,
+  Network,
+  Secrets,
+  Template,
+  Trait,
 } from "./typings";
 import { capitalize } from "./utils";
 
@@ -390,6 +403,7 @@ export const sellDrop = (
 // #region Provider
 export const createProvider = (
   id: string,
+  network: Network,
   callback: ({ connected }: { connected: boolean }) => void
 ) =>
   new Promise<string>((resolve) => {
@@ -425,11 +439,14 @@ export const createProvider = (
 
     window.ipcRenderer.on("createProviderUri", onCreateProviderUri);
     window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
-    window.ipcRenderer.send("createProvider", id);
+    window.ipcRenderer.send("createProvider", id, network);
   });
 
-export const createProviderWithKey = (id: string, privateKey: string) =>
-  ipcTask("createProviderWithKey")(id, privateKey);
+export const createProviderWithKey = (
+  id: string,
+  privateKey: string,
+  network: Network
+) => ipcTask("createProviderWithKey")(id, privateKey, network);
 
 // #endregion
 

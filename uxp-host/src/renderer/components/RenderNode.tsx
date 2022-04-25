@@ -1,14 +1,34 @@
 import React, { memo, useEffect, useState } from "react";
-import { Handle, Node as FlowNode, Position, useEdges, useNodes } from "react-flow-renderer";
+import {
+  Handle,
+  Node as FlowNode,
+  Position,
+  useEdges,
+  useNodes,
+} from "react-flow-renderer";
 
 import {
-    ActionButton, Divider, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Radio, RadioGroup,
-    Text
+  ActionButton,
+  Divider,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  Radio,
+  RadioGroup,
+  Text,
 } from "@adobe/react-spectrum";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import { DEFAULT_N, DEFAULT_PRICE, DEFAULT_SALE_TIME, DEFAULT_SALE_TYPE } from "../constants";
+import {
+  DEFAULT_N,
+  DEFAULT_PRICE,
+  DEFAULT_SALE_TIME,
+  DEFAULT_SALE_TYPE,
+} from "../constants";
 import { Trait } from "../typings";
 import { getBranches, hash } from "../utils";
 import { LayerNodeComponentData } from "./LayerNode";
@@ -158,22 +178,27 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
             }
             label="Starting price"
           />
-          <NumberField
-            width="100%"
-            minValue={0}
-            value={endingPrice}
-            onChange={(value: number) =>
-              data.updateEndingPrices(nTraits[i], value)
-            }
-            label="Ending price"
-          />
 
-          <Time
-            value={salesTime}
-            onChange={(value: number) =>
-              data.updateSalesTimes(nTraits[i], value)
-            }
-          />
+          {saleType === "dutch" || saleType === "english" ? (
+            <>
+              <NumberField
+                width="100%"
+                minValue={0}
+                value={endingPrice}
+                onChange={(value: number) =>
+                  data.updateEndingPrices(nTraits[i], value)
+                }
+                label="Ending price"
+              />
+
+              <Time
+                value={salesTime}
+                onChange={(value: number) =>
+                  data.updateSalesTimes(nTraits[i], value)
+                }
+              />
+            </>
+          ) : null}
 
           <Flex gap="size-100" alignItems="end">
             <NumberField

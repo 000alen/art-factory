@@ -33,10 +33,10 @@
 
 - [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~
 
-- [ ] Private key subprovider
-- [ ] Rinkeby & Main
-- [ ] UXP
-- [ ] Stop working on error
+- [x] Private key subprovider
+- [x] UXP
+- [x] Rinkeby & Main
+- [x] Stop working on error
 - [ ] Global state
 - [ ] Custom sell orders
 - [ ] Research about money withdrawal

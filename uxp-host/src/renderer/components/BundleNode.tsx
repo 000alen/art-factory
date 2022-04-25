@@ -2,8 +2,17 @@ import React, { memo, useEffect, useState } from "react";
 import { Node as FlowNode, useEdges, useNodes } from "react-flow-renderer";
 
 import {
-    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Radio, RadioGroup, Text,
-    TextField
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  Radio,
+  RadioGroup,
+  Text,
+  TextField,
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import Refresh from "@spectrum-icons/workflow/Refresh";
@@ -138,7 +147,6 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
 
   return (
     <Flex direction="column" gap="size-100">
-      {/* <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all"> */}
       <div className="p-3 border-1 border-dashed border-white rounded opacity-25 hover:opacity-100 transition-all">
         <TextField
           width="100%"
@@ -148,7 +156,6 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
         />
       </div>
 
-      {/* <div className="w-48 p-3 border-1 border-solid border-white rounded"> */}
       <div className="p-3 border-1 border-solid border-white rounded">
         <Flex direction="column" gap="size-300">
           {data.ids === null ? (
@@ -182,16 +189,23 @@ export const BundleNode: React.FC<BundleNodeProps> = memo(({ id, data }) => {
                 label="Starting price"
               />
 
-              <NumberField
-                minValue={0}
-                value={data.endingPrice}
-                onChange={(value: number) =>
-                  data.onChangeBundleEndingPrice(id, value)
-                }
-                label="Ending price"
-              />
+              {data.saleType === "dutch" || data.saleType === "english" ? (
+                <>
+                  <NumberField
+                    minValue={0}
+                    value={data.endingPrice}
+                    onChange={(value: number) =>
+                      data.onChangeBundleEndingPrice(id, value)
+                    }
+                    label="Ending price"
+                  />
 
-              {/* <Time /> */}
+                  <Time
+                    value={data.saleTime}
+                    onChange={(value) => data.onChangeBundleSaleTime(id, value)}
+                  />
+                </>
+              ) : null}
 
               <Flex direction="row-reverse">
                 <ActionButton

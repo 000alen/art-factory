@@ -2,7 +2,15 @@ import React, { useState } from "react";
 import { v4 as uuid } from "uuid";
 
 import {
-    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, Text, TextField, View
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  Text,
+  TextField,
+  View,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
@@ -31,7 +39,7 @@ export const Panel721: React.FC<Panel721Props> = ({
   addOutput,
   increaseDropNumber,
 }) => {
-  const task = useErrorHandler();
+  const task = useErrorHandler(setWorking);
 
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
@@ -46,8 +54,6 @@ export const Panel721: React.FC<Panel721Props> = ({
   const [privateKey, setPrivateKey] = useState("");
 
   const onMintDrop = task("mint drop", async () => {
-    setWorking(true);
-
     await mintDrop(id, contractId, dropToMint);
 
     addOutput({
@@ -57,14 +63,15 @@ export const Panel721: React.FC<Panel721Props> = ({
     });
 
     increaseDropNumber();
-    setWorking(false);
   });
 
   const onSellDrop = task("sell drop", async () => {
-    setWorking(true);
-
     const providerEngineId = uuid();
-    await createProviderWithKey(providerEngineId, privateKey);
+    await createProviderWithKey(
+      providerEngineId,
+      privateKey,
+      deployment.network
+    );
 
     await sellDrop(
       id,
@@ -78,21 +85,15 @@ export const Panel721: React.FC<Panel721Props> = ({
       text: "",
       isCopiable: true,
     });
-
-    setWorking(false);
   });
 
   const onWithdraw = task("withdraw", async () => {
-    setWorking(true);
-
     await withdraw(id, contractId);
     addOutput({
       title: "Withdraw",
       text: "",
       isCopiable: true,
     });
-
-    setWorking(false);
   });
 
   return (
@@ -135,13 +136,13 @@ export const Panel721: React.FC<Panel721Props> = ({
               <Play />
             </ActionButton>
           </Flex>
+          <TextField
+            label="Private key"
+            type="password"
+            value={privateKey}
+            onChange={setPrivateKey}
+          />
           <MenuTrigger>
-            <TextField
-              label="Private key"
-              type="password"
-              value={privateKey}
-              onChange={setPrivateKey}
-            />
             <ActionButton width="100%">{dropNameToSell}</ActionButton>
             <Menu
               items={dropsItems}

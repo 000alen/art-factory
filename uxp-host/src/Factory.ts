@@ -1024,13 +1024,6 @@ export class Factory {
     });
   }
 
-  // #region 721 & 721_reveal_pause
-  // async getCost(contractId: string) {
-  //   const contract = contracts[contractId];
-  //   const cost = await contract.cost();
-  //   return utils.formatUnits(cost.toString(), "ether");
-  // }
-
   async getBalanceOf(contractId: string, address: string) {
     const contract = contracts[contractId];
     const balance = await contract.balanceOf(address);
@@ -1066,18 +1059,6 @@ export class Factory {
     const wallet = await contract.walletOfOwner(owner);
     return wallet;
   }
-
-  // async setCost(contractId: string, cost: string) {
-  //   const contract = contracts[contractId];
-  //   const tx = await contract.setCost(utils.parseEther(cost));
-  //   await tx.wait();
-  // }
-
-  // async setMaxMintAmount(contractId: string, amount: number) {
-  //   const contract = contracts[contractId];
-  //   const tx = await contract.setMaxMintAmount(amount);
-  //   await tx.wait();
-  // }
 
   async withdraw(contractId: string) {
     const contract = contracts[contractId];

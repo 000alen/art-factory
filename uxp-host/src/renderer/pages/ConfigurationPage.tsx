@@ -14,11 +14,12 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { readProjectAvailableLayers } from "../ipc";
 import { Configuration, Instance } from "../typings";
+import { useGlobalState } from "../components/GlobalState";
 
 interface ConfigurationPageState {
   projectDir: string;
-  instance: Instance;
   id: string;
+  instance: Instance;
   dirty: boolean;
 }
 
@@ -29,10 +30,11 @@ export function ConfigurationPage() {
   const { state } = useLocation();
   const {
     projectDir,
-    instance,
     id,
+    instance,
     dirty: _dirty,
   } = state as ConfigurationPageState;
+
   const { configuration } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
@@ -55,10 +57,6 @@ export function ConfigurationPage() {
     )
   );
   const [contractType, _setContractType] = useState(configuration.contractType);
-  // const [cost, _setCost] = useState(configuration.cost);
-  // const [maxMintAmount, _setMaxMintAmount] = useState(
-  //   configuration.maxMintAmount
-  // );
   const [layers, _setLayers] = useState(configuration.layers);
 
   const setter =
@@ -75,8 +73,6 @@ export function ConfigurationPage() {
   const setGenerateBackground = setter(_setGenerateBackground);
   const setDefaultBackground = setter(_setDefaultBackground);
   const setContractType = setter(_setContractType);
-  // const setCost = setter(_setCost);
-  // const setMaxMintAmount = setter(_setMaxMintAmount);
   const setLayers = setter(_setLayers);
 
   useEffect(() => {
@@ -94,7 +90,7 @@ export function ConfigurationPage() {
   }, []);
 
   const onBack = () =>
-    navigate("/factory", { state: { projectDir, instance, id, dirty } });
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onSave = () => {
     const configuration: Configuration = {
@@ -111,19 +107,17 @@ export function ConfigurationPage() {
         b: defaultBackground.getChannelValue("blue"),
         a: defaultBackground.getChannelValue("alpha"),
       },
-      // cost,
-      // maxMintAmount,
       layers,
     };
 
     navigate("/factory", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
         },
-        id,
         dirty,
       },
     });

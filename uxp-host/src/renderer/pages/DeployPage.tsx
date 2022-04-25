@@ -4,7 +4,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-    ActionButton, Button, ButtonGroup, Flex, Heading, Item, Menu, MenuTrigger, Text, TextField
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  Text,
+  TextField,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import More from "@spectrum-icons/workflow/More";
@@ -12,28 +21,27 @@ import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
 import { getGenerationPreview } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { ImageItem } from "../components/ImageItem";
 import { Preview } from "../components/Preview";
 import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import { Networks } from "../constants";
 import { createProvider, factoryDeploy, factoryGetImage } from "../ipc";
 import { Deployment, Instance, Network } from "../typings";
+import { useGlobalState } from "../components/GlobalState";
 
 interface DeployPageState {
   projectDir: string;
-  instance: Instance;
   id: string;
+  instance: Instance;
   dirty: boolean;
 }
 
 export function DeployPage() {
   const toolbarContext = useContext(ToolbarContext);
-  const task = useErrorHandler();
 
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { projectDir, instance, id, dirty: _dirty } = state as DeployPageState;
+  const { projectDir, id, instance, dirty: _dirty } = state as DeployPageState;
+
   const { configuration, generations } = instance;
 
   const [dirty, setDirty] = useState(_dirty);
@@ -72,11 +80,13 @@ export function DeployPage() {
   const [contractAddress, setContractAddress] = useState<string>(null);
   const [abi, setAbi] = useState<any>(null);
   const [compilerVersion, setCompilerVersion] = useState<string>(null);
-  const [network, setNetwork] = useState("rinkeby");
+  const [network, setNetwork] = useState<Network>(Network.RINKEBY);
 
-  const [isWorking, setIsWorking] = useState(false);
+  const [working, setWorking] = useState(false);
   const [deployDone, setDeployDone] = useState(false);
   const [elapsedTime, setElapsedTime] = useState<string>(null);
+
+  const task = useErrorHandler(setWorking);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -119,44 +129,45 @@ export function DeployPage() {
   );
 
   const onBack = () =>
-    navigate("/factory", { state: { projectDir, instance, id, dirty } });
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onDeploy = task("deployment", async () => {
-    setIsWorking(true);
-
     const providerId = uuid();
-    const uri = await createProvider(providerId, async ({ connected }) => {
-      WalletConnectQRCodeModal.close();
+    const uri = await createProvider(
+      providerId,
+      network,
+      async ({ connected }) => {
+        WalletConnectQRCodeModal.close();
 
-      const start = moment(performance.now());
-      const {
-        imagesCid,
-        metadataCid,
-        notRevealedImageCid,
-        notRevealedMetadataCid,
-        contractAddress,
-        abi,
-        compilerVersion,
-      } = await factoryDeploy(
-        id,
-        providerId,
-        generation,
-        notRevealedGeneration
-      );
-      const end = moment(performance.now());
-      const diff = end.diff(start);
+        const start = moment(performance.now());
+        const {
+          imagesCid,
+          metadataCid,
+          notRevealedImageCid,
+          notRevealedMetadataCid,
+          contractAddress,
+          abi,
+          compilerVersion,
+        } = await factoryDeploy(
+          id,
+          providerId,
+          generation,
+          notRevealedGeneration
+        );
+        const end = moment(performance.now());
+        const diff = end.diff(start);
 
-      setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
-      setImagesCid(imagesCid);
-      setMetadataCid(metadataCid);
-      setNotRevealedImageCid(notRevealedImageCid);
-      setNotRevealedMetadataCid(notRevealedMetadataCid);
-      setContractAddress(contractAddress);
-      setAbi(abi);
-      setCompilerVersion(compilerVersion);
-      setIsWorking(false);
-      setDeployDone(true);
-    });
+        setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
+        setImagesCid(imagesCid);
+        setMetadataCid(metadataCid);
+        setNotRevealedImageCid(notRevealedImageCid);
+        setNotRevealedMetadataCid(notRevealedMetadataCid);
+        setContractAddress(contractAddress);
+        setAbi(abi);
+        setCompilerVersion(compilerVersion);
+        setDeployDone(true);
+      }
+    );
     WalletConnectQRCodeModal.open(uri, () => {});
   });
 
@@ -169,7 +180,7 @@ export function DeployPage() {
       contractAddress,
       abi,
       compilerVersion,
-      network: Network.RINKEBY,
+      network,
       generation: JSON.parse(JSON.stringify(generation)),
       dropNumber: 0,
     };
@@ -177,8 +188,12 @@ export function DeployPage() {
     navigate("/factory", {
       state: {
         projectDir,
-        instance: { ...instance, deployment, frozen: true },
         id,
+        instance: {
+          ...instance,
+          deployment,
+          frozen: true,
+        },
         dirty: true,
       },
     });
@@ -205,7 +220,7 @@ export function DeployPage() {
         <>
           <Flex gap="size-100" alignItems="center">
             <Heading level={1} marginStart={16}>
-              Deploy {configuration.contractType} to {Networks[network].name}
+              Deploy {configuration.contractType} to {network}
             </Heading>
             <MenuTrigger>
               <ActionButton>
@@ -216,12 +231,11 @@ export function DeployPage() {
                 disallowEmptySelection={true}
                 selectedKeys={[network]}
                 onSelectionChange={(selectedKeys: Set<string>) =>
-                  setNetwork([...selectedKeys].shift())
+                  setNetwork([...selectedKeys].shift() as Network)
                 }
               >
-                <Item key="mainnet">{Networks["mainnet"].name}</Item>
-                <Item key="ropsten">{Networks["ropsten"].name}</Item>
-                <Item key="rinkeby">{Networks["rinkeby"].name}</Item>
+                <Item key="rinkeby">{Network.RINKEBY}</Item>
+                <Item key="mainnet">{Network.MAIN}</Item>
               </Menu>
             </MenuTrigger>
           </Flex>
@@ -327,7 +341,7 @@ export function DeployPage() {
           <TriStateButton
             preLabel="Deploy"
             preAction={onDeploy}
-            loading={isWorking}
+            loading={working}
             loadingDone={deployDone}
             loadingLabel="Deploying..."
             postLabel={`${dirty ? "* " : ""}Save`}

@@ -1,3 +1,10 @@
+import { Network } from "./typings";
+
+export const ChainId = {
+  [Network.MAIN]: 1,
+  [Network.RINKEBY]: 4,
+};
+
 export const NAMESPACE = "84002a51-4399-4405-bf15-05decc67081e";
 export const RARITY_DELIMITER = "#";
 export const DEFAULT_BLENDING = "normal";

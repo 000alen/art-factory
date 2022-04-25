@@ -1,19 +1,11 @@
-export const METADATA_FIELDS = ["external_url", "animation_url", "youtube_url"];
+import { Network } from "./typings";
 
-export const Networks: Record<string, any> = {
-  mainnet: {
-    name: "Mainnet",
-    id: 1,
-  },
-  ropsten: {
-    name: "Ropsten",
-    id: 3,
-  },
-  rinkeby: {
-    name: "Rinkeby",
-    id: 4,
-  },
+export const ChainId = {
+  [Network.MAIN]: 1,
+  [Network.RINKEBY]: 4,
 };
+
+export const METADATA_FIELDS = ["external_url", "animation_url", "youtube_url"];
 
 export const MAX_SIZE = 500;
 export const DEFAULT_OPACITY = 1;
@@ -42,6 +34,5 @@ export const DEFAULT_BACKGROUND = {
   b: 255,
   a: 1,
 };
-// export const DEFAULT_COST = 0.05;
 export const DEFAULT_MAX_MINT_AMOUNT = 20;
 export const BUILD_DIR_NAME = ".build";

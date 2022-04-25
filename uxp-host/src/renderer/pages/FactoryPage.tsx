@@ -4,7 +4,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-    ActionButton, ActionGroup, Flex, Grid, Heading, Item, Menu, MenuTrigger, repeat, Text, View
+  ActionButton,
+  ActionGroup,
+  Flex,
+  Grid,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  repeat,
+  Text,
+  View,
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import Close from "@spectrum-icons/workflow/Close";
@@ -15,7 +25,10 @@ import Hammer from "@spectrum-icons/workflow/Hammer";
 import Settings from "@spectrum-icons/workflow/Settings";
 
 import {
-    getGenerationPreview, getTemplatePreview, removeGeneration, unifyGenerations
+  getGenerationPreview,
+  getTemplatePreview,
+  removeGeneration,
+  unifyGenerations,
 } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
@@ -26,16 +39,21 @@ import { CustomField, TaskItem } from "../components/TaskItem";
 import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import {
-    createFactory, factoryReloadConfiguration, factoryReloadLayers, hasFactory, openInExplorer,
-    writeProjectInstance
+  createFactory,
+  factoryReloadConfiguration,
+  factoryReloadLayers,
+  hasFactory,
+  openInExplorer,
+  writeProjectInstance,
 } from "../ipc";
 import { Instance, SourceItem } from "../typings";
 import { makeSource } from "../utils";
+import { useGlobalState } from "../components/GlobalState";
 
 interface FactoryPageState {
   projectDir: string;
-  instance: Instance;
   id: string;
+  instance: Instance;
   dirty: boolean;
 }
 
@@ -47,23 +65,24 @@ interface GenerationItemProps {
 export const FactoryPage: React.FC = () => {
   const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
-  const task = useErrorHandler();
   const navigate = useNavigate();
+
   const { state } = useLocation();
-  const { projectDir, instance, id, dirty: _dirty } = state as FactoryPageState;
+  const { projectDir, id, instance, dirty: _dirty } = state as FactoryPageState;
 
-  const { configuration } = instance;
-
-  const [working, setWorking] = useState(false);
-  const [workingTitle, setWorkingTitle] = useState("");
-
-  const [dirty, setDirty] = useState(_dirty);
+  const [configuration] = useState(instance.configuration);
   const [templates, setTemplates] = useState(instance.templates);
   const [generations, setGenerations] = useState(instance.generations);
   const [sources, setSources] = useState(instance.sources);
 
+  const [dirty, setDirty] = useState(_dirty);
+
+  const [working, setWorking] = useState(false);
+  const [workingTitle, setWorkingTitle] = useState("");
+
   const [templatesPreviews, setTemplatesPreviews] = useState<string[]>(null);
   const [generationPreviews, setGenerationPreviews] = useState<string[]>(null);
+  const task = useErrorHandler(setWorking);
 
   useEffect(() => {
     toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
@@ -147,6 +166,7 @@ export const FactoryPage: React.FC = () => {
     navigate("/configuration", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
@@ -154,7 +174,6 @@ export const FactoryPage: React.FC = () => {
           generations,
           sources,
         },
-        id,
         dirty,
       },
     });
@@ -164,6 +183,7 @@ export const FactoryPage: React.FC = () => {
     navigate("/template", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
@@ -171,7 +191,6 @@ export const FactoryPage: React.FC = () => {
           generations,
           sources,
         },
-        id,
         templateId,
         dirty,
       },
@@ -182,6 +201,7 @@ export const FactoryPage: React.FC = () => {
     navigate("/generation", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
@@ -189,7 +209,6 @@ export const FactoryPage: React.FC = () => {
           generations,
           sources,
         },
-        id,
         templateId,
         dirty,
       },
@@ -200,6 +219,7 @@ export const FactoryPage: React.FC = () => {
     navigate("/quality", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
@@ -207,7 +227,6 @@ export const FactoryPage: React.FC = () => {
           generations,
           sources,
         },
-        id,
         generationId,
         dirty,
       },
@@ -218,6 +237,7 @@ export const FactoryPage: React.FC = () => {
     navigate("/deploy", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
@@ -225,7 +245,6 @@ export const FactoryPage: React.FC = () => {
           generations,
           sources,
         },
-        id,
         dirty,
       },
     });
@@ -235,6 +254,7 @@ export const FactoryPage: React.FC = () => {
     navigate("/instance", {
       state: {
         projectDir,
+        id,
         instance: {
           ...instance,
           configuration,
@@ -242,7 +262,6 @@ export const FactoryPage: React.FC = () => {
           generations,
           sources,
         },
-        id,
         dirty,
       },
     });
@@ -322,7 +341,6 @@ export const FactoryPage: React.FC = () => {
 
     async ({ newName, generationsNames }) => {
       setWorkingTitle("Unifying generations...");
-      setWorking(true);
       const { collection, bundles, drops } = await unifyGenerations(
         id,
         newName,
@@ -343,7 +361,6 @@ export const FactoryPage: React.FC = () => {
         },
       ]);
       setDirty(true);
-      setWorking(false);
     }
   );
 
@@ -356,7 +373,6 @@ export const FactoryPage: React.FC = () => {
 
   const onRemoveGenerationCommand = task("remove", async (name: string) => {
     setWorkingTitle("Removing generation...");
-    setWorking(true);
     await removeGeneration(
       id,
       generations.find((g) => g.name === name)
@@ -365,7 +381,6 @@ export const FactoryPage: React.FC = () => {
       prevGenerations.filter((g) => g.name !== name)
     );
     setDirty(true);
-    setWorking(false);
   });
 
   return (
