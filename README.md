@@ -18,32 +18,33 @@
 - [x] **Feature request**: Poder ver las imágenes 1 por 1 e ir pasando con flechas.
 - [x] **Feature request**: Different smart contracts: pre-sale, not-revealed, pause, etc.
 - [x] Publish bundles
-- [ ] **Feature request**: Añadir un link a opensea en la ui.
-- [ ] **FIX**: Aceleración por ~~gpu~~ paralelismo.
 - [x] Poder reemplazar un atributo por otro desde las propiedades
 - [x] Pasar de pipeline a proyecto
 - [x] Hacer toda la configuración guafdable
 - [x] para art factory será posible que las categorias que salgan en la producción puedan quedar en carpetas distintas con el nombre de cada categoria?
-- [ ] Poner botón refresh nfts
-- [ ] Request mio: que el regenerate por filtros haga un refresh
-- [ ] Request mio: ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
-- [ ] Request mio (y los poston probablemente lo comparten): agregar las aristas de los nodos
-- [ ] Respetar el orden de las capas de Photoshop en la aplicación
-- [ ] Evaluar el otro estándar
-
-- [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~
 
 - [x] Private key subprovider
 - [x] UXP
 - [x] Rinkeby & Main
 - [x] Stop working on error
-- [-] Auctions
+- [x] Auctions
+- [x] Fees
+- [x] Research about money withdrawal
+
+- [ ] **Feature request**: Añadir un link a opensea en la ui.
+- [ ] **FIX**: Aceleración por ~~gpu~~ paralelismo.
+- [ ] Poner botón refresh nfts
 - [ ] Custom sell orders
-- [ ] Research about money withdrawal
 - [ ] Import custom
 - [ ] Import from folder
-- [ ] Fees
 - [ ] Refactor
-- [ ] Testing
+- [ ] _Testing_
 
+- [ ] Request mio: que el regenerate por filtros haga un refresh
+- [ ] Request mio: ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
+- [ ] Request mio: agregar las aristas de los nodos
+
+- [ ] ~~Respetar el orden de las capas de Photoshop en la aplicación~~
+- [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~
 - [ ] ~~Global state~~
+- ~~[ ] Evaluar el otro estándar~~

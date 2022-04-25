@@ -1147,13 +1147,39 @@ export class Factory {
           tokenAddress: contractAddress,
         }));
 
-        await seaport.createBundleSellOrder({
-          assets,
-          bundleName,
-          accountAddress: accounts[providerEngineId],
-          startAmount: bundle.startingPrice,
-          // endAmount: bundle.endingPrice,
-        });
+        switch (bundle.saleType) {
+          case SaleType.FIXED:
+            await seaport.createBundleSellOrder({
+              assets,
+              bundleName,
+              accountAddress: accounts[providerEngineId],
+              startAmount: bundle.startingPrice,
+            });
+            break;
+          case SaleType.DUTCH:
+            await seaport.createBundleSellOrder({
+              assets,
+              bundleName,
+              accountAddress: accounts[providerEngineId],
+              startAmount: bundle.startingPrice,
+              endAmount: bundle.endingPrice,
+              expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
+            });
+            break;
+          case SaleType.ENGLISH: // ? NOTE: Must use WETH
+            await seaport.createBundleSellOrder({
+              assets,
+              bundleName,
+              accountAddress: accounts[providerEngineId],
+              paymentTokenAddress:
+                deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
+              startAmount: bundle.startingPrice,
+              endAmount: bundle.endingPrice,
+              expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
+              waitForHighestBid: true,
+            });
+            break;
+        }
 
         publishedIds.push(..._ids);
       }
@@ -1202,7 +1228,7 @@ export class Factory {
             expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
           });
           break;
-        case SaleType.ENGLISH: // ? NOTE: Must use wETH
+        case SaleType.ENGLISH: // ? NOTE: Must use WETH
           await seaport.createSellOrder({
             asset,
             accountAddress: accounts[providerEngineId],

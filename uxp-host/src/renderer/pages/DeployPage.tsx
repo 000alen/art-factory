@@ -24,7 +24,7 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { Preview } from "../components/Preview";
 import { ToolbarContext } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import { createProvider, factoryDeploy, factoryGetImage } from "../ipc";
+import { createProvider, factoryDeploy } from "../ipc";
 import { Deployment, Instance, Network } from "../typings";
 import { useGlobalState } from "../components/GlobalState";
 
