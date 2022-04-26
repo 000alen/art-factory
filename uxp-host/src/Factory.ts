@@ -145,6 +145,16 @@ export class Factory {
     this._ensureLayers();
   }
 
+  async getResolution() {
+    const layerFolder = (await readDir(this.projectDir))[0];
+    const layerPath = path.join(this.projectDir, layerFolder);
+    const traitName = (await readDir(layerPath))[0];
+    const traitPath = path.join(layerPath, traitName);
+    const traitBuffer = await fs.promises.readFile(traitPath);
+    const { width, height } = imageSize(traitBuffer);
+    return { width, height };
+  }
+
   getLayerByName(layerName: string) {
     return this.layerByName.get(layerName);
   }

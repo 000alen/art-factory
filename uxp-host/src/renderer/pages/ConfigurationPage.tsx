@@ -2,8 +2,20 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-    Button, ButtonGroup, Flex, Heading, Item, ListBox, NumberField, Radio, RadioGroup, Slider,
-    Switch, TextArea, TextField
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Heading,
+  Item,
+  ListBox,
+  NumberField,
+  Radio,
+  RadioGroup,
+  Slider,
+  Switch,
+  TextArea,
+  TextField,
 } from "@adobe/react-spectrum";
 import { parseColor } from "@react-stately/color";
 import Back from "@spectrum-icons/workflow/Back";
@@ -11,8 +23,9 @@ import Back from "@spectrum-icons/workflow/Back";
 import { ColorPicker } from "../components/ColorPicker";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import { readProjectAvailableLayers } from "../ipc";
+import { factoryGetResolution, readProjectAvailableLayers } from "../ipc";
 import { Configuration, ContractType, Instance } from "../typings";
+import Refresh from "@spectrum-icons/workflow/Refresh";
 
 interface ConfigurationPageState {
   projectDir: string;
@@ -44,8 +57,8 @@ export function ConfigurationPage() {
   const [description, _setDescription] = useState(configuration.description);
   const [symbol, _setSymbol] = useState(configuration.symbol);
 
-  const [originalWidth] = useState(configuration.width);
-  const [originalHeight] = useState(configuration.height);
+  const [originalWidth, setOriginalWidth] = useState(configuration.width);
+  const [originalHeight, setOriginalHeight] = useState(configuration.height);
   const [width, _setWidth] = useState(configuration.width);
   const [height, _setHeight] = useState(configuration.height);
   const [generateBackground, _setGenerateBackground] = useState(
@@ -58,6 +71,7 @@ export function ConfigurationPage() {
   );
   const [contractType, _setContractType] = useState(configuration.contractType);
   const [layers, _setLayers] = useState(configuration.layers);
+  const [resolution, setResolution] = useState(100);
 
   const setter =
     <T,>(set: (v: T | ((v: T) => T)) => void) =>
@@ -132,6 +146,16 @@ export function ConfigurationPage() {
   const onResolutionChange = (value: number) => {
     setWidth(Math.floor(originalWidth * (value / 100)));
     setHeight(Math.floor(originalHeight * (value / 100)));
+    setResolution(value);
+  };
+
+  const onRefreshResolution = async () => {
+    const { width, height } = await factoryGetResolution(id);
+    setOriginalWidth(width);
+    setOriginalHeight(height);
+    setWidth(width);
+    setHeight(height);
+    setResolution(100);
   };
 
   const items = availableLayers.map((layer) => ({
@@ -153,12 +177,15 @@ export function ConfigurationPage() {
       <Flex gap="size-100" justifyContent="space-evenly">
         <Flex direction="column" gap="size-100">
           <TextField
+            width="100%"
             isDisabled={frozen}
             label="Name"
             value={name}
             onChange={setName}
           />
+
           <TextArea
+            width="100%"
             isDisabled={frozen}
             label="Description"
             value={description}
@@ -166,22 +193,24 @@ export function ConfigurationPage() {
           />
 
           <TextField
+            width="100%"
             isDisabled={frozen}
             label="Symbol"
             value={symbol}
             onChange={setSymbol}
           />
 
-          <Flex direction="column">
-            <Slider
-              isDisabled={frozen}
-              label="Resolution"
-              defaultValue={100}
-              minValue={10}
-              maxValue={100}
-              onChange={onResolutionChange}
-            />
+          <Slider
+            width="100%"
+            isDisabled={frozen}
+            label="Resolution"
+            value={resolution}
+            minValue={10}
+            maxValue={100}
+            onChange={onResolutionChange}
+          />
 
+          <Flex gap="size-100" alignItems="end">
             <NumberField
               isDisabled={frozen}
               label="Width"
@@ -189,6 +218,7 @@ export function ConfigurationPage() {
               onChange={setWidth}
               isReadOnly
             />
+
             <NumberField
               isDisabled={frozen}
               label="Height"
@@ -196,9 +226,13 @@ export function ConfigurationPage() {
               onChange={setHeight}
               isReadOnly
             />
+            <ActionButton onPress={onRefreshResolution}>
+              <Refresh />
+            </ActionButton>
           </Flex>
 
           <Switch
+            width="100%"
             isDisabled={frozen}
             isSelected={generateBackground}
             onChange={setGenerateBackground}
@@ -214,6 +248,7 @@ export function ConfigurationPage() {
           />
 
           <RadioGroup
+            width="100%"
             isDisabled={frozen}
             label="Contract type"
             value={contractType}

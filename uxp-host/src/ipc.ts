@@ -211,6 +211,11 @@ ipcTaskWithRequestId(
     factories[id].getTraitsByLayerName(layerName)
 );
 
+ipcAsyncTask(
+  "factoryGetResolution",
+  async (id: string) => await factories[id].getResolution()
+);
+
 ipcTask(
   "factoryMakeGeneration",
   (id: string, name: string, template: Template) =>

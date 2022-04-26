@@ -42,6 +42,7 @@ const sendWhitelist = [
   "factoryUnify",
   "factoryRemove",
   "factoryReconstruct",
+  "factoryGetResolution",
 
   // "getCost",
   "getBalanceOf",
@@ -111,6 +112,7 @@ const onWhitelist = [
   "factoryUnifyResult",
   "factoryRemoveResult",
   "factoryReconstructResult",
+  "factoryGetResolutionResult",
 
   // "getCostResult",
   "getBalanceOfResult",

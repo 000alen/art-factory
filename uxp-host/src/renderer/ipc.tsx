@@ -405,6 +405,12 @@ export const sellDrop = (
   drop: Drop
 ) => ipcTask("sellDrop")(id, providerEngineId, deployment, drop);
 
+export const factoryGetResolution = (id: string) =>
+  ipcTask("factoryGetResolution")(id) as Promise<{
+    width: number;
+    height: number;
+  }>;
+
 // #endregion
 
 // #region Provider
