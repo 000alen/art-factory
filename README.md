@@ -35,7 +35,11 @@
 - [ ] **Feature request**: Añadir un link a opensea en la ui.
 - [ ] **FIX**: Aceleración por ~~gpu~~ paralelismo.
 - [ ] Custom sell orders
+- [ ] Demo
+- [ ] Massive tests
 - [ ] Refactor
+- [ ] Quality
+- [ ] Nonce
 - [ ] _Bugs_
 - [ ] _Testing_
 

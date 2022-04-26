@@ -13,13 +13,7 @@ import {
   MAIN_WETH,
   RINKEBY_WETH,
 } from "./constants";
-import {
-  accounts,
-  contracts,
-  // eths,
-  providers,
-  seaports,
-} from "./ipc";
+import { accounts, contracts, providers, seaports } from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -54,6 +48,8 @@ import {
 
 export class Factory {
   buildDir: string;
+  imagesDir: string;
+  jsonDir: string;
 
   layerByName: Map<string, Layer>;
   traitsByLayerName: Map<string, Trait[]>;
@@ -63,6 +59,8 @@ export class Factory {
 
   constructor(public configuration: Configuration, public projectDir: string) {
     this.buildDir = path.join(this.projectDir, BUILD_DIR_NAME);
+    this.imagesDir = path.join(this.buildDir, "images");
+    this.jsonDir = path.join(this.buildDir, "json");
     this.layerByName = new Map();
     this.traitsByLayerName = new Map();
     this.traitsBuffer = new Map();
@@ -71,14 +69,12 @@ export class Factory {
     this._ensureLayers();
   }
 
-  private async _ensureOutputDir() {
+  private _ensureOutputDir() {
     if (!fs.existsSync(this.buildDir)) fs.mkdirSync(this.buildDir);
 
-    if (!fs.existsSync(path.join(this.buildDir, "images")))
-      fs.mkdirSync(path.join(this.buildDir, "images"));
+    if (!fs.existsSync(this.imagesDir)) fs.mkdirSync(this.imagesDir);
 
-    if (!fs.existsSync(path.join(this.buildDir, "json")))
-      fs.mkdirSync(path.join(this.buildDir, "json"));
+    if (!fs.existsSync(this.jsonDir)) fs.mkdirSync(this.jsonDir);
   }
 
   private async _ensureLayers() {
@@ -137,6 +133,18 @@ export class Factory {
 
     this.traitsBuffer.set(key, buffer);
     return key;
+  }
+
+  image(generationName: string, name?: string) {
+    return name
+      ? path.join(this.imagesDir, generationName, `${name}.png`)
+      : path.join(this.imagesDir, generationName);
+  }
+
+  json(generationName: string, name?: string) {
+    return name
+      ? path.join(this.jsonDir, generationName, `${name}.json`)
+      : path.join(this.jsonDir, generationName);
   }
 
   loadSecrets(secrets: Secrets) {
@@ -452,8 +460,7 @@ export class Factory {
     callback?: (name: string) => void
   ) {
     const { name, collection } = generation;
-    if (!fs.existsSync(path.join(this.buildDir, "images", name)))
-      fs.mkdirSync(path.join(this.buildDir, "images", name));
+    if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
 
     await Promise.all(
       collection.map(async (collectionItem) => {
@@ -470,8 +477,7 @@ export class Factory {
   ) {
     const { name, collection } = generation;
 
-    if (!fs.existsSync(path.join(this.buildDir, "json", name)))
-      fs.mkdirSync(path.join(this.buildDir, "json", name));
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
     for (const collectionItem of collection) {
       const metadata: any = {
@@ -489,7 +495,7 @@ export class Factory {
         metadata[key] = replaceAll(value, /\${name}/, collectionItem.name);
 
       await fs.promises.writeFile(
-        path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
+        this.json(name, collectionItem.name),
         JSON.stringify(metadata)
       );
     }
@@ -502,20 +508,16 @@ export class Factory {
   ) {
     const { name, collection } = generation;
 
-    if (!fs.existsSync(path.join(this.buildDir, "json", name)))
-      fs.mkdirSync(path.join(this.buildDir, "json", name));
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
     for (const collectionItem of collection) {
       const metadata = JSON.parse(
-        await fs.promises.readFile(
-          path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
-          "utf8"
-        )
+        await fs.promises.readFile(this.json(name, collectionItem.name), "utf8")
       );
       metadata["image"] = `ipfs://${imagesCid}/${collectionItem.name}.png`;
 
       await fs.promises.writeFile(
-        path.join(this.buildDir, "json", name, `${collectionItem.name}.json`),
+        this.json(name, collectionItem.name),
         JSON.stringify(metadata)
       );
     }
@@ -529,17 +531,11 @@ export class Factory {
     const { name } = generation;
 
     const metadata = JSON.parse(
-      await fs.promises.readFile(
-        path.join(this.buildDir, "json", name, `1.json`),
-        "utf8"
-      )
+      await fs.promises.readFile(this.json(name, "1"), "utf8")
     );
     metadata["image"] = `ipfs://${notRevealedImageCid}/`;
 
-    await fs.promises.writeFile(
-      path.join(this.buildDir, "json", name, `1.json`),
-      JSON.stringify(metadata)
-    );
+    await fs.promises.writeFile(this.json(name, "1"), JSON.stringify(metadata));
   }
 
   async deployNotRevealedImage(generation: Generation) {
@@ -548,7 +544,7 @@ export class Factory {
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(this.buildDir, "images", generation.name, "1.png") // ? INFO: hardcoded
+      this.image(generation.name, "1") // ? Hardcoded
     );
 
     return IpfsHash;
@@ -558,7 +554,7 @@ export class Factory {
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(this.buildDir, "json", generation.name, "1.json") // ? INFO: hardcoded
+      this.json(generation.name, "1") // ? Hardcoded
     );
 
     return IpfsHash;
@@ -568,7 +564,7 @@ export class Factory {
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(this.buildDir, "images", generation.name)
+      this.image(generation.name)
     );
 
     return IpfsHash;
@@ -578,7 +574,7 @@ export class Factory {
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      path.join(this.buildDir, "json", generation.name)
+      this.json(generation.name)
     );
 
     return IpfsHash;
@@ -738,9 +734,7 @@ export class Factory {
     maxSize?: number
   ) {
     const buffer = await restrictImage(
-      await fs.promises.readFile(
-        path.join(this.buildDir, "images", generation.name, `${item.name}.png`)
-      ),
+      await fs.promises.readFile(this.image(generation.name, item.name)),
       maxSize
     );
     return buffer;
@@ -754,7 +748,7 @@ export class Factory {
 
   async getMetadata(generation: Generation, item: CollectionItem) {
     const metadata = await fs.promises.readFile(
-      path.join(this.buildDir, "json", generation.name, `${item.name}.json`),
+      this.json(generation.name, item.name),
       "utf8"
     );
     return JSON.parse(metadata);
@@ -774,12 +768,8 @@ export class Factory {
 
     await Promise.all(
       items.map(async (item) => {
-        await fs.promises.rm(
-          path.join(this.buildDir, "images", name, `${item.name}.png`)
-        );
-        await fs.promises.rm(
-          path.join(this.buildDir, "json", name, `${item.name}.json`)
-        );
+        await fs.promises.rm(this.image(name, item.name));
+        await fs.promises.rm(this.json(name, item.name));
       })
     );
 
@@ -805,26 +795,23 @@ export class Factory {
 
     for (const [i, item] of collection.entries()) {
       await fs.promises.rename(
-        path.join(this.buildDir, "images", name, `${item.name}.png`),
-        path.join(this.buildDir, "images", name, `_${i + 1}.png`)
+        this.image(name, item.name),
+        this.image(name, `_${i + 1}`)
       );
 
       await fs.promises.writeFile(
-        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        this.json(name, item.name),
         JSON.stringify({
           ...JSON.parse(
-            await fs.promises.readFile(
-              path.join(this.buildDir, "json", name, `${item.name}.json`),
-              "utf8"
-            )
+            await fs.promises.readFile(this.json(name, item.name), "utf8")
           ),
           edition: `${i + 1}`,
         })
       );
 
       await fs.promises.rename(
-        path.join(this.buildDir, "json", name, `${item.name}.json`),
-        path.join(this.buildDir, "json", name, `_${i + 1}.json`)
+        this.json(name, item.name),
+        this.json(name, `_${i + 1}`)
       );
 
       const _bundles = [];
@@ -855,16 +842,15 @@ export class Factory {
       item.name = `${i + 1}`;
     }
 
-    // for (const [i, item] of collection.entries()) {
     for (let i = 0; i < collection.length; i++) {
       await fs.promises.rename(
-        path.join(this.buildDir, "images", name, `_${i + 1}.png`),
-        path.join(this.buildDir, "images", name, `${i + 1}.png`)
+        this.image(name, `_${i + 1}`),
+        this.image(name, `${i + 1}`)
       );
 
       await fs.promises.rename(
-        path.join(this.buildDir, "json", name, `_${i + 1}.json`),
-        path.join(this.buildDir, "json", name, `${i + 1}.json`)
+        this.json(name, `_${i + 1}`),
+        this.json(name, `${i + 1}`)
       );
 
       const _bundles = [];
@@ -914,13 +900,10 @@ export class Factory {
 
     for (const item of items) {
       await fs.promises.writeFile(
-        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        this.json(name, item.name),
         JSON.stringify({
           ...JSON.parse(
-            await fs.promises.readFile(
-              path.join(this.buildDir, "json", name, `${item.name}.json`),
-              "utf8"
-            )
+            await fs.promises.readFile(this.json(name, item.name), "utf8")
           ),
           attributes: item.traits.map((trait) => ({
             trait_type: trait.name,
@@ -951,13 +934,10 @@ export class Factory {
 
     for (const item of _with) {
       await fs.promises.writeFile(
-        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        this.json(name, item.name),
         JSON.stringify({
           ...JSON.parse(
-            await fs.promises.readFile(
-              path.join(this.buildDir, "json", name, `${item.name}.json`),
-              "utf8"
-            )
+            await fs.promises.readFile(this.json(name, item.name), "utf8")
           ),
           attributes: item.traits.map((trait) => ({
             trait_type: trait.name,
@@ -982,11 +962,8 @@ export class Factory {
   }
 
   async unify(name: string, generations: Generation[]) {
-    if (!fs.existsSync(path.join(this.buildDir, "images", name)))
-      fs.mkdirSync(path.join(this.buildDir, "images", name));
-
-    if (!fs.existsSync(path.join(this.buildDir, "json", name)))
-      fs.mkdirSync(path.join(this.buildDir, "json", name));
+    if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
     const unifiedCollection: Collection = [];
     const unifiedBundles: Bundles = [];
@@ -1005,21 +982,16 @@ export class Factory {
         mappings[item.name] = `${i}`;
 
         await fs.promises.copyFile(
-          path.join(this.buildDir, "images", currentName, `${item.name}.png`),
-          path.join(this.buildDir, "images", name, `${i}.png`)
+          this.image(currentName, item.name),
+          this.image(name, `${i}`)
         );
 
         await fs.promises.writeFile(
-          path.join(this.buildDir, "json", name, `${i}.json`),
+          this.json(name, `${i}`),
           JSON.stringify({
             ...JSON.parse(
               await fs.promises.readFile(
-                path.join(
-                  this.buildDir,
-                  "json",
-                  currentName,
-                  `${item.name}.json`
-                ),
+                this.json(currentName, item.name),
                 "utf8"
               )
             ),
@@ -1058,19 +1030,18 @@ export class Factory {
   }
 
   async remove(generation: Generation) {
-    await fs.promises.rm(path.join(this.buildDir, "images", generation.name), {
+    await fs.promises.rm(this.image(generation.name), {
       recursive: true,
       force: true,
     });
-    await fs.promises.rm(path.join(this.buildDir, "json", generation.name), {
+    await fs.promises.rm(this.json(generation.name), {
       recursive: true,
       force: true,
     });
   }
 
   async reconstruct(generation: Generation) {
-    const imagesDir = path.join(this.buildDir, "images", generation.name);
-    const names = (await readDir(imagesDir)).map(
+    const names = (await readDir(this.image(generation.name))).map(
       (fileName) => path.parse(fileName).name
     );
 
@@ -1082,9 +1053,7 @@ export class Factory {
 
     await Promise.all(
       items.map(async (item) => {
-        await fs.promises.rm(
-          path.join(this.buildDir, "json", name, `${item.name}.json`)
-        );
+        await fs.promises.rm(this.json(name, item.name));
       })
     );
 
@@ -1110,26 +1079,23 @@ export class Factory {
 
     for (const [i, item] of collection.entries()) {
       await fs.promises.rename(
-        path.join(this.buildDir, "images", name, `${item.name}.png`),
-        path.join(this.buildDir, "images", name, `_${i + 1}.png`)
+        this.image(name, item.name),
+        this.image(name, `_${i + 1}`)
       );
 
       await fs.promises.writeFile(
-        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        this.json(name, item.name),
         JSON.stringify({
           ...JSON.parse(
-            await fs.promises.readFile(
-              path.join(this.buildDir, "json", name, `${item.name}.json`),
-              "utf8"
-            )
+            await fs.promises.readFile(this.json(name, item.name), "utf8")
           ),
           edition: `${i + 1}`,
         })
       );
 
       await fs.promises.rename(
-        path.join(this.buildDir, "json", name, `${item.name}.json`),
-        path.join(this.buildDir, "json", name, `_${i + 1}.json`)
+        this.json(name, item.name),
+        this.json(name, `_${i + 1}`)
       );
 
       const _bundles = [];
@@ -1160,16 +1126,15 @@ export class Factory {
       item.name = `${i + 1}`;
     }
 
-    // for (const [i, item] of collection.entries()) {
     for (let i = 0; i < collection.length; i++) {
       await fs.promises.rename(
-        path.join(this.buildDir, "images", name, `_${i + 1}.png`),
-        path.join(this.buildDir, "images", name, `${i + 1}.png`)
+        this.image(name, `_${i + 1}`),
+        this.image(name, `${i + 1}`)
       );
 
       await fs.promises.rename(
-        path.join(this.buildDir, "json", name, `_${i + 1}.json`),
-        path.join(this.buildDir, "json", name, `${i + 1}.json`)
+        this.json(name, `_${i + 1}`),
+        this.json(name, `${i + 1}`)
       );
 
       const _bundles = [];
@@ -1272,14 +1237,8 @@ export class Factory {
 
   async mintDrop(providerId: string, contractId: string, drop: Drop) {
     const contract = contracts[contractId];
-    // const eth = eths[contractId];
     const n = drop.ids.length;
-    const tx = await contract.mint(
-      n
-      // {
-      //   nonce: await eth.getTransactionCount(accounts[contractId], "pending"),
-      // }
-    );
+    const tx = await contract.mint(n);
     await tx.wait();
   }
 
