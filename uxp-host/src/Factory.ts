@@ -2,7 +2,6 @@ import { ContractFactory, providers as ethersProviders, utils } from "ethers";
 import fs from "fs";
 import imageSize from "image-size";
 import path from "path";
-import { Node as FlowNode } from "react-flow-renderer";
 import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
 
@@ -34,6 +33,8 @@ import {
   append,
   arrayDifference,
   choose,
+  computeBundlesNs,
+  computeTraitsNs,
   getBranches,
   getContract,
   hash,
@@ -46,15 +47,22 @@ import {
   restrictImage,
 } from "./utils";
 
+interface LayerNodeComponentData {
+  urls?: Record<string, string>;
+  trait: Trait;
+  id: string;
+  name: string;
+  opacity: number;
+  blending: string;
+}
+
 export class Factory {
   buildDir: string;
   imagesDir: string;
   jsonDir: string;
-
   layerByName: Map<string, Layer>;
   traitsByLayerName: Map<string, Trait[]>;
   traitsBuffer: Map<string, Buffer>;
-
   secrets: Secrets;
 
   constructor(public configuration: Configuration, public projectDir: string) {
@@ -65,49 +73,81 @@ export class Factory {
     this.traitsByLayerName = new Map();
     this.traitsBuffer = new Map();
 
-    this._ensureOutputDir();
+    this._ensureBuildDir();
     this._ensureLayers();
   }
 
-  private _ensureOutputDir() {
+  layer(layerName: string) {
+    return path.join(this.projectDir, layerName);
+  }
+
+  image(generationName: string, name?: string) {
+    return name
+      ? path.join(this.imagesDir, generationName, `${name}.png`)
+      : path.join(this.imagesDir, generationName);
+  }
+
+  json(generationName: string, name?: string) {
+    return name
+      ? path.join(this.jsonDir, generationName, `${name}.json`)
+      : path.join(this.jsonDir, generationName);
+  }
+
+  async updateJson(
+    generationName: string,
+    name: string,
+    obj: Record<string, any>,
+    fromGenerationName?: string,
+    fromName?: string
+  ) {
+    await fs.promises.writeFile(
+      this.json(generationName, name),
+      JSON.stringify({
+        ...JSON.parse(
+          await fs.promises.readFile(
+            this.json(fromGenerationName || generationName, fromName || name),
+            "utf8"
+          )
+        ),
+        ...obj,
+      })
+    );
+  }
+
+  private _ensureBuildDir() {
     if (!fs.existsSync(this.buildDir)) fs.mkdirSync(this.buildDir);
-
     if (!fs.existsSync(this.imagesDir)) fs.mkdirSync(this.imagesDir);
-
     if (!fs.existsSync(this.jsonDir)) fs.mkdirSync(this.jsonDir);
   }
 
   private async _ensureLayers() {
-    const layersPaths: string[] = await readDir(this.projectDir);
+    const layersNames = await readDir(this.projectDir);
 
-    const layers: Layer[] = layersPaths.map((layerPath) => ({
-      basePath: path.join(this.projectDir, layerPath),
-      name: layerPath,
+    const layers: Layer[] = layersNames.map((layerName) => ({
+      basePath: this.layer(layerName),
+      name: layerName,
       blending: DEFAULT_BLENDING,
       opacity: DEFAULT_OPACITY,
     }));
 
-    const traitsPathsByLayerIndex: string[][] = await Promise.all(
-      layersPaths.map((layerName) =>
-        readDir(path.join(this.projectDir, layerName))
-      )
+    const nTraitsNames = await Promise.all(
+      layersNames.map((layerName) => readDir(this.layer(layerName)))
     );
 
-    const traitsByLayerIndex: Trait[][] = traitsPathsByLayerIndex.map(
-      (traitsPaths, i) =>
-        traitsPaths.map((traitPath) => {
-          const { name: value, ext } = path.parse(traitPath);
-          return {
-            ...layers[i],
-            fileName: traitPath,
-            value: removeRarity(value),
-            rarity: rarity(value),
-            type: ext.slice(1),
-          };
-        })
+    const traitsByLayerIndex: Trait[][] = nTraitsNames.map((traitsNames, i) =>
+      traitsNames.map((traitName) => {
+        const { name, ext } = path.parse(traitName);
+        return {
+          ...layers[i],
+          fileName: traitName,
+          value: removeRarity(name),
+          rarity: rarity(name),
+          type: ext.slice(1),
+        };
+      })
     );
 
-    layersPaths.forEach((layerPath, i) => {
+    layersNames.forEach((layerPath, i) => {
       this.layerByName.set(layerPath, layers[i]);
       this.traitsByLayerName.set(layerPath, traitsByLayerIndex[i]);
     });
@@ -133,18 +173,6 @@ export class Factory {
 
     this.traitsBuffer.set(key, buffer);
     return key;
-  }
-
-  image(generationName: string, name?: string) {
-    return name
-      ? path.join(this.imagesDir, generationName, `${name}.png`)
-      : path.join(this.imagesDir, generationName);
-  }
-
-  json(generationName: string, name?: string) {
-    return name
-      ? path.join(this.jsonDir, generationName, `${name}.json`)
-      : path.join(this.jsonDir, generationName);
   }
 
   loadSecrets(secrets: Secrets) {
@@ -178,92 +206,7 @@ export class Factory {
   }
 
   makeGeneration(name: string, template: Template): Generation {
-    interface LayerNodeComponentData {
-      urls?: Record<string, string>;
-      trait: Trait;
-      id: string;
-      name: string;
-      opacity: number;
-      blending: string;
-    }
-
-    const {
-      nodes,
-      edges,
-      ns,
-      ignored,
-      salesTypes,
-      startingPrices,
-      endingPrices,
-      salesTimes,
-    } = template;
-
-    const nData = (
-      getBranches(nodes, edges).map((branch) =>
-        branch.slice(1, -1)
-      ) as FlowNode<LayerNodeComponentData>[][]
-    ).map((branch) => branch.map((node) => node.data));
-    let keys = nData
-      .map((branch) =>
-        branch.map((data) => ({
-          ...data.trait,
-          id: data.id,
-        }))
-      )
-      .map(hash);
-
-    const nTraits: Trait[][] = nData
-      .map((branch) =>
-        branch.map((data) => ({
-          ...data.trait,
-          id: data.id,
-          opacity: data.opacity,
-          blending: data.blending,
-        }))
-      )
-      .filter((_, i) => !ignored.includes(keys[i]));
-
-    keys = keys.filter((key) => !ignored.includes(key));
-
-    const bundlesInfo: BundlesInfo = nodes
-      .filter((node) => node.type === "bundleNode")
-      .map((node) => node.data)
-      .map(({ name, ids, saleType, startingPrice, endingPrice, saleTime }) => ({
-        name,
-        ids,
-        saleType,
-        startingPrice,
-        endingPrice,
-        saleTime,
-      }));
-
-    const computeTraitsNs = (
-      _nTraits: Trait[][],
-      _branchesNs: Record<string, number>
-    ): Record<string, number> => {
-      const maxNs: Record<string, number> = {};
-
-      _nTraits = [..._nTraits];
-      for (let [index, traits] of _nTraits.entries()) {
-        traits = [...traits];
-        const n = _branchesNs[keys[index]];
-        for (const { id } of traits)
-          if (!(id in maxNs) || n > maxNs[id]) maxNs[id] = n;
-      }
-
-      return maxNs;
-    };
-
-    const computeBundlesNs = (
-      _bundlesInfo: BundlesInfo,
-      _branchesNs: Record<string, number>
-    ): Record<string, number> => {
-      const bundlesNs: Record<string, number> = {};
-      for (const { name, ids } of _bundlesInfo)
-        bundlesNs[name] = Math.min(...ids.map((id) => _branchesNs[id]));
-      return bundlesNs;
-    };
-
+    // #region Helper functions
     const computeNTraits = (layer: Layer, n: number) => {
       const nTraits: Trait[] = [];
 
@@ -282,38 +225,83 @@ export class Factory {
       _traitsNs: Record<string, number>
     ): Record<string, Trait[]> => {
       const cache: Record<string, Trait[]> = {};
-
-      _nTraits = [..._nTraits];
-      for (let traits of _nTraits) {
-        traits = [...traits];
-
+      for (let traits of _nTraits)
         for (const trait of traits)
           cache[trait.id] = computeNTraits(trait, _traitsNs[trait.id]);
-      }
-
       return cache;
     };
+    // #endregion
 
-    const traitsNs = computeTraitsNs(nTraits, ns);
+    const {
+      nodes,
+      edges,
+      ns,
+      ignored,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
+    } = template;
+
+    // #region Data preparation
+    const nData = getBranches(nodes, edges)
+      .map((branch) => branch.slice(1, -1))
+      .map((branch) => branch.map((node) => node.data));
+
+    let keys = nData
+      .map((branch) => branch.map(({ trait, id }) => ({ ...trait, id })))
+      .map(hash);
+
+    const nTraits: Trait[][] = nData
+      .map((branch) =>
+        branch.map(({ trait, id, opacity, blending }) => ({
+          ...trait,
+          id,
+          opacity,
+          blending,
+        }))
+      )
+      .filter((_, i) => !ignored.includes(keys[i]));
+
+    keys = keys.filter((key) => !ignored.includes(key));
+
+    const bundlesInfo: BundlesInfo = nodes
+      .filter((node) => node.type === "bundleNode")
+      .map((node) => node.data)
+      .map(({ name, ids, saleType, startingPrice, endingPrice, saleTime }) => ({
+        name,
+        ids,
+        saleType,
+        startingPrice,
+        endingPrice,
+        saleTime,
+      }));
+    // #endregion
+
+    const traitsNs = computeTraitsNs(nTraits, ns, keys);
     const bundlesNs = computeBundlesNs(bundlesInfo, ns);
     const cache = computeCache(nTraits, traitsNs);
+
     const collection: Collection = [];
     const bundles: Bundles = [];
+    const drops: Drop[] = [];
 
-    let i = 1;
-    for (const [index, traits] of nTraits.entries()) {
-      const n = ns[keys[index]];
-      const saleType = salesTypes[keys[index]];
-      const startingPrice = startingPrices[keys[index]];
-      const endingPrice = endingPrices[keys[index]];
-      const saleTime = salesTimes[keys[index]];
+    let c = 1;
+    for (const [i, traits] of nTraits.entries()) {
+      const n = ns[keys[i]];
+      const saleType = salesTypes[keys[i]];
+      const startingPrice = startingPrices[keys[i]];
+      const endingPrice = endingPrices[keys[i]];
+      const saleTime = salesTimes[keys[i]];
 
-      let nTraits = Array.from({ length: n }, () => []);
-      for (const trait of traits)
-        nTraits = nTraits.map((traits, i) => [...traits, cache[trait.id][i]]);
+      const nTraits = traits.reduce(
+        (prevNTraits, trait) =>
+          prevNTraits.map((traits, j) => [...traits, cache[trait.id][j]]),
+        Array.from({ length: n }, () => [])
+      );
 
-      const collectionItems = nTraits.map((traits) => ({
-        name: `${i++}`,
+      const items = nTraits.map((traits) => ({
+        name: `${c++}`,
         traits,
         saleType,
         startingPrice,
@@ -321,46 +309,48 @@ export class Factory {
         saleTime,
       }));
 
-      const bundle = bundlesInfo.find(({ ids }) => ids.includes(keys[index]));
+      const bundleInfo = bundlesInfo.find(({ ids }) => ids.includes(keys[i]));
 
-      if (bundle !== undefined) {
-        const bundleName = bundle.name;
+      if (bundleInfo !== undefined) {
+        let bundle;
+        if (bundles.some((b) => b.name === bundleInfo.name)) {
+          bundle = bundles.find((b) => b.name === bundleInfo.name);
+        } else {
+          bundle = {
+            name: bundleInfo.name,
+            ids: Array.from({ length: bundlesNs[bundleInfo.name] }, () => []),
+            saleType: bundleInfo.saleType,
+            startingPrice: bundleInfo.startingPrice,
+            endingPrice: bundleInfo.endingPrice,
+            saleTime: bundleInfo.saleTime,
+          };
+          bundles.push(bundle);
+        }
 
-        if (!bundles.some((b) => b.name === bundleName))
-          bundles.push({
-            name: bundleName,
-            ids: Array.from({ length: bundlesNs[bundleName] }, () => []),
-            saleType: bundle.saleType,
-            startingPrice: bundle.startingPrice,
-            endingPrice: bundle.endingPrice,
-            saleTime: bundle.saleTime,
-          });
-
-        const bundleIndex = bundles.findIndex((b) => b.name === bundleName);
-        bundles[bundleIndex].ids = append(
-          bundles[bundleIndex].ids,
-          collectionItems
-            .map((collectionItem) => collectionItem.name)
-            .slice(0, bundlesNs[bundleName])
+        bundle.ids = append(
+          bundle.ids,
+          items
+            .map((item) => item.name)
+            .slice(0, bundlesNs[bundleInfo.name])
             .map((name) => [name])
         );
       }
 
-      collection.push(...collectionItems);
+      collection.push(...items);
     }
+
+    drops.push({
+      name,
+      ids: collection.map(({ name }) => name),
+      bundles: bundles.map(({ name }) => name),
+    });
 
     return {
       id: uuid(),
       name,
       collection,
       bundles,
-      drops: [
-        {
-          name,
-          ids: collection.map(({ name }) => name),
-          bundles: bundles.map(({ name }) => name),
-        },
-      ],
+      drops,
     };
   }
 
@@ -463,9 +453,9 @@ export class Factory {
     if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
 
     await Promise.all(
-      collection.map(async (collectionItem) => {
-        await this.generateImage(collectionItem, path.join("images", name));
-        if (callback) callback(collectionItem.name);
+      collection.map(async (item) => {
+        await this.generateImage(item, path.join("images", name));
+        if (callback) callback(item.name);
       })
     );
   }
@@ -479,23 +469,24 @@ export class Factory {
 
     if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
-    for (const collectionItem of collection) {
+    for (const item of collection) {
       const metadata: any = {
         name: this.configuration.name,
         description: this.configuration.description,
-        image: `ipfs://<unknown>/${collectionItem.name}.png`,
-        edition: collectionItem.name,
+        image: `ipfs://<unknown>/${item.name}.png`,
+        edition: item.name,
         date: Date.now(),
-        attributes: collectionItem.traits.map((trait) => ({
+        attributes: item.traits.map((trait) => ({
           trait_type: trait.name,
           value: trait.value,
         })),
       };
+
       for (const { key, value } of metadataItems)
-        metadata[key] = replaceAll(value, /\${name}/, collectionItem.name);
+        metadata[key] = replaceAll(value, /\${name}/, item.name);
 
       await fs.promises.writeFile(
-        this.json(name, collectionItem.name),
+        this.json(name, item.name),
         JSON.stringify(metadata)
       );
     }
@@ -510,17 +501,13 @@ export class Factory {
 
     if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
-    for (const collectionItem of collection) {
-      const metadata = JSON.parse(
-        await fs.promises.readFile(this.json(name, collectionItem.name), "utf8")
-      );
-      metadata["image"] = `ipfs://${imagesCid}/${collectionItem.name}.png`;
-
-      await fs.promises.writeFile(
-        this.json(name, collectionItem.name),
-        JSON.stringify(metadata)
-      );
-    }
+    await Promise.all(
+      collection.map((item) =>
+        this.updateJson(name, item.name, {
+          image: `ipfs://${imagesCid}/${item.name}.png`,
+        })
+      )
+    );
   }
 
   async hydrateNotRevealedMetadata(
@@ -530,17 +517,14 @@ export class Factory {
   ) {
     const { name } = generation;
 
-    const metadata = JSON.parse(
-      await fs.promises.readFile(this.json(name, "1"), "utf8")
-    );
-    metadata["image"] = `ipfs://${notRevealedImageCid}/`;
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
-    await fs.promises.writeFile(this.json(name, "1"), JSON.stringify(metadata));
+    await this.updateJson(name, "1", {
+      image: `ipfs://${notRevealedImageCid}/`,
+    });
   }
 
   async deployNotRevealedImage(generation: Generation) {
-    console.log(generation);
-
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
@@ -799,15 +783,9 @@ export class Factory {
         this.image(name, `_${i + 1}`)
       );
 
-      await fs.promises.writeFile(
-        this.json(name, item.name),
-        JSON.stringify({
-          ...JSON.parse(
-            await fs.promises.readFile(this.json(name, item.name), "utf8")
-          ),
-          edition: `${i + 1}`,
-        })
-      );
+      await this.updateJson(name, item.name, {
+        edition: `${i + 1}`,
+      });
 
       await fs.promises.rename(
         this.json(name, item.name),
@@ -888,7 +866,7 @@ export class Factory {
   }
 
   async regenerateItems(generation: Generation, items: Collection) {
-    let { name, collection } = generation;
+    const { name, collection } = generation;
 
     const newItems: Collection = items.map(({ traits, ...rest }) => ({
       ...rest,
@@ -898,66 +876,53 @@ export class Factory {
     }));
     await this.generateImages({ name, collection: newItems } as Generation);
 
-    for (const item of items) {
-      await fs.promises.writeFile(
-        this.json(name, item.name),
-        JSON.stringify({
-          ...JSON.parse(
-            await fs.promises.readFile(this.json(name, item.name), "utf8")
-          ),
+    await Promise.all(
+      items.map((item) =>
+        this.updateJson(name, item.name, {
           attributes: item.traits.map((trait) => ({
             trait_type: trait.name,
             value: trait.value,
           })),
         })
-      );
-    }
+      )
+    );
 
-    const newCollectionItemsByName = new Map(
-      newItems.map((item) => [item.name, item])
+    const newItemsByName = new Map(newItems.map((item) => [item.name, item]));
+
+    const newCollection = collection.map((item) =>
+      newItemsByName.has(item.name) ? newItemsByName.get(item.name) : item
     );
-    collection = collection.map((collectionItem) =>
-      newCollectionItemsByName.has(collectionItem.name)
-        ? newCollectionItemsByName.get(collectionItem.name)
-        : collectionItem
-    );
+
     return {
       ...generation,
-      collection,
+      collection: newCollection,
     };
   }
 
   async replaceItems(generation: Generation, _with: Collection) {
-    let { name, collection } = generation;
+    const { name, collection } = generation;
 
     await this.generateImages({ name, collection: _with } as Generation);
 
-    for (const item of _with) {
-      await fs.promises.writeFile(
-        this.json(name, item.name),
-        JSON.stringify({
-          ...JSON.parse(
-            await fs.promises.readFile(this.json(name, item.name), "utf8")
-          ),
+    await Promise.all(
+      _with.map((item) =>
+        this.updateJson(name, item.name, {
           attributes: item.traits.map((trait) => ({
             trait_type: trait.name,
             value: trait.value,
           })),
         })
-      );
-    }
+      )
+    );
 
-    const newCollectionItemsByName = new Map(
-      _with.map((item) => [item.name, item])
+    const newItemsByName = new Map(_with.map((item) => [item.name, item]));
+    const newCollection = collection.map((item) =>
+      newItemsByName.has(item.name) ? newItemsByName.get(item.name) : item
     );
-    collection = collection.map((collectionItem) =>
-      newCollectionItemsByName.has(collectionItem.name)
-        ? newCollectionItemsByName.get(collectionItem.name)
-        : collectionItem
-    );
+
     return {
       ...generation,
-      collection,
+      collection: newCollection,
     };
   }
 
@@ -986,17 +951,14 @@ export class Factory {
           this.image(name, `${i}`)
         );
 
-        await fs.promises.writeFile(
-          this.json(name, `${i}`),
-          JSON.stringify({
-            ...JSON.parse(
-              await fs.promises.readFile(
-                this.json(currentName, item.name),
-                "utf8"
-              )
-            ),
+        this.updateJson(
+          name,
+          `${i}`,
+          {
             edition: `${i}`,
-          })
+          },
+          currentName,
+          item.name
         );
 
         unifiedCollection.push({
@@ -1083,15 +1045,9 @@ export class Factory {
         this.image(name, `_${i + 1}`)
       );
 
-      await fs.promises.writeFile(
-        this.json(name, item.name),
-        JSON.stringify({
-          ...JSON.parse(
-            await fs.promises.readFile(this.json(name, item.name), "utf8")
-          ),
-          edition: `${i + 1}`,
-        })
-      );
+      await this.updateJson(name, item.name, {
+        edition: `${i + 1}`,
+      });
 
       await fs.promises.rename(
         this.json(name, item.name),

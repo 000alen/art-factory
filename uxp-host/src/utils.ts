@@ -3,14 +3,18 @@ import FormData from "form-data";
 import fs from "fs";
 import imageSize from "image-size";
 import path from "path";
-import { Edge as FlowEdge, getOutgoers, Node as FlowNode } from "react-flow-renderer";
+import {
+  Edge as FlowEdge,
+  getOutgoers,
+  Node as FlowNode,
+} from "react-flow-renderer";
 import sharp from "sharp";
 import solc from "solc";
 import { v5 as uuidv5 } from "uuid";
 
 import { NAMESPACE, RARITY_DELIMITER } from "./constants";
 import { getInfuraProjectId } from "./store";
-import { Network, Trait } from "./typings";
+import { BundlesInfo, Network, Trait } from "./typings";
 
 export function rarity(elementName: string) {
   let rarity = Number(elementName.split(RARITY_DELIMITER).pop());
@@ -241,3 +245,28 @@ export const getInfuraEndpoint = (network: Network) =>
   network === "main"
     ? `https://mainnet.infura.io/v3/${getInfuraProjectId()}`
     : `https://rinkeby.infura.io/v3/${getInfuraProjectId()}`;
+
+export const computeTraitsNs = (
+  _nTraits: Trait[][],
+  _branchesNs: Record<string, number>,
+  keys: string[]
+): Record<string, number> => {
+  const traitsNs: Record<string, number> = {};
+  for (let [index, traits] of _nTraits.entries()) {
+    const n = _branchesNs[keys[index]];
+    for (const { id } of traits)
+      if (!(id in traitsNs) || n > traitsNs[id]) traitsNs[id] = n;
+  }
+  return traitsNs;
+};
+
+export const computeBundlesNs = (
+  _bundlesInfo: BundlesInfo,
+  _branchesNs: Record<string, number>
+): Record<string, number> => {
+  const bundlesNs: Record<string, number> = {};
+  for (const { name, ids } of _bundlesInfo)
+    bundlesNs[name] = Math.min(...ids.map((id) => _branchesNs[id]));
+  return bundlesNs;
+};
+
