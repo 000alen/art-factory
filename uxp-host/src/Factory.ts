@@ -11,10 +11,14 @@ import {
   DEFAULT_BLENDING,
   DEFAULT_OPACITY,
   MAIN_WETH,
-  RINKEBY_WETH,
+  RINKEBY_WETH
 } from "./constants";
-import { accounts, contracts, eths, providerEngines, providers } from "./ipc";
-import { Network, OpenSeaPort } from "./opensea";
+import {
+  accounts,
+  contracts,
+  eths, providers,
+  seaports
+} from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -29,7 +33,7 @@ import {
   SaleType,
   Secrets,
   Template,
-  Trait,
+  Trait
 } from "./typings";
 import {
   append,
@@ -44,7 +48,7 @@ import {
   readDir,
   removeRarity,
   replaceAll,
-  restrictImage,
+  restrictImage
 } from "./utils";
 
 export class Factory {
@@ -1132,14 +1136,10 @@ export class Factory {
     deployment: Deployment,
     drop: Drop
   ) {
-    const providerEngine = providerEngines[providerEngineId];
+    const seaport = seaports[providerEngineId];
 
     const { generation, contractAddress } = deployment;
     const { bundles } = generation;
-
-    const seaport = new OpenSeaPort(providerEngine, {
-      networkName: Network.Rinkeby,
-    });
 
     const publishedIds = [];
     for (const bundleName of drop.bundles) {
@@ -1198,14 +1198,10 @@ export class Factory {
     drop: Drop,
     publishedIds: string[] = []
   ) {
-    const providerEngine = providerEngines[providerEngineId];
+    const seaport = seaports[providerEngineId];
 
     const { generation, contractAddress } = deployment;
     const { collection } = generation;
-
-    const seaport = new OpenSeaPort(providerEngine, {
-      networkName: Network.Rinkeby,
-    });
 
     for (const id of arrayDifference(drop.ids, publishedIds)) {
       const item = collection.find((item) => item.name === id);

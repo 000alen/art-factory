@@ -38,6 +38,7 @@ import {
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
 import { Eth } from "web3-eth";
+import { OpenSeaPort, Network as OpenSeaNetwork } from "./opensea";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -455,6 +456,7 @@ export const providers: Record<string, WalletConnectProvider> = {};
 export const providerEngines: Record<string, any> = {};
 export const accounts: Record<string, string> = {};
 export const eths: Record<string, Eth> = {};
+export const seaports: Record<string, OpenSeaPort> = {};
 
 /*
 -> createProvider
@@ -523,9 +525,16 @@ ipcAsyncTask(
     providerEngine.addProvider(infuraRpcSubprovider);
     providerEngine.start();
 
+    const openseaApiKey = getOpenseaApiKey();
+
     providerEngines[id] = providerEngine;
     accounts[id] = (await privateKeyWalletSubprovider.getAccountsAsync())[0];
     eths[id] = new Eth(providerEngine);
+    seaports[id] = new OpenSeaPort(providerEngine, {
+      networkName:
+        network === "main" ? OpenSeaNetwork.Main : OpenSeaNetwork.Rinkeby,
+      ...(openseaApiKey && { apiKey: openseaApiKey as string }),
+    });
   }
 );
 
