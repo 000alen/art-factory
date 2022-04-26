@@ -1,16 +1,37 @@
 import React, { memo, useEffect, useState } from "react";
-import { Handle, Node as FlowNode, Position, useEdges, useNodes } from "react-flow-renderer";
+import {
+  Handle,
+  Node as FlowNode,
+  Position,
+  useEdges,
+  useNodes,
+} from "react-flow-renderer";
 
 import {
-    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Radio, RadioGroup, Text
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  Radio,
+  RadioGroup,
+  Text,
 } from "@adobe/react-spectrum";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import { DEFAULT_N, DEFAULT_PRICE, DEFAULT_SALE_TIME, DEFAULT_SALE_TYPE } from "../constants";
+import {
+  DEFAULT_N,
+  DEFAULT_PRICE,
+  DEFAULT_SALE_TIME,
+  DEFAULT_SALE_TYPE,
+} from "../constants";
 import { Trait } from "../typings";
 import { getBranches, hash } from "../utils";
 import { LayerNodeComponentData } from "./LayerNode";
 import { Time } from "./Time";
+import { ImageItem } from "./ImageItem";
 
 export interface RenderNodeComponentData {
   composedUrls?: Record<string, string>;
@@ -39,34 +60,6 @@ interface RenderNodeProps {
   id: string;
   data: RenderNodeComponentData;
 }
-
-interface ImageItemProps {
-  name?: string;
-  src: string;
-}
-
-export const ImageItem: React.FC<ImageItemProps> = ({
-  name,
-  src,
-  children,
-}) => {
-  return (
-    <div className="relative w-full h-full m-auto rounded">
-      {children && (
-        <div className="absolute w-full h-full space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
-          {children}
-        </div>
-      )}
-
-      <img
-        className="w-full h-full select-none rounded"
-        draggable="false"
-        src={src}
-        alt={name}
-      />
-    </div>
-  );
-};
 
 export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
   const [nodes, edges] = [useNodes(), useEdges()];
@@ -132,7 +125,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     ) : (
       <>
         <Flex UNSAFE_className="w-48" key={i} direction="column" gap="size-100">
-          <ImageItem src={composedUrl}>
+          <ImageItem src={composedUrl} maxSize={192}>
             <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
           </ImageItem>
           <Heading>{renderId}</Heading>
