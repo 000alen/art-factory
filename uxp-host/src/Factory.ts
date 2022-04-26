@@ -11,14 +11,9 @@ import {
   DEFAULT_BLENDING,
   DEFAULT_OPACITY,
   MAIN_WETH,
-  RINKEBY_WETH
+  RINKEBY_WETH,
 } from "./constants";
-import {
-  accounts,
-  contracts,
-  eths, providers,
-  seaports
-} from "./ipc";
+import { accounts, contracts, eths, providers, seaports } from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -33,7 +28,7 @@ import {
   SaleType,
   Secrets,
   Template,
-  Trait
+  Trait,
 } from "./typings";
 import {
   append,
@@ -48,7 +43,7 @@ import {
   readDir,
   removeRarity,
   replaceAll,
-  restrictImage
+  restrictImage,
 } from "./utils";
 
 export class Factory {
@@ -1055,6 +1050,144 @@ export class Factory {
       recursive: true,
       force: true,
     });
+  }
+
+  async reconstruct(generation: Generation) {
+    const imagesDir = path.join(this.buildDir, "images", generation.name);
+    const names = (await readDir(imagesDir)).map(
+      (fileName) => path.parse(fileName).name
+    );
+
+    const items = generation.collection.filter(
+      (item) => !names.includes(item.name)
+    );
+
+    let { name, collection, bundles, drops } = generation;
+
+    await Promise.all(
+      items.map(async (item) => {
+        await fs.promises.rm(
+          path.join(this.buildDir, "json", name, `${item.name}.json`)
+        );
+      })
+    );
+
+    collection = collection.filter(
+      (item) =>
+        !items.some((itemToRemove) => {
+          return item.name === itemToRemove.name;
+        })
+    );
+
+    bundles = bundles.map(({ ids, ...rest }) => ({
+      ...rest,
+      ids: ids.filter(
+        (ids) => !ids.some((id) => items.some((item) => item.name === id))
+      ),
+    }));
+
+    drops = drops.map(({ name, ids }) => ({
+      name,
+      ids: ids.filter((id) => items.some((item) => item.name === id)),
+      bundles: bundles.map(({ name }) => name),
+    }));
+
+    for (const [i, item] of collection.entries()) {
+      await fs.promises.rename(
+        path.join(this.buildDir, "images", name, `${item.name}.png`),
+        path.join(this.buildDir, "images", name, `_${i + 1}.png`)
+      );
+
+      await fs.promises.writeFile(
+        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        JSON.stringify({
+          ...JSON.parse(
+            await fs.promises.readFile(
+              path.join(this.buildDir, "json", name, `${item.name}.json`),
+              "utf8"
+            )
+          ),
+          edition: `${i + 1}`,
+        })
+      );
+
+      await fs.promises.rename(
+        path.join(this.buildDir, "json", name, `${item.name}.json`),
+        path.join(this.buildDir, "json", name, `_${i + 1}.json`)
+      );
+
+      const _bundles = [];
+      for (const { name, ids } of bundles) {
+        const newIds = [];
+        for (const _ids of ids) {
+          newIds.push(
+            _ids.includes(item.name)
+              ? _ids.map((id) => (id === item.name ? `_${i + 1}` : id))
+              : _ids
+          );
+        }
+        _bundles.push({ name, ids: newIds });
+      }
+      bundles = _bundles;
+
+      const _drops = [];
+      for (const { name, ids } of drops) {
+        _drops.push({
+          name,
+          ids: ids.includes(item.name)
+            ? ids.map((id) => (id === item.name ? `_${i + 1}` : id))
+            : ids,
+        });
+      }
+      drops = _drops;
+
+      item.name = `${i + 1}`;
+    }
+
+    // for (const [i, item] of collection.entries()) {
+    for (let i = 0; i < collection.length; i++) {
+      await fs.promises.rename(
+        path.join(this.buildDir, "images", name, `_${i + 1}.png`),
+        path.join(this.buildDir, "images", name, `${i + 1}.png`)
+      );
+
+      await fs.promises.rename(
+        path.join(this.buildDir, "json", name, `_${i + 1}.json`),
+        path.join(this.buildDir, "json", name, `${i + 1}.json`)
+      );
+
+      const _bundles = [];
+      for (const { name, ids } of bundles) {
+        const newIds = [];
+        for (const _ids of ids) {
+          newIds.push(
+            _ids.includes(`_${i + 1}`)
+              ? _ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
+              : _ids
+          );
+        }
+        _bundles.push({ name, ids: newIds });
+      }
+      bundles = _bundles;
+
+      const _drops = [];
+      for (const { name, ids } of drops) {
+        _drops.push({
+          name,
+          ids: ids.includes(`_${i + 1}`)
+            ? ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
+            : ids,
+        });
+      }
+      drops = _drops;
+    }
+
+    return {
+      ...generation,
+      collection,
+      bundles,
+      drops,
+    };
   }
 
   async getBalanceOf(contractId: string, address: string) {

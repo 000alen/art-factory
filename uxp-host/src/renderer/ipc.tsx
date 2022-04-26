@@ -324,6 +324,9 @@ export const factoryUnify = (
 export const factoryRemove = (id: string, generation: Generation) =>
   ipcTask("factoryRemove")(id, generation);
 
+export const factoryReconstruct = (id: string, generation: Generation) =>
+  ipcTask("factoryReconstruct")(id, generation) as Promise<Generation>;
+
 // export const getCost = (id: string, contractId: string) =>
 //   ipcTask("getCost")(id, contractId);
 

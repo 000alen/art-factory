@@ -10,6 +10,7 @@ import {
   factoryGenerateMetadata,
   factoryGetImage,
   factoryMakeGeneration,
+  factoryReconstruct,
   factoryRegenerateItems,
   factoryRemove,
   factoryReplaceItems,
@@ -182,4 +183,12 @@ export const computeGenerationRepeats = (generation: Generation) => {
     else keys.add(key);
   }
   return repeats;
+};
+
+export const reconstructGeneration = async (
+  id: string,
+  generation: Generation
+) => {
+  const _generation = await factoryReconstruct(id, generation);
+  return _generation;
 };

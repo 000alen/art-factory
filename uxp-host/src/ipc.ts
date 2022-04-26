@@ -348,6 +348,12 @@ ipcAsyncTask(
 );
 
 ipcAsyncTask(
+  "factoryReconstruct",
+  async (id: string, generation: Generation) =>
+    await factories[id].reconstruct(generation)
+);
+
+ipcAsyncTask(
   "getBalanceOf",
   async (id: string, contractId: string, address: string) =>
     await factories[id].getBalanceOf(contractId, address)

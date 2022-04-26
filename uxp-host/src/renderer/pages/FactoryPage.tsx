@@ -24,6 +24,7 @@ import Settings from "@spectrum-icons/workflow/Settings";
 import {
   getGenerationPreview,
   getTemplatePreview,
+  reconstructGeneration,
   removeGeneration,
   unifyGenerations,
 } from "../commands";
@@ -36,6 +37,7 @@ import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import {
   createFactory,
+  factoryReconstruct,
   factoryReloadConfiguration,
   factoryReloadLayers,
   hasFactory,
@@ -310,8 +312,8 @@ export const FactoryPage: React.FC = () => {
 
   const resolveUnifyGenerationFields = (
     field: CustomField,
-    value: string[],
-    onChange: (value: string[]) => void,
+    value: any,
+    onChange: (value: any) => void,
     isDisabled: boolean
   ) => {
     switch (field._type) {
@@ -328,6 +330,10 @@ export const FactoryPage: React.FC = () => {
             items={value || []}
             setItems={onChange}
           />
+        );
+      case "generation":
+        return (
+          <GenerationItem key={field.key} value={value} onChange={onChange} />
         );
       default:
         break;
@@ -380,6 +386,25 @@ export const FactoryPage: React.FC = () => {
     );
     setDirty(true);
   });
+
+  const onReconstructCommand = task(
+    "reconstruct",
+    async ({ generationName }) => {
+      setWorkingTitle("Reconstructing generation...");
+      const _generation = await reconstructGeneration(
+        id,
+        generations.find((g) => g.name === generationName)
+      );
+
+      setGenerations((prevGenerations) =>
+        prevGenerations.map((g) =>
+          g.name === generationName ? _generation : g
+        )
+      );
+
+      setDirty(true);
+    }
+  );
 
   return (
     <Grid
@@ -488,6 +513,7 @@ export const FactoryPage: React.FC = () => {
 
         <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
           <TaskItem name="Save" onRun={onSave} />
+
           <TaskItem
             isDisabled={frozen}
             name="Unify generations"
@@ -511,18 +537,27 @@ export const FactoryPage: React.FC = () => {
             resolveCustomFields={resolveUnifyGenerationFields}
             onRun={onUnifyGenerationsCommand}
           />
-          <TaskItem isDisabled={frozen} name="Deploy" onRun={onDeploy} />
-          <TaskItem name="Instance" onRun={onInstance} />
-          {/* <TaskItem
-            isDisabled={frozen}
-            name="Import from files"
-            onRun={() => {}}
-          /> */}
+
           <TaskItem
             isDisabled={frozen}
-            name="Reload generation"
-            onRun={() => {}}
+            name="Reconstruct generation"
+            useDialog={true}
+            fields={[
+              {
+                key: "generationName",
+                type: "custom",
+                _type: "generation",
+                label: "Generation",
+                value: generationEmptyValue,
+              },
+            ]}
+            resolveCustomFields={resolveUnifyGenerationFields}
+            onRun={onReconstructCommand}
           />
+
+          <TaskItem isDisabled={frozen} name="Deploy" onRun={onDeploy} />
+
+          <TaskItem name="Instance" onRun={onInstance} />
         </Grid>
       </View>
     </Grid>
