@@ -21,7 +21,7 @@ export const ImageItem: React.FC<ImageItemProps> = ({
   maxSize,
 }) => {
   return (
-    <div className="relative w-auto h-auto rounded">
+    <div className="relative w-auto h-auto mx-auto rounded">
       {actions && (
         <div className="absolute w-[calc(100%-0.5rem)] h-[calc(100%-0.5rem)] p-2 space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
           <Text>{name}</Text>

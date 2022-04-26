@@ -34,7 +34,6 @@
 
 - [ ] **Feature request**: Añadir un link a opensea en la ui.
 - [ ] **FIX**: Aceleración por ~~gpu~~ paralelismo.
-- [ ] Poner botón refresh nfts
 - [ ] Custom sell orders
 - [ ] Refactor
 - [ ] _Bugs_
@@ -44,9 +43,10 @@
 - [ ] Ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
 - [ ] Agregar las aristas de los nodos
 
-- [ ] ~~Import custom~~
-- [ ] ~~Import from folder~~
-- [ ] ~~Respetar el orden de las capas de Photoshop en la aplicación~~
-- [ ] ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~
-- [ ] ~~Global state~~
-- ~~[ ] Evaluar el otro estándar~~
+- ~~Poner botón refresh nfts~~
+- ~~Import custom~~
+- ~~Import from folder~~
+- ~~Respetar el orden de las capas de Photoshop en la aplicación~~
+- ~~**Feature request**: Poder ver las imágenes ya generadas mientras se espera a que se haga el resto. Es muy útil junto a la feature de 'borrar y generar uno nuevo'.~~
+- ~~Global state~~
+- ~~Evaluar el otro estándar~~

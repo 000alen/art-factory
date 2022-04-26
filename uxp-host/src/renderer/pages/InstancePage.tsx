@@ -22,9 +22,15 @@ import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { ToolbarContext } from "../components/Toolbar";
-import { createContract, createProvider, writeProjectInstance } from "../ipc";
+import {
+  createContract,
+  createProvider,
+  createProviderWithKey,
+  writeProjectInstance,
+} from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
+import { TaskItem } from "../components/TaskItem";
 
 interface InstancePageState {
   projectDir: string;
@@ -60,6 +66,7 @@ export function InstancePage() {
   const [outputs, setOutputs] = useState<OutputItemProps[]>([]);
   const [providerId, setProviderId] = useState<string>(null);
   const [contractId, setContractId] = useState<string>(null);
+  const [providerEngineId, setProviderEngineId] = useState<string>(null);
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -80,6 +87,9 @@ export function InstancePage() {
         network,
         async ({ connected }) => {
           WalletConnectQRCodeModal.close();
+
+          if (!connected) throw Error("Could not connect");
+
           await createContract(contractId, providerId, contractAddress, abi);
           setProviderId(providerId);
           setContractId(contractId);
@@ -117,6 +127,39 @@ export function InstancePage() {
     setDeployment(newDeployment);
   };
 
+  const onConnect = task("connect", async () => {
+    const providerId = uuid();
+    const contractId = uuid();
+
+    const uri = await createProvider(
+      providerId,
+      network,
+      async ({ connected }) => {
+        WalletConnectQRCodeModal.close();
+
+        if (!connected) throw Error("Could not connect");
+
+        await createContract(contractId, providerId, contractAddress, abi);
+        setProviderId(providerId);
+        setContractId(contractId);
+      }
+    );
+    WalletConnectQRCodeModal.open(uri, () => {});
+  });
+
+  const onConnectWithPrivateKey = task(
+    "connect with private key",
+    async ({ privateKey }) => {
+      const providerEngineId = uuid();
+      await createProviderWithKey(
+        providerEngineId,
+        privateKey,
+        deployment.network
+      );
+      setProviderEngineId(providerEngineId);
+    }
+  );
+
   return (
     <Grid
       UNSAFE_className="overflow-hidden"
@@ -144,6 +187,22 @@ export function InstancePage() {
             overflow="auto"
           >
             <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
+              <TaskItem name="Connect" onRun={onConnect} />
+
+              <TaskItem
+                name="Connect with private key"
+                fields={[
+                  {
+                    key: "privateKey",
+                    type: "password",
+                    label: "Private key",
+                    initial: "",
+                    value: "",
+                  },
+                ]}
+                onRun={onConnectWithPrivateKey}
+              />
+
               {configuration.contractType === "721" ? (
                 <Panel721
                   {...{
@@ -151,6 +210,7 @@ export function InstancePage() {
                     id,
                     providerId,
                     contractId,
+                    providerEngineId,
                     setWorking,
                     addOutput,
                     increaseDropNumber,
@@ -163,6 +223,7 @@ export function InstancePage() {
                     id,
                     providerId,
                     contractId,
+                    providerEngineId,
                     setWorking,
                     addOutput,
                     increaseDropNumber,

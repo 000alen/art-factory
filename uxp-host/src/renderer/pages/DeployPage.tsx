@@ -138,6 +138,8 @@ export function DeployPage() {
       async ({ connected }) => {
         WalletConnectQRCodeModal.close();
 
+        if (!connected) throw new Error("Could not connect");
+
         const start = moment(performance.now());
         const {
           imagesCid,

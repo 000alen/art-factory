@@ -84,10 +84,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               draggable
             >
               <div className="w-20 p-1 flex flex-col border-[0.5px] border-solid border-white rounded">
-                <div>
-                  <ImageItem src={urls[i]} maxSize={80} />
-                  <Text>{name}</Text>
-                </div>
+                <ImageItem src={urls[i]} maxSize={80} />
+                <Text>{name}</Text>
               </div>
             </div>
           ))}

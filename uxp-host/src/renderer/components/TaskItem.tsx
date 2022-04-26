@@ -30,6 +30,11 @@ interface StringField extends BaseField<string> {
   initial: string;
 }
 
+interface PasswordField extends BaseField<string> {
+  type: "password";
+  initial: string;
+}
+
 interface AddressesField extends BaseField<string> {
   type: "address[]";
 }
@@ -64,6 +69,7 @@ type Field =
   | IntField
   | FloatField
   | StringField
+  | PasswordField
   | AddressesField
   | IntsField
   | FloatsField
@@ -75,8 +81,18 @@ type Field =
 import React, { useState } from "react";
 
 import {
-    ActionButton, Button, ButtonGroup, Content, Dialog, DialogTrigger, Divider, Flex, Heading,
-    NumberField, TextField, View
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Content,
+  Dialog,
+  DialogTrigger,
+  Divider,
+  Flex,
+  Heading,
+  NumberField,
+  TextField,
+  View,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 import ShowMenu from "@spectrum-icons/workflow/ShowMenu";
@@ -208,6 +224,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           <TextField
             key={field.key}
             isDisabled={isDisabled}
+            label={field.label}
+            onChange={(value) => onSet(field.key, value)}
+          />
+        );
+      case "password":
+        return (
+          <TextField
+            key={field.key}
+            isDisabled={isDisabled}
+            type="password"
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
           />

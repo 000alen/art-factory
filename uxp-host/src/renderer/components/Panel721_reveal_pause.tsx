@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { v4 as uuid } from "uuid";
 
 import {
   ActionButton,
@@ -8,19 +7,12 @@ import {
   Item,
   Menu,
   MenuTrigger,
-  Text,
-  TextField,
   View,
+  Well,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
-import {
-  createProviderWithKey,
-  mintDrop,
-  pause,
-  reveal,
-  sellDrop,
-} from "../ipc";
+import { mintDrop, pause, reveal, sellDrop } from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
@@ -31,6 +23,7 @@ interface Panel721_reveal_pauseProps {
   id: string;
   providerId: string;
   contractId: string;
+  providerEngineId: string;
   setWorking: (working: boolean) => void;
   addOutput: (output: OutputItemProps) => void;
   increaseDropNumber: () => void;
@@ -41,6 +34,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   id,
   providerId,
   contractId,
+  providerEngineId,
   setWorking,
   addOutput,
   increaseDropNumber,
@@ -61,9 +55,11 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   );
 
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
-  const [privateKey, setPrivateKey] = useState("");
 
   const onMintDrop = task("mint drop", async () => {
+    if (!providerId || !contractId)
+      throw new Error("Must create provider first");
+
     await mintDrop(id, providerId, contractId, dropToMint);
 
     addOutput({
@@ -76,6 +72,9 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   });
 
   const onPause = task("pause", async () => {
+    if (!providerId || !contractId)
+      throw new Error("Must create provider first");
+
     await pause(id, contractId);
     addOutput({
       title: "Paused",
@@ -85,6 +84,9 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   });
 
   const onReveal = task("reveal", async () => {
+    if (!providerId || !contractId)
+      throw new Error("Must create provider first");
+
     await reveal(id, contractId);
     addOutput({
       title: "Revealed",
@@ -94,12 +96,8 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   });
 
   const onSellDrop = task("sell drop", async () => {
-    const providerEngineId = uuid();
-    await createProviderWithKey(
-      providerEngineId,
-      privateKey,
-      deployment.network
-    );
+    if (!providerEngineId)
+      throw new Error("Must create provider with private key first");
 
     await sellDrop(
       id,
@@ -136,7 +134,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
               <Play />
             </ActionButton>
           </Flex>
-          {dropToMint && <Text>{dropToMint.name}</Text>}
+          {dropToMint && <Well>{dropToMint.name}</Well>}
         </Flex>
       </View>
 
@@ -161,12 +159,6 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
               <Play />
             </ActionButton>
           </Flex>
-          <TextField
-            label="Private key"
-            type="password"
-            value={privateKey}
-            onChange={setPrivateKey}
-          />
           <MenuTrigger>
             <ActionButton width="100%">{dropNameToSell}</ActionButton>
             <Menu
