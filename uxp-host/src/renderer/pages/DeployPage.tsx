@@ -85,7 +85,8 @@ export function DeployPage() {
   const [deployDone, setDeployDone] = useState(false);
   const [elapsedTime, setElapsedTime] = useState<string>(null);
 
-  const task = useErrorHandler(setWorking);
+  // const task = useErrorHandler(setWorking);
+  const task = useErrorHandler();
 
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -131,6 +132,8 @@ export function DeployPage() {
     navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onDeploy = task("deployment", async () => {
+    setWorking(true);
+
     const providerId = uuid();
     const uri = await createProvider(
       providerId,
@@ -167,6 +170,7 @@ export function DeployPage() {
         setAbi(abi);
         setCompilerVersion(compilerVersion);
         setDeployDone(true);
+        setWorking(false);
       }
     );
     WalletConnectQRCodeModal.open(uri, () => {});

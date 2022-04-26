@@ -466,7 +466,7 @@ ipcAsyncTask(
 export const providers: Record<string, WalletConnectProvider> = {};
 export const providerEngines: Record<string, any> = {};
 export const accounts: Record<string, string> = {};
-export const eths: Record<string, Eth> = {};
+// export const eths: Record<string, Eth> = {};
 export const seaports: Record<string, OpenSeaPort> = {};
 
 /*
@@ -508,7 +508,7 @@ ipcMain.on("createProvider", async (event, id: string, network: Network) => {
       providers[id] = provider;
       accounts[id] = _accounts[0];
       // @ts-ignore
-      eths[id] = new Eth(web3Provider);
+      // eths[id] = new Eth(web3Provider);
 
       event.reply("createProviderResult", { id, connected: true });
     }
@@ -540,7 +540,7 @@ ipcAsyncTask(
 
     providerEngines[id] = providerEngine;
     accounts[id] = (await privateKeyWalletSubprovider.getAccountsAsync())[0];
-    eths[id] = new Eth(providerEngine);
+    // eths[id] = new Eth(providerEngine);
     seaports[id] = new OpenSeaPort(providerEngine, {
       networkName:
         network === "main" ? OpenSeaNetwork.Main : OpenSeaNetwork.Rinkeby,

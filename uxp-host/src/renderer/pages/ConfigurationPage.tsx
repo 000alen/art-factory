@@ -226,7 +226,7 @@ export function ConfigurationPage() {
               onChange={setHeight}
               isReadOnly
             />
-            <ActionButton onPress={onRefreshResolution}>
+            <ActionButton isDisabled={frozen} onPress={onRefreshResolution}>
               <Refresh />
             </ActionButton>
           </Flex>

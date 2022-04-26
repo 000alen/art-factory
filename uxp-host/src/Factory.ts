@@ -13,7 +13,13 @@ import {
   MAIN_WETH,
   RINKEBY_WETH,
 } from "./constants";
-import { accounts, contracts, eths, providers, seaports } from "./ipc";
+import {
+  accounts,
+  contracts,
+  // eths,
+  providers,
+  seaports,
+} from "./ipc";
 import {
   Bundles,
   BundlesInfo,
@@ -1266,11 +1272,14 @@ export class Factory {
 
   async mintDrop(providerId: string, contractId: string, drop: Drop) {
     const contract = contracts[contractId];
-    const eth = eths[contractId];
+    // const eth = eths[contractId];
     const n = drop.ids.length;
-    const tx = await contract.mint(n, {
-      nonce: await eth.getTransactionCount(accounts[contractId], "pending"),
-    });
+    const tx = await contract.mint(
+      n
+      // {
+      //   nonce: await eth.getTransactionCount(accounts[contractId], "pending"),
+      // }
+    );
     await tx.wait();
   }
 
