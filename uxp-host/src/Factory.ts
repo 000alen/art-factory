@@ -13,7 +13,7 @@ import {
   MAIN_WETH,
   RINKEBY_WETH,
 } from "./constants";
-import { accounts, contracts, providerEngines, providers } from "./ipc";
+import { accounts, contracts, eths, providerEngines, providers } from "./ipc";
 import { Network, OpenSeaPort } from "./opensea";
 import {
   Bundles,
@@ -1075,6 +1075,7 @@ export class Factory {
     return uri;
   }
 
+  // ? NOTE: Might have to manually set the nonce
   async mint(contractId: string, payable: string, mint: number) {
     const contract = contracts[contractId];
     const tx = await contract.mint(mint, {
@@ -1116,10 +1117,13 @@ export class Factory {
   }
   // #endregion
 
-  async mintDrop(contractId: string, drop: Drop) {
+  async mintDrop(providerId: string, contractId: string, drop: Drop) {
     const contract = contracts[contractId];
+    const eth = eths[contractId];
     const n = drop.ids.length;
-    const tx = await contract.mint(n);
+    const tx = await contract.mint(n, {
+      nonce: await eth.getTransactionCount(accounts[contractId], "pending"),
+    });
     await tx.wait();
   }
 

@@ -39,3 +39,11 @@ export function getEtherscanApiKey() {
     ? store.get("etherscanApiKey")
     : undefined;
 }
+
+export function getOpenseaApiKey() {
+  return store.has("openseaApiKey") ? store.get("openseaApiKey") : undefined;
+}
+
+export function setOpenseaApiKey(openseaApiKey: string) {
+  store.set("openseaApiKey", openseaApiKey);
+}

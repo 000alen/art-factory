@@ -1,13 +1,32 @@
 import React, { useEffect, useState } from "react";
 
 import {
-    Button, ButtonGroup, Content, ContextualHelp, Dialog, Divider, Flex, Footer, Form, Heading,
-    Link, Text, TextField
+  Button,
+  ButtonGroup,
+  Content,
+  ContextualHelp,
+  Dialog,
+  Divider,
+  Flex,
+  Footer,
+  Form,
+  Heading,
+  Link,
+  Text,
+  TextField,
 } from "@adobe/react-spectrum";
 
 import {
-    getEtherscanApiKey, getInfuraProjectId, getPinataApiKey, getPinataSecretApiKey,
-    setEtherscanApiKey, setInfuraProjectId, setPinataApiKey, setPinataSecretApiKey
+  getEtherscanApiKey,
+  getInfuraProjectId,
+  getOpenseaApiKey,
+  getPinataApiKey,
+  getPinataSecretApiKey,
+  setEtherscanApiKey,
+  setInfuraProjectId,
+  setOpenseaApiKey,
+  setPinataApiKey,
+  setPinataSecretApiKey,
 } from "../ipc";
 import { useErrorHandler } from "./ErrorHandler";
 
@@ -20,6 +39,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
   const [infuraProjectId, _setInfuraProjectId] = useState("");
   const [etherscanApiKey, _setEtherscanApiKey] = useState("");
+  const [openseaApiKey, _setOpenseaApiKey] = useState("");
   const task = useErrorHandler();
 
   useEffect(() => {
@@ -32,10 +52,13 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
         ((await getInfuraProjectId()) as unknown as string) || "";
       const etherscanApiKey =
         ((await getEtherscanApiKey()) as unknown as string) || "";
+      const openseaApiKey =
+        ((await getOpenseaApiKey()) as unknown as string) || "";
       _setPinataApiKey(pinataApiKey);
       _setPinataSecretApiKey(pinataSecretApiKey);
       _setInfuraProjectId(infuraProjectId);
       _setEtherscanApiKey(etherscanApiKey);
+      _setOpenseaApiKey(openseaApiKey);
     })();
   }, []);
 
@@ -44,6 +67,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
     await setPinataSecretApiKey(pinataSecretApiKey);
     await setInfuraProjectId(infuraProjectId);
     await setEtherscanApiKey(etherscanApiKey);
+    await setOpenseaApiKey(openseaApiKey);
     close();
   });
 
@@ -110,6 +134,12 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
             onChange={_setEtherscanApiKey}
             type="password"
             label="Etherscan API Key"
+          />
+          <TextField
+            value={openseaApiKey}
+            onChange={_setOpenseaApiKey}
+            type="password"
+            label="Opensea API Key"
           />
         </Form>
       </Content>

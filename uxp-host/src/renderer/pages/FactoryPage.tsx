@@ -513,11 +513,11 @@ export const FactoryPage: React.FC = () => {
           />
           <TaskItem isDisabled={frozen} name="Deploy" onRun={onDeploy} />
           <TaskItem name="Instance" onRun={onInstance} />
-          <TaskItem
+          {/* <TaskItem
             isDisabled={frozen}
             name="Import from files"
             onRun={() => {}}
-          />
+          /> */}
           <TaskItem
             isDisabled={frozen}
             name="Reload generation"

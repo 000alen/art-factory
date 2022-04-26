@@ -12,14 +12,32 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
 import {
-    getEtherscanApiKey, getInfuraProjectId, getPinataApiKey, getPinataSecretApiKey,
-    setEtherscanApiKey, setInfuraProjectId, setPinataApiKey, setPinataSecretApiKey
+  getEtherscanApiKey,
+  getInfuraProjectId,
+  getOpenseaApiKey,
+  getPinataApiKey,
+  getPinataSecretApiKey,
+  setEtherscanApiKey,
+  setInfuraProjectId,
+  setOpenseaApiKey,
+  setPinataApiKey,
+  setPinataSecretApiKey,
 } from "./store";
 import {
-    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
-    Network, Template, Trait
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Layer,
+  MetadataItem,
+  Network,
+  Template,
+  Trait,
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
+import { Eth } from "web3-eth";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -115,6 +133,8 @@ ipcSetterAndGetter(
 ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
 
 ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
+
+ipcSetterAndGetter("openseaApiKey", setOpenseaApiKey, getOpenseaApiKey);
 // #endregion
 
 // #region General
@@ -394,8 +414,8 @@ ipcAsyncTask(
 
 ipcAsyncTask(
   "mintDrop",
-  async (id: string, contractId: string, drop: Drop) =>
-    await factories[id].mintDrop(contractId, drop)
+  async (id: string, providerId: string, contractId: string, drop: Drop) =>
+    await factories[id].mintDrop(providerId, contractId, drop)
 );
 
 ipcAsyncTask(
@@ -432,8 +452,9 @@ ipcAsyncTask(
 
 // #region Provider
 export const providers: Record<string, WalletConnectProvider> = {};
-export const accounts: Record<string, string> = {};
 export const providerEngines: Record<string, any> = {};
+export const accounts: Record<string, string> = {};
+export const eths: Record<string, Eth> = {};
 
 /*
 -> createProvider
@@ -469,8 +490,12 @@ ipcMain.on("createProvider", async (event, id: string, network: Network) => {
 
       const { accounts: _accounts } = payload.params[0];
 
+      const web3Provider = new ethersProviders.Web3Provider(provider);
+
       providers[id] = provider;
       accounts[id] = _accounts[0];
+      // @ts-ignore
+      eths[id] = new Eth(web3Provider);
 
       event.reply("createProviderResult", { id, connected: true });
     }
@@ -500,6 +525,7 @@ ipcAsyncTask(
 
     providerEngines[id] = providerEngine;
     accounts[id] = (await privateKeyWalletSubprovider.getAccountsAsync())[0];
+    eths[id] = new Eth(providerEngine);
   }
 );
 

@@ -39,6 +39,7 @@
 - [ ] Import from folder
 - [ ] Refactor
 - [ ] _Testing_
+- [ ] API KEY
 
 - [ ] Que el regenerate por filtros haga un refresh
 - [ ] Ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)

@@ -10,7 +10,7 @@ import {
   MenuTrigger,
   Text,
   TextField,
-  View
+  View,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
@@ -57,7 +57,7 @@ export const Panel721: React.FC<Panel721Props> = ({
   const [privateKey, setPrivateKey] = useState("");
 
   const onMintDrop = task("mint drop", async () => {
-    await mintDrop(id, contractId, dropToMint);
+    await mintDrop(id, providerId, contractId, dropToMint);
 
     addOutput({
       title: "Minted",

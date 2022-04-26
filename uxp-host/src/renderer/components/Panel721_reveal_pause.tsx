@@ -14,7 +14,13 @@ import {
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
-import { createProviderWithKey, mintDrop, pause, reveal, sellDrop } from "../ipc";
+import {
+  createProviderWithKey,
+  mintDrop,
+  pause,
+  reveal,
+  sellDrop,
+} from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
@@ -58,7 +64,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const [privateKey, setPrivateKey] = useState("");
 
   const onMintDrop = task("mint drop", async () => {
-    await mintDrop(id, contractId, dropToMint);
+    await mintDrop(id, providerId, contractId, dropToMint);
 
     addOutput({
       title: "Minted",

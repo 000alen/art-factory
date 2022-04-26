@@ -124,6 +124,9 @@ export const [setInfuraProjectId, getInfuraProjectId] =
 
 export const [setEtherscanApiKey, getEtherscanApiKey] =
   ipcSetterAndGetter<string>("etherscanApiKey");
+
+export const [setOpenseaApiKey, getOpenseaApiKey] =
+  ipcSetterAndGetter<string>("openseaApiKey");
 // #endregion
 
 // #region General
@@ -371,8 +374,12 @@ export const setBaseUri = (id: string, contractId: string, baseUri: string) =>
 export const reveal = (id: string, contractId: string) =>
   ipcTask("reveal")(id, contractId);
 
-export const mintDrop = (id: string, contractId: string, drop: Drop) =>
-  ipcTask("mintDrop")(id, contractId, drop);
+export const mintDrop = (
+  id: string,
+  providerId: string,
+  contractId: string,
+  drop: Drop
+) => ipcTask("mintDrop")(id, providerId, contractId, drop);
 
 export const sellDropBundles = (
   id: string,
