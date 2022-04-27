@@ -1,23 +1,32 @@
 import React, { useEffect } from "react";
 
 import {
-    ActionButton, Button, ButtonGroup, Heading, Item, Menu, MenuTrigger
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
 } from "@adobe/react-spectrum";
 
 import { Collection, Trait } from "../typings";
+import { QualityItem } from "../pages/QualityPage";
 
 interface PropertiesProps {
   traits: Record<string, Trait[]>;
   filteredCollection: Collection;
-  selectedItem: number;
-  onReplace: (i: number, traits: Trait[]) => void;
-  onRegenerate: (i: number) => void;
-  onEdit: (i: number) => void;
+  items: QualityItem[];
+  selectedItem: string;
+  onReplace: (n: string, traits: Trait[]) => void;
+  onRegenerate: (n: string) => void;
+  onEdit: (n: string) => void;
 }
 
 export const Properties: React.FC<PropertiesProps> = ({
   traits,
   filteredCollection,
+  items,
   selectedItem,
   onReplace: _onReplace,
   onRegenerate: _onRegenerate,
@@ -26,9 +35,13 @@ export const Properties: React.FC<PropertiesProps> = ({
   const [selectedTraits, setSelectedTraits] = React.useState<Trait[]>(null);
 
   useEffect(() => {
-    if (filteredCollection.length > 0)
+    if (filteredCollection.length > 0 && items.length > 0)
       setSelectedTraits(
-        JSON.parse(JSON.stringify(filteredCollection[selectedItem].traits))
+        JSON.parse(
+          JSON.stringify(
+            filteredCollection.find((i) => i.name === selectedItem).traits
+          )
+        )
       );
   }, [filteredCollection, selectedItem]);
 
@@ -45,25 +58,20 @@ export const Properties: React.FC<PropertiesProps> = ({
       )
     );
 
-  const onReplace = () => {
-    _onReplace(selectedItem, selectedTraits);
-  };
+  const onReplace = () => _onReplace(selectedItem, selectedTraits);
 
-  const onRegenerate = () => {
-    _onRegenerate(selectedItem);
-  };
+  const onRegenerate = () => _onRegenerate(selectedItem);
 
-  const onEdit = () => {
-    _onEdit(selectedItem);
-  };
+  const onEdit = () => _onEdit(selectedItem);
 
   return (
     <>
-      {filteredCollection.length > 0 && traits && (
+      {items.length > 0 && traits && (
         <>
           <Heading zIndex={1001} position="sticky" top={0} level={2}>
-            {filteredCollection[selectedItem].name}
+            {filteredCollection.find((i) => i.name === selectedItem).name}
           </Heading>
+          {/* !!! TODO */}
           {selectedTraits &&
             selectedTraits.map(({ name, value }, i) => (
               <>

@@ -43,6 +43,7 @@ const sendWhitelist = [
   "factoryRemove",
   "factoryReconstruct",
   "factoryGetResolution",
+  "factoryHydrateMetadata",
 
   // "getCost",
   "getBalanceOf",
@@ -113,6 +114,7 @@ const onWhitelist = [
   "factoryRemoveResult",
   "factoryReconstructResult",
   "factoryGetResolutionResult",
+  "factoryHydrateMetadataResult",
 
   // "getCostResult",
   "getBalanceOfResult",

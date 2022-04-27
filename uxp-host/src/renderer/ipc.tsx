@@ -339,6 +339,12 @@ export const factoryRemove = (id: string, generation: Generation) =>
 export const factoryReconstruct = (id: string, generation: Generation) =>
   ipcTask("factoryReconstruct")(id, generation) as Promise<Generation>;
 
+export const factoryHydrateMetadata = (
+  id: string,
+  generation: Generation,
+  imagesCid: string
+) => ipcTask("factoryHydrateMetadata")(id, generation, imagesCid);
+
 // export const getCost = (id: string, contractId: string) =>
 //   ipcTask("getCost")(id, contractId);
 

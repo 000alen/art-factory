@@ -31,19 +31,17 @@ import { ToolbarContext } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
+  Filters as IFilters,
+  useBundlesFilters,
+  useFilters,
+} from "../hooks/useFilters";
+import {
   factoryGetImage,
   factoryGetTraitsByLayerName,
   factoryRemoveItems,
   openInExplorer,
 } from "../ipc";
-import {
-  Bundles,
-  Collection,
-  CollectionItem,
-  Generation,
-  Instance,
-  Trait,
-} from "../typings";
+import { Bundles, Collection, Generation, Instance, Trait } from "../typings";
 
 interface QualityPageState {
   projectDir: string;
@@ -53,9 +51,7 @@ interface QualityPageState {
   dirty: boolean;
 }
 
-type Filters = Record<string, string[]>;
-
-interface Item {
+export interface QualityItem {
   name: string;
   url: string;
 }
@@ -85,8 +81,7 @@ export const QualityPage = () => {
 
   const { configuration, generations, sources } = instance;
 
-  // const [dirty, setDirty] = useState(_dirty);
-  const [dirty] = useState(_dirty);
+  const [dirty, setDirty] = useState(_dirty);
 
   const [selectedTab, setSelectedTab] = useState("items");
 
@@ -98,28 +93,31 @@ export const QualityPage = () => {
   const [bundles] = useState(generation.bundles);
   const [traits, setTraits] = useState<Record<string, Trait[]>>(null);
 
-  const [filtersInfo, setFiltersInfo] = useState<Filters>({});
-  const [filters, setFilters] = useState<Filters>({});
+  const [filtersInfo, setFiltersInfo] = useState<IFilters>({});
+  const { filters, addFilter, hasFilter, removeFilter } = useFilters();
+
   const [page, setPage] = useState(1);
   const [maxPage, setMaxPage] = useState(1);
   const [filteredCollection, setFilteredCollection] =
     useState<Collection>(collection);
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<QualityItem[]>([]);
 
-  const [selectedItem, setSelectedItem] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<string>(null);
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
 
   const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
   const [stringFilter, setStringFilter] = useState<string>(null);
 
   const [bundlesFiltersInfo, setBundlesFiltersInfo] = useState<string[]>([]);
-  const [bundlesFilters, setBundlesFilters] = useState<string[]>([]);
+  const { bundlesFilters, addBundlesFilter, removeBundlesFilter } =
+    useBundlesFilters();
   const [bundlesPage, setBundlesPage] = useState(1);
   const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
   const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
   const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
   const task = useErrorHandler(setWorking);
 
+  // #region Setups
   // ? Toolbar setup
   useEffect(() => {
     toolbarContext.addButton("back", "Back", <Back />, () => onBack());
@@ -133,6 +131,17 @@ export const QualityPage = () => {
     return () => {
       toolbarContext.removeButton("back");
       toolbarContext.removeButton("open-explorer");
+    };
+  }, []);
+
+  // ? UXP setup
+  useEffect(() => {
+    const uxpReload = async () => loadPreviews();
+
+    uxpContext.on("uxp-reload", uxpReload);
+
+    return () => {
+      uxpContext.off("uxp-reload", uxpReload);
     };
   }, []);
 
@@ -152,53 +161,9 @@ export const QualityPage = () => {
     })();
   }, []);
 
-  // #region UXP setup
-  useEffect(() => {
-    // const uxpReload = async () => loadPreviews();
-    const uxpReload = async () => {};
-
-    uxpContext.on("uxp-reload", uxpReload);
-
-    return () => {
-      uxpContext.off("uxp-reload", uxpReload);
-    };
-  }, []);
-
-  const onEdit = task("edit", async (i: number) => {
-    const { name, traits } = filteredCollection[i];
-    const traitsSources = traits.map((trait) =>
-      sources.find(({ items }) =>
-        items.some(
-          ({ name, value }) => trait.name === name && trait.value === value
-        )
-      )
-    );
-    const photoshopTraitsLayers = traits.map(
-      (trait, i) =>
-        traitsSources[i].items.find(
-          (item) => item.name === trait.name && item.value === trait.value
-        ).photoshopTraitLayer
-    );
-    const layers = traits.map((trait, i) => ({
-      document: traitsSources[i].name,
-      photoshopTraitLayer: photoshopTraitsLayers[i],
-      name: trait.name,
-      value: trait.value,
-    }));
-
-    uxpContext.hostEdit({
-      width: configuration.width,
-      height: configuration.height,
-      name,
-      generation: generation.name,
-      layers,
-    });
-  });
-  // #endregion
-
   // ? Collection filters setup
   useEffect(() => {
-    const filtersInfo: Filters = {};
+    const filtersInfo: IFilters = {};
     for (const { traits } of collection)
       for (const { name, value } of traits)
         if (name in filtersInfo && !filtersInfo[name].includes(value))
@@ -238,7 +203,9 @@ export const QualityPage = () => {
       } as Generation);
 
     setPage(1);
-    setSelectedItem(0);
+    setSelectedItem(
+      filteredCollection.length > 0 ? filteredCollection[0].name : null
+    );
     setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
   }, [collection, filters, stringFilter, repeatedFilter]);
@@ -254,84 +221,86 @@ export const QualityPage = () => {
     setFilteredBundles(filteredBundles);
   }, [bundles, bundlesFilters, stringFilter]);
 
-  const loadPreviews = task("loading previews", async () => {
-    const items = (
-      await Promise.all(
-        Array.from({ length: PAGE_N }).map(async (_, i) => {
-          const cursor = (page - 1) * PAGE_N;
-
-          if (cursor + i >= filteredCollection.length) return null;
-          const collectionItem = filteredCollection[
-            cursor + i
-          ] as CollectionItem;
-          const url = `data:image/png;base64,${await factoryGetImage(
-            id,
-            generation,
-            collectionItem,
-            MAX_SIZE
-          )}`;
-          return { name: collectionItem.name, url };
-        })
-      )
-    ).filter((item) => item !== null);
-
-    setItems(items);
-  });
-
   useEffect(() => {
     loadPreviews();
   }, [filteredCollection, page]);
 
-  const loadBundlesPreviews = task("loading bundles previews", async () => {
-    const flatFilteredBundles: { name: string; ids: string[] }[] = [];
-    for (const { name, ids } of filteredBundles)
-      flatFilteredBundles.push(...ids.map((ids) => ({ name, ids })));
-
-    const bundlesItems = (
-      await Promise.all(
-        Array.from({ length: PAGE_N }).map(async (_, i) => {
-          const bundlesCursor = (bundlesPage - 1) * PAGE_N;
-
-          if (bundlesCursor + i >= flatFilteredBundles.length) return null;
-          const { ids: names, name: bundleName } =
-            flatFilteredBundles[bundlesCursor + i];
-          const collectionItems = names.map((id) =>
-            collection.find((item) => item.name === id)
-          );
-          const base64Strings = await Promise.all(
-            collectionItems.map((collectionItem) =>
-              factoryGetImage(id, generation, collectionItem, MAX_SIZE)
-            )
-          );
-          const urls = base64Strings.map(
-            (b64) => `data:image/png;base64,${b64}`
-          );
-          return { bundleName, names, urls };
-        })
-      )
-    ).filter((item) => item !== null);
-    setBundleSItems(bundlesItems);
-  });
-
   useEffect(() => {
     loadBundlesPreviews();
   }, [filteredBundles, bundlesPage]);
+  // #endregion
+
+  const loadPreviews = task("loading previews", async () =>
+    setItems(
+      (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            const cursor = (page - 1) * PAGE_N;
+            if (cursor + i >= filteredCollection.length) return null;
+            const item = filteredCollection[cursor + i];
+            const url = `data:image/png;base64,${await factoryGetImage(
+              id,
+              generation,
+              item,
+              MAX_SIZE
+            )}`;
+            return { name: item.name, url };
+          })
+        )
+      ).filter((item) => item !== null)
+    )
+  );
+
+  const loadBundlesPreviews = task("loading bundles previews", async () => {
+    const flatFilteredBundles = filteredBundles.reduce(
+      (p, { name, ids }) => [...p, ...ids.map((id) => ({ name, id }))],
+      []
+    );
+    setBundleSItems(
+      (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            const bundlesCursor = (bundlesPage - 1) * PAGE_N;
+            if (bundlesCursor + i >= flatFilteredBundles.length) return null;
+            const { ids: names, name: bundleName } =
+              flatFilteredBundles[bundlesCursor + i];
+            const items = names.map((id) =>
+              collection.find((item) => item.name === id)
+            );
+            const urls = await Promise.all(
+              items.map(
+                async (item) =>
+                  `data:image/png;base64,${await factoryGetImage(
+                    id,
+                    generation,
+                    item,
+                    MAX_SIZE
+                  )}`
+              )
+            );
+            return { bundleName, names, urls };
+          })
+        )
+      ).filter((item) => item !== null)
+    );
+  });
 
   const onBack = () =>
     navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
+  // #region Tasks
   const onSave = task("filtering", async () => {
     setWorkingTitle("Saving...");
     const { collection: _collection, drops: _drops } = await factoryRemoveItems(
       id,
       generation,
-      itemsToRemove.map((name) => collection.find((item) => item.name === name))
+      itemsToRemove.map((n) => collection.find((i) => i.name === n))
     );
 
-    const generations = instance.generations.map((generation) =>
-      generation.id === generationId
-        ? { ...generation, collection: _collection, drops: _drops }
-        : generation
+    const generations = instance.generations.map((g) =>
+      g.id === generationId
+        ? { ...g, collection: _collection, drops: _drops }
+        : g
     );
 
     navigate("/factory", {
@@ -342,55 +311,54 @@ export const QualityPage = () => {
           ...instance,
           generations,
         },
-        dirty,
+        dirty: true,
       },
     });
   });
 
-  const onSelect = (i: number) => setSelectedItem(i);
-
-  const addFilter = (name: string, value: string) =>
-    setFilters((prevFilters) =>
-      name in prevFilters
-        ? {
-            ...prevFilters,
-            [name]: [...prevFilters[name], value],
-          }
-        : {
-            ...prevFilters,
-            [name]: [value],
-          }
-    );
-
-  const hasFilter = (name: string, value: string) =>
-    name in filters && filters[name].includes(value);
-
-  const removeFilter = (name: string, value: string) =>
-    setFilters((prevFilters) =>
-      name in prevFilters
-        ? {
-            ...prevFilters,
-            [name]: prevFilters[name].filter((v) => v !== value),
-          }
-        : prevFilters
-    );
-
-  const addBundlesFilter = (bundle: string) =>
-    setBundlesFilters((prevFilters) => [...prevFilters, bundle]);
-
-  const removeBundlesFilter = (bundle: string) =>
-    setBundlesFilters((prevFilters) => prevFilters.filter((v) => v !== bundle));
+  const onSelect = (n: string) => setSelectedItem(n);
 
   const onRemoveRepeated = () =>
     computeGenerationRepeats(generation).forEach(({ name }) => onRemove(name));
 
-  const onRemove = (name: string) =>
-    setItemsToRemove((prevItemsToRemove) => [...prevItemsToRemove, name]);
+  const onRemove = (n: string) => setItemsToRemove((p) => [...p, n]);
 
-  const onUndoRemove = (name: string) =>
-    setItemsToRemove((prevItemsToRemove) =>
-      prevItemsToRemove.filter((n) => n !== name)
+  const onUndoRemove = (n: string) =>
+    setItemsToRemove((p) => p.filter((p_n) => p_n !== n));
+
+  const onEdit = task("edit", async (n: string) => {
+    const { name, traits } = collection.find((i) => i.name === n);
+
+    const traitsSources = traits.map((trait) =>
+      sources.find(({ items }) =>
+        items.some(
+          ({ name, value }) => trait.name === name && trait.value === value
+        )
+      )
     );
+
+    const photoshopTraitsLayers = traits.map(
+      (trait, i) =>
+        traitsSources[i].items.find(
+          (item) => item.name === trait.name && item.value === trait.value
+        ).photoshopTraitLayer
+    );
+
+    const layers = traits.map((trait, i) => ({
+      document: traitsSources[i].name,
+      photoshopTraitLayer: photoshopTraitsLayers[i],
+      name: trait.name,
+      value: trait.value,
+    }));
+
+    uxpContext.hostEdit({
+      width: configuration.width,
+      height: configuration.height,
+      name,
+      generation: generation.name,
+      layers,
+    });
+  });
 
   const onRegenerateRepeated = task("regenerating repeated", async () => {
     setWorkingTitle("Regenerating repeated...");
@@ -400,32 +368,36 @@ export const QualityPage = () => {
       computeGenerationRepeats(generation)
     );
     setCollection(_collection);
+    setDirty(true);
   });
 
-  const onRegenerate = task("regenerating", async (i: number) => {
+  const onRegenerate = task("regenerating", async (n: string) => {
     setWorkingTitle("Regenerating item...");
     const { collection: _collection } = await regenerateItems(
       id,
       { ...generation, collection },
-      [filteredCollection[i]]
+      [collection.find((i) => i.name === n)]
     );
     setCollection(_collection);
+    setDirty(true);
   });
 
-  const onReplace = task("replacing", async (i: number, traits: Trait[]) => {
+  const onReplace = task("replacing", async (n: string, traits: Trait[]) => {
     setWorkingTitle("Replacing traits...");
     const { collection: _collection } = await replaceItems(
       id,
       { ...generation, collection },
       [
         {
-          ...filteredCollection[i],
+          ...collection.find((i) => i.name === n),
           traits,
         },
       ]
     );
     setCollection(_collection);
+    setDirty(true);
   });
+  // #endregion
 
   return (
     <Grid
@@ -555,6 +527,7 @@ export const QualityPage = () => {
         <Properties
           traits={traits}
           filteredCollection={filteredCollection}
+          items={items}
           selectedItem={selectedItem}
           onReplace={onReplace}
           onRegenerate={onRegenerate}

@@ -24,6 +24,7 @@ import Settings from "@spectrum-icons/workflow/Settings";
 import {
   getGenerationPreview,
   getTemplatePreview,
+  hydrateMetadata,
   reconstructGeneration,
   removeGeneration,
   unifyGenerations,
@@ -414,6 +415,18 @@ export const FactoryPage: React.FC = () => {
     }
   );
 
+  const onHydrateMetadata = task(
+    "hydrate metadata",
+    async ({ generationName, imagesCid }) => {
+      setWorkingTitle("Hydrating metadata...");
+      await hydrateMetadata(
+        id,
+        generations.find((g) => g.name === generationName),
+        imagesCid
+      );
+    }
+  );
+
   return (
     <Grid
       areas={["left right"]}
@@ -561,6 +574,30 @@ export const FactoryPage: React.FC = () => {
             ]}
             resolveCustomFields={resolveUnifyGenerationFields}
             onRun={onReconstructCommand}
+          />
+
+          <TaskItem
+            isDisabled={frozen}
+            name="Hydrate metadata"
+            useDialog={true}
+            fields={[
+              {
+                key: "generationName",
+                type: "custom",
+                _type: "generation",
+                label: "Generation",
+                value: generationEmptyValue,
+              },
+              {
+                key: "imagesCid",
+                type: "string",
+                label: "Images CID",
+                initial: "",
+                value: "",
+              },
+            ]}
+            resolveCustomFields={resolveUnifyGenerationFields}
+            onRun={onHydrateMetadata}
           />
 
           <TaskItem isDisabled={frozen} name="Deploy" onRun={onDeploy} />

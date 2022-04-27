@@ -474,6 +474,12 @@ ipcAsyncTask(
   ) => await factories[id].sellDrop(providerEngineId, deployment, drop)
 );
 
+ipcAsyncTask(
+  "factoryHydrateMetadata",
+  async (id: string, generation: Generation, imagesCid: string) =>
+    await factories[id].hydrateMetadata(generation, imagesCid)
+);
+
 // #endregion
 
 // #region Provider

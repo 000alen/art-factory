@@ -7,25 +7,21 @@ import Edit from "@spectrum-icons/workflow/Edit";
 import Refresh from "@spectrum-icons/workflow/Refresh";
 
 import { Preview } from "./Preview";
-
-interface Item {
-  name: string;
-  url: string;
-}
+import { QualityItem } from "../pages/QualityPage";
 
 interface GalleryItemsProps {
-  selectedItem: number;
-  items: Item[];
+  selectedItem: string;
+  items: QualityItem[];
   itemsToRemove: string[];
   onRemove: (name: string) => void;
   onUndoRemove: (name: string) => void;
-  onEdit: (i: number) => void;
-  onSelect: (i: number) => void;
-  onRegenerate: (i: number) => void;
+  onEdit: (n: string) => void;
+  onSelect: (n: string) => void;
+  onRegenerate: (n: string) => void;
 }
 
 export const GalleryItems: React.FC<GalleryItemsProps> = ({
-  selectedItem: selectedCollectionItem,
+  selectedItem,
   items,
   itemsToRemove,
   onUndoRemove,
@@ -40,29 +36,33 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
     (e) => {
       if (!zoomed) return;
 
-      if (e.key === "ArrowLeft" || e.keyCode === 37)
-        onSelect(Math.max(selectedCollectionItem - 1, 0));
-      else if (e.key === "ArrowRight" || e.keyCode === 39)
-        onSelect(Math.min(selectedCollectionItem + 1, items.length - 1));
+      const index = items.findIndex((i) => i.name === selectedItem);
+
+      if (e.key === "ArrowLeft" || e.keyCode === 37) {
+        const newIndex = Math.max(index - 1, 0);
+        onSelect(items[newIndex].name);
+      } else if (e.key === "ArrowRight" || e.keyCode === 39) {
+        const newIndex = Math.min(index + 1, items.length - 1);
+        onSelect(items[newIndex].name);
+      }
     },
-    [selectedCollectionItem, items, itemsToRemove, zoomed]
+    [selectedItem, items, itemsToRemove, zoomed]
   );
 
   useEvent("keydown", handleKeyDown, document);
 
   const onAction = (message: string) => {
-    const [action, _i] = message.split("_");
-    const i = parseInt(_i, 10);
+    const [action, name] = message.split("_");
 
     switch (action) {
       case "select":
-        onSelect(i);
+        onSelect(name);
         break;
       case "remove":
-        onRemove(items[i].name);
+        onRemove(name);
         break;
       case "regenerate":
-        onRegenerate(i);
+        onRegenerate(name);
         break;
     }
   };
@@ -79,10 +79,10 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
           name={name}
           url={url}
           controlledZoom={true}
-          isZoomed={zoomed && selectedCollectionItem === i}
+          isZoomed={zoomed && selectedItem === name}
           onZoomChange={(isZoomed) => {
             if (isZoomed) {
-              onSelect(i);
+              onSelect(name);
               setZoomed(true);
               return;
             }
@@ -96,13 +96,13 @@ export const GalleryItems: React.FC<GalleryItemsProps> = ({
           }
         >
           <ActionGroup onAction={onAction} isJustified>
-            <Item key={`select_${i}`}>
+            <Item key={`select_${name}`}>
               <Edit />
             </Item>
-            <Item key={`remove_${i}`}>
+            <Item key={`remove_${name}`}>
               <Close />
             </Item>
-            <Item key={`regenerate_${i}`}>
+            <Item key={`regenerate_${name}`}>
               <Refresh />
             </Item>
           </ActionGroup>

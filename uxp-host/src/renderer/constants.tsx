@@ -26,7 +26,8 @@ export const DEFAULT_NODES = [
   },
 ];
 
-export const PAGE_N = 50;
+// export const PAGE_N = 50;
+export const PAGE_N = 5;
 export const RARITY_DELIMITER = "#";
 export const DEFAULT_BACKGROUND = {
   r: 255,

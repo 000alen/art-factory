@@ -9,6 +9,7 @@ import {
   factoryGenerateImages,
   factoryGenerateMetadata,
   factoryGetImage,
+  factoryHydrateMetadata,
   factoryMakeGeneration,
   factoryReconstruct,
   factoryRegenerateItems,
@@ -198,6 +199,13 @@ export const reconstructGeneration = async (
   id: string,
   generation: Generation
 ) => {
-  const _generation = await factoryReconstruct(id, generation);
-  return _generation;
+  return await factoryReconstruct(id, generation);
+};
+
+export const hydrateMetadata = async (
+  id: string,
+  generation: Generation,
+  imagesCid: string
+) => {
+  return await factoryHydrateMetadata(id, generation, imagesCid);
 };
