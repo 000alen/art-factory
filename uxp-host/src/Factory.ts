@@ -419,7 +419,7 @@ export class Factory {
     );
   }
 
-  async generateImage(item: CollectionItem, folder: string = "images") {
+  async generateImage(generation: Generation, item: CollectionItem) {
     const keys = await Promise.all(
       item.traits.map(async (trait) => await this._ensureTraitBuffer(trait))
     );
@@ -456,7 +456,7 @@ export class Factory {
         )
       )
       .png()
-      .toFile(path.join(this.buildDir, folder, `${item.name}.png`));
+      .toFile(this.image(generation.name, item.name));
   }
 
   async generateImages(
@@ -468,7 +468,7 @@ export class Factory {
 
     await Promise.all(
       collection.map(async (item) => {
-        await this.generateImage(item, path.join("images", name));
+        await this.generateImage(generation, item);
         if (callback) callback(item.name);
       })
     );
@@ -779,10 +779,7 @@ export class Factory {
       );
 
     let intermidiateCollection = collection.filter(
-      (item) =>
-        !items.some((itemToRemove) => {
-          return item.name === itemToRemove.name;
-        })
+      (item) => !items.some((itemToRemove) => item.name === itemToRemove.name)
     );
 
     let intermidiateBundles = bundles.map(({ ids, ...rest }) => ({
@@ -798,69 +795,59 @@ export class Factory {
       bundles: bundles.map(({ name }) => name),
     }));
 
+    // ? First pass
     for (const [i, item] of intermidiateCollection.entries()) {
-      await this.renameImage(name, item.name, `_${i + 1}`);
-      await this.updateJson(name, item.name, {
+      const _from = item.name;
+      const _to = `_${i + 1}`;
+
+      await this.renameImage(name, _from, _to);
+      await this.updateJson(name, _from, {
         edition: `${i + 1}`,
       });
-      await this.renameJson(name, item.name, `_${i + 1}`);
+      await this.renameJson(name, _from, _to);
 
-      const _bundles = [];
-      for (const { name, ids } of intermidiateBundles) {
-        const newIds = [];
-        for (const _ids of ids) {
-          newIds.push(
-            _ids.includes(item.name)
-              ? _ids.map((id) => (id === item.name ? `_${i + 1}` : id))
-              : _ids
-          );
-        }
-        _bundles.push({ name, ids: newIds });
-      }
-      intermidiateBundles = _bundles;
+      intermidiateBundles = intermidiateBundles.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.map((_ids) =>
+          _ids.includes(_from)
+            ? _ids.map((id) => (id === _from ? _to : id))
+            : _ids
+        ),
+      }));
 
-      const _drops = [];
-      for (const { name, ids } of intermidiateDrops) {
-        _drops.push({
-          name,
-          ids: ids.includes(item.name)
-            ? ids.map((id) => (id === item.name ? `_${i + 1}` : id))
-            : ids,
-        });
-      }
-      intermidiateDrops = _drops;
+      intermidiateDrops = intermidiateDrops.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.includes(_from)
+          ? ids.map((id) => (id === _from ? _to : id))
+          : ids,
+      }));
 
       item.name = `${i + 1}`;
     }
 
+    // ? Second pass
     for (let i = 0; i < intermidiateCollection.length; i++) {
-      await this.renameImage(name, `_${i + 1}`, `${i + 1}`);
-      await this.renameJson(name, `_${i + 1}`, `${i + 1}`);
+      const _from = `_${i + 1}`;
+      const _to = `${i + 1}`;
 
-      const _bundles = [];
-      for (const { name, ids } of intermidiateBundles) {
-        const newIds = [];
-        for (const _ids of ids) {
-          newIds.push(
-            _ids.includes(`_${i + 1}`)
-              ? _ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
-              : _ids
-          );
-        }
-        _bundles.push({ name, ids: newIds });
-      }
-      intermidiateBundles = _bundles;
+      await this.renameImage(name, _from, _to);
+      await this.renameJson(name, _from, _to);
 
-      const _drops = [];
-      for (const { name, ids } of intermidiateDrops) {
-        _drops.push({
-          name,
-          ids: ids.includes(`_${i + 1}`)
-            ? ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
-            : ids,
-        });
-      }
-      intermidiateDrops = _drops;
+      intermidiateBundles = intermidiateBundles.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.map((_ids) =>
+          _ids.includes(_from)
+            ? _ids.map((id) => (id === _from ? _to : id))
+            : _ids
+        ),
+      }));
+
+      intermidiateDrops = intermidiateDrops.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.includes(_from)
+          ? ids.map((id) => (id === _from ? _to : id))
+          : ids,
+      }));
     }
 
     return {
