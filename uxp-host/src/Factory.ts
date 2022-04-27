@@ -6,17 +6,46 @@ import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
 
 import {
-    BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY, MAIN_WETH, RINKEBY_WETH
+  BUILD_DIR_NAME,
+  DEFAULT_BLENDING,
+  DEFAULT_OPACITY,
+  MAIN_WETH,
+  PARALLEL_LIMIT,
+  RINKEBY_WETH,
 } from "./constants";
 import { accounts, contracts, providers, seaports } from "./ipc";
 import {
-    Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
-    Layer, MetadataItem, SaleType, Secrets, Template, Trait
+  Bundles,
+  BundlesInfo,
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Layer,
+  MetadataItem,
+  SaleType,
+  Secrets,
+  Template,
+  Trait,
 } from "./typings";
 import {
-    append, arrayDifference, choose, computeBundlesNs, computeTraitsNs, getBranches, getContract,
-    hash, pinDirectoryToIPFS, pinFileToIPFS, rarity, readDir, removeRarity, replaceAll,
-    restrictImage
+  append,
+  arrayDifference,
+  choose,
+  computeBundlesNs,
+  computeTraitsNs,
+  getBranches,
+  getContract,
+  hash,
+  pinDirectoryToIPFS,
+  pinFileToIPFS,
+  rarity,
+  readDir,
+  removeRarity,
+  replaceAll,
+  restrictImage,
 } from "./utils";
 
 interface LayerNodeComponentData {
@@ -438,12 +467,14 @@ export class Factory {
     const { name, collection } = generation;
     if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
 
-    await Promise.all(
-      collection.map(async (item) => {
-        await this.generateImage(generation, item);
-        if (callback) callback(item.name);
-      })
-    );
+    for (let i = 0; i < collection.length; i += PARALLEL_LIMIT) {
+      await Promise.all(
+        collection.slice(i, i + PARALLEL_LIMIT).map(async (item) => {
+          await this.generateImage(generation, item);
+          if (callback) callback(item.name);
+        })
+      );
+    }
   }
 
   async generateMetadata(
