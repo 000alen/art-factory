@@ -114,6 +114,20 @@ export class Factory {
     );
   }
 
+  async renameImage(generationName: string, prev: string, _new: string) {
+    await fs.promises.rename(
+      this.image(generationName, prev),
+      this.image(generationName, _new)
+    );
+  }
+
+  async renameJson(generationName: string, prev: string, _new: string) {
+    await fs.promises.rename(
+      this.json(generationName, prev),
+      this.json(generationName, _new)
+    );
+  }
+
   private _ensureBuildDir() {
     if (!fs.existsSync(this.buildDir)) fs.mkdirSync(this.buildDir);
     if (!fs.existsSync(this.imagesDir)) fs.mkdirSync(this.imagesDir);
@@ -524,13 +538,13 @@ export class Factory {
     });
   }
 
+  // #region IPFS Deployment
   async deployNotRevealedImage(generation: Generation) {
     const { IpfsHash } = await pinFileToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
       this.image(generation.name, "1") // ? Hardcoded
     );
-
     return IpfsHash;
   }
 
@@ -540,7 +554,6 @@ export class Factory {
       this.secrets.pinataSecretApiKey,
       this.json(generation.name, "1") // ? Hardcoded
     );
-
     return IpfsHash;
   }
 
@@ -550,7 +563,6 @@ export class Factory {
       this.secrets.pinataSecretApiKey,
       this.image(generation.name)
     );
-
     return IpfsHash;
   }
 
@@ -560,9 +572,9 @@ export class Factory {
       this.secrets.pinataSecretApiKey,
       this.json(generation.name)
     );
-
     return IpfsHash;
   }
+  // #endregion
 
   async deployAssets(
     generation: Generation,
@@ -700,15 +712,16 @@ export class Factory {
     };
   }
 
+  // #region Getters
   async getTraitImage(trait: Trait, maxSize?: number) {
-    const key = await this._ensureTraitBuffer(trait);
-    const buffer = await restrictImage(this.traitsBuffer.get(key), maxSize);
-    return buffer;
+    return await restrictImage(
+      this.traitsBuffer.get(await this._ensureTraitBuffer(trait)),
+      maxSize
+    );
   }
 
   async getRandomTraitImage(layer: Layer, maxSize?: number) {
-    const traits = this.traitsByLayerName.get(layer.name);
-    const trait = choose(traits);
+    const trait = choose(this.traitsByLayerName.get(layer.name));
     return [trait, await this.getTraitImage(trait, maxSize)];
   }
 
@@ -717,83 +730,83 @@ export class Factory {
     item: CollectionItem,
     maxSize?: number
   ) {
-    const buffer = await restrictImage(
+    return await restrictImage(
       await fs.promises.readFile(this.image(generation.name, item.name)),
       maxSize
     );
-    return buffer;
   }
 
   async getRandomImage(generation: Generation, maxSize?: number) {
-    const { collection } = generation;
-    const item = collection[Math.floor(Math.random() * collection.length)];
+    const item =
+      generation.collection[
+        Math.floor(Math.random() * generation.collection.length)
+      ];
     return [item, await this.getImage(generation, item, maxSize)];
   }
 
   async getMetadata(generation: Generation, item: CollectionItem) {
-    const metadata = await fs.promises.readFile(
-      this.json(generation.name, item.name),
-      "utf8"
+    return JSON.parse(
+      await fs.promises.readFile(this.json(generation.name, item.name), "utf8")
     );
-    return JSON.parse(metadata);
   }
 
   async getRandomMetadata(generation: Generation) {
-    const { collection } = generation;
-    const item = collection[Math.floor(Math.random() * collection.length)];
+    const item =
+      generation.collection[
+        Math.floor(Math.random() * generation.collection.length)
+      ];
     return [item, await this.getMetadata(generation, item)];
   }
+  // #endregion
 
   async removeItems(
     generation: Generation,
-    items: Collection
+    items: Collection,
+    filesAlreadyRemoved: boolean = false
   ): Promise<Generation> {
-    let { name, collection, bundles, drops } = generation;
+    const { name, collection, bundles, drops } = generation;
 
-    await Promise.all(
-      items.map(async (item) => {
-        await fs.promises.rm(this.image(name, item.name));
-        await fs.promises.rm(this.json(name, item.name));
-      })
-    );
+    if (!filesAlreadyRemoved)
+      await Promise.all(
+        items.reduce(
+          (p, item) => [
+            ...p,
+            fs.promises.rm(this.image(name, item.name)),
+            fs.promises.rm(this.json(name, item.name)),
+          ],
+          []
+        )
+      );
 
-    collection = collection.filter(
+    let intermidiateCollection = collection.filter(
       (item) =>
         !items.some((itemToRemove) => {
           return item.name === itemToRemove.name;
         })
     );
 
-    bundles = bundles.map(({ ids, ...rest }) => ({
+    let intermidiateBundles = bundles.map(({ ids, ...rest }) => ({
       ...rest,
       ids: ids.filter(
         (ids) => !ids.some((id) => items.some((item) => item.name === id))
       ),
     }));
 
-    drops = drops.map(({ name, ids }) => ({
+    let intermidiateDrops = drops.map(({ name, ids }) => ({
       name,
       ids: ids.filter((id) => items.some((item) => item.name === id)),
       bundles: bundles.map(({ name }) => name),
     }));
 
-    for (const [i, item] of collection.entries()) {
-      await fs.promises.rename(
-        this.image(name, item.name),
-        this.image(name, `_${i + 1}`)
-      );
-
+    for (const [i, item] of intermidiateCollection.entries()) {
+      await this.renameImage(name, item.name, `_${i + 1}`);
       await this.updateJson(name, item.name, {
         edition: `${i + 1}`,
       });
-
-      await fs.promises.rename(
-        this.json(name, item.name),
-        this.json(name, `_${i + 1}`)
-      );
+      await this.renameJson(name, item.name, `_${i + 1}`);
 
       const _bundles = [];
-      for (const { name, ids } of bundles) {
+      for (const { name, ids } of intermidiateBundles) {
         const newIds = [];
         for (const _ids of ids) {
           newIds.push(
@@ -804,10 +817,10 @@ export class Factory {
         }
         _bundles.push({ name, ids: newIds });
       }
-      bundles = _bundles;
+      intermidiateBundles = _bundles;
 
       const _drops = [];
-      for (const { name, ids } of drops) {
+      for (const { name, ids } of intermidiateDrops) {
         _drops.push({
           name,
           ids: ids.includes(item.name)
@@ -815,24 +828,17 @@ export class Factory {
             : ids,
         });
       }
-      drops = _drops;
+      intermidiateDrops = _drops;
 
       item.name = `${i + 1}`;
     }
 
-    for (let i = 0; i < collection.length; i++) {
-      await fs.promises.rename(
-        this.image(name, `_${i + 1}`),
-        this.image(name, `${i + 1}`)
-      );
-
-      await fs.promises.rename(
-        this.json(name, `_${i + 1}`),
-        this.json(name, `${i + 1}`)
-      );
+    for (let i = 0; i < intermidiateCollection.length; i++) {
+      await this.renameImage(name, `_${i + 1}`, `${i + 1}`);
+      await this.renameJson(name, `_${i + 1}`, `${i + 1}`);
 
       const _bundles = [];
-      for (const { name, ids } of bundles) {
+      for (const { name, ids } of intermidiateBundles) {
         const newIds = [];
         for (const _ids of ids) {
           newIds.push(
@@ -843,10 +849,10 @@ export class Factory {
         }
         _bundles.push({ name, ids: newIds });
       }
-      bundles = _bundles;
+      intermidiateBundles = _bundles;
 
       const _drops = [];
-      for (const { name, ids } of drops) {
+      for (const { name, ids } of intermidiateDrops) {
         _drops.push({
           name,
           ids: ids.includes(`_${i + 1}`)
@@ -854,14 +860,14 @@ export class Factory {
             : ids,
         });
       }
-      drops = _drops;
+      intermidiateDrops = _drops;
     }
 
     return {
       ...generation,
-      collection,
-      bundles,
-      drops,
+      collection: intermidiateCollection,
+      bundles: intermidiateBundles,
+      drops: intermidiateDrops,
     };
   }
 
@@ -1004,127 +1010,18 @@ export class Factory {
 
   async reconstruct(generation: Generation) {
     const names = (await readDir(this.image(generation.name))).map(
-      (fileName) => path.parse(fileName).name
+      (name) => path.parse(name).name
     );
 
     const items = generation.collection.filter(
       (item) => !names.includes(item.name)
     );
 
-    let { name, collection, bundles, drops } = generation;
-
     await Promise.all(
-      items.map(async (item) => {
-        await fs.promises.rm(this.json(name, item.name));
-      })
+      items.map((item) => fs.promises.rm(this.json(generation.name, item.name)))
     );
 
-    collection = collection.filter(
-      (item) =>
-        !items.some((itemToRemove) => {
-          return item.name === itemToRemove.name;
-        })
-    );
-
-    bundles = bundles.map(({ ids, ...rest }) => ({
-      ...rest,
-      ids: ids.filter(
-        (ids) => !ids.some((id) => items.some((item) => item.name === id))
-      ),
-    }));
-
-    drops = drops.map(({ name, ids }) => ({
-      name,
-      ids: ids.filter((id) => items.some((item) => item.name === id)),
-      bundles: bundles.map(({ name }) => name),
-    }));
-
-    for (const [i, item] of collection.entries()) {
-      await fs.promises.rename(
-        this.image(name, item.name),
-        this.image(name, `_${i + 1}`)
-      );
-
-      await this.updateJson(name, item.name, {
-        edition: `${i + 1}`,
-      });
-
-      await fs.promises.rename(
-        this.json(name, item.name),
-        this.json(name, `_${i + 1}`)
-      );
-
-      const _bundles = [];
-      for (const { name, ids } of bundles) {
-        const newIds = [];
-        for (const _ids of ids) {
-          newIds.push(
-            _ids.includes(item.name)
-              ? _ids.map((id) => (id === item.name ? `_${i + 1}` : id))
-              : _ids
-          );
-        }
-        _bundles.push({ name, ids: newIds });
-      }
-      bundles = _bundles;
-
-      const _drops = [];
-      for (const { name, ids } of drops) {
-        _drops.push({
-          name,
-          ids: ids.includes(item.name)
-            ? ids.map((id) => (id === item.name ? `_${i + 1}` : id))
-            : ids,
-        });
-      }
-      drops = _drops;
-
-      item.name = `${i + 1}`;
-    }
-
-    for (let i = 0; i < collection.length; i++) {
-      await fs.promises.rename(
-        this.image(name, `_${i + 1}`),
-        this.image(name, `${i + 1}`)
-      );
-
-      await fs.promises.rename(
-        this.json(name, `_${i + 1}`),
-        this.json(name, `${i + 1}`)
-      );
-
-      const _bundles = [];
-      for (const { name, ids } of bundles) {
-        const newIds = [];
-        for (const _ids of ids) {
-          newIds.push(
-            _ids.includes(`_${i + 1}`)
-              ? _ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
-              : _ids
-          );
-        }
-        _bundles.push({ name, ids: newIds });
-      }
-      bundles = _bundles;
-
-      const _drops = [];
-      for (const { name, ids } of drops) {
-        _drops.push({
-          name,
-          ids: ids.includes(`_${i + 1}`)
-            ? ids.map((id) => (id === `_${i + 1}` ? `${i + 1}` : id))
-            : ids,
-        });
-      }
-      drops = _drops;
-    }
-
-    return {
-      ...generation,
-      collection,
-      bundles,
-      drops,
-    };
+    return await this.removeItems(generation, items, true);
   }
 
   async getBalanceOf(contractId: string, address: string) {
