@@ -4,7 +4,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-    ActionButton, Button, ButtonGroup, Flex, Heading, Item, Menu, MenuTrigger, TextField
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  Switch,
+  TextField,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import More from "@spectrum-icons/workflow/More";
@@ -73,6 +82,8 @@ export function DeployPage() {
   const [compilerVersion, setCompilerVersion] = useState<string>(null);
   const [network, setNetwork] = useState<Network>(Network.RINKEBY);
 
+  const [automatic, setAutomatic] = useState(true);
+
   const [working, setWorking] = useState(false);
   const [deployDone, setDeployDone] = useState(false);
   const [elapsedTime, setElapsedTime] = useState<string>(null);
@@ -137,28 +148,34 @@ export function DeployPage() {
 
         const start = moment(performance.now());
         const {
-          imagesCid,
-          metadataCid,
-          notRevealedImageCid,
-          notRevealedMetadataCid,
-          contractAddress,
+          imagesCid: _imagesCid,
+          metadataCid: _metadataCid,
+          notRevealedImageCid: _notRevealedImageCid,
+          notRevealedMetadataCid: _notRevealedMetadataCid,
+          contractAddress: _contractAddress,
           abi,
           compilerVersion,
         } = await factoryDeploy(
           id,
           providerId,
           generation,
-          notRevealedGeneration
+          notRevealedGeneration,
+
+          imagesCid,
+          metadataCid,
+          notRevealedImageCid,
+          notRevealedMetadataCid,
+          contractAddress
         );
         const end = moment(performance.now());
         const diff = end.diff(start);
 
         setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
-        setImagesCid(imagesCid);
-        setMetadataCid(metadataCid);
-        setNotRevealedImageCid(notRevealedImageCid);
-        setNotRevealedMetadataCid(notRevealedMetadataCid);
-        setContractAddress(contractAddress);
+        setImagesCid(_imagesCid);
+        setMetadataCid(_metadataCid);
+        setNotRevealedImageCid(_notRevealedImageCid);
+        setNotRevealedMetadataCid(_notRevealedMetadataCid);
+        setContractAddress(_contractAddress);
         setAbi(abi);
         setCompilerVersion(compilerVersion);
         setDeployDone(true);
@@ -289,21 +306,20 @@ export function DeployPage() {
               </Preview>
             </Flex>
 
-            <Flex
-              direction="column"
-              justifyContent="center"
-              alignItems="center"
-            >
+            <Flex direction="column" justifyContent="center" gap="size-100">
+              <Switch isSelected={automatic} onChange={setAutomatic}>
+                Automatic
+              </Switch>
               <TextField
                 width="100%"
-                isReadOnly={true}
+                isReadOnly={automatic}
                 label="Images CID"
                 value={imagesCid}
               />
 
               <TextField
                 width="100%"
-                isReadOnly={true}
+                isReadOnly={automatic}
                 label="Metadata CID"
                 value={metadataCid}
               />
@@ -312,14 +328,14 @@ export function DeployPage() {
                 <>
                   <TextField
                     width="100%"
-                    isReadOnly={true}
+                    isReadOnly={automatic}
                     label="Not Revealed Image CID"
                     value={notRevealedImageCid}
                   />
 
                   <TextField
                     width="100%"
-                    isReadOnly={true}
+                    isReadOnly={automatic}
                     label="Not Revealed Metadata CID"
                     value={notRevealedMetadataCid}
                   />
@@ -328,7 +344,7 @@ export function DeployPage() {
 
               <TextField
                 width="100%"
-                isReadOnly={true}
+                isReadOnly={automatic}
                 label="Contract Address"
                 value={contractAddress}
               />

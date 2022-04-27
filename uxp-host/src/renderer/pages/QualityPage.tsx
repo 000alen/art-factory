@@ -154,7 +154,8 @@ export const QualityPage = () => {
 
   // #region UXP setup
   useEffect(() => {
-    const uxpReload = async () => loadPreviews();
+    // const uxpReload = async () => loadPreviews();
+    const uxpReload = async () => {};
 
     uxpContext.on("uxp-reload", uxpReload);
 

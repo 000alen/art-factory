@@ -14,13 +14,29 @@ import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
 import { Network as OpenSeaNetwork, OpenSeaPort } from "./opensea";
 import {
-    getEtherscanApiKey, getInfuraProjectId, getOpenseaApiKey, getPinataApiKey,
-    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setOpenseaApiKey,
-    setPinataApiKey, setPinataSecretApiKey
+  getEtherscanApiKey,
+  getInfuraProjectId,
+  getOpenseaApiKey,
+  getPinataApiKey,
+  getPinataSecretApiKey,
+  setEtherscanApiKey,
+  setInfuraProjectId,
+  setOpenseaApiKey,
+  setPinataApiKey,
+  setPinataSecretApiKey,
 } from "./store";
 import {
-    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
-    Network, Template, Trait
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Layer,
+  MetadataItem,
+  Network,
+  Template,
+  Trait,
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
 
@@ -250,7 +266,12 @@ ipcAsyncTask(
     id: string,
     providerId: string,
     generation: Generation,
-    notRevealedGeneration: Generation
+    notRevealedGeneration: Generation,
+    imagesCid: string | null,
+    metadataCid: string | null,
+    notRevealedImageCid: string | null,
+    notRevealedMetadataCid: string | null,
+    contractAddress: string | null
   ) => {
     const factory = factories[id];
     factory.loadSecrets({
@@ -259,7 +280,16 @@ ipcAsyncTask(
       infuraProjectId: getInfuraProjectId() as string,
       etherscanApiKey: getEtherscanApiKey() as string,
     });
-    return await factory.deploy(providerId, generation, notRevealedGeneration);
+    return await factory.deploy(
+      providerId,
+      generation,
+      notRevealedGeneration,
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+      contractAddress
+    );
   }
 );
 

@@ -581,31 +581,37 @@ export class Factory {
 
   async deployAssets(
     generation: Generation,
-    notRevealedGeneration?: Generation
+    notRevealedGeneration: Generation,
+    imagesCid: string | null,
+    metadataCid: string | null,
+    notRevealedImageCid: string | null,
+    notRevealedMetadataCid: string | null
   ) {
-    const imagesCid = await this.deployImages(generation);
-    await this.hydrateMetadata(generation, imagesCid);
-    const metadataCid = await this.deployMetadata(generation);
+    const _imagesCid = imagesCid || (await this.deployImages(generation));
+    await this.hydrateMetadata(generation, _imagesCid);
+    const _metadataCid = metadataCid || (await this.deployMetadata(generation));
 
-    const notRevealedImageCid =
+    const _notRevealedImageCid =
       this.configuration.contractType === "721_reveal_pause"
-        ? await this.deployNotRevealedImage(notRevealedGeneration)
+        ? notRevealedImageCid ||
+          (await this.deployNotRevealedImage(notRevealedGeneration))
         : undefined;
     if (this.configuration.contractType === "721_reveal_pause")
       await this.hydrateNotRevealedMetadata(
         notRevealedGeneration,
-        notRevealedImageCid
+        _notRevealedImageCid
       );
-    const notRevealedMetadataCid =
+    const _notRevealedMetadataCid =
       this.configuration.contractType === "721_reveal_pause"
-        ? await this.deployNotRevealedMetadata(notRevealedGeneration)
+        ? notRevealedMetadataCid ||
+          (await this.deployNotRevealedMetadata(notRevealedGeneration))
         : undefined;
 
     return {
-      imagesCid,
-      metadataCid,
-      notRevealedImageCid,
-      notRevealedMetadataCid,
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
     };
   }
 
@@ -641,7 +647,8 @@ export class Factory {
     providerId: string,
     generation: Generation,
     metadataCid: string,
-    notRevealedMetadataCid: string
+    notRevealedMetadataCid: string,
+    contractAddress: string | null
   ) {
     const web3Provider = new ethersProviders.Web3Provider(
       providers[providerId]
@@ -655,60 +662,86 @@ export class Factory {
     const { version: compilerVersion } = metadata.compiler;
     const { abi, evm } = NFT;
     const { bytecode } = evm;
-    const contractFactory = new ContractFactory(abi, bytecode, signer);
 
-    const contract =
-      this.configuration.contractType === "721"
-        ? await this.deployContract721(generation, contractFactory, metadataCid)
-        : this.configuration.contractType === "721_reveal_pause"
-        ? await this.deployContract721_reveal_pause(
-            generation,
-            contractFactory,
-            metadataCid,
-            notRevealedMetadataCid
-          )
-        : null;
+    let contractFactory, contract, transactionHash;
+    if (!contractAddress) {
+      contractFactory = new ContractFactory(abi, bytecode, signer);
 
-    const contractAddress = contract.address;
-    const transactionHash = contract.deployTransaction.hash;
+      contract =
+        this.configuration.contractType === "721"
+          ? await this.deployContract721(
+              generation,
+              contractFactory,
+              metadataCid
+            )
+          : this.configuration.contractType === "721_reveal_pause"
+          ? await this.deployContract721_reveal_pause(
+              generation,
+              contractFactory,
+              metadataCid,
+              notRevealedMetadataCid
+            )
+          : null;
+      transactionHash = contract.deployTransaction.hash;
+    }
+
+    const _contractAddress = contractAddress || contract.address;
 
     return {
-      contractAddress,
+      contractAddress: _contractAddress,
       abi,
       compilerVersion,
       transactionHash,
-      wait: contract.deployTransaction.wait(),
+      wait: contractAddress ? null : contract.deployTransaction.wait(),
     };
   }
 
   async deploy(
     providerId: string,
     generation: Generation,
-    notRevealedGeneration?: Generation
+    notRevealedGeneration: Generation,
+    imagesCid: string | null,
+    metadataCid: string | null,
+    notRevealedImageCid: string | null,
+    notRevealedMetadataCid: string | null,
+    contractAddress: string | null
   ) {
     const {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+    } = await this.deployAssets(
+      generation,
+      notRevealedGeneration,
       imagesCid,
       metadataCid,
       notRevealedImageCid,
-      notRevealedMetadataCid,
-    } = await this.deployAssets(generation, notRevealedGeneration);
+      notRevealedMetadataCid
+    );
 
-    const { contractAddress, abi, compilerVersion, transactionHash, wait } =
-      await this.deployContract(
-        providerId,
-        generation,
-        metadataCid,
-        notRevealedMetadataCid
-      );
+    const {
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+      wait,
+    } = await this.deployContract(
+      providerId,
+      generation,
+      _metadataCid,
+      _notRevealedMetadataCid,
+      contractAddress
+    );
 
     await wait;
 
     return {
-      imagesCid,
-      metadataCid,
-      notRevealedImageCid,
-      notRevealedMetadataCid,
-      contractAddress,
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+      contractAddress: _contractAddress,
       abi,
       compilerVersion,
       transactionHash,

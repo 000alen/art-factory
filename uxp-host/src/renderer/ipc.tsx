@@ -17,8 +17,18 @@ declare global {
 import { v4 as uuid } from "uuid";
 
 import {
-    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Instance, Layer,
-    MetadataItem, Network, Template, Trait
+  Collection,
+  CollectionItem,
+  Configuration,
+  Deployment,
+  Drop,
+  Generation,
+  Instance,
+  Layer,
+  MetadataItem,
+  Network,
+  Template,
+  Trait,
 } from "./typings";
 import { capitalize } from "./utils";
 
@@ -218,13 +228,25 @@ export const factoryDeploy = (
   id: string,
   providerId: string,
   generation: Generation,
-  notRevealedGeneration?: Generation
+  notRevealedGeneration: Generation,
+
+  imagesCid: string,
+  metadataCid: string,
+  notRevealedImageCid: string,
+  notRevealedMetadataCid: string,
+  contractAddress: string
 ) =>
   ipcTask("factoryDeploy")(
     id,
     providerId,
     generation,
-    notRevealedGeneration
+    notRevealedGeneration,
+
+    imagesCid,
+    metadataCid,
+    notRevealedImageCid,
+    notRevealedMetadataCid,
+    contractAddress
   ) as Promise<{
     imagesCid: string;
     metadataCid: string;

@@ -162,7 +162,8 @@ export const FactoryPage: React.FC = () => {
     setDirty(false);
   });
 
-  const onConfiguration = () => {
+  const onConfiguration = task("configuration ", async () => {
+    setWorkingTitle("Configuration...");
     navigate("/configuration", {
       state: {
         projectDir,
@@ -177,9 +178,10 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-  };
+  });
 
-  const onTemplate = (templateId?: string) => {
+  const onTemplate = task("template", (templateId?: string) => {
+    setWorkingTitle("Template...");
     navigate("/template", {
       state: {
         projectDir,
@@ -195,9 +197,10 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-  };
+  });
 
-  const onGeneration = (templateId: string) => {
+  const onGeneration = task("generation", (templateId: string) => {
+    setWorkingTitle("Generation...");
     navigate("/generation", {
       state: {
         projectDir,
@@ -213,9 +216,10 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-  };
+  });
 
-  const onQuality = (generationId: string) => {
+  const onQuality = task("quality", (generationId: string) => {
+    setWorkingTitle("Quality...");
     navigate("/quality", {
       state: {
         projectDir,
@@ -231,9 +235,10 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-  };
+  });
 
-  const onDeploy = () => {
+  const onDeploy = task("deploy", () => {
+    setWorkingTitle("Deploy...");
     navigate("/deploy", {
       state: {
         projectDir,
@@ -248,9 +253,10 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-  };
+  });
 
-  const onInstance = () => {
+  const onInstance = task("instance", () => {
+    setWorkingTitle("Instance...");
     navigate("/instance", {
       state: {
         projectDir,
@@ -265,7 +271,7 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-  };
+  });
 
   const onTemplateAction = (message: string) => {
     const [action, name] = message.split("_");
