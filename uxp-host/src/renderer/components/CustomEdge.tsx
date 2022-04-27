@@ -1,10 +1,6 @@
 import React, { CSSProperties, MouseEvent } from "react";
 import {
-  getBezierPath,
-  getEdgeCenter,
-  getMarkerEnd,
-  MarkerType,
-  Position,
+    getBezierPath, getEdgeCenter, getMarkerEnd, MarkerType, Position
 } from "react-flow-renderer";
 
 const foreignObjectSize = 20;

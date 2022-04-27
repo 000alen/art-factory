@@ -2,30 +2,18 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Flex,
-  Heading,
-  Item,
-  ListBox,
-  NumberField,
-  Radio,
-  RadioGroup,
-  Slider,
-  Switch,
-  TextArea,
-  TextField,
+    ActionButton, Button, ButtonGroup, Flex, Heading, Item, ListBox, NumberField, Radio, RadioGroup,
+    Slider, Switch, TextArea, TextField
 } from "@adobe/react-spectrum";
 import { parseColor } from "@react-stately/color";
 import Back from "@spectrum-icons/workflow/Back";
+import Refresh from "@spectrum-icons/workflow/Refresh";
 
 import { ColorPicker } from "../components/ColorPicker";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
 import { factoryGetResolution, readProjectAvailableLayers } from "../ipc";
 import { Configuration, ContractType, Instance } from "../typings";
-import Refresh from "@spectrum-icons/workflow/Refresh";
 
 interface ConfigurationPageState {
   projectDir: string;

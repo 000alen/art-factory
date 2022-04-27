@@ -3,15 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Flex,
-  Grid,
-  Heading,
-  ProgressBar,
-  repeat,
-  View,
+    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, ProgressBar, repeat, View
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
@@ -21,16 +13,13 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
+import { TaskItem } from "../components/TaskItem";
 import { ToolbarContext } from "../components/Toolbar";
 import {
-  createContract,
-  createProvider,
-  createProviderWithKey,
-  writeProjectInstance,
+    createContract, createProvider, createProviderWithKey, writeProjectInstance
 } from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
-import { TaskItem } from "../components/TaskItem";
 
 interface InstancePageState {
   projectDir: string;

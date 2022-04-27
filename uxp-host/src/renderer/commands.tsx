@@ -73,9 +73,18 @@ export const generate = async (
   template: Template,
   onProgress?: (name: string) => void
 ): Promise<Generation> => {
+  console.time("Make Generation");
   const generation = await factoryMakeGeneration(id, name, template);
+  console.timeEnd("Make Generation");
+
+  console.time("Generate Images");
   await factoryGenerateImages(id, generation, onProgress);
+  console.timeEnd("Generate Images");
+
+  console.time("Generate Metadata");
   await factoryGenerateMetadata(id, generation, metadataItems);
+  console.timeEnd("Generate Metadata");
+
   return generation;
 };
 

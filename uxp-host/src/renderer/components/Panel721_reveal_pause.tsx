@@ -1,14 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  View,
-  Well,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, View, Well
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 

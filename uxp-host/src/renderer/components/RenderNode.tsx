@@ -1,37 +1,17 @@
 import React, { memo, useEffect, useState } from "react";
-import {
-  Handle,
-  Node as FlowNode,
-  Position,
-  useEdges,
-  useNodes,
-} from "react-flow-renderer";
+import { Handle, Node as FlowNode, Position, useEdges, useNodes } from "react-flow-renderer";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  NumberField,
-  Radio,
-  RadioGroup,
-  Text,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Radio, RadioGroup, Text
 } from "@adobe/react-spectrum";
 import Remove from "@spectrum-icons/workflow/Remove";
 
-import {
-  DEFAULT_N,
-  DEFAULT_PRICE,
-  DEFAULT_SALE_TIME,
-  DEFAULT_SALE_TYPE,
-} from "../constants";
+import { DEFAULT_N, DEFAULT_PRICE, DEFAULT_SALE_TIME, DEFAULT_SALE_TYPE } from "../constants";
 import { Trait } from "../typings";
 import { getBranches, hash } from "../utils";
+import { ImageItem } from "./ImageItem";
 import { LayerNodeComponentData } from "./LayerNode";
 import { Time } from "./Time";
-import { ImageItem } from "./ImageItem";
 
 export interface RenderNodeComponentData {
   composedUrls?: Record<string, string>;

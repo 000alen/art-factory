@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
@@ -12,11 +6,7 @@ import { Button, Flex, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
 import { useErrorHandler } from "../components/ErrorHandler";
-import {
-  Nodes,
-  NodesContextProvider,
-  NodesInstance,
-} from "../components/NodesContext";
+import { Nodes, NodesContextProvider, NodesInstance } from "../components/NodesContext";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { ToolbarContext } from "../components/Toolbar";
 import { factoryGetTraitsByLayerName } from "../ipc";

@@ -2,6 +2,7 @@ import { dialog, ipcMain, shell } from "electron";
 import { Contract, providers as ethersProviders } from "ethers";
 import fs from "fs";
 import path from "path";
+import { Eth } from "web3-eth";
 import Web3ProviderEngine from "web3-provider-engine";
 import RPCSubprovider from "web3-provider-engine/subproviders/rpc";
 
@@ -11,34 +12,17 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 
 import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
+import { Network as OpenSeaNetwork, OpenSeaPort } from "./opensea";
 import {
-  getEtherscanApiKey,
-  getInfuraProjectId,
-  getOpenseaApiKey,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setEtherscanApiKey,
-  setInfuraProjectId,
-  setOpenseaApiKey,
-  setPinataApiKey,
-  setPinataSecretApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getOpenseaApiKey, getPinataApiKey,
+    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setOpenseaApiKey,
+    setPinataApiKey, setPinataSecretApiKey
 } from "./store";
 import {
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  Network,
-  Template,
-  Trait,
+    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
+    Network, Template, Trait
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
-import { Eth } from "web3-eth";
-import { OpenSeaPort, Network as OpenSeaNetwork } from "./opensea";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {

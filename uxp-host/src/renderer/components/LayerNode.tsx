@@ -2,13 +2,7 @@ import React, { memo, useEffect, useState } from "react";
 import { useNodes } from "react-flow-renderer";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  Slider,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, Slider
 } from "@adobe/react-spectrum";
 
 import { Trait } from "../typings";

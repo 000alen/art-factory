@@ -116,6 +116,8 @@ export const FactoryPage: React.FC = () => {
 
   useEffect(() => {
     task("factory initialization & preview", async () => {
+      setWorkingTitle("factory initialization & preview...");
+
       if (!(await hasFactory(id)))
         await createFactory(id, configuration, projectDir);
       else {

@@ -1,14 +1,5 @@
-import {
-  Edge as FlowEdge,
-  getOutgoers,
-  Node as FlowNode,
-} from "react-flow-renderer";
-import {
-  adjectives,
-  animals,
-  colors,
-  uniqueNamesGenerator,
-} from "unique-names-generator";
+import { Edge as FlowEdge, getOutgoers, Node as FlowNode } from "react-flow-renderer";
+import { adjectives, animals, colors, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuid, v5 as uuidv5 } from "uuid";
 
 import { DEFAULT_BACKGROUND, NAMESPACE, RARITY_DELIMITER } from "./constants";

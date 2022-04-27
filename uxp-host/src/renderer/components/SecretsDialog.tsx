@@ -1,32 +1,14 @@
 import React, { useEffect, useState } from "react";
 
 import {
-  Button,
-  ButtonGroup,
-  Content,
-  ContextualHelp,
-  Dialog,
-  Divider,
-  Flex,
-  Footer,
-  Form,
-  Heading,
-  Link,
-  Text,
-  TextField,
+    Button, ButtonGroup, Content, ContextualHelp, Dialog, Divider, Flex, Footer, Form, Heading,
+    Link, Text, TextField
 } from "@adobe/react-spectrum";
 
 import {
-  getEtherscanApiKey,
-  getInfuraProjectId,
-  getOpenseaApiKey,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setEtherscanApiKey,
-  setInfuraProjectId,
-  setOpenseaApiKey,
-  setPinataApiKey,
-  setPinataSecretApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getOpenseaApiKey, getPinataApiKey,
+    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setOpenseaApiKey,
+    setPinataApiKey, setPinataSecretApiKey
 } from "../ipc";
 import { useErrorHandler } from "./ErrorHandler";
 
