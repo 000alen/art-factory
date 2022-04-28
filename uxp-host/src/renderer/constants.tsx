@@ -36,3 +36,5 @@ export const DEFAULT_BACKGROUND = {
 };
 export const DEFAULT_MAX_MINT_AMOUNT = 20;
 export const BUILD_DIR_NAME = ".build";
+
+export const MINT_N = 128;

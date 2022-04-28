@@ -22,3 +22,5 @@ export const RINKEBY_WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
 export const MAIN_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 
 export const PARALLEL_LIMIT = 256;
+
+export const MINT_N = 128;

@@ -10,6 +10,7 @@ import {
   DEFAULT_BLENDING,
   DEFAULT_OPACITY,
   MAIN_WETH,
+  MINT_N,
   PARALLEL_LIMIT,
   RINKEBY_WETH,
 } from "./constants";
@@ -1105,11 +1106,23 @@ export class Factory {
   }
   // #endregion
 
-  async mintDrop(providerId: string, contractId: string, drop: Drop) {
+  async mintDrop(
+    providerId: string,
+    contractId: string,
+    drop: Drop,
+    gasLimit?: number
+  ) {
     const contract = contracts[contractId];
-    const n = drop.ids.length;
-    const tx = await contract.mint(n);
-    await tx.wait();
+
+    const txs = [];
+
+    for (let i = 0; i < drop.ids.length; i += MINT_N) {
+      const n = drop.ids.slice(i, i + MINT_N).length;
+      console.log(n);
+      const tx = await contract.mint(n, { gasLimit });
+      txs.push(tx);
+    }
+    await Promise.all(txs.map((tx) => tx.wait()));
   }
 
   async sellDropBundles(

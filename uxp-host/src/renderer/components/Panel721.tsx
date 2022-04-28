@@ -1,7 +1,15 @@
 import React, { useMemo, useState } from "react";
 
 import {
-    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, View, Well
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  View,
+  Well,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
@@ -9,6 +17,7 @@ import { mintDrop, sellDrop } from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
+import { MINT_N } from "../constants";
 
 interface Panel721Props {
   deployment: Deployment;
@@ -36,6 +45,8 @@ export const Panel721: React.FC<Panel721Props> = ({
   const { dropNumber, generation } = deployment;
   const { drops } = generation;
 
+  const [gasLimit, setGasLimit] = useState(250000);
+
   const hasUnmintedDrops = useMemo(
     () => dropNumber < drops.length,
     [deployment]
@@ -52,7 +63,7 @@ export const Panel721: React.FC<Panel721Props> = ({
     if (!providerId || !contractId)
       throw new Error("Must create provider first");
 
-    await mintDrop(id, providerId, contractId, dropToMint);
+    await mintDrop(id, providerId, contractId, dropToMint, gasLimit);
 
     addOutput({
       title: "Minted",
@@ -102,7 +113,17 @@ export const Panel721: React.FC<Panel721Props> = ({
               <Play />
             </ActionButton>
           </Flex>
+
           {dropToMint && <Well>{dropToMint.name}</Well>}
+
+          <NumberField
+            width="100%"
+            label="Gas limit per transaction"
+            value={gasLimit}
+            onChange={setGasLimit}
+          />
+
+          <Well>{Math.ceil(dropToMint.ids.length / MINT_N)} transactions</Well>
         </Flex>
       </View>
 

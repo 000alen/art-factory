@@ -399,8 +399,9 @@ export const mintDrop = (
   id: string,
   providerId: string,
   contractId: string,
-  drop: Drop
-) => ipcTask("mintDrop")(id, providerId, contractId, drop);
+  drop: Drop,
+  gasLimit?: number
+) => ipcTask("mintDrop")(id, providerId, contractId, drop, gasLimit);
 
 export const sellDropBundles = (
   id: string,

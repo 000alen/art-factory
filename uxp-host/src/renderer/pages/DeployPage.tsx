@@ -315,6 +315,7 @@ export function DeployPage() {
                 isReadOnly={automatic}
                 label="Images CID"
                 value={imagesCid}
+                onChange={setImagesCid}
               />
 
               <TextField
@@ -322,6 +323,7 @@ export function DeployPage() {
                 isReadOnly={automatic}
                 label="Metadata CID"
                 value={metadataCid}
+                onChange={setMetadataCid}
               />
 
               {configuration.contractType === "721_reveal_pause" && (
@@ -331,6 +333,7 @@ export function DeployPage() {
                     isReadOnly={automatic}
                     label="Not Revealed Image CID"
                     value={notRevealedImageCid}
+                    onChange={setNotRevealedImageCid}
                   />
 
                   <TextField
@@ -338,6 +341,7 @@ export function DeployPage() {
                     isReadOnly={automatic}
                     label="Not Revealed Metadata CID"
                     value={notRevealedMetadataCid}
+                    onChange={setNotRevealedMetadataCid}
                   />
                 </>
               )}
@@ -347,6 +351,7 @@ export function DeployPage() {
                 isReadOnly={automatic}
                 label="Contract Address"
                 value={contractAddress}
+                onChange={setContractAddress}
               />
             </Flex>
           </Flex>
