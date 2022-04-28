@@ -145,7 +145,7 @@ export const GenerationPage: React.FC = () => {
           <Preview name={template.name} url={url} />
         </Flex>
 
-        <ArrayOf
+        {/* <ArrayOf
           Component={MetadataField}
           label="Metadata"
           heading={true}
@@ -157,7 +157,7 @@ export const GenerationPage: React.FC = () => {
             * <code>{"${name}"}</code> will get replaced with the name of the
             item
           </Text>
-        </ArrayOf>
+        </ArrayOf> */}
       </Flex>
 
       <TriStateButton

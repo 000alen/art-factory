@@ -31,22 +31,25 @@
 - [x] Fees
 - [x] Research about money withdrawal
 - [x] API KEY
+- [x] Refactor
+- [x] **FIX**: Aceleración por ~~gpu~~ paralelismo.
+- [x] quality bug
+- [x] Quality
 
 - [ ] **Feature request**: Añadir un link a opensea en la ui.
-- [ ] **FIX**: Aceleración por ~~gpu~~ paralelismo.
 - [ ] Custom sell orders
 - [ ] Demo
 - [ ] Massive tests
-- [ ] Refactor
-- [ ] Quality
-- [ ] Nonce
 - [ ] _Bugs_
 - [ ] _Testing_
+- [ ] onUnify bundles bug
+- [ ] instance does not update nonce
 
 - [ ] Que el regenerate por filtros haga un refresh
 - [ ] Ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
-- [ ] Agregar las aristas de los nodos
 
+- ~~[ ] Agregar las aristas de los nodos~~
+- ~~[ ] Nonce~~
 - ~~Poner botón refresh nfts~~
 - ~~Import custom~~
 - ~~Import from folder~~

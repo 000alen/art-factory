@@ -202,9 +202,17 @@ export const QualityPage = () => {
         collection: filteredCollection,
       } as Generation);
 
-    setPage(1);
-    setSelectedItem(
-      filteredCollection.length > 0 ? filteredCollection[0].name : null
+    setPage((p) => {
+      // if (filteredCollection.some((i) => i.name === p))
+
+      return 1;
+    });
+    setSelectedItem((p) =>
+      filteredCollection.some((i) => i.name === p)
+        ? p
+        : filteredCollection.length > 0
+        ? filteredCollection[0].name
+        : null
     );
     setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
@@ -213,8 +221,12 @@ export const QualityPage = () => {
   // ? Bundles filtering
   useEffect(() => {
     const filteredBundles = bundles
-      .filter(({ name }) => bundlesFilters.includes(name))
-      .filter(({ name }) => name.includes(stringFilter));
+      .filter(({ name }) =>
+        bundlesFilters.length > 0 ? bundlesFilters.includes(name) : true
+      )
+      .filter(({ name }) =>
+        stringFilter ? name.includes(stringFilter) : true
+      );
 
     setBundlesPage(1);
     setBundlesMaxPage(Math.ceil(filteredBundles.length / PAGE_N));
@@ -252,10 +264,12 @@ export const QualityPage = () => {
   );
 
   const loadBundlesPreviews = task("loading bundles previews", async () => {
-    const flatFilteredBundles = filteredBundles.reduce(
-      (p, { name, ids }) => [...p, ...ids.map((id) => ({ name, id }))],
-      []
-    );
+    const flatFilteredBundles: { name: string; ids: string[] }[] =
+      filteredBundles.reduce(
+        (p, { name, ids }) => [...p, ...ids.map((ids) => ({ name, ids }))],
+        []
+      );
+
     setBundleSItems(
       (
         await Promise.all(

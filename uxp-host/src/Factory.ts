@@ -48,15 +48,6 @@ import {
   restrictImage,
 } from "./utils";
 
-interface LayerNodeComponentData {
-  urls?: Record<string, string>;
-  trait: Trait;
-  id: string;
-  name: string;
-  opacity: number;
-  blending: string;
-}
-
 export class Factory {
   buildDir: string;
   imagesDir: string;
@@ -973,21 +964,24 @@ export class Factory {
       const mappings: Record<string, string> = {};
 
       for (const item of collection) {
-        mappings[item.name] = `${i}`;
+        const _from = item.name;
+        const _to = `${i}`;
+
+        mappings[_from] = _to;
 
         await fs.promises.copyFile(
-          this.image(currentName, item.name),
-          this.image(name, `${i}`)
+          this.image(currentName, _from),
+          this.image(name, _to)
         );
 
         this.updateJson(
           name,
-          `${i}`,
+          _to,
           {
-            edition: `${i}`,
+            edition: _to,
           },
           currentName,
-          item.name
+          _from
         );
 
         unifiedCollection.push({
