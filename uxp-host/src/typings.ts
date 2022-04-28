@@ -3,6 +3,7 @@ import { Edge as FlowEdge, Node as FlowNode } from "react-flow-renderer";
 export enum ContractType {
   ERC721 = "721",
   ERC721_REVEAL_PAUSE = "721_reveal_pause",
+  ERC721_CLIENT_MINT = "721_client_mint",
 }
 
 export enum Network {
