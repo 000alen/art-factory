@@ -35,19 +35,20 @@
 - [x] **FIX**: Aceleración por ~~gpu~~ paralelismo.
 - [x] quality bug
 - [x] Quality
+- [x] onUnify bundles bug
 
 - [ ] **Feature request**: Añadir un link a opensea en la ui.
-- [ ] Custom sell orders
 - [ ] Demo
 - [ ] Massive tests
 - [ ] _Bugs_
 - [ ] _Testing_
-- [ ] onUnify bundles bug
-- [ ] instance does not update nonce
+- [ ] instance does not update
+- [ ] nonce
 
 - [ ] Que el regenerate por filtros haga un refresh
 - [ ] Ver cuales se parecen (que tengan a lo mas n caracteristicas distintas)
 
+- ~~[ ] Custom sell orders~~
 - ~~[ ] Agregar las aristas de los nodos~~
 - ~~[ ] Nonce~~
 - ~~Poner botón refresh nfts~~

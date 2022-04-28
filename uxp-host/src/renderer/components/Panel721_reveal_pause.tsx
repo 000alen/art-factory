@@ -1,7 +1,14 @@
 import React, { useMemo, useState } from "react";
 
 import {
-    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, View, Well
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  View,
+  Well,
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
@@ -64,17 +71,17 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     increaseDropNumber();
   });
 
-  const onPause = task("pause", async () => {
-    if (!providerId || !contractId)
-      throw new Error("Must create provider first");
+  // const onPause = task("pause", async () => {
+  //   if (!providerId || !contractId)
+  //     throw new Error("Must create provider first");
 
-    await pause(id, contractId);
-    addOutput({
-      title: "Paused",
-      text: "",
-      isCopiable: true,
-    });
-  });
+  //   await pause(id, contractId);
+  //   addOutput({
+  //     title: "Paused",
+  //     text: "",
+  //     isCopiable: true,
+  //   });
+  // });
 
   const onReveal = task("reveal", async () => {
     if (!providerId || !contractId)
@@ -131,7 +138,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
         </Flex>
       </View>
 
-      <TaskItem name="Pause" onRun={onPause} />
+      {/* <TaskItem name="Pause" onRun={onPause} /> */}
 
       <TaskItem name="Reveal" onRun={onReveal} />
 
