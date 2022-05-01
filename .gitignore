@@ -1,3 +1,4 @@
+config.json
 .VsCodeCounter/
 build/
 sample/
@@ -137,7 +138,6 @@ node_modules
 .env
 coverage
 coverage.json
-typechain
 
 #Hardhat files
 cache

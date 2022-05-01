@@ -1,19 +1,17 @@
 let id = 0;
+export const getId = () => `${id++}`;
 
-export const getId = () => {
-  id++;
-  return id.toString();
-};
+export const getConnectionStatus = () =>
+  localStorage.getItem("connectionStatus") || false;
 
-export const setDocument = (id, documentName) =>
-  localStorage.setItem(`document(${id})`, documentName);
+export const setConnectionStatus = (connectionStatus) =>
+  localStorage.setItem("connectionStatus", connectionStatus);
 
-export const getDocument = (id) => localStorage.getItem(`document(${id})`);
+export const setProjectFolderToken = (token) =>
+  localStorage.setItem("projectFolderToken", token);
 
-export const setFolder = (id, token) =>
-  localStorage.setItem(`folder(${id})`, token);
-
-export const getFolder = (id) => localStorage.getItem(`folder(${id})`);
+export const getProjectFolderToken = () =>
+  localStorage.getItem("projectFolderToken");
 
 export const setItem = (id, item) =>
   localStorage.setItem(`item(${id})`, JSON.stringify(item));

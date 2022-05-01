@@ -1,20 +1,13 @@
 import React from "react";
 
-import {
-  View,
-  ActionButton,
-  Flex,
-  Item,
-  ActionGroup,
-} from "@adobe/react-spectrum";
-
+import { ActionButton, ActionGroup, Flex, Heading, Item, View } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
-import Remove from "@spectrum-icons/workflow/Remove";
-import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
+import ChevronUp from "@spectrum-icons/workflow/ChevronUp";
+import Remove from "@spectrum-icons/workflow/Remove";
 
 interface ArrayItemProps {
-  Component: React.ComponentType;
+  Component: React.ComponentType<any> | Function;
   props: any;
   value: any;
   moveable: boolean;
@@ -22,6 +15,7 @@ interface ArrayItemProps {
   onMoveDown: () => void;
   onMoveUp: () => void;
   onRemove: () => void;
+  isDisabled?: boolean;
 }
 
 export const ArrayItem: React.FC<ArrayItemProps> = ({
@@ -33,6 +27,7 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
   onMoveDown,
   onMoveUp,
   onRemove,
+  isDisabled = false,
 }) => {
   const onAction = (action: string) => {
     switch (action) {
@@ -49,24 +44,31 @@ export const ArrayItem: React.FC<ArrayItemProps> = ({
 
   return (
     <Flex gap="size-100" justifyContent="space-between">
+      {/* @ts-ignore */}
       <Component
         {...props}
         width="100%"
+        isDisabled={isDisabled}
         aria-label={value}
         value={value}
         onChange={onChange}
       />
-      <ActionGroup overflowMode="collapse" onAction={onAction}>
+      <ActionGroup
+        disabledKeys={isDisabled ? ["moveDown", "moveUp", "remove"] : []}
+        overflowMode="collapse"
+        onAction={onAction}
+      >
         {moveable && (
-          <>
-            <Item key="moveDown">
-              <ChevronDown />
-            </Item>
-            <Item key="moveUp">
-              <ChevronUp />
-            </Item>
-          </>
+          <Item key="moveDown">
+            <ChevronDown />
+          </Item>
         )}
+        {moveable && (
+          <Item key="moveUp">
+            <ChevronUp />
+          </Item>
+        )}
+
         <Item key="remove">
           <Remove />
         </Item>
@@ -83,7 +85,11 @@ interface ArrayOfProps {
   items: any[];
   setItems: (items: any[]) => void;
   moveable?: boolean;
+  heading?: boolean;
+  border?: boolean;
   width?: string;
+  direction?: "row" | "column";
+  isDisabled?: boolean;
 }
 
 export const ArrayOf: React.FC<ArrayOfProps> = ({
@@ -94,7 +100,12 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
   items,
   setItems,
   moveable,
+  heading = false,
+  border = true,
   width = "30vw",
+  direction = "column",
+  isDisabled = false,
+  children,
 }) => {
   const onAdd = () => {
     setItems([...items, emptyValue]);
@@ -126,21 +137,32 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
 
   return (
     <View>
-      <label className="spectrum-FieldLabel">{label}</label>
+      {heading ? (
+        <Heading>{label}</Heading>
+      ) : (
+        <label className="spectrum-FieldLabel">{label}</label>
+      )}
+
+      {children}
 
       <View
         width={width}
         height="100%"
         padding="size-100"
         overflow="auto"
-        borderWidth="thin"
-        borderColor="dark"
-        borderRadius="medium"
+        {...(border
+          ? {
+              borderWidth: "thin",
+              borderColor: "dark",
+              borderRadius: "medium",
+            }
+          : {})}
       >
-        <Flex direction="column" gap="size-100">
+        <Flex direction={direction} gap="size-100">
           {items.map((item, i) => (
             <ArrayItem
               key={i}
+              isDisabled={isDisabled}
               Component={Component}
               props={props}
               value={item}
@@ -153,7 +175,7 @@ export const ArrayOf: React.FC<ArrayOfProps> = ({
           ))}
         </Flex>
       </View>
-      <ActionButton marginTop={8} onPress={onAdd}>
+      <ActionButton isDisabled={isDisabled} marginTop={8} onPress={onAdd}>
         <Add />
       </ActionButton>
     </View>

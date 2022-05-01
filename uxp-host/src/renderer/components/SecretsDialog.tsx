@@ -1,31 +1,15 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
-  Flex,
-  ContextualHelp,
-  Footer,
-  Link,
-  Dialog,
-  Heading,
-  Divider,
-  Content,
-  Text,
-  ButtonGroup,
-  Button,
-  Form,
-  TextField,
+    Button, ButtonGroup, Content, ContextualHelp, Dialog, Divider, Flex, Footer, Form, Heading,
+    Link, Text, TextField
 } from "@adobe/react-spectrum";
+
 import {
-  getInfuraId,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setPinataApiKey,
-  setPinataSecretApiKey,
-  setInfuraId,
-  getEtherscanApiKey,
-  setEtherscanApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getOpenseaApiKey, getPinataApiKey,
+    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setOpenseaApiKey,
+    setPinataApiKey, setPinataSecretApiKey
 } from "../ipc";
-import { GenericDialogContext } from "./GenericDialog";
 import { useErrorHandler } from "./ErrorHandler";
 
 interface SecretsDialogProps {
@@ -35,8 +19,9 @@ interface SecretsDialogProps {
 export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const [pinataApiKey, _setPinataApiKey] = useState("");
   const [pinataSecretApiKey, _setPinataSecretApiKey] = useState("");
-  const [infuraId, _setInfuraId] = useState("");
+  const [infuraProjectId, _setInfuraProjectId] = useState("");
   const [etherscanApiKey, _setEtherscanApiKey] = useState("");
+  const [openseaApiKey, _setOpenseaApiKey] = useState("");
   const task = useErrorHandler();
 
   useEffect(() => {
@@ -45,21 +30,26 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
         ((await getPinataApiKey()) as unknown as string) || "";
       const pinataSecretApiKey =
         ((await getPinataSecretApiKey()) as unknown as string) || "";
-      const infuraId = ((await getInfuraId()) as unknown as string) || "";
+      const infuraProjectId =
+        ((await getInfuraProjectId()) as unknown as string) || "";
       const etherscanApiKey =
         ((await getEtherscanApiKey()) as unknown as string) || "";
+      const openseaApiKey =
+        ((await getOpenseaApiKey()) as unknown as string) || "";
       _setPinataApiKey(pinataApiKey);
       _setPinataSecretApiKey(pinataSecretApiKey);
-      _setInfuraId(infuraId);
+      _setInfuraProjectId(infuraProjectId);
       _setEtherscanApiKey(etherscanApiKey);
+      _setOpenseaApiKey(openseaApiKey);
     })();
   }, []);
 
   const onSave = task("save", async () => {
     await setPinataApiKey(pinataApiKey);
     await setPinataSecretApiKey(pinataSecretApiKey);
-    await setInfuraId(infuraId);
+    await setInfuraProjectId(infuraProjectId);
     await setEtherscanApiKey(etherscanApiKey);
+    await setOpenseaApiKey(openseaApiKey);
     close();
   });
 
@@ -116,16 +106,22 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
             label="Pinata Secret API Key"
           />
           <TextField
-            value={infuraId}
-            onChange={_setInfuraId}
+            value={infuraProjectId}
+            onChange={_setInfuraProjectId}
             type="password"
-            label="Infura ID"
+            label="Infura Project ID"
           />
           <TextField
             value={etherscanApiKey}
             onChange={_setEtherscanApiKey}
             type="password"
             label="Etherscan API Key"
+          />
+          <TextField
+            value={openseaApiKey}
+            onChange={_setOpenseaApiKey}
+            type="password"
+            label="Opensea API Key"
           />
         </Form>
       </Content>

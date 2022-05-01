@@ -1,26 +1,25 @@
-import React, { useState, useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button, Flex, Heading, ButtonGroup } from "@adobe/react-spectrum";
 
-import { layersNames, name as _name, sizeOf } from "../ipc";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { Configuration721 } from "../components/Configuration721";
-import { Configuration1155 } from "../components/Configuration1155";
-import { ConfigurationBase } from "../components/ConfigurationBase";
-import { ConfigurationLayers } from "../components/ConfigurationLayers";
-import { GenericDialogContext } from "../components/GenericDialog";
-import { initializeFactory } from "../actions";
+import {
+    ActionButton, Button, ButtonGroup, Flex, Heading, Item, ListBox, NumberField, Radio, RadioGroup,
+    Slider, Switch, TextArea, TextField
+} from "@adobe/react-spectrum";
+import { parseColor } from "@react-stately/color";
+import Back from "@spectrum-icons/workflow/Back";
+import Refresh from "@spectrum-icons/workflow/Refresh";
+
+import { ColorPicker } from "../components/ColorPicker";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { ToolbarContext } from "../components/Toolbar";
-import Close from "@spectrum-icons/workflow/Close";
-import { Configuration } from "../typings";
+import { factoryGetResolution, readProjectAvailableLayers } from "../ipc";
+import { Configuration, ContractType, Instance } from "../typings";
 
 interface ConfigurationPageState {
-  inputDir: string;
-  outputDir: string;
-  photoshopId?: string;
-  photoshop: boolean;
-  partialConfiguration: Partial<Configuration>;
+  projectDir: string;
+  id: string;
+  instance: Instance;
+  dirty: boolean;
 }
 
 export function ConfigurationPage() {
@@ -28,153 +27,128 @@ export function ConfigurationPage() {
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { inputDir, outputDir, photoshopId, photoshop, partialConfiguration } =
-    state as ConfigurationPageState;
+  const {
+    projectDir,
+    id,
+    instance,
+    dirty: _dirty,
+  } = state as ConfigurationPageState;
 
-  // ConfigurationBase
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [symbol, setSymbol] = useState("");
+  const { configuration, frozen: _frozen } = instance;
 
-  const [originalWidth, setOriginalWidth] = useState(null);
-  const [originalHeight, setOriginalHeight] = useState(null);
-  const [width, setWidth] = useState(512);
-  const [height, setHeight] = useState(512);
-  const [generateBackground, setGenerateBackground] = useState(true);
-  const [defaultBackground, _setDefaultBackground] = useState("#ffffff");
-  const [contractType, setContractType] = useState("721");
+  const [dirty, setDirty] = useState(_dirty);
+  const [availableLayers, setAvailableLayers] = useState(configuration.layers);
 
-  // Configuration721
-  const [cost, setCost] = useState(0.05);
-  const [maxMintAmount, setMaxMintAmount] = useState(20);
+  const [frozen, _setFrozen] = useState(_frozen);
 
-  const [layers, setLayers] = useState([""]);
+  const [name, _setName] = useState(configuration.name);
+  const [description, _setDescription] = useState(configuration.description);
+  const [symbol, _setSymbol] = useState(configuration.symbol);
+
+  const [originalWidth, setOriginalWidth] = useState(configuration.width);
+  const [originalHeight, setOriginalHeight] = useState(configuration.height);
+  const [width, _setWidth] = useState(configuration.width);
+  const [height, _setHeight] = useState(configuration.height);
+  const [generateBackground, _setGenerateBackground] = useState(
+    configuration.generateBackground
+  );
+  const [defaultBackground, _setDefaultBackground] = useState(
+    parseColor(
+      `rgba(${configuration.defaultBackground.r}, ${configuration.defaultBackground.g}, ${configuration.defaultBackground.b}, ${configuration.defaultBackground.a})`
+    )
+  );
+  const [contractType, _setContractType] = useState(configuration.contractType);
+  const [layers, _setLayers] = useState(configuration.layers);
+  const [resolution, setResolution] = useState(100);
+
+  const setter =
+    <T,>(set: (v: T | ((v: T) => T)) => void) =>
+    (v: T | ((v: T) => T)) => {
+      if (frozen) return;
+      set(v);
+      setDirty(true);
+    };
+  const setName = setter(_setName);
+  const setDescription = setter(_setDescription);
+  const setSymbol = setter(_setSymbol);
+  const setWidth = setter(_setWidth);
+  const setHeight = setter(_setHeight);
+  const setGenerateBackground = setter(_setGenerateBackground);
+  const setDefaultBackground = setter(_setDefaultBackground);
+  const setContractType = setter(_setContractType);
+  const setLayers = setter(_setLayers);
+  const setFrozen = (v: boolean) => {
+    _setFrozen(v);
+    setDirty(true);
+  };
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-
-    const loadInformation = task("load information", async () => {
-      const layers = (await layersNames(inputDir)) as string[];
-      const name = (await _name(inputDir)) as string;
-      const { width, height } = (await sizeOf(inputDir)) as {
-        width: number;
-        height: number;
-      };
-      setLayers(layers);
-      setName(name);
-      setOriginalWidth(width);
-      setOriginalHeight(height);
-      setWidth(width);
-      setHeight(height);
-    });
-
-    if (partialConfiguration) {
-      if (partialConfiguration.name) setName(partialConfiguration.name);
-      if (partialConfiguration.description)
-        setDescription(partialConfiguration.description);
-      if (partialConfiguration.symbol) setSymbol(partialConfiguration.symbol);
-      if (partialConfiguration.width) setWidth(partialConfiguration.width);
-      if (partialConfiguration.height) setHeight(partialConfiguration.height);
-      if (partialConfiguration.generateBackground)
-        setGenerateBackground(partialConfiguration.generateBackground);
-      if (partialConfiguration.defaultBackground)
-        setDefaultBackground(partialConfiguration.defaultBackground);
-      if (partialConfiguration.contractType)
-        setContractType(partialConfiguration.contractType);
-
-      if ("cost" in partialConfiguration && partialConfiguration.cost)
-        setCost(partialConfiguration.cost);
-      if (
-        "maxMintAmount" in partialConfiguration &&
-        partialConfiguration.maxMintAmount
-      )
-        setMaxMintAmount(partialConfiguration.maxMintAmount);
-
-      if (partialConfiguration.layers) setLayers(partialConfiguration.layers);
-    } else {
-      loadInformation();
-    }
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     return () => {
-      toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
     };
-  }, [inputDir, partialConfiguration]);
+  }, []);
 
-  const canContinue = useMemo(
-    () =>
-      name &&
-      description &&
-      symbol &&
-      width &&
-      height &&
-      (generateBackground || defaultBackground) &&
-      contractType &&
-      (contractType === "721"
-        ? cost && maxMintAmount
-        : contractType === "1155"
-        ? true
-        : false) &&
-      layers.length > 0 &&
-      layers.every((layer) => layer.length > 0),
-    [
+  useEffect(() => {
+    task("available layers", async () =>
+      setAvailableLayers(await readProjectAvailableLayers(projectDir))
+    )();
+  }, []);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
+
+  const onSave = () => {
+    const configuration: Configuration = {
       name,
       description,
       symbol,
+      contractType,
       width,
       height,
       generateBackground,
-      defaultBackground,
-      contractType,
-      cost,
-      maxMintAmount,
+      defaultBackground: {
+        r: defaultBackground.getChannelValue("red"),
+        g: defaultBackground.getChannelValue("green"),
+        b: defaultBackground.getChannelValue("blue"),
+        a: defaultBackground.getChannelValue("alpha"),
+      },
       layers,
-    ]
-  );
+    };
 
-  const setDefaultBackground = (color: any) => {
-    _setDefaultBackground(color.toString("hex"));
-  };
-
-  const onContinue = task("initializing factory", async () => {
-    const partialConfiguration = {
-      name,
-      description,
-      symbol,
-      width: width,
-      height: height,
-      generateBackground,
-      defaultBackground,
-      contractType,
-
-      ...(contractType === "721"
-        ? {
-            cost,
-            maxMintAmount,
-          }
-        : contractType === "1155"
-        ? {}
-        : {}),
-
-      layers,
-    } as Partial<Configuration>;
-
-    const { id } = await initializeFactory(
-      partialConfiguration,
-      inputDir,
-      outputDir
-    );
-
-    navigate("/nodes", {
+    navigate("/factory", {
       state: {
+        projectDir,
         id,
-        inputDir,
-        outputDir,
-        photoshopId,
-        photoshop,
-        partialConfiguration,
+        instance: {
+          ...instance,
+          configuration,
+          frozen,
+        },
+        dirty,
       },
     });
-  });
+  };
+
+  const onResolutionChange = (value: number) => {
+    setWidth(Math.floor(originalWidth * (value / 100)));
+    setHeight(Math.floor(originalHeight * (value / 100)));
+    setResolution(value);
+  };
+
+  const onRefreshResolution = async () => {
+    const { width, height } = await factoryGetResolution(id);
+    setOriginalWidth(width);
+    setOriginalHeight(height);
+    setWidth(width);
+    setHeight(height);
+    setResolution(100);
+  };
+
+  const items = availableLayers.map((layer) => ({
+    name: layer,
+  }));
 
   return (
     <Flex
@@ -184,58 +158,124 @@ export function ConfigurationPage() {
       gap="size-100"
       justifyContent="space-between"
     >
-      <Heading level={1} marginStart={16}>
-        Configuration
+      <Heading level={1}>
+        {dirty && "*"} {frozen && "[frozen]"} Configuration
       </Heading>
 
-      <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
-        <ConfigurationBase
-          {...{
-            name,
-            setName,
-            description,
-            setDescription,
-            symbol,
-            setSymbol,
-            originalWidth,
-            originalHeight,
-            width,
-            setWidth,
-            height,
-            setHeight,
-            generateBackground,
-            setGenerateBackground,
-            defaultBackground,
-            setDefaultBackground,
-            contractType,
-            setContractType,
-          }}
-        />
-
-        {contractType === "721" ? (
-          <Configuration721
-            {...{
-              cost,
-              setCost,
-              maxMintAmount,
-              setMaxMintAmount,
-            }}
+      <Flex gap="size-100" justifyContent="space-evenly">
+        <Flex direction="column" gap="size-100">
+          <TextField
+            width="100%"
+            isDisabled={frozen}
+            label="Name"
+            value={name}
+            onChange={setName}
           />
-        ) : contractType === "1155" ? (
-          <Configuration1155 {...{}} />
-        ) : null}
 
-        <ConfigurationLayers
-          {...{
-            layers,
-            setLayers,
-          }}
-        />
+          <TextArea
+            width="100%"
+            isDisabled={frozen}
+            label="Description"
+            value={description}
+            onChange={setDescription}
+          />
+
+          <TextField
+            width="100%"
+            isDisabled={frozen}
+            label="Symbol"
+            value={symbol}
+            onChange={setSymbol}
+          />
+
+          <Slider
+            width="100%"
+            isDisabled={frozen}
+            label="Resolution"
+            value={resolution}
+            minValue={10}
+            maxValue={100}
+            onChange={onResolutionChange}
+          />
+
+          <Flex gap="size-100" alignItems="end">
+            <NumberField
+              isDisabled={frozen}
+              label="Width"
+              value={width}
+              onChange={setWidth}
+              isReadOnly
+            />
+
+            <NumberField
+              isDisabled={frozen}
+              label="Height"
+              value={height}
+              onChange={setHeight}
+              isReadOnly
+            />
+            <ActionButton isDisabled={frozen} onPress={onRefreshResolution}>
+              <Refresh />
+            </ActionButton>
+          </Flex>
+
+          <Switch
+            width="100%"
+            isDisabled={frozen}
+            isSelected={generateBackground}
+            onChange={setGenerateBackground}
+          >
+            Generate Background
+          </Switch>
+
+          <ColorPicker
+            label="Default Background"
+            color={defaultBackground as any}
+            setColor={setDefaultBackground}
+            isDisabled={generateBackground || frozen}
+          />
+
+          <RadioGroup
+            width="100%"
+            isDisabled={frozen}
+            label="Contract type"
+            value={contractType}
+            onChange={(v) => setContractType(v as ContractType)}
+          >
+            <Radio value="721">ERC721</Radio>
+            <Radio value="721_reveal_pause">ERC721_reveal_pause</Radio>
+          </RadioGroup>
+        </Flex>
+
+        <Flex direction="column" gap="size-100">
+          <Heading>Layers</Heading>
+          <ListBox
+            disabledKeys={frozen ? availableLayers : []}
+            width="size-2400"
+            selectionMode="multiple"
+            aria-label="Pick an animal"
+            items={items}
+            defaultSelectedKeys={layers}
+            onSelectionChange={(selectedKeys) =>
+              setLayers([...selectedKeys] as string[])
+            }
+          >
+            {(item) => <Item key={item.name}>{item.name}</Item>}
+          </ListBox>
+        </Flex>
+
+        {_frozen && (
+          <Flex>
+            <Switch isSelected={frozen} onChange={setFrozen}>
+              Frozen
+            </Switch>
+          </Flex>
+        )}
       </Flex>
 
-      <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
-        <Button variant="cta" onPress={onContinue} isDisabled={!canContinue}>
-          Continue!
+      <ButtonGroup align="end">
+        <Button variant="cta" onPress={onSave}>
+          Save
         </Button>
       </ButtonGroup>
     </Flex>

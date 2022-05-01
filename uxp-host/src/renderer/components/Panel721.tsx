@@ -1,253 +1,166 @@
-import React from "react";
-import { Flex } from "@adobe/react-spectrum";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { TaskItem } from "./TaskItem";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { Contract, utils } from "ethers";
-import { chopAddress } from "../utils";
-// import { OpenSeaPort } from "opensea-js";
+import React, { useMemo, useState } from "react";
+
+import {
+  ActionButton,
+  Flex,
+  Heading,
+  Item,
+  Menu,
+  MenuTrigger,
+  NumberField,
+  View,
+  Well,
+} from "@adobe/react-spectrum";
+import Play from "@spectrum-icons/workflow/Play";
+
+import { mintDrop, sellDrop } from "../ipc";
+import { Deployment } from "../typings";
+import { useErrorHandler } from "./ErrorHandler";
+import { OutputItemProps } from "./OutputItem";
+import { MINT_N } from "../constants";
 
 interface Panel721Props {
-  task: (name: string, callback: (...args: any[]) => void) => () => void;
-  contract: Contract;
-  addOutput: (output: any) => void;
-  // seaport: OpenSeaPort;
+  deployment: Deployment;
+  id: string;
+  providerId: string;
+  contractId: string;
+  providerEngineId: string;
+  setWorking: (working: boolean) => void;
+  addOutput: (output: OutputItemProps) => void;
+  increaseDropNumber: () => void;
 }
 
 export const Panel721: React.FC<Panel721Props> = ({
-  task,
-  contract,
+  deployment,
+  id,
+  providerId,
+  contractId,
+  providerEngineId,
+  setWorking,
   addOutput,
-  // seaport,
+  increaseDropNumber,
 }) => {
-  const onCost = task("cost", async () => {
-    const cost = await contract.cost();
+  const task = useErrorHandler(setWorking);
 
-    addOutput({
-      title: "Cost",
-      text: utils.formatUnits(cost.toString(), "ether"),
-      isCopiable: true,
-    });
-  });
+  const { dropNumber, generation } = deployment;
+  const { drops } = generation;
 
-  const onBalanceOf = task("balance of", async ({ address }) => {
-    if (!address) return;
+  const [gasLimit, setGasLimit] = useState(250000);
 
-    const balance = await contract.balanceOf(address);
-
-    addOutput({
-      title: `Balance of ${chopAddress(address)}`,
-      text: balance.toString(),
-      isCopiable: true,
-    });
-  });
-
-  const onTokenOfOwnerByIndex = task(
-    "token of owner by index",
-    async ({ address, index }) => {
-      if (!address || !index) return;
-
-      const n = await contract.tokenOfOwnerByIndex(address, index);
-
-      addOutput({
-        title: "Token of owner by index",
-        text: n.toString(),
-        isCopiable: true,
-      });
-    }
+  const hasUnmintedDrops = useMemo(
+    () => dropNumber < drops.length,
+    [deployment]
   );
 
-  const onTokenURI = task("token URI", async ({ index }) => {
-    if (!index) return;
+  const dropToMint = useMemo(
+    () => (hasUnmintedDrops ? drops[dropNumber] : null),
+    [deployment, hasUnmintedDrops]
+  );
 
-    const uri = await contract.tokenURI(index);
+  const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
 
-    addOutput({
-      title: "Token URI",
-      text: uri,
-      isCopiable: true,
-    });
-  });
+  const onMintDrop = task("mint drop", async () => {
+    if (!providerId || !contractId)
+      throw new Error("Must create provider first");
 
-  const onMint = task("mint", async ({ payable, mint }) => {
-    if (!payable || !mint) return;
-
-    let tx;
-    // let receipt;
-
-    tx = await contract.mint(mint, {
-      value: utils.parseEther(payable),
-    });
-    // receipt =
-    await tx.wait();
+    await mintDrop(id, providerId, contractId, dropToMint, gasLimit);
 
     addOutput({
       title: "Minted",
-      text: mint.toString(),
+      text: "",
       isCopiable: true,
     });
+
+    increaseDropNumber();
   });
 
-  const onSetCost = task("set cost", async ({ cost }) => {
-    if (!cost) return;
+  const onSellDrop = task("sell drop", async () => {
+    if (!providerEngineId)
+      throw new Error("Must create provider with private key first");
 
-    let tx;
-    // let receipt;
-
-    tx = await contract.setCost(utils.parseEther(cost));
-    // receipt =
-    await tx.wait();
+    await sellDrop(
+      id,
+      providerEngineId,
+      deployment,
+      drops.find(({ name }) => name === dropNameToSell)
+    );
 
     addOutput({
-      title: "Cost set",
-      text: cost.toString(),
+      title: "Listed",
+      text: "",
       isCopiable: true,
     });
   });
 
-  const onSetMaxMintAmount = task("set max mint amount", async ({ amount }) => {
-    if (!amount) return;
-
-    let tx;
-    // let receipt;
-
-    tx = await contract.setMaxMintAmount(utils.parseEther(amount));
-    // receipt =
-    await tx.wait();
-
-    addOutput({
-      title: "Max mint amount set",
-      text: amount.toString(),
-      isCopiable: true,
-    });
-  });
-
-  const onWithdraw = task("withdraw", async () => {
-    let tx;
-    // let receipt;
-
-    tx = await contract.withdraw();
-    // receipt =
-    await tx.wait();
-
-    addOutput({
-      title: "Withdrawn",
-      text: "true",
-      isCopiable: true,
-    });
-  });
-
-  const onSell = task("sell", async () => {
-    // const expirationTime = Math.round(Date.now() / 1000 + 60 * 60 * 24);
-    // const auction = await seaport.createSellOrder({
-    //   expirationTime,
-    //   accountAddress: "0xa4BfC85ad65428E600864C9d6C04065670996c1e",
-    //   startAmount: 1,
-    //   asset: {
-    //     tokenId: "1",
-    //     tokenAddress: contract.address,
-    //   },
-    // });
-
-    addOutput({
-      title: "Sell order created",
-      text: "true",
-      isCopiable: true,
-    });
-  });
+  const dropsItems = drops.map(({ name }) => ({ name }));
 
   return (
     <>
-      <Flex direction="column" gap="size-100">
-        <TaskItem task="Cost" onRun={onCost} />
-        <TaskItem
-          task="Balance of"
-          onRun={onBalanceOf}
-          fields={[
-            {
-              key: "address",
-              type: "address",
-              label: "Address",
-            },
-          ]}
-        />
+      <View
+        borderWidth="thin"
+        borderColor="dark"
+        borderRadius="medium"
+        padding="size-100"
+      >
+        <Flex direction="column" gap="size-100">
+          <Flex
+            gap="size-100"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Heading>Mint drop</Heading>
+            <ActionButton onPress={onMintDrop} isDisabled={!dropToMint}>
+              <Play />
+            </ActionButton>
+          </Flex>
 
-        <TaskItem
-          task="Token of owner by index"
-          onRun={onTokenOfOwnerByIndex}
-          fields={[
-            {
-              key: "address",
-              type: "address",
-              label: "Address",
-            },
-            {
-              key: "index",
-              type: "int",
-              label: "Index",
-            },
-          ]}
-        />
+          {dropToMint && <Well>{dropToMint.name}</Well>}
 
-        <TaskItem
-          task="Token URI"
-          onRun={onTokenURI}
-          fields={[
-            {
-              key: "index",
-              type: "int",
-              label: "Token Index",
-            },
-          ]}
-        />
-      </Flex>
+          <NumberField
+            width="100%"
+            label="Gas limit per transaction"
+            value={gasLimit}
+            onChange={setGasLimit}
+          />
 
-      <Flex direction="column" gap="size-100">
-        <TaskItem
-          task="Mint"
-          onRun={onMint}
-          fields={[
-            {
-              key: "payable",
-              type: "string",
-              label: "Payable amount",
-            },
-            {
-              key: "mint",
-              type: "int",
-              label: "Mint amount",
-            },
-          ]}
-        />
+          <Well>{Math.ceil(dropToMint.ids.length / MINT_N)} transactions</Well>
+        </Flex>
+      </View>
 
-        <TaskItem
-          task="Set cost"
-          onRun={onSetCost}
-          fields={[
-            {
-              key: "cost",
-              type: "string",
-              label: "Cost",
-            },
-          ]}
-        />
-
-        <TaskItem
-          task="Set max Mint amount"
-          onRun={onSetMaxMintAmount}
-          fields={[
-            {
-              key: "amount",
-              type: "int",
-              label: "Amount",
-            },
-          ]}
-        />
-
-        <TaskItem task="Withdraw" onRun={onWithdraw} />
-
-        {/* <TaskItem task="Sell" onRun={onSell} /> */}
-      </Flex>
+      <View
+        borderWidth="thin"
+        borderColor="dark"
+        borderRadius="medium"
+        padding="size-100"
+      >
+        <Flex direction="column" gap="size-100">
+          <Flex
+            gap="size-100"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Heading>Sell drop</Heading>
+            <ActionButton onPress={onSellDrop}>
+              <Play />
+            </ActionButton>
+          </Flex>
+          <MenuTrigger>
+            <ActionButton width="100%">{dropNameToSell}</ActionButton>
+            <Menu
+              items={dropsItems}
+              selectionMode="single"
+              disallowEmptySelection={true}
+              selectedKeys={[dropNameToSell]}
+              onSelectionChange={(selectedKeys) => {
+                const selectedKey = [...selectedKeys].shift() as string;
+                setDropNameToSell(selectedKey);
+              }}
+            >
+              {({ name }) => <Item key={name}>{name}</Item>}
+            </Menu>
+          </MenuTrigger>
+        </Flex>
+      </View>
     </>
   );
 };

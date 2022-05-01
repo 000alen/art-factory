@@ -1,275 +1,357 @@
-import React, { useEffect } from "react";
-import { createContext, useState, useContext, useRef } from "react";
-import { RootNode } from "./RootNode";
-import { LayerNode } from "./LayerNode";
-import { RenderNode } from "./RenderNode";
-import { CustomEdge } from "./CustomEdge";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import ReactFlow, {
-  addEdge,
-  removeElements,
-  Controls,
-  Background,
-  getOutgoers,
-  getIncomers,
-  BackgroundVariant,
-  Elements as FlowElements,
-  Node as FlowNode,
-  Edge as FlowEdge,
-  Connection as FlowConnection,
+    addEdge, Background, BackgroundVariant, Connection as FlowConnection, Controls,
+    Edge as FlowEdge, EdgeChange as FlowEdgeChange, Node as FlowNode, NodeChange as FlowNodeChange,
+    ReactFlowInstance, useEdgesState, useNodesState
 } from "react-flow-renderer";
-import { BundleNode } from "./BundleNode";
+
 import {
-  NodesAndEdges,
-  Node,
-  Configuration,
-  RenderNode as IRenderNode,
-  BundleNode as IBundleNode,
-  Edge,
-} from "../typings";
-import { v4 as uuid } from "uuid";
+    DEFAULT_BLENDING, DEFAULT_NODES, DEFAULT_OPACITY, DEFAULT_PRICE, DEFAULT_SALE_TIME,
+    DEFAULT_SALE_TYPE, MAX_SIZE
+} from "../constants";
+import { factoryComposeTraits, factoryComputeMaxCombinations, factoryGetTraitImage } from "../ipc";
+import { Trait } from "../typings";
+import { dashedName, getId, hash, spacedName } from "../utils";
+import { BundleNode, BundleNodeComponentData } from "./BundleNode";
+import { CustomEdge } from "./CustomEdge";
+import { LayerNode, LayerNodeComponentData } from "./LayerNode";
+import { RenderNode, RenderNodeComponentData } from "./RenderNode";
+import { RootNode } from "./RootNode";
 
 interface NodesContextProviderProps {
+  id: string;
   autoPlace?: boolean;
-  elements: FlowElements;
-  setElements: (
-    elements: FlowElements | ((prev: FlowElements) => FlowElements)
-  ) => void;
-  partialConfiguration: Partial<Configuration>;
-  buffers: Buffer[];
-  urls: string[];
-  partialNodes?: any[];
+  layers: string[];
+  traits: Trait[];
+  setter: (getter: () => NodesInstance) => void;
+
+  initialNodes?: FlowNode[];
+  initialEdges?: FlowEdge[];
+  initialRenderIds?: Record<string, string>;
+  initialNs?: Record<string, number>;
+  initialIgnored?: string[];
+  initialSalesTypes?: Record<string, string>;
+  initialStartingPrices?: Record<string, number>;
+  initialEndingPrices?: Record<string, number>;
+  initialSalesTimes?: Record<string, number>;
+
+  setDirty: (dirty: boolean) => void;
 }
 
-let id = 0;
-export const getId = () => `${id++}`;
+interface INodesContext {
+  id: string;
 
-const nodeTypes = {
+  reactFlowWrapperRef: React.RefObject<HTMLDivElement>;
+  reactFlowInstance: any;
+
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+
+  onInit: (reactFlowInstance: any) => void;
+  onNodesChange: (changes: FlowNodeChange[]) => void;
+  onEdgesChange: (changes: FlowEdgeChange[]) => void;
+  onConnect: (connection: FlowConnection) => void;
+  onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
+}
+
+export interface NodesInstance {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  urls: Record<string, string>;
+  composedUrls: Record<string, string>;
+  renderIds: Record<string, string>;
+  ns: Record<string, number>;
+  ignored: string[];
+  salesTypes: Record<string, string>;
+  startingPrices: Record<string, number>;
+  endingPrices: Record<string, number>;
+  salesTimes: Record<string, number>;
+}
+
+export const NODE_TYPES = {
   rootNode: RootNode,
   layerNode: LayerNode,
   renderNode: RenderNode,
   bundleNode: BundleNode,
 };
 
-const edgeTypes = {
+export const EDGE_TYPES = {
   customEdge: CustomEdge,
 };
 
-export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
-  const root = nodesAndEdges.find((node) => node.type === "rootNode") as Node;
+export function useNodes(
+  id: string,
+  layers: string[],
+  traits: Trait[],
+  setter: (getter: () => NodesInstance) => void,
+  initialNodes?: FlowNode[],
+  initialEdges?: FlowEdge[],
+  initialRenderIds?: Record<string, string>,
+  initialNs?: Record<string, number>,
+  initialIgnored?: string[],
+  initialSalesTypes?: Record<string, string>,
+  initialStartingPrices?: Record<string, number>,
+  initialEndingPrices?: Record<string, number>,
+  initialSalesTimes?: Record<string, number>,
+  setDirty?: (dirty: boolean) => void
+) {
+  const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
+  const [nodes, setNodes, _onNodesChange] = useNodesState(DEFAULT_NODES);
+  const [edges, setEdges, _onEdgesChange] = useEdgesState([]);
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [composedUrls, setComposedUrls] = useState<Record<string, string>>({});
+  const [renderIds, setRenderIds] = useState<Record<string, string>>(
+    initialRenderIds || {}
+  );
+  const [ns, setNs] = useState<Record<string, number>>(initialNs || {});
+  const [maxNs, setMaxNs] = useState<Record<string, number>>({});
+  const [ignored, setIgnored] = useState<string[]>(initialIgnored || []);
+  const [salesTypes, setSalesTypes] = useState<Record<string, string>>(
+    initialSalesTypes || {}
+  );
+  const [startingPrices, setStartingPrices] = useState<Record<string, number>>(
+    initialStartingPrices || {}
+  );
+  const [endingPrices, setEndingPrices] = useState<Record<string, number>>(
+    initialEndingPrices || {}
+  );
+  const [salesTimes, setSalesTimes] = useState<Record<string, number>>(
+    initialSalesTimes || {}
+  );
 
-  const stack: {
-    node: Node;
-    path: Node[];
-  }[] = [
-    {
-      node: root,
-      path: [root],
-    },
-  ];
+  useEffect(() => {
+    if (traits.length === 0) return;
+    if (initialNodes) setNodes(hydrateNodes(initialNodes));
+    if (initialEdges) setEdges(hydrateEdges(initialEdges));
+  }, [initialNodes, initialEdges, traits]);
 
-  const savedPaths = [];
-  while (stack.length > 0) {
-    const actualNode = stack.pop();
-    const neighbors = getOutgoers(
-      actualNode.node as FlowNode,
-      nodesAndEdges as FlowElements
-    ) as Node[];
+  useEffect(() => {
+    setter(() => ({
+      nodes,
+      edges,
+      urls,
+      composedUrls,
+      renderIds,
+      ns,
+      ignored,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
+    }));
+  }, [
+    setter,
+    nodes,
+    edges,
+    urls,
+    composedUrls,
+    renderIds,
+    ns,
+    ignored,
+    salesTypes,
+    startingPrices,
+    endingPrices,
+    salesTimes,
+  ]);
 
-    if (actualNode.node.type === "renderNode") {
-      savedPaths.push(actualNode.path);
-    } else {
-      for (const v of neighbors) {
-        stack.push({
-          node: v,
-          path: [...actualNode.path, v],
-        });
-      }
-    }
-  }
-
-  return savedPaths;
-}
-
-export function getBundles(
-  nodesAndEdges: NodesAndEdges
-): Map<string, string[]> {
-  const bundleNodes = nodesAndEdges.filter(
-    (node) => node.type === "bundleNode"
-  ) as IBundleNode[];
-
-  const bundles = new Map();
-  for (const bundleNode of bundleNodes) {
-    bundles.set(
-      bundleNode.data.bundle,
-      (
-        getIncomers(
-          bundleNode as FlowNode,
-          nodesAndEdges as FlowElements
-        ) as IRenderNode[]
-      ).map((node) => node.data.renderId)
-    );
-  }
-
-  return bundles;
-}
-
-const cleanRender = (element: any) =>
-  element.type === "renderNode"
-    ? {
-        ...element,
-        data: {
-          ...element.data,
-          connected: false,
-          buffers: undefined,
-          urls: undefined,
-        },
-      }
-    : element;
-
-const populateRender = (element: any, toUpdate: any) =>
-  element.id in toUpdate
-    ? {
-        ...element,
-        data: {
-          ...element.data,
-          connected: true,
-          buffers: toUpdate[element.id][0],
-          urls: toUpdate[element.id][1],
-        },
-      }
-    : element;
-
-const property =
-  (
-    name: string,
-    setElements: (value: any | ((prevValue: any) => any)) => void
-  ) =>
-  (id: string, value: any) =>
-    setElements((prevElements: any) =>
-      prevElements.map((prevElement: any) =>
-        prevElement.id === id
-          ? {
-              ...prevElement,
-              data: { ...prevElement.data, [name]: value },
-            }
-          : prevElement
+  const onNodesChange = (changes: FlowNodeChange[]) => {
+    _onNodesChange(
+      changes.filter(
+        (change) => !(change.type === "remove" && change.id === "root")
       )
     );
+    setDirty(true);
+  };
 
-const makeNode = (
-  id: string,
-  type: string,
-  position: any,
-  name: string,
-  buffers: Buffer[],
-  urls: string[],
-  partialConfiguration: Partial<Configuration>,
-  onChangeOpacity: (id: string, value: number) => void,
-  onChangeBlending: (id: string, value: string) => void,
-  onChangeN: (id: string, value: number) => void,
-  onChangeBundle: (id: string, value: string) => void
-) => ({
-  id,
-  type,
-  position,
-  data: {
-    ...(type === "layerNode"
-      ? {
-          name,
-          buffer:
-            buffers[
-              partialConfiguration.layers.findIndex((e: string) => e === name)
-            ],
-          url: urls[
-            partialConfiguration.layers.findIndex((e: string) => e === name)
-          ],
-          opacity: 1,
-          blending: "normal",
-          onChangeOpacity: (opacity: number) => onChangeOpacity(id, opacity),
-          onChangeBlending: (blending: string) =>
-            onChangeBlending(id, blending),
-        }
-      : type === "renderNode"
-      ? {
-          n: 1,
-          renderId: uuid(),
-          onChangeN: (n: number) => onChangeN(id, n),
-        }
-      : type === "bundleNode"
-      ? {
-          bundle: "",
-          onChangeBundle: (bundle: string) => onChangeBundle(id, bundle),
-        }
-      : {}),
-  },
-});
+  const onEdgesChange = (changes: FlowEdgeChange[]) => {
+    _onEdgesChange(changes);
+    setDirty(true);
+  };
 
-export function useNodes(
-  elements: any[],
-  setElements: (elements: any[] | ((prevElements: any[]) => any[])) => void,
-  partialConfiguration: any,
-  buffers: any[],
-  urls: string[]
-) {
-  const reactFlowWrapperRef = useRef(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
-
-  const onChangeBundle = property("bundle", setElements);
-  const onChangeN = property("n", setElements);
-  const onChangeOpacity = property("opacity", setElements);
-  const onChangeBlending = property("blending", setElements);
-
-  const updateRender = () => {
-    setElements((prevElements) => {
-      const toUpdate: Record<string, [Buffer[], string[]]> = {};
-
-      prevElements = prevElements.map(cleanRender);
-
-      getBranches(prevElements).forEach((branch) => {
-        branch.shift();
-        const render = branch.pop() as IRenderNode;
-        const buffers = branch.map((node) => node.data.buffer);
-        const urls = branch.map((node) => node.data.url);
-        toUpdate[render.id] = [buffers, urls];
-      });
-
-      prevElements = prevElements.map((prevElement) =>
-        populateRender(prevElement, toUpdate)
+  const onChange =
+    <T,>(name: string) =>
+    (id: string, value: T) =>
+      setNodes((ns) =>
+        ns.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, [name]: value } } : n
+        )
       );
 
-      return prevElements;
+  const onUpdate =
+    <T,>(types: string[], name: string) =>
+    (value: T) =>
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          types.includes(node.type)
+            ? { ...node, data: { ...node.data, [name]: value } }
+            : node
+        )
+      );
+
+  const update =
+    <T,>(
+      setter: (
+        v: Record<string, T> | ((v: Record<string, T>) => Record<string, T>)
+      ) => void,
+      updater: (v: Record<string, T>) => void
+    ) =>
+    (traits: Trait[], v: T) => {
+      const key = hash(traits);
+      setter((prevV) => {
+        const newV = { ...prevV, [key]: v };
+        updater(newV);
+        return newV;
+      });
+    };
+
+  const request =
+    <T,>(
+      setter: (
+        v: Record<string, T> | ((v: Record<string, T>) => Record<string, T>)
+      ) => void,
+      updater: (v: Record<string, T>) => void,
+      getter: (traits: Trait[]) => T | Promise<T>
+    ) =>
+    async (traits: Trait[]) => {
+      const key = hash(traits);
+      const v = await getter(traits);
+      setter((prevV) => {
+        const newV = { ...prevV, [key]: v };
+        updater(newV);
+        return newV;
+      });
+    };
+
+  const onChangeLayerId = onChange<string>("id");
+  const onChangeLayerOpacity = onChange<number>("opacity");
+  const onChangeLayerBlending = onChange<string>("blending");
+  const onChangeBundleName = onChange<string>("name");
+
+  const onChangeBundleIds = onChange<string[]>("ids");
+  const onChangeBundleSaleType = onChange<string>("saleType");
+  const onChangeBundleStartingPrice = onChange<number>("startingPrice");
+  const onChangeBundleEndingPrice = onChange<number>("endingPrice");
+  const onChangeBundleSaleTime = onChange<number>("saleTime");
+
+  const onUpdateUrls = onUpdate<Record<string, string>>(["layerNode"], "urls");
+  const onUpdateComposedUrls = onUpdate<Record<string, string>>(
+    ["renderNode", "bundleNode", "notRevealedNode"],
+    "composedUrls"
+  );
+  const onUpdateRenderIds = onUpdate<Record<string, string>>(
+    ["renderNode", "bundleNode", "notRevealedNode"],
+    "renderIds"
+  );
+  const onUpdateNs = onUpdate<Record<string, number>>(
+    ["renderNode", "bundleNode"],
+    "ns"
+  );
+  const onUpdateMaxNs = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "maxNs"
+  );
+  const onUpdateIgnored = onUpdate<string[]>(
+    ["renderNode", "bundleNode"],
+    "ignored"
+  );
+  const onUpdateSalesTypes = onUpdate<Record<string, string>>(
+    ["renderNode"],
+    "salesTypes"
+  );
+  const onUpdateStartingPrices = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "startingPrices"
+  );
+  const onUpdateEndingPrices = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "endingPrices"
+  );
+  const onUpdateSalesTimes = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "salesTimes"
+  );
+
+  const updateNs = update<number>(setNs, onUpdateNs);
+  const updateSalesTypes = update<string>(setSalesTypes, onUpdateSalesTypes);
+  const updateStartingPrices = update<number>(
+    setStartingPrices,
+    onUpdateStartingPrices
+  );
+  const updateEndingPrices = update<number>(
+    setEndingPrices,
+    onUpdateEndingPrices
+  );
+  const updateSalesTimes = update<number>(setSalesTimes, onUpdateSalesTimes);
+
+  const requestComposedUrl = request(
+    setComposedUrls,
+    onUpdateComposedUrls,
+    async (traits: Trait[]) =>
+      `data:image/png;base64,${await factoryComposeTraits(
+        id,
+        traits,
+        MAX_SIZE
+      )}`
+  );
+
+  const requestRenderId = request(setRenderIds, onUpdateRenderIds, () =>
+    dashedName()
+  );
+
+  const requestMaxNs = request(
+    setMaxNs,
+    onUpdateMaxNs,
+    async (traits: Trait[]) => await factoryComputeMaxCombinations(id, traits)
+  );
+
+  const requestUrl = async (trait: Trait) => {
+    const key = hash(trait);
+    const url = `data:image/png;base64,${await factoryGetTraitImage(
+      id,
+      trait,
+      MAX_SIZE
+    )}`;
+    setUrls((prevUrls) => {
+      const newUrls = {
+        ...prevUrls,
+        [key]: url,
+      };
+      onUpdateUrls(newUrls);
+      return newUrls;
     });
   };
 
-  const onConnect = (connection: FlowEdge | FlowConnection) => {
-    setElements((prevElements) =>
-      addEdge(
-        { ...connection, type: "customEdge", data: { onEdgeRemove } },
-        prevElements
-      )
-    );
-    updateRender();
+  const updateIgnored = async (traits: Trait[], ignored: boolean) => {
+    const key = hash(traits);
+    setIgnored((prevIgnored) => {
+      const newIgnored = ignored
+        ? [...prevIgnored, key]
+        : prevIgnored.filter((k) => k !== key);
+      onUpdateIgnored(newIgnored);
+      return newIgnored;
+    });
   };
 
-  const onElementsRemove = (elements: FlowElements) => {
-    setElements((prevElements) => removeElements(elements, prevElements));
-    updateRender();
-  };
+  const onConnect = useCallback(
+    (connection: FlowConnection) =>
+      setEdges((eds) =>
+        addEdge(
+          { ...connection, type: "customEdge", data: { onEdgeRemove } },
+          eds
+        )
+      ),
+    [setEdges]
+  );
 
-  const onEdgeRemove = (id: string) => {
-    onElementsRemove([{ id }] as FlowElements);
-  };
-
-  const onLoad = (reactFlowInstance: any) => {
-    setReactFlowInstance(reactFlowInstance);
-  };
-
-  const onDragOver = (event: any) => {
+  const onDragOver = (event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   };
 
-  const onDrop = (event: any) => {
+  const onDrop = async (event: React.DragEvent) => {
     event.preventDefault();
 
     const reactFlowBounds = reactFlowWrapperRef.current.getBoundingClientRect();
@@ -277,69 +359,220 @@ export function useNodes(
       event.dataTransfer.getData("application/reactflow")
     );
 
-    const newNode = makeNode(
+    const newNode = await make(
       getId(),
       type,
       reactFlowInstance.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       }),
-      name,
-      buffers,
-      urls,
-      partialConfiguration,
-      onChangeOpacity,
-      onChangeBlending,
-      onChangeN,
-      onChangeBundle
+      name
     );
 
-    setElements((prevElements) => prevElements.concat(newNode));
-    updateRender();
+    onNodesChange([
+      {
+        item: newNode,
+        type: "add",
+      },
+    ]);
   };
 
+  const onEdgeRemove = (id: string) =>
+    setEdges((es) => es.filter((e) => e.id !== id));
+
+  const onInit = setReactFlowInstance;
+
+  const makeData = async (type: string, name: string) => {
+    switch (type) {
+      case "layerNode":
+        return {
+          urls,
+          requestUrl,
+          onChangeLayerId,
+          onChangeLayerOpacity,
+          onChangeLayerBlending,
+
+          trait: traits[layers.findIndex((e: string) => e === name)],
+          id: dashedName(),
+          name,
+          opacity: DEFAULT_OPACITY,
+          blending: DEFAULT_BLENDING,
+        } as LayerNodeComponentData;
+      case "renderNode":
+        return {
+          composedUrls,
+          renderIds,
+          ns,
+          maxNs,
+          ignored,
+          salesTypes,
+          startingPrices,
+          endingPrices,
+          salesTimes,
+
+          requestComposedUrl,
+          requestRenderId,
+          requestMaxNs,
+          updateNs,
+          updateIgnored,
+          updateSalesTypes,
+          updateStartingPrices,
+          updateEndingPrices,
+          updateSalesTimes,
+        } as RenderNodeComponentData;
+      case "bundleNode":
+        return {
+          composedUrls,
+          renderIds,
+          ns,
+          ignored,
+
+          name: spacedName(),
+          ids: null,
+          saleType: DEFAULT_SALE_TYPE,
+          startingPrice: DEFAULT_PRICE,
+          endingPrice: DEFAULT_PRICE,
+          saleTime: DEFAULT_SALE_TIME,
+
+          onChangeBundleName,
+          onChangeBundleIds,
+          onChangeBundleSaleType,
+          onChangeBundleStartingPrice,
+          onChangeBundleEndingPrice,
+          onChangeBundleSaleTime,
+        } as BundleNodeComponentData;
+      default:
+        return {};
+    }
+  };
+
+  const make = async (
+    id: string,
+    type: string,
+    position: any,
+    name: string
+  ) => {
+    const data = await makeData(type, name);
+
+    return {
+      id,
+      type,
+      position,
+      data,
+    };
+  };
+
+  const hydrateNodeData = (type: string, data: any): any => {
+    switch (type) {
+      case "layerNode":
+        return {
+          ...data,
+
+          urls,
+          requestUrl,
+          onChangeLayerId,
+          onChangeLayerOpacity,
+          onChangeLayerBlending,
+
+          trait: traits[layers.findIndex((e: string) => e === data.name)],
+        } as LayerNodeComponentData;
+      case "renderNode":
+        return {
+          ...data,
+
+          composedUrls,
+          renderIds,
+          ns,
+          maxNs,
+          ignored,
+          salesTypes,
+          startingPrices,
+          endingPrices,
+          salesTimes,
+
+          requestComposedUrl,
+          requestRenderId,
+          requestMaxNs,
+          updateNs,
+          updateIgnored,
+          updateSalesTypes,
+          updateStartingPrices,
+          updateEndingPrices,
+          updateSalesTimes,
+        } as RenderNodeComponentData;
+      case "bundleNode":
+        return {
+          ...data,
+
+          composedUrls,
+          renderIds,
+          ns,
+          ignored,
+
+          onChangeBundleName,
+          onChangeBundleIds,
+          onChangeBundleSaleType,
+          onChangeBundleStartingPrice,
+          onChangeBundleEndingPrice,
+          onChangeBundleSaleTime,
+        } as BundleNodeComponentData;
+      default:
+        return data;
+    }
+  };
+
+  const hydrateNodes = (nodes: FlowNode[]): FlowNode[] =>
+    nodes.map((node) => ({
+      ...node,
+      data: hydrateNodeData(node.type, node.data),
+    }));
+
+  const hydrateEdgeDate = (type: string, data: any): any => {
+    switch (type) {
+      case "customEdge":
+        return {
+          ...data,
+          onEdgeRemove,
+        };
+      default:
+        return data;
+    }
+  };
+
+  const hydrateEdges = (edges: FlowEdge[]): FlowEdge[] =>
+    edges.map((edge) => ({
+      ...edge,
+      data: hydrateEdgeDate(edge.type, edge.data),
+    }));
+
   return {
+    id,
     reactFlowWrapperRef,
     reactFlowInstance,
-    elements,
-    onChangeN,
-    onChangeOpacity,
-    onChangeBlending,
-    onChangeBundle,
-    updateRender,
+    nodes,
+    setNodes,
+    edges,
+    setEdges,
+    onInit,
+    onNodesChange,
+    onEdgesChange,
     onConnect,
-    onElementsRemove,
-    onEdgeRemove,
-    onLoad,
     onDragOver,
     onDrop,
   };
 }
 
-export const NodesContext = createContext({
-  reactFlowWrapperRef: null,
-  reactFlowInstance: null,
-  elements: [],
-  onChangeN: (id: string, n: number) => {},
-  onChangeOpacity: (id: string, opacity: number) => {},
-  onChangeBlending: (id: string, blending: string) => {},
-  onChangeBundle: (id: string, bundle: string) => {},
-  updateRender: () => {},
-  onConnect: (connection: FlowEdge | FlowConnection) => {},
-  onElementsRemove: (elements: FlowElements) => {},
-  onEdgeRemove: (id: string) => {},
-  onLoad: (reactFlowInstance: any) => {},
-  onDragOver: (event: any) => {},
-  onDrop: (event: any) => {},
-});
+export const NodesContext = createContext<INodesContext>(null);
 
 export const Nodes: React.FC = ({ children }) => {
   const {
     reactFlowWrapperRef,
-    elements,
+    nodes,
+    edges,
+    onInit,
+    onNodesChange,
+    onEdgesChange,
     onConnect,
-    onElementsRemove,
-    onLoad,
     onDragOver,
     onDrop,
   } = useContext(NodesContext);
@@ -347,16 +580,19 @@ export const Nodes: React.FC = ({ children }) => {
   return (
     <div className="w-full h-full" ref={reactFlowWrapperRef}>
       <ReactFlow
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        elements={elements}
+        nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
+        nodes={nodes}
+        edges={edges}
+        onInit={onInit}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onElementsRemove={onElementsRemove}
-        onLoad={onLoad}
-        onDrop={onDrop}
         onDragOver={onDragOver}
+        onDrop={onDrop}
+        attributionPosition="top-right"
       >
-        <Controls />
+        <Controls showInteractive={false} />
         <Background variant={BackgroundVariant.Dots} gap={50} />
         {children}
       </ReactFlow>
@@ -365,44 +601,45 @@ export const Nodes: React.FC = ({ children }) => {
 };
 
 export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
+  id,
   autoPlace = true,
-  elements,
-  setElements,
-  partialConfiguration,
-  buffers,
-  urls,
+  layers,
   children,
+  traits,
+  setter,
+
+  initialNodes,
+  initialEdges,
+  initialRenderIds,
+  initialNs,
+  initialIgnored,
+
+  initialSalesTypes,
+  initialStartingPrices,
+  initialEndingPrices,
+  initialSalesTimes,
+
+  setDirty,
 }) => {
-  const {
-    reactFlowWrapperRef,
-    reactFlowInstance,
-    onChangeN,
-    updateRender,
-    onConnect,
-    onElementsRemove,
-    onEdgeRemove,
-    onLoad,
-    onDragOver,
-    onDrop,
-  } = useNodes(elements, setElements, partialConfiguration, buffers, urls);
+  const value = useNodes(
+    id,
+    layers,
+    traits,
+    setter,
+    initialNodes,
+    initialEdges,
+    initialRenderIds,
+    initialNs,
+    initialIgnored,
+    initialSalesTypes,
+    initialStartingPrices,
+    initialEndingPrices,
+    initialSalesTimes,
+    setDirty
+  );
 
   return (
-    <NodesContext.Provider
-      // @ts-ignore
-      value={{
-        reactFlowWrapperRef,
-        reactFlowInstance,
-        elements,
-        onChangeN,
-        updateRender,
-        onConnect,
-        onElementsRemove,
-        onEdgeRemove,
-        onLoad,
-        onDragOver,
-        onDrop,
-      }}
-    >
+    <NodesContext.Provider value={value}>
       {autoPlace && <Nodes />}
       {children}
     </NodesContext.Provider>

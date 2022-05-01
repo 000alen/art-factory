@@ -1,15 +1,15 @@
+import "@spectrum-css/fieldlabel/dist/index-vars.css";
+import "react-medium-image-zoom/dist/styles.css";
+import "./index.css";
+
 import React from "react";
 import ReactDOM from "react-dom";
-import {
-  Provider as SpectrumProvider,
-  defaultTheme,
-  darkTheme,
-} from "@adobe/react-spectrum";
+
+import { darkTheme, Provider as SpectrumProvider } from "@adobe/react-spectrum";
 
 import { App } from "./App";
 import { socket, SocketContext } from "./components/SocketContext";
 import { UXPContextProvider } from "./components/UXPContext";
-import "./index.css";
 
 ReactDOM.render(
   <SocketContext.Provider value={socket}>

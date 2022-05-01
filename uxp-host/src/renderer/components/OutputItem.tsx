@@ -1,8 +1,9 @@
 import React from "react";
-import { Flex, Text, ActionButton, Heading } from "@adobe/react-spectrum";
+
+import { ActionButton, Flex, Heading, Text } from "@adobe/react-spectrum";
 import Copy from "@spectrum-icons/workflow/Copy";
 
-interface OutputItemProps {
+export interface OutputItemProps {
   title: string;
   text: string;
   isCopiable: boolean;

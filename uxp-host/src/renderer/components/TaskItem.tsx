@@ -1,50 +1,128 @@
+// #region Declarations
+interface BaseField<T> {
+  key: string;
+  type: string;
+  label: string;
+  value: T;
+}
+
+interface AddressField extends BaseField<string> {
+  type: "address";
+}
+
+interface IntField extends BaseField<number> {
+  type: "int";
+  initial: number;
+  min: number;
+  max: number;
+}
+
+interface FloatField extends BaseField<number> {
+  type: "float";
+  initial: number;
+  step: number;
+  min: number;
+  max: number;
+}
+
+interface StringField extends BaseField<string> {
+  type: "string";
+  initial: string;
+}
+
+interface PasswordField extends BaseField<string> {
+  type: "password";
+  initial: string;
+}
+
+interface AddressesField extends BaseField<string> {
+  type: "address[]";
+}
+
+interface IntsField extends BaseField<number> {
+  type: "int[]";
+  initial: number;
+  min: number;
+  max: number;
+}
+
+interface FloatsField extends BaseField<number> {
+  type: "float[]";
+  initial: number;
+  step: number;
+  min: number;
+  max: number;
+}
+
+interface StringsField extends BaseField<string> {
+  type: "string[]";
+  initial: string;
+}
+
+export interface CustomField extends BaseField<any> {
+  type: "custom";
+  [key: string]: any;
+}
+
+type Field =
+  | AddressField
+  | IntField
+  | FloatField
+  | StringField
+  | PasswordField
+  | AddressesField
+  | IntsField
+  | FloatsField
+  | StringsField
+  | CustomField;
+
+// #endregion
+
 import React, { useState } from "react";
+
 import {
-  Flex,
-  View,
-  Text,
-  ActionButton,
-  TextField,
-  NumberField,
-  DialogTrigger,
-  Dialog,
-  Content,
-  ButtonGroup,
-  Button,
-  Heading,
-  Divider,
+    ActionButton, Button, ButtonGroup, Content, Dialog, DialogTrigger, Divider, Flex, Heading,
+    NumberField, TextField, View
 } from "@adobe/react-spectrum";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
 import Play from "@spectrum-icons/workflow/Play";
 import ShowMenu from "@spectrum-icons/workflow/ShowMenu";
 
 import { ArrayOf } from "./ArrayOf";
 
 interface TaskDialogProps {
-  task: string;
+  name: string;
+  state: Record<string, any>;
+  fields?: Field[];
+  resolveField: (field: Field) => any;
   onHideDialog: () => void;
-  onRun: () => void;
-  fields: any[];
-  resolveField: (field: string) => any;
+  onRun: (...args: any[]) => void;
 }
 
 interface TaskItemProps {
-  task: string;
+  name: string;
+  fields?: Field[];
+  useDialog?: boolean;
+  isDisabled?: boolean;
+  resolveCustomFields?: (
+    field: CustomField,
+    value: any,
+    onChange: (value: any) => void,
+    isDisabled: boolean
+  ) => any;
   onRun: (...args: any[]) => void;
-  fields?: any[];
-  dialog?: boolean;
 }
 
 const TaskDialog: React.FC<TaskDialogProps> = ({
-  task,
-  onHideDialog,
-  onRun,
+  name,
+  state,
   fields,
   resolveField,
+  onHideDialog,
+  onRun,
 }) => {
   return (
     <Dialog>
-      <Heading>{task}</Heading>
+      <Heading>{name}</Heading>
       <Divider />
 
       <Content>
@@ -57,7 +135,13 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
         <Button variant="secondary" onPress={onHideDialog}>
           Close
         </Button>
-        <Button variant="cta" onPress={() => onRun && onRun()}>
+        <Button
+          variant="cta"
+          onPress={() => {
+            onRun(state);
+            onHideDialog();
+          }}
+        >
           Run
         </Button>
       </ButtonGroup>
@@ -66,24 +150,34 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
 };
 
 export const TaskItem: React.FC<TaskItemProps> = ({
-  task,
+  name,
   onRun,
   fields,
-  dialog,
+  resolveCustomFields,
+  useDialog,
+  isDisabled = false,
 }) => {
   const [state, setState] = useState({});
   const [dialogShown, setDialogShown] = useState(false);
 
-  const onSet = (key: string, value: any) => {
+  const onSet = (key: string, value: any) =>
     setState({ ...state, [key]: value });
+
+  const onShowDialog = () => setDialogShown(true);
+
+  const onHideDialog = () => setDialogShown(false);
+
+  const onPress = () => {
+    if (useDialog) onShowDialog();
+    else onRun(state);
   };
 
-  // {key, type, label}
-  const resolveField = (field: any) => {
+  const resolveField = (field: Field) => {
     switch (field.type) {
       case "address":
         return (
           <TextField
+            isDisabled={isDisabled}
             key={field.key}
             label={field.label}
             placeholder="0x"
@@ -95,35 +189,52 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         return (
           <NumberField
             key={field.key}
+            isDisabled={isDisabled}
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
-            minValue={1}
+            step={1}
+            minValue={field.min}
+            maxValue={field.max}
           />
         );
       case "float":
         return (
           <NumberField
             key={field.key}
+            isDisabled={isDisabled}
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
-            minValue={0}
-            step={0.01}
+            step={field.step}
+            minValue={field.min}
+            maxValue={field.max}
           />
         );
       case "string":
         return (
           <TextField
             key={field.key}
+            isDisabled={isDisabled}
+            label={field.label}
+            onChange={(value) => onSet(field.key, value)}
+          />
+        );
+      case "password":
+        return (
+          <TextField
+            key={field.key}
+            isDisabled={isDisabled}
+            type="password"
             label={field.label}
             onChange={(value) => onSet(field.key, value)}
           />
         );
       case "address[]":
-        // @ts-ignore
         const addresses = state[field.key] || [""];
 
         return (
           <ArrayOf
+            key={field.key}
+            isDisabled={isDisabled}
             Component={TextField}
             props={{ placeholder: "0x" }}
             label={field.label}
@@ -133,49 +244,67 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           />
         );
       case "int[]":
-        // @ts-ignore
-        const ints = state[field.key] || [0];
+        const ints = state[field.key] || [field.initial];
 
         return (
           <ArrayOf
+            key={field.key}
+            isDisabled={isDisabled}
             Component={NumberField}
+            props={{
+              step: 1,
+              minValue: field.min,
+              maxValue: field.max,
+            }}
             label={field.label}
-            emptyValue={0}
+            emptyValue={field.initial}
             items={ints}
             setItems={(value) => onSet(field.key, value)}
           />
         );
-      case "string[]":
-        // @ts-ignore
-        const strings = state[field.key] || [""];
+      case "float[]":
+        const floats = state[field.key] || [field.initial];
 
         return (
           <ArrayOf
+            key={field.key}
+            isDisabled={isDisabled}
+            Component={NumberField}
+            props={{
+              step: field.step,
+              minValue: field.min,
+              maxValue: field.max,
+            }}
+            label={field.label}
+            emptyValue={field.initial}
+            items={floats}
+            setItems={(value) => onSet(field.key, value)}
+          />
+        );
+      case "string[]":
+        const strings = state[field.key] || [field.initial];
+
+        return (
+          <ArrayOf
+            key={field.key}
+            isDisabled={isDisabled}
             Component={TextField}
             label={field.label}
-            emptyValue=""
+            emptyValue={field.initial}
             items={strings}
             setItems={(value) => onSet(field.key, value)}
           />
         );
       default:
-        break;
-    }
-  };
-
-  const onShowDialog = () => {
-    setDialogShown(true);
-  };
-
-  const onHideDialog = () => {
-    setDialogShown(false);
-  };
-
-  const onPress = () => {
-    if (dialog) {
-      onShowDialog();
-    } else {
-      onRun && onRun(state);
+        return (
+          resolveCustomFields &&
+          resolveCustomFields(
+            field,
+            state[(field as CustomField).key],
+            (value) => onSet((field as CustomField).key, value),
+            isDisabled
+          )
+        );
     }
   };
 
@@ -183,7 +312,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     <>
       <DialogTrigger isOpen={dialogShown}>
         {null}
-        <TaskDialog {...{ task, onHideDialog, onRun, fields, resolveField }} />
+        <TaskDialog
+          {...{ name, state, fields, resolveField, onHideDialog, onRun }}
+        />
       </DialogTrigger>
 
       <View
@@ -193,13 +324,17 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         padding="size-100"
       >
         <Flex direction="column" gap="size-100">
-          <Flex alignItems="center" justifyContent="space-between">
-            <Text>{task}</Text>
-            <ActionButton onPress={onPress}>
-              {dialog ? <ShowMenu /> : <Play />}
+          <Flex
+            gap="size-100"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Heading>{name}</Heading>
+            <ActionButton isDisabled={isDisabled} onPress={onPress}>
+              {useDialog ? <ShowMenu /> : <Play />}
             </ActionButton>
           </Flex>
-          {!dialog && fields && fields.map((field) => resolveField(field))}
+          {!useDialog && fields && fields.map((field) => resolveField(field))}
         </Flex>
       </View>
     </>

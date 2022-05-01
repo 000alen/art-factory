@@ -1,508 +1,160 @@
+import { ContractFactory, providers as ethersProviders, utils } from "ethers";
 import fs from "fs";
-import path from "path";
-import Jimp from "jimp";
 import imageSize from "image-size";
-import { tuple } from "immutable-tuple";
+import path from "path";
+import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
-import FormData from "form-data";
-import axios from "axios";
 
 import {
-  CacheNodeData,
+  BUILD_DIR_NAME,
+  DEFAULT_BLENDING,
+  DEFAULT_OPACITY,
+  MAIN_WETH,
+  MINT_N,
+  PARALLEL_LIMIT,
+  RINKEBY_WETH,
+} from "./constants";
+import { accounts, contracts, providers, seaports } from "./ipc";
+import {
+  Bundles,
+  BundlesInfo,
   Collection,
   CollectionItem,
   Configuration,
-  Instance,
+  Deployment,
+  Drop,
+  Generation,
   Layer,
-  LayerNodeData,
-  Node,
-  NodesAndEdges,
+  MetadataItem,
+  SaleType,
   Secrets,
+  Template,
   Trait,
-  RenderNodeData,
-  RenderNode,
-  BundleNode,
 } from "./typings";
-import { append, rarity, removeRarity } from "./utils";
 import {
-  getOutgoers,
-  Elements as FlowElements,
-  Node as FlowNode,
-  getIncomers,
-} from "react-flow-renderer";
-
-export const DEFAULT_BLENDING = "normal";
-export const DEFAULT_OPACITY = 1;
-export const DEFAULT_BACKGROUND = "#ffffff";
-
-// #region Utils
-async function readDir(dir: string): Promise<string[]> {
-  return (await fs.promises.readdir(dir)).filter(
-    (file) => !file.startsWith(".")
-  );
-}
-
-export function choose(
-  traits: Trait[],
-  temperature = 50,
-  randomFunction = Math.random,
-  influence = 2
-): Trait {
-  const T = (temperature - 50) / 50;
-  const n = traits.length;
-  if (!n) return null;
-
-  const total = traits.reduce(
-    (previousTotal, element) => previousTotal + element.rarity,
-    0
-  );
-
-  const average = total / n;
-
-  const urgencies: Record<string, number> = {};
-  const urgencySum = traits.reduce((previousSum, element) => {
-    const { value, rarity } = element;
-    let urgency = rarity + T * influence * (average - rarity);
-    if (urgency < 0) urgency = 0;
-    urgencies[value] = (urgencies[value] || 0) + urgency;
-    return previousSum + urgency;
-  }, 0);
-
-  let currentUrgency = 0;
-  const cumulatedUrgencies: Record<string, number> = {};
-  Object.keys(urgencies).forEach((id) => {
-    currentUrgency += urgencies[id];
-    cumulatedUrgencies[id] = currentUrgency;
-  });
-
-  if (urgencySum <= 0) return null;
-
-  const choice = randomFunction() * urgencySum;
-  const values = Object.keys(cumulatedUrgencies);
-  for (let i = 0; i < values.length; i++) {
-    const value = values[i];
-    const urgency = cumulatedUrgencies[value];
-    if (choice <= urgency) {
-      return traits.find((trait) => trait.value === value);
-    }
-  }
-}
-
-export function getBranches(nodesAndEdges: NodesAndEdges): Node[][] {
-  const root = nodesAndEdges.find((node) => node.type === "rootNode") as Node;
-
-  const stack: {
-    node: Node;
-    path: Node[];
-  }[] = [
-    {
-      node: root,
-      path: [root],
-    },
-  ];
-
-  const savedPaths = [];
-  while (stack.length > 0) {
-    const actualNode = stack.pop();
-    const neighbors = getOutgoers(
-      actualNode.node as FlowNode,
-      nodesAndEdges as FlowElements
-    ) as Node[];
-
-    if (actualNode.node.type === "renderNode") {
-      savedPaths.push(actualNode.path);
-    } else {
-      for (const v of neighbors) {
-        stack.push({
-          node: v,
-          path: [...actualNode.path, v],
-        });
-      }
-    }
-  }
-
-  return savedPaths;
-}
-
-export function getBundles(
-  nodesAndEdges: NodesAndEdges
-): Map<string, string[]> {
-  const bundleNodes = nodesAndEdges.filter(
-    (node) => node.type === "bundleNode"
-  ) as BundleNode[];
-
-  const bundles = new Map();
-  for (const bundleNode of bundleNodes) {
-    bundles.set(
-      bundleNode.data.bundle,
-      (
-        getIncomers(
-          bundleNode as FlowNode,
-          nodesAndEdges as FlowElements
-        ) as RenderNode[]
-      ).map((node) => node.data.renderId)
-    );
-  }
-
-  return bundles;
-}
-
-export function computeBundlesNs(
-  bundlesByRenderIds: Map<string, string[]>,
-  nodesAndEdges: NodesAndEdges
-) {
-  const ns = new Map();
-  for (const [bundle, renderIds] of bundlesByRenderIds) {
-    const renderNs = renderIds
-      .map((renderId) =>
-        nodesAndEdges.find(
-          (node) => "renderId" in node.data && node.data.renderId === renderId
-        )
-      )
-      .map((node) => node.data.n);
-    const n = Math.min(...renderNs);
-    ns.set(bundle, n);
-  }
-
-  return ns;
-}
-
-export function getBundle(
-  bundlesByRenderId: Map<string, string[]>,
-  renderId: string
-) {
-  for (const [bundle, renderIds] of bundlesByRenderId) {
-    if (renderIds.includes(renderId)) {
-      return bundle;
-    }
-  }
-}
-
-export function getBranchesDataPrefixes(
-  branchesData: (LayerNodeData | RenderNodeData | CacheNodeData)[][]
-): (LayerNodeData | RenderNodeData | CacheNodeData)[][] {
-  const branchDataPrefixes = new Set();
-
-  for (const branchData of branchesData) {
-    const filteredBranchesData = branchesData.filter(
-      (_branchData) =>
-        (_branchData[0] as LayerNodeData | CacheNodeData).name ===
-        (branchData[0] as LayerNodeData | CacheNodeData).name
-    );
-    const subBranchesData = filteredBranchesData.map((_branchData) =>
-      _branchData.slice(1)
-    );
-    if (subBranchesData.length > 1) {
-      branchDataPrefixes.add(tuple(branchData[0]));
-      const subBranchDataPrefixes = getBranchesDataPrefixes(subBranchesData);
-      for (const subBranchDataPrefix of subBranchDataPrefixes) {
-        branchDataPrefixes.add(tuple(branchData[0], ...subBranchDataPrefix));
-      }
-    }
-  }
-
-  return Array.from(branchDataPrefixes, (branchDataPrefix) =>
-    Array.from(branchDataPrefix as Iterable<any>)
-  );
-}
-
-export function reduceBranches(
-  branchesData: (LayerNodeData | RenderNodeData | CacheNodeData)[][]
-): [
-  Map<string, (LayerNodeData | RenderNodeData | CacheNodeData)[]>,
-  (LayerNodeData | RenderNodeData | CacheNodeData)[][]
-] {
-  const branchesCache = new Map();
-
-  while (true) {
-    const id = uuid();
-    const branchesDataPrefixes = getBranchesDataPrefixes(branchesData)
-      .map((branchDataPrefix) =>
-        branchDataPrefix.length === 1 &&
-        branchesCache.has(
-          (branchDataPrefix[0] as LayerNodeData | CacheNodeData).name
-        )
-          ? null
-          : branchDataPrefix
-      )
-      .filter((branchDataPrefix) => branchDataPrefix !== null)
-      .sort((a, b) => a.length - b.length);
-
-    const branchDataPrefix = branchesDataPrefixes[0];
-
-    if (branchDataPrefix === undefined) break;
-
-    branchesCache.set(id, branchDataPrefix);
-
-    branchesData = branchesData.map((branchData) => {
-      const _branchData = branchData.map((data) =>
-        "name" in data ? data.name : data
-      );
-      const _branchDataPrefix = branchDataPrefix.map((data) =>
-        "name" in data ? data.name : data
-      );
-
-      return tuple(..._branchData.slice(0, _branchDataPrefix.length)) ===
-        tuple(..._branchDataPrefix)
-        ? [
-            { name: id } as CacheNodeData,
-            ...branchData.slice(_branchDataPrefix.length),
-          ]
-        : branchData;
-    });
-  }
-
-  return [branchesCache, branchesData];
-}
-
-export function computeNs(
-  branchesCache: Map<
-    string,
-    (LayerNodeData | RenderNodeData | CacheNodeData)[]
-  >,
-  branches: (LayerNodeData | RenderNodeData | CacheNodeData)[][]
-) {
-  const ns = new Map();
-
-  for (const [name, cachedPath] of branchesCache) {
-    let n = branches
-      .filter((branch) =>
-        branch.find(
-          (data) => (data as LayerNodeData | CacheNodeData).name === name
-        )
-      )
-      // .map((branch) => (branch.at(-1) as RenderNodeData).n)
-      .map((branch) => (branch[branch.length - 1] as RenderNodeData).n)
-      .reduce((a, b) => Math.max(a, b), 0);
-
-    n = Math.max(ns.has(name) ? ns.get(name) : 0, n);
-    const stack = [name];
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!ns.has(current) || ns.get(current) < n) ns.set(current, n);
-      for (const v of branchesCache.get(current)) {
-        if ("name" in v && ns.has(v.name)) stack.push(v.name);
-      }
-    }
-  }
-
-  return ns;
-}
-
-export function expandBranch(
-  cache: Map<string, (LayerNodeData | RenderNodeData | CacheNodeData)[]>,
-  branchData: (LayerNodeData | RenderNodeData | CacheNodeData)[]
-): (LayerNodeData | RenderNodeData | CacheNodeData)[] {
-  const _branchData = [];
-
-  for (const node of branchData) {
-    if ("name" in node && cache.has(node.name)) {
-      _branchData.push(...expandBranch(cache, cache.get(node.name)));
-    } else {
-      _branchData.push(node);
-    }
-  }
-
-  return _branchData;
-}
-
-export function dataToLayer(
-  data: LayerNodeData | CacheNodeData,
-  layerByName: Map<string, Layer>
-): Layer {
-  return "name" in data && layerByName.has(data.name)
-    ? layerByName.get(data.name)
-    : {
-        name: data.name,
-        basePath: "<cache>",
-        blending: "<cache>",
-        opacity: DEFAULT_OPACITY,
-      };
-}
-
-export function getRandomColor() {
-  return Jimp.rgbaToInt(
-    Math.floor(Math.random() * 256),
-    Math.floor(Math.random() * 256),
-    Math.floor(Math.random() * 256),
-    255
-  );
-}
-
-export function composeImages(
-  back: Jimp,
-  front: Jimp,
-  blending: string,
-  opacity: number
-) {
-  back.composite(front, 0, 0, {
-    mode:
-      blending === "normal"
-        ? Jimp.BLEND_SOURCE_OVER
-        : blending === "screen"
-        ? Jimp.BLEND_SCREEN
-        : blending === "multiply"
-        ? Jimp.BLEND_MULTIPLY
-        : blending === "darken"
-        ? Jimp.BLEND_DARKEN
-        : blending === "overlay"
-        ? Jimp.BLEND_OVERLAY
-        : Jimp.BLEND_SOURCE_OVER,
-    opacitySource: 1,
-    opacityDest: opacity,
-  });
-}
-
-export async function pinDirectoryToIPFS(
-  pinataApiKey: string,
-  pinataSecretApiKey: string,
-  src: string
-): Promise<{
-  IpfsHash: string;
-  PinSize: number;
-  Timestamp: string;
-}> {
-  const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
-  const base = path.parse(src).base;
-
-  const data = new FormData();
-  (await readDir(src)).forEach((file) => {
-    data.append("file", fs.createReadStream(path.join(src, file)), {
-      filepath: path.join(base, path.parse(file).base),
-    });
-  });
-
-  return axios
-    .post(url, data, {
-      // @ts-ignore
-      maxBodyLength: "Infinity",
-      headers: {
-        // @ts-ignore
-        "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
-        pinata_api_key: pinataApiKey,
-        pinata_secret_api_key: pinataSecretApiKey,
-      },
-    })
-    .then((response) => response.data);
-}
-
-export async function pinFileToIPFS(
-  pinataApiKey: string,
-  pinataSecretApiKey: string,
-  src: string
-): Promise<{
-  IpfsHash: string;
-  PinSize: number;
-  Timestamp: string;
-}> {
-  const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
-
-  const data = new FormData();
-  data.append("file", fs.createReadStream(src));
-
-  return axios
-    .post(url, data, {
-      // @ts-ignore
-      maxBodyLength: "Infinity",
-      headers: {
-        // @ts-ignore
-        "Content-Type": `multipart/form-data; boundary=${data._boundary}`,
-        pinata_api_key: pinataApiKey,
-        pinata_secret_api_key: pinataSecretApiKey,
-      },
-    })
-    .then((response) => response.data);
-}
-
-export async function restrictImage(buffer: Buffer, maxSize?: number) {
-  if (maxSize) {
-    let { width, height } = imageSize(buffer);
-    const ratio = Math.max(width, height) / maxSize;
-    if (ratio > 1) {
-      width = Math.floor(width / ratio);
-      height = Math.floor(height / ratio);
-      const image = await Jimp.read(buffer);
-      image.resize(width, height);
-      buffer = await image.getBufferAsync(Jimp.MIME_PNG);
-    }
-  }
-  return buffer;
-}
-// #endregion
+  append,
+  arrayDifference,
+  choose,
+  computeBundlesNs,
+  computeTraitsNs,
+  getBranches,
+  getContract,
+  hash,
+  pinDirectoryToIPFS,
+  pinFileToIPFS,
+  rarity,
+  readDir,
+  removeRarity,
+  replaceAll,
+  restrictImage,
+} from "./utils";
 
 export class Factory {
+  buildDir: string;
+  imagesDir: string;
+  jsonDir: string;
   layerByName: Map<string, Layer>;
   traitsByLayerName: Map<string, Trait[]>;
   traitsBuffer: Map<string, Buffer>;
-
-  nodes: NodesAndEdges;
-  collection: Collection;
-  bundles: Map<string, string[][]>;
-
   secrets: Secrets;
-  imagesGenerated: boolean;
-  metadataGenerated: boolean;
-  imagesCid: string;
-  metadataCid: string;
-  network: string;
-  compilerVersion: string;
-  abi: any[];
-  contractAddress: string;
 
-  constructor(
-    public configuration: Configuration,
-    public inputDir: string,
-    public outputDir: string
-  ) {
+  constructor(public configuration: Configuration, public projectDir: string) {
+    this.buildDir = path.join(this.projectDir, BUILD_DIR_NAME);
+    this.imagesDir = path.join(this.buildDir, "images");
+    this.jsonDir = path.join(this.buildDir, "json");
     this.layerByName = new Map();
     this.traitsByLayerName = new Map();
     this.traitsBuffer = new Map();
 
-    this._ensureOutputDir();
+    this._ensureBuildDir();
     this._ensureLayers();
   }
 
-  private async _ensureOutputDir() {
-    if (!fs.existsSync(this.outputDir)) fs.mkdirSync(this.outputDir);
+  layer(layerName: string) {
+    return path.join(this.projectDir, layerName);
+  }
 
-    if (!fs.existsSync(path.join(this.outputDir, "json")))
-      fs.mkdirSync(path.join(this.outputDir, "json"));
+  image(generationName: string, name?: string) {
+    return name
+      ? path.join(this.imagesDir, generationName, `${name}.png`)
+      : path.join(this.imagesDir, generationName);
+  }
 
-    if (!fs.existsSync(path.join(this.outputDir, "images")))
-      fs.mkdirSync(path.join(this.outputDir, "images"));
+  json(generationName: string, name?: string) {
+    return name
+      ? path.join(this.jsonDir, generationName, `${name}.json`)
+      : path.join(this.jsonDir, generationName);
+  }
+
+  async updateJson(
+    generationName: string,
+    name: string,
+    obj: Record<string, any>,
+    fromGenerationName?: string,
+    fromName?: string
+  ) {
+    await fs.promises.writeFile(
+      this.json(generationName, name),
+      JSON.stringify({
+        ...JSON.parse(
+          await fs.promises.readFile(
+            this.json(fromGenerationName || generationName, fromName || name),
+            "utf8"
+          )
+        ),
+        ...obj,
+      })
+    );
+  }
+
+  async renameImage(generationName: string, prev: string, _new: string) {
+    await fs.promises.rename(
+      this.image(generationName, prev),
+      this.image(generationName, _new)
+    );
+  }
+
+  async renameJson(generationName: string, prev: string, _new: string) {
+    await fs.promises.rename(
+      this.json(generationName, prev),
+      this.json(generationName, _new)
+    );
+  }
+
+  private _ensureBuildDir() {
+    if (!fs.existsSync(this.buildDir)) fs.mkdirSync(this.buildDir);
+    if (!fs.existsSync(this.imagesDir)) fs.mkdirSync(this.imagesDir);
+    if (!fs.existsSync(this.jsonDir)) fs.mkdirSync(this.jsonDir);
   }
 
   private async _ensureLayers() {
-    const layersPaths: string[] = await readDir(this.inputDir);
+    const layersNames = await readDir(this.projectDir);
 
-    const layers: Layer[] = layersPaths.map((layerPath) => ({
-      basePath: path.join(this.inputDir, layerPath),
-      name: layerPath,
+    const layers: Layer[] = layersNames.map((layerName) => ({
+      basePath: this.layer(layerName),
+      name: layerName,
       blending: DEFAULT_BLENDING,
       opacity: DEFAULT_OPACITY,
     }));
 
-    const traitsPathsByLayerIndex: string[][] = await Promise.all(
-      layersPaths.map((layerName) =>
-        readDir(path.join(this.inputDir, layerName))
-      )
+    const nTraitsNames = await Promise.all(
+      layersNames.map((layerName) => readDir(this.layer(layerName)))
     );
 
-    const traitsByLayerIndex: Trait[][] = traitsPathsByLayerIndex.map(
-      (traitsPaths, i) =>
-        traitsPaths.map((traitPath) => {
-          const { name: value, ext } = path.parse(traitPath);
-          return {
-            ...layers[i],
-            fileName: traitPath,
-            value: removeRarity(value),
-            rarity: rarity(value),
-            type: ext.slice(1),
-          };
-        })
+    const traitsByLayerIndex: Trait[][] = nTraitsNames.map((traitsNames, i) =>
+      traitsNames.map((traitName) => {
+        const { name, ext } = path.parse(traitName);
+        return {
+          ...layers[i],
+          fileName: traitName,
+          value: removeRarity(name),
+          rarity: rarity(name),
+          type: ext.slice(1),
+        };
+      })
     );
 
-    layersPaths.forEach((layerPath, i) => {
+    layersNames.forEach((layerPath, i) => {
       this.layerByName.set(layerPath, layers[i]);
       this.traitsByLayerName.set(layerPath, traitsByLayerIndex[i]);
     });
@@ -520,78 +172,36 @@ export class Factory {
       (width !== this.configuration.width ||
         height !== this.configuration.height)
     ) {
-      const image = await Jimp.read(buffer);
-      image.resize(this.configuration.width, this.configuration.height);
-      buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+      buffer = await sharp(buffer)
+        .resize(this.configuration.width, this.configuration.height)
+        .png()
+        .toBuffer();
     }
 
     this.traitsBuffer.set(key, buffer);
     return key;
   }
 
-  instance() {
-    return {
-      inputDir: this.inputDir,
-      outputDir: this.outputDir,
-      configuration: this.configuration,
-      collection: this.collection,
-      bundles: this.bundles === undefined ? undefined : {},
-      // Object.fromEntries(this.bundles),
-      nodes: this.nodes,
-      imagesGenerated: this.imagesGenerated,
-      metadataGenerated: this.metadataGenerated,
-      imagesCid: this.imagesCid,
-      metadataCid: this.metadataCid,
-      network: this.network,
-      contractAddress: this.contractAddress,
-      abi: this.abi,
-      compilerVersion: this.compilerVersion,
-    };
-  }
-
-  loadInstance(instance: Partial<Instance>) {
-    const {
-      inputDir,
-      outputDir,
-      configuration,
-      collection,
-      bundles,
-      nodes,
-      imagesGenerated,
-      metadataGenerated,
-      imagesCid,
-      metadataCid,
-      network,
-      contractAddress,
-      abi,
-      compilerVersion,
-    } = instance;
-
-    if (inputDir) this.inputDir = inputDir;
-    if (outputDir) this.outputDir = outputDir;
-    if (configuration) this.configuration = configuration;
-    if (collection) this.collection = collection;
-    if (bundles) this.bundles = new Map(Object.entries(bundles));
-    if (nodes) this.nodes = nodes;
-    if (imagesGenerated) this.imagesGenerated = imagesGenerated;
-    if (metadataGenerated) this.metadataGenerated = metadataGenerated;
-    if (imagesCid) this.imagesCid = imagesCid;
-    if (metadataCid) this.metadataCid = metadataCid;
-    if (network) this.network = network;
-    if (contractAddress) this.contractAddress = contractAddress;
-    if (abi) this.abi = abi;
-    if (compilerVersion) this.compilerVersion = compilerVersion;
-  }
-
-  async saveInstance() {
-    await this._ensureOutputDir();
-    const instancePath = path.join(this.outputDir, "instance.json");
-    await fs.promises.writeFile(instancePath, JSON.stringify(this.instance()));
-    return instancePath;
-  }
-
   loadSecrets(secrets: Secrets) {
     this.secrets = secrets;
+  }
+
+  reloadConfiguration(configuration: Configuration) {
+    this.configuration = configuration;
+  }
+
+  reloadLayers() {
+    this._ensureLayers();
+  }
+
+  async getResolution() {
+    const layerFolder = (await readDir(this.projectDir))[0];
+    const layerPath = path.join(this.projectDir, layerFolder);
+    const traitName = (await readDir(layerPath))[0];
+    const traitPath = path.join(layerPath, traitName);
+    const traitBuffer = await fs.promises.readFile(traitPath);
+    const { width, height } = imageSize(traitBuffer);
+    return { width, height };
   }
 
   getLayerByName(layerName: string) {
@@ -602,351 +212,1037 @@ export class Factory {
     return this.traitsByLayerName.get(layerName);
   }
 
-  generateNTraits(
-    layers: Layer[],
-    n: number,
-    traitsCache: Map<string, Trait[]> = new Map()
-  ) {
-    let attributes: Trait[][] = Array.from({ length: n }, () => []);
+  makeGeneration(name: string, template: Template): Generation {
+    // #region Helper functions
+    const computeNTraits = (layer: Layer, n: number) => {
+      const nTraits: Trait[] = [];
 
-    for (const layer of layers) {
       const { name } = layer;
-      if (traitsCache.has(name)) {
-        attributes = append(attributes, traitsCache.get(name).slice(0, n));
-      } else {
-        for (let i = 0; i < n; i++) {
-          const traits = this.traitsByLayerName.get(name);
-          const trait = choose(traits);
-          attributes[i].push(trait);
-        }
+      for (let i = 0; i < n; i++) {
+        const traits = this.traitsByLayerName.get(name);
+        const trait = choose(traits);
+        nTraits.push(trait);
       }
-    }
 
-    return attributes;
-  }
+      return nTraits;
+    };
 
-  generateCollection(nodesAndEdges: NodesAndEdges) {
-    const branchesData = getBranches(nodesAndEdges)
-      .map((path) => path.slice(1))
-      .map((path) => path.map((node) => node.data))
-      .sort((a, b) => a.length - b.length);
+    const computeCache = (
+      _nTraits: Trait[][],
+      _traitsNs: Record<string, number>
+    ): Record<string, Trait[]> => {
+      const cache: Record<string, Trait[]> = {};
+      for (let traits of _nTraits)
+        for (const trait of traits)
+          cache[trait.id] = computeNTraits(trait, _traitsNs[trait.id]);
+      return cache;
+    };
+    // #endregion
 
-    const [branchesCache, reducedBranches] = reduceBranches(branchesData);
-    const ns = computeNs(branchesCache, reducedBranches);
+    const {
+      nodes,
+      edges,
+      ns,
+      ignored,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
+    } = template;
 
-    const traitsCache = new Map();
-    for (const [name, branch] of branchesCache) {
-      const layers = (
-        expandBranch(branchesCache, branch) as unknown as (
-          | LayerNodeData
-          | CacheNodeData
-        )[]
-      ).map((data) => dataToLayer(data, this.layerByName));
+    // #region Data preparation
+    const nData = getBranches(nodes, edges)
+      .map((branch) => branch.slice(1, -1))
+      .map((branch) => branch.map((node) => node.data));
 
-      traitsCache.set(
+    let keys = nData
+      .map((branch) => branch.map(({ trait, id }) => ({ ...trait, id })))
+      .map(hash);
+
+    const nTraits: Trait[][] = nData
+      .map((branch) =>
+        branch.map(({ trait, id, opacity, blending }) => ({
+          ...trait,
+          id,
+          opacity,
+          blending,
+        }))
+      )
+      .filter((_, i) => !ignored.includes(keys[i]));
+
+    keys = keys.filter((key) => !ignored.includes(key));
+
+    const bundlesInfo: BundlesInfo = nodes
+      .filter((node) => node.type === "bundleNode")
+      .map((node) => node.data)
+      .map(({ name, ids, saleType, startingPrice, endingPrice, saleTime }) => ({
         name,
-        this.generateNTraits(layers, ns.get(name), traitsCache)
-      );
-    }
+        ids,
+        saleType,
+        startingPrice,
+        endingPrice,
+        saleTime,
+      }));
+    // #endregion
 
-    const bundlesByRenderId = getBundles(nodesAndEdges);
-    const bundlesNs = computeBundlesNs(bundlesByRenderId, nodesAndEdges);
-    const bundles = new Map();
-    for (const [bundle, n] of bundlesNs)
-      bundles.set(
-        bundle,
+    const traitsNs = computeTraitsNs(nTraits, ns, keys);
+    const bundlesNs = computeBundlesNs(bundlesInfo, ns);
+    const cache = computeCache(nTraits, traitsNs);
+
+    const collection: Collection = [];
+    const bundles: Bundles = [];
+    const drops: Drop[] = [];
+
+    let c = 1;
+    for (const [i, traits] of nTraits.entries()) {
+      const n = ns[keys[i]];
+      const saleType = salesTypes[keys[i]];
+      const startingPrice = startingPrices[keys[i]];
+      const endingPrice = endingPrices[keys[i]];
+      const saleTime = salesTimes[keys[i]];
+
+      const nTraits = traits.reduce(
+        (prevNTraits, trait) =>
+          prevNTraits.map((traits, j) => [...traits, cache[trait.id][j]]),
         Array.from({ length: n }, () => [])
       );
 
-    const collection: Collection = [];
-
-    let i = 1;
-    for (const branch of reducedBranches) {
-      const { n, renderId } = branch.pop() as RenderNodeData;
-      const layers: Layer[] = branch.map((data) =>
-        dataToLayer(data as LayerNodeData | CacheNodeData, this.layerByName)
-      );
-      const nTraits = this.generateNTraits(layers, n, traitsCache);
-      const collectionItems = nTraits.map((traits) => ({
-        name: `${i++}`,
+      const items = nTraits.map((traits) => ({
+        name: `${c++}`,
         traits,
+        saleType,
+        startingPrice,
+        endingPrice,
+        saleTime,
       }));
-      const nNames = collectionItems.map(
-        (collectionItem) => collectionItem.name
-      );
 
-      const bundle = getBundle(bundlesByRenderId, renderId);
+      const bundleInfo = bundlesInfo.find(({ ids }) => ids.includes(keys[i]));
 
-      if (bundle !== undefined) {
-        const bundleValue = append(
-          bundles.get(bundle),
-          nNames.slice(0, bundlesNs.get(bundle)).map((name) => [name])
+      if (bundleInfo !== undefined) {
+        let bundle;
+        if (bundles.some((b) => b.name === bundleInfo.name)) {
+          bundle = bundles.find((b) => b.name === bundleInfo.name);
+        } else {
+          bundle = {
+            name: bundleInfo.name,
+            ids: Array.from({ length: bundlesNs[bundleInfo.name] }, () => []),
+            saleType: bundleInfo.saleType,
+            startingPrice: bundleInfo.startingPrice,
+            endingPrice: bundleInfo.endingPrice,
+            saleTime: bundleInfo.saleTime,
+          };
+          bundles.push(bundle);
+        }
+
+        bundle.ids = append(
+          bundle.ids,
+          items
+            .map((item) => item.name)
+            .slice(0, bundlesNs[bundleInfo.name])
+            .map((name) => [name])
         );
-
-        bundles.set(bundle, bundleValue);
       }
 
-      collection.push(...collectionItems);
+      collection.push(...items);
     }
 
-    this.nodes = nodesAndEdges;
-    this.collection = collection;
-    this.configuration.n = collection.length;
-    this.bundles = bundles;
+    drops.push({
+      name,
+      ids: collection.map(({ name }) => name),
+      bundles: bundles.map(({ name }) => name),
+    });
 
-    return collection;
+    return {
+      id: uuid(),
+      name,
+      collection,
+      bundles,
+      drops,
+    };
   }
 
-  async generateImage(collectionItem: CollectionItem) {
-    const image = await Jimp.create(
-      this.configuration.width,
-      this.configuration.height,
-      this.configuration.generateBackground
-        ? getRandomColor()
-        : this.configuration.defaultBackground || DEFAULT_BACKGROUND
+  computeMaxCombinations(layers: Layer[]) {
+    return layers.reduce(
+      (combinations, layer) =>
+        combinations * this.traitsByLayerName.get(layer.name).length,
+      1
+    );
+  }
+
+  async composeTraits(traits: Trait[], maxSize?: number) {
+    const keys = await Promise.all(
+      traits.map(async (trait) => await this._ensureTraitBuffer(trait))
     );
 
-    for (const trait of collectionItem.traits) {
-      const key = await this._ensureTraitBuffer(trait);
-      const current = await Jimp.read(this.traitsBuffer.get(key));
-      composeImages(image, current, trait.blending, trait.opacity);
-    }
+    const buffers = keys.map((key) => this.traitsBuffer.get(key));
 
-    await image.writeAsync(
-      path.join(this.outputDir, "images", `${collectionItem.name}.png`)
+    return await restrictImage(
+      await sharp({
+        create: {
+          width: this.configuration.width,
+          height: this.configuration.height,
+          channels: 4,
+          background: this.configuration.generateBackground
+            ? {
+                r: Math.floor(Math.random() * 255),
+                g: Math.floor(Math.random() * 255),
+                b: Math.floor(Math.random() * 255),
+                alpha: 1,
+              }
+            : {
+                r: this.configuration.defaultBackground.r,
+                g: this.configuration.defaultBackground.g,
+                b: this.configuration.defaultBackground.b,
+                alpha: this.configuration.defaultBackground.a,
+              },
+        },
+      })
+        .composite(
+          traits.map(
+            ({ blending }, i) => ({
+              input: buffers[i],
+              blend: (blending === "normal" ? "over" : blending) as Blend,
+            }),
+            this
+          )
+        )
+        .png()
+        .toBuffer(),
+      maxSize
     );
+  }
+
+  async generateImage(generation: Generation, item: CollectionItem) {
+    const keys = await Promise.all(
+      item.traits.map(async (trait) => await this._ensureTraitBuffer(trait))
+    );
+
+    const buffers = keys.map((key) => this.traitsBuffer.get(key));
+
+    await sharp({
+      create: {
+        width: this.configuration.width,
+        height: this.configuration.height,
+        channels: 4,
+        background: this.configuration.generateBackground
+          ? {
+              r: Math.floor(Math.random() * 255),
+              g: Math.floor(Math.random() * 255),
+              b: Math.floor(Math.random() * 255),
+              alpha: 1,
+            }
+          : {
+              r: this.configuration.defaultBackground.r,
+              g: this.configuration.defaultBackground.g,
+              b: this.configuration.defaultBackground.b,
+              alpha: this.configuration.defaultBackground.a,
+            },
+      },
+    })
+      .composite(
+        item.traits.map(
+          ({ blending }, i) => ({
+            input: buffers[i],
+            blend: (blending === "normal" ? "over" : blending) as Blend,
+          }),
+          this
+        )
+      )
+      .png()
+      .toFile(this.image(generation.name, item.name));
   }
 
   async generateImages(
-    collection: Collection,
+    generation: Generation,
     callback?: (name: string) => void
   ) {
-    await Promise.all(
-      collection.map(async (collectionItem) => {
-        await this.generateImage(collectionItem);
-        if (callback) callback(collectionItem.name);
-      })
-    );
-    this.imagesGenerated = true;
+    const { name, collection } = generation;
+    if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
+
+    for (let i = 0; i < collection.length; i += PARALLEL_LIMIT) {
+      await Promise.all(
+        collection.slice(i, i + PARALLEL_LIMIT).map(async (item) => {
+          await this.generateImage(generation, item);
+          if (callback) callback(item.name);
+        })
+      );
+    }
   }
 
-  async generateMetadata(callback?: (name: string) => void) {
-    if (!this.imagesGenerated) return;
-    if (!this.imagesCid) return;
+  async generateMetadata(
+    generation: Generation,
+    metadataItems: MetadataItem[],
+    callback?: (name: string) => void
+  ) {
+    const { name, collection } = generation;
 
-    const metadatas = [];
-    for (const collectionItem of this.collection) {
-      const metadata = {
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
+
+    for (const item of collection) {
+      const metadata: any = {
         name: this.configuration.name,
         description: this.configuration.description,
-        image: `ipfs://${this.imagesCid}/${collectionItem.name}.png`,
-        edition: collectionItem.name,
+        image: `ipfs://<unknown>/${item.name}.png`,
+        edition: item.name,
         date: Date.now(),
-        attributes: collectionItem.traits.map((trait) => ({
+        attributes: item.traits.map((trait) => ({
           trait_type: trait.name,
           value: trait.value,
         })),
       };
-      metadatas.push(metadata);
+
+      for (const { key, value } of metadataItems)
+        metadata[key] = replaceAll(value, /\${name}/, item.name);
 
       await fs.promises.writeFile(
-        path.join(this.outputDir, "json", `${collectionItem.name}.json`),
+        this.json(name, item.name),
         JSON.stringify(metadata)
       );
     }
-
-    await fs.promises.writeFile(
-      path.join(this.outputDir, "json", "metadata.json"),
-      JSON.stringify(metadatas)
-    );
-
-    this.metadataGenerated = true;
   }
 
-  async deployImages() {
-    if (this.imagesCid) return this.imagesCid;
+  async hydrateMetadata(
+    generation: Generation,
+    imagesCid: string,
+    callback?: (name: string) => void
+  ) {
+    const { name, collection } = generation;
 
-    const imagesDir = path.join(this.outputDir, "images");
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
 
+    await Promise.all(
+      collection.map((item) =>
+        this.updateJson(name, item.name, {
+          image: `ipfs://${imagesCid}/${item.name}.png`,
+        })
+      )
+    );
+  }
+
+  async hydrateNotRevealedMetadata(
+    generation: Generation,
+    notRevealedImageCid: string,
+    callback?: (name: string) => void
+  ) {
+    const { name } = generation;
+
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
+
+    await this.updateJson(name, "1", {
+      image: `ipfs://${notRevealedImageCid}/`,
+    });
+  }
+
+  // #region IPFS Deployment
+  async deployNotRevealedImage(generation: Generation) {
+    const { IpfsHash } = await pinFileToIPFS(
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretApiKey,
+      this.image(generation.name, "1") // ? Hardcoded
+    );
+    return IpfsHash;
+  }
+
+  async deployNotRevealedMetadata(generation: Generation) {
+    const { IpfsHash } = await pinFileToIPFS(
+      this.secrets.pinataApiKey,
+      this.secrets.pinataSecretApiKey,
+      this.json(generation.name, "1") // ? Hardcoded
+    );
+    return IpfsHash;
+  }
+
+  async deployImages(generation: Generation) {
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      imagesDir
+      this.image(generation.name)
     );
-    this.imagesCid = IpfsHash;
-
-    return this.imagesCid;
+    return IpfsHash;
   }
 
-  async deployMetadata() {
-    if (this.metadataCid) return this.metadataCid;
-
-    if (!this.imagesCid) return;
-
-    const jsonDir = path.join(this.outputDir, "json");
-
+  async deployMetadata(generation: Generation) {
     const { IpfsHash } = await pinDirectoryToIPFS(
       this.secrets.pinataApiKey,
       this.secrets.pinataSecretApiKey,
-      jsonDir
+      this.json(generation.name)
     );
-    this.metadataCid = IpfsHash;
+    return IpfsHash;
+  }
+  // #endregion
 
-    return this.metadataCid;
+  async deployAssets(
+    generation: Generation,
+    notRevealedGeneration: Generation,
+    imagesCid: string | null,
+    metadataCid: string | null,
+    notRevealedImageCid: string | null,
+    notRevealedMetadataCid: string | null
+  ) {
+    const _imagesCid = imagesCid || (await this.deployImages(generation));
+    await this.hydrateMetadata(generation, _imagesCid);
+    const _metadataCid = metadataCid || (await this.deployMetadata(generation));
+
+    const _notRevealedImageCid =
+      this.configuration.contractType === "721_reveal_pause"
+        ? notRevealedImageCid ||
+          (await this.deployNotRevealedImage(notRevealedGeneration))
+        : undefined;
+    if (this.configuration.contractType === "721_reveal_pause")
+      await this.hydrateNotRevealedMetadata(
+        notRevealedGeneration,
+        _notRevealedImageCid
+      );
+    const _notRevealedMetadataCid =
+      this.configuration.contractType === "721_reveal_pause"
+        ? notRevealedMetadataCid ||
+          (await this.deployNotRevealedMetadata(notRevealedGeneration))
+        : undefined;
+
+    return {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+    };
   }
 
+  async deployContract721(
+    generation: Generation,
+    contractFactory: ContractFactory,
+    metadataCid: string
+  ) {
+    return await contractFactory.deploy(
+      this.configuration.name,
+      this.configuration.symbol,
+      `ipfs://${metadataCid}/`,
+      generation.collection.length
+    );
+  }
+
+  async deployContract721_reveal_pause(
+    generation: Generation,
+    contractFactory: ContractFactory,
+    metadataCid: string,
+    notRevealedImageCid: string
+  ) {
+    return await contractFactory.deploy(
+      this.configuration.name,
+      this.configuration.symbol,
+      `ipfs://${metadataCid}/`,
+      `ipfs://${notRevealedImageCid}`,
+      generation.collection.length
+    );
+  }
+
+  async deployContract(
+    providerId: string,
+    generation: Generation,
+    metadataCid: string,
+    notRevealedMetadataCid: string,
+    contractAddress: string | null
+  ) {
+    const web3Provider = new ethersProviders.Web3Provider(
+      providers[providerId]
+    );
+
+    const signer = web3Provider.getSigner();
+
+    const { contracts } = await getContract(this.configuration.contractType);
+    const { NFT } = contracts[this.configuration.contractType];
+    const metadata = JSON.parse(NFT.metadata);
+    const { version: compilerVersion } = metadata.compiler;
+    const { abi, evm } = NFT;
+    const { bytecode } = evm;
+
+    let contractFactory, contract, transactionHash;
+    if (!contractAddress) {
+      contractFactory = new ContractFactory(abi, bytecode, signer);
+
+      contract =
+        this.configuration.contractType === "721"
+          ? await this.deployContract721(
+              generation,
+              contractFactory,
+              metadataCid
+            )
+          : this.configuration.contractType === "721_reveal_pause"
+          ? await this.deployContract721_reveal_pause(
+              generation,
+              contractFactory,
+              metadataCid,
+              notRevealedMetadataCid
+            )
+          : null;
+      transactionHash = contract.deployTransaction.hash;
+    }
+
+    const _contractAddress = contractAddress || contract.address;
+
+    return {
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+      wait: contractAddress ? null : contract.deployTransaction.wait(),
+    };
+  }
+
+  async deploy(
+    providerId: string,
+    generation: Generation,
+    notRevealedGeneration: Generation,
+    imagesCid: string | null,
+    metadataCid: string | null,
+    notRevealedImageCid: string | null,
+    notRevealedMetadataCid: string | null,
+    contractAddress: string | null
+  ) {
+    const {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+    } = await this.deployAssets(
+      generation,
+      notRevealedGeneration,
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid
+    );
+
+    const {
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+      wait,
+    } = await this.deployContract(
+      providerId,
+      generation,
+      _metadataCid,
+      _notRevealedMetadataCid,
+      contractAddress
+    );
+
+    await wait;
+
+    return {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+    };
+  }
+
+  // #region Getters
   async getTraitImage(trait: Trait, maxSize?: number) {
-    const key = await this._ensureTraitBuffer(trait);
-    const buffer = await restrictImage(this.traitsBuffer.get(key), maxSize);
-    return buffer;
+    return await restrictImage(
+      this.traitsBuffer.get(await this._ensureTraitBuffer(trait)),
+      maxSize
+    );
   }
 
   async getRandomTraitImage(layer: Layer, maxSize?: number) {
-    const traits = this.traitsByLayerName.get(layer.name);
-    const trait = choose(traits);
-    return await this.getTraitImage(trait, maxSize);
+    const trait = choose(this.traitsByLayerName.get(layer.name));
+    return [trait, await this.getTraitImage(trait, maxSize)];
   }
 
-  async rewriteTraitImage(trait: Trait, dataUrl: string) {
-    await fs.promises.writeFile(
-      path.join(trait.basePath, trait.fileName),
-      Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
-    );
-  }
-
-  async getImage(collectionItem: CollectionItem, maxSize?: number) {
-    const buffer = await restrictImage(
-      await fs.promises.readFile(
-        path.join(this.outputDir, "images", `${collectionItem.name}.png`)
-      ),
+  async getImage(
+    generation: Generation,
+    item: CollectionItem,
+    maxSize?: number
+  ) {
+    return await restrictImage(
+      await fs.promises.readFile(this.image(generation.name, item.name)),
       maxSize
     );
-    return buffer;
   }
 
-  async getRandomImage(maxSize?: number) {
-    const collectionItem =
-      this.collection[Math.floor(Math.random() * this.collection.length)];
-    return await this.getImage(collectionItem, maxSize);
+  async getRandomImage(generation: Generation, maxSize?: number) {
+    const item =
+      generation.collection[
+        Math.floor(Math.random() * generation.collection.length)
+      ];
+    return [item, await this.getImage(generation, item, maxSize)];
   }
 
-  async rewriteImage(collectionItem: CollectionItem, dataUrl: string) {
-    await fs.promises.writeFile(
-      path.join(this.outputDir, "images", `${collectionItem.name}.png`),
-      Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64")
+  async getMetadata(generation: Generation, item: CollectionItem) {
+    return JSON.parse(
+      await fs.promises.readFile(this.json(generation.name, item.name), "utf8")
     );
   }
 
-  async getMetadata(collectionItem: CollectionItem) {
-    const metadata = await fs.promises.readFile(
-      path.join(this.outputDir, "json", `${collectionItem.name}.json`)
-    );
-    return JSON.parse(metadata.toString());
+  async getRandomMetadata(generation: Generation) {
+    const item =
+      generation.collection[
+        Math.floor(Math.random() * generation.collection.length)
+      ];
+    return [item, await this.getMetadata(generation, item)];
   }
+  // #endregion
 
-  async getRandomMetadata() {
-    const collectionItem =
-      this.collection[Math.floor(Math.random() * this.collection.length)];
-    return this.getMetadata(collectionItem);
-  }
+  async removeItems(
+    generation: Generation,
+    items: Collection,
+    filesAlreadyRemoved: boolean = false
+  ): Promise<Generation> {
+    const { name, collection, bundles, drops } = generation;
 
-  // ! TODO
-  // vector<int> a = {1, 5, 8, 10, 13};
-  // vector<int> b = {2, 8, 11, 13};
-  // vector<int> c;
-  // int i = 0, j = 0;
-  // bool inb = false;
-  // while (i < a.size() && j < b.size()) {
-  //   if (a[i] == b[j]) ++i;
-  //   else if (a[i]  > b[j]) ++j;
-  //   else { // a[i] < b[i]
-  //     c.push_back(a[i]);
-  //     ++i;
-  //   }
-  // }
-  async removeCollectionItems(collectionItemsToRemove: Collection) {
-    await Promise.all(
-      collectionItemsToRemove.map((itemToRemove) =>
-        fs.promises.rm(
-          path.join(this.outputDir, "images", `${itemToRemove.name}.png`)
+    if (!filesAlreadyRemoved)
+      await Promise.all(
+        items.reduce(
+          (p, item) => [
+            ...p,
+            fs.promises.rm(this.image(name, item.name)),
+            fs.promises.rm(this.json(name, item.name)),
+          ],
+          []
         )
-      )
-    );
-
-    const collection = this.collection.filter(
-      (item) =>
-        !collectionItemsToRemove.some((itemToRemove) => {
-          return item.name === itemToRemove.name;
-        })
-    );
-
-    const bundles = new Map(
-      [...this.bundles.entries()].map(([bundleName, nBundles]) => [
-        bundleName,
-        nBundles.filter(
-          (bundle) =>
-            !collectionItemsToRemove.some((itemToRemove) =>
-              bundle.includes(itemToRemove.name)
-            )
-        ),
-      ])
-    );
-
-    for (const [i, item] of collection.entries()) {
-      await fs.promises.rename(
-        path.join(this.outputDir, "images", `${item.name}.png`),
-        path.join(this.outputDir, "images", `_${i + 1}.png`)
       );
 
-      const _bundles = new Map(bundles);
-      for (const [bundlesName, nBundles] of _bundles) {
-        const newNBundles = [];
-        for (const bundle of nBundles) {
-          newNBundles.push(
-            bundle.includes(item.name)
-              ? bundle.map((name) => (name === item.name ? `_${i + 1}` : name))
-              : bundle
-          );
-        }
-        bundles.set(bundlesName, newNBundles);
-      }
+    let intermidiateCollection = collection.filter(
+      (item) => !items.some((itemToRemove) => item.name === itemToRemove.name)
+    );
+
+    let intermidiateBundles = bundles.map(({ ids, ...rest }) => ({
+      ...rest,
+      ids: ids.filter(
+        (ids) => !ids.some((id) => items.some((item) => item.name === id))
+      ),
+    }));
+
+    let intermidiateDrops = drops.map(({ name, ids }) => ({
+      name,
+      ids: ids.filter((id) => items.some((item) => item.name === id)),
+      bundles: bundles.map(({ name }) => name),
+    }));
+
+    // ? First pass
+    for (const [i, item] of intermidiateCollection.entries()) {
+      const _from = item.name;
+      const _to = `_${i + 1}`;
+
+      await this.renameImage(name, _from, _to);
+      await this.updateJson(name, _from, {
+        edition: `${i + 1}`,
+      });
+      await this.renameJson(name, _from, _to);
+
+      intermidiateBundles = intermidiateBundles.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.map((_ids) =>
+          _ids.includes(_from)
+            ? _ids.map((id) => (id === _from ? _to : id))
+            : _ids
+        ),
+      }));
+
+      intermidiateDrops = intermidiateDrops.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.includes(_from)
+          ? ids.map((id) => (id === _from ? _to : id))
+          : ids,
+      }));
 
       item.name = `${i + 1}`;
     }
 
-    for (const [i, item] of collection.entries()) {
-      await fs.promises.rename(
-        path.join(this.outputDir, "images", `_${i + 1}.png`),
-        path.join(this.outputDir, "images", `${i + 1}.png`)
+    // ? Second pass
+    for (let i = 0; i < intermidiateCollection.length; i++) {
+      const _from = `_${i + 1}`;
+      const _to = `${i + 1}`;
+
+      await this.renameImage(name, _from, _to);
+      await this.renameJson(name, _from, _to);
+
+      intermidiateBundles = intermidiateBundles.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.map((_ids) =>
+          _ids.includes(_from)
+            ? _ids.map((id) => (id === _from ? _to : id))
+            : _ids
+        ),
+      }));
+
+      intermidiateDrops = intermidiateDrops.map(({ ids, ...rest }) => ({
+        ...rest,
+        ids: ids.includes(_from)
+          ? ids.map((id) => (id === _from ? _to : id))
+          : ids,
+      }));
+    }
+
+    return {
+      ...generation,
+      collection: intermidiateCollection,
+      bundles: intermidiateBundles,
+      drops: intermidiateDrops,
+    };
+  }
+
+  async regenerateItems(generation: Generation, items: Collection) {
+    const { name, collection } = generation;
+
+    const newItems: Collection = items.map(({ traits, ...rest }) => ({
+      ...rest,
+      traits: traits.map((trait) =>
+        choose(this.traitsByLayerName.get(trait.name))
+      ),
+    }));
+    await this.generateImages({ name, collection: newItems } as Generation);
+
+    await Promise.all(
+      items.map((item) =>
+        this.updateJson(name, item.name, {
+          attributes: item.traits.map((trait) => ({
+            trait_type: trait.name,
+            value: trait.value,
+          })),
+        })
+      )
+    );
+
+    const newItemsByName = new Map(newItems.map((item) => [item.name, item]));
+
+    const newCollection = collection.map((item) =>
+      newItemsByName.has(item.name) ? newItemsByName.get(item.name) : item
+    );
+
+    return {
+      ...generation,
+      collection: newCollection,
+    };
+  }
+
+  async replaceItems(generation: Generation, _with: Collection) {
+    const { name, collection } = generation;
+
+    await this.generateImages({ name, collection: _with } as Generation);
+
+    await Promise.all(
+      _with.map((item) =>
+        this.updateJson(name, item.name, {
+          attributes: item.traits.map((trait) => ({
+            trait_type: trait.name,
+            value: trait.value,
+          })),
+        })
+      )
+    );
+
+    const newItemsByName = new Map(_with.map((item) => [item.name, item]));
+    const newCollection = collection.map((item) =>
+      newItemsByName.has(item.name) ? newItemsByName.get(item.name) : item
+    );
+
+    return {
+      ...generation,
+      collection: newCollection,
+    };
+  }
+
+  async unify(name: string, generations: Generation[]) {
+    if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
+    if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
+
+    const unifiedCollection: Collection = [];
+    const unifiedBundles: Bundles = [];
+    const unifiedDrops: Drop[] = [];
+
+    let i = 1;
+    for (const {
+      name: currentName,
+      collection,
+      bundles,
+      drops,
+    } of generations) {
+      const mappings: Record<string, string> = {};
+
+      for (const item of collection) {
+        const _from = item.name;
+        const _to = `${i}`;
+
+        mappings[_from] = _to;
+
+        await fs.promises.copyFile(
+          this.image(currentName, _from),
+          this.image(name, _to)
+        );
+
+        this.updateJson(
+          name,
+          _to,
+          {
+            edition: _to,
+          },
+          currentName,
+          _from
+        );
+
+        unifiedCollection.push({
+          ...item,
+          name: `${i++}`,
+        });
+      }
+
+      unifiedBundles.push(
+        ...bundles.map(({ ids, ...rest }) => ({
+          ...rest,
+          ids: ids.map((_ids) => _ids.map((id) => mappings[id])),
+        }))
       );
 
-      const _bundles = new Map(bundles);
-      for (const [bundlesName, nBundles] of _bundles) {
-        const newNBundles = [];
-        for (const bundle of nBundles) {
-          newNBundles.push(
-            bundle.includes(`_${i + 1}`)
-              ? bundle.map((name) => (name === `_${i + 1}` ? `${i + 1}` : name))
-              : bundle
-          );
+      unifiedDrops.push(
+        ...drops.map(({ name, ids }) => ({
+          name,
+          ids: ids.map((id) => mappings[id]),
+          bundles: bundles.map(({ name }) => name),
+        }))
+      );
+    }
+
+    return {
+      name,
+      collection: unifiedCollection,
+      bundles: unifiedBundles,
+      drops: unifiedDrops,
+    };
+  }
+
+  async remove(generation: Generation) {
+    await fs.promises.rm(this.image(generation.name), {
+      recursive: true,
+      force: true,
+    });
+    await fs.promises.rm(this.json(generation.name), {
+      recursive: true,
+      force: true,
+    });
+  }
+
+  async reconstruct(generation: Generation) {
+    const names = (await readDir(this.image(generation.name))).map(
+      (name) => path.parse(name).name
+    );
+
+    const items = generation.collection.filter(
+      (item) => !names.includes(item.name)
+    );
+
+    await Promise.all(
+      items.map((item) => fs.promises.rm(this.json(generation.name, item.name)))
+    );
+
+    return await this.removeItems(generation, items, true);
+  }
+
+  async getBalanceOf(contractId: string, address: string) {
+    const contract = contracts[contractId];
+    const balance = await contract.balanceOf(address);
+    return balance;
+  }
+
+  async getTokenOfOwnerByIndex(
+    contractId: string,
+    address: string,
+    index: number
+  ) {
+    const contract = contracts[contractId];
+    const id = await contract.tokenOfOwnerByIndex(address, index);
+    return id;
+  }
+
+  async getTokenUri(contractId: string, index: number) {
+    const contract = contracts[contractId];
+    const uri = await contract.tokenURI(index);
+    return uri;
+  }
+
+  // ? NOTE: Might have to manually set the nonce
+  async mint(contractId: string, payable: string, mint: number) {
+    const contract = contracts[contractId];
+    const tx = await contract.mint(mint, {
+      value: utils.parseEther(payable),
+    });
+    await tx.wait();
+  }
+
+  async getWalletOfOwner(contractId: string, owner: string) {
+    const contract = contracts[contractId];
+    const wallet = await contract.walletOfOwner(owner);
+    return wallet;
+  }
+
+  async withdraw(contractId: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.withdraw();
+    await tx.wait();
+  }
+  // #endregion
+
+  // #region 721_reveal_pause
+  async pause(contractId: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.pause();
+    await tx.wait();
+  }
+
+  async setBaseUri(contractId: string, baseUri: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.setBaseUri(baseUri);
+    await tx.wait();
+  }
+
+  async reveal(contractId: string) {
+    const contract = contracts[contractId];
+    const tx = await contract.reveal();
+    await tx.wait();
+  }
+  // #endregion
+
+  async mintDrop(
+    providerId: string,
+    contractId: string,
+    drop: Drop,
+    gasLimit?: number
+  ) {
+    const contract = contracts[contractId];
+
+    const txs = [];
+
+    for (let i = 0; i < drop.ids.length; i += MINT_N) {
+      const n = drop.ids.slice(i, i + MINT_N).length;
+      console.log(n);
+      const tx = await contract.mint(n, { gasLimit });
+      txs.push(tx);
+    }
+    await Promise.all(txs.map((tx) => tx.wait()));
+  }
+
+  async sellDropBundles(
+    providerEngineId: string,
+    deployment: Deployment,
+    drop: Drop
+  ) {
+    const seaport = seaports[providerEngineId];
+
+    const { generation, contractAddress } = deployment;
+    const { bundles } = generation;
+
+    const publishedIds = [];
+    for (const bundleName of drop.bundles) {
+      const bundle = bundles.find((bundle) => bundle.name === bundleName);
+
+      for (const _ids of bundle.ids) {
+        const assets = _ids.map((id) => ({
+          tokenId: id,
+          tokenAddress: contractAddress,
+        }));
+
+        switch (bundle.saleType) {
+          case SaleType.FIXED:
+            await seaport.createBundleSellOrder({
+              assets,
+              bundleName,
+              accountAddress: accounts[providerEngineId],
+              startAmount: bundle.startingPrice,
+            });
+            break;
+          case SaleType.DUTCH:
+            await seaport.createBundleSellOrder({
+              assets,
+              bundleName,
+              accountAddress: accounts[providerEngineId],
+              startAmount: bundle.startingPrice,
+              endAmount: bundle.endingPrice,
+              expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
+            });
+            break;
+          case SaleType.ENGLISH: // ? NOTE: Must use WETH
+            await seaport.createBundleSellOrder({
+              assets,
+              bundleName,
+              accountAddress: accounts[providerEngineId],
+              paymentTokenAddress:
+                deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
+              startAmount: bundle.startingPrice,
+              endAmount: bundle.endingPrice,
+              expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
+              waitForHighestBid: true,
+            });
+            break;
         }
-        bundles.set(bundlesName, newNBundles);
+
+        publishedIds.push(..._ids);
       }
     }
 
-    this.collection = collection;
-    this.bundles = bundles;
-    this.configuration.n = collection.length;
-
-    return collection;
+    return publishedIds;
   }
-}
 
-export async function loadInstance(instancePath: string) {
-  const { inputDir, outputDir, configuration, ...instance } = JSON.parse(
-    await fs.promises.readFile(instancePath, "utf8")
-  );
-  const factory = new Factory(configuration, inputDir, outputDir);
-  factory.loadInstance(instance);
-  return factory;
+  async sellDropItems(
+    providerEngineId: string,
+    deployment: Deployment,
+    drop: Drop,
+    publishedIds: string[] = []
+  ) {
+    const seaport = seaports[providerEngineId];
+
+    const { generation, contractAddress } = deployment;
+    const { collection } = generation;
+
+    for (const id of arrayDifference(drop.ids, publishedIds)) {
+      const item = collection.find((item) => item.name === id);
+
+      const asset = {
+        tokenId: id,
+        tokenAddress: contractAddress,
+      };
+
+      switch (item.saleType) {
+        case SaleType.FIXED:
+          await seaport.createSellOrder({
+            asset,
+            accountAddress: accounts[providerEngineId],
+            startAmount: item.startingPrice,
+          });
+          break;
+        case SaleType.DUTCH:
+          await seaport.createSellOrder({
+            asset,
+            accountAddress: accounts[providerEngineId],
+            startAmount: item.startingPrice,
+            endAmount: item.endingPrice,
+            expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
+          });
+          break;
+        case SaleType.ENGLISH: // ? NOTE: Must use WETH
+          await seaport.createSellOrder({
+            asset,
+            accountAddress: accounts[providerEngineId],
+            paymentTokenAddress:
+              deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
+            startAmount: item.startingPrice,
+            expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
+            waitForHighestBid: true,
+          });
+          break;
+      }
+    }
+  }
+
+  async sellDrop(providerEngineId: string, deployment: Deployment, drop: Drop) {
+    const publishedIds = await this.sellDropBundles(
+      providerEngineId,
+      deployment,
+      drop
+    );
+    await this.sellDropItems(providerEngineId, deployment, drop, publishedIds);
+  }
 }

@@ -1,96 +1,98 @@
-import React, { useState, useContext, useEffect } from "react";
-import {
-  Flex,
-  Heading,
-  ProgressBar,
-  View,
-  Text,
-  ActionButton,
-  Link,
-} from "@adobe/react-spectrum";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { OutputItem } from "../components/OutputItem";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "@spectrum-css/fieldlabel/dist/index-vars.css";
-import { Networks } from "../constants";
-import { Contract, providers } from "ethers";
+import { v4 as uuid } from "uuid";
 
-import WalletConnectProvider from "@walletconnect/web3-provider";
+import {
+    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, ProgressBar, repeat, View
+} from "@adobe/react-spectrum";
+import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
-import Close from "@spectrum-icons/workflow/Close";
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
-import { Panel721 } from "../components/Panel721";
-import { chopAddress } from "../utils";
-import { Panel1155 } from "../components/Panel1155";
-import LogOut from "@spectrum-icons/workflow/LogOut";
-import { ToolbarContext } from "../components/Toolbar";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { Configuration } from "../typings";
-import { loadSecrets } from "../actions";
-// import { OpenSeaPort } from "opensea-js";
+import { OutputItem, OutputItemProps } from "../components/OutputItem";
+import { Panel721 } from "../components/Panel721";
+import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
+import { TaskItem } from "../components/TaskItem";
+import { ToolbarContext } from "../components/Toolbar";
+import {
+    createContract, createProvider, createProviderWithKey, writeProjectInstance
+} from "../ipc";
+import { Deployment, Instance } from "../typings";
+import { chopAddress } from "../utils";
 
 interface InstancePageState {
-  configuration: Configuration;
-  network: string;
-  contractAddress: string;
-  abi: any[];
+  projectDir: string;
+  id: string;
+  instance: Instance;
+  dirty: boolean;
 }
-
-function resolveEtherscanUrl(network: string, contractAddress: string) {
-  return network === "mainnet"
-    ? `https://etherscan.io/address/${contractAddress}`
-    : network === "ropsten"
-    ? `https://ropsten.etherscan.io/address/${contractAddress}`
-    : network === "rinkeby"
-    ? `https://rinkeby.etherscan.io/address/${contractAddress}`
-    : null;
-}
-
-// TODO
-// https://testnets.opensea.io/assets/<asset_contract_address>/<token_id>
 
 export function InstancePage() {
   const task = useErrorHandler();
   const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { configuration, network, contractAddress, abi } =
-    state as InstancePageState;
+  const {
+    projectDir,
+    id,
+    instance,
+    dirty: _dirty,
+  } = state as InstancePageState;
+  const { configuration, deployment: _deployment } = instance;
 
-  const [isWorking, setIsWorking] = useState(false);
-  const [contract, setContract] = useState(null);
-  const [outputs, setOutputs] = useState([]);
+  const [deployment, setDeployment] = useState(_deployment);
+  const [error] = useState(!deployment);
+
+  const [contractAddress] = useState(error ? null : deployment.contractAddress);
+  const [abi] = useState(error ? null : deployment.abi);
+  const [network] = useState(error ? null : deployment.network);
+
+  // const [dirty, setDirty] = useState(_dirty);
+  const [dirty] = useState(_dirty);
+
+  const [working, setWorking] = useState(false);
+  const [outputs, setOutputs] = useState<OutputItemProps[]>([]);
+  const [providerId, setProviderId] = useState<string>(null);
+  const [contractId, setContractId] = useState<string>(null);
+  const [providerEngineId, setProviderEngineId] = useState<string>(null);
 
   useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton("logOut", "Log Out", <LogOut />, () =>
-      localStorage.clear()
-    );
-
-    task("loading secrets", async () => {
-      const secrets = await loadSecrets();
-      const provider = new WalletConnectProvider({
-        infuraId: secrets.infuraId,
-        chainId: Networks[network].id,
-      });
-      await provider.enable();
-      const web3Provider = new providers.Web3Provider(provider);
-      const signer = web3Provider.getSigner();
-      const contract = new Contract(contractAddress, abi, signer);
-
-      // TODO
-      // const seaport = new OpenSeaPort(web3Provider, {
-      //   networkName: network === "mainnet" ? "main" : "rinkeby",
-      // });
-
-      setContract(contract);
-    })();
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
 
     return () => {
-      toolbarContext.removeButton("close");
-      toolbarContext.removeButton("logOut");
+      toolbarContext.removeButton("back");
     };
-  }, [abi, contractAddress, network]);
+  }, []);
+
+  useEffect(() => {
+    task("provider & contract", async () => {
+      if (error) return;
+      const providerId = uuid();
+      const contractId = uuid();
+
+      const uri = await createProvider(
+        providerId,
+        network,
+        async ({ connected }) => {
+          WalletConnectQRCodeModal.close();
+
+          if (!connected) throw Error("Could not connect");
+
+          await createContract(contractId, providerId, contractAddress, abi);
+          setProviderId(providerId);
+          setContractId(contractId);
+        }
+      );
+      WalletConnectQRCodeModal.open(uri, () => {});
+    })();
+  }, []);
+
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
+
+  const onCopy = () =>
+    navigator.clipboard.writeText(deployment.contractAddress);
 
   const addOutput = (output: {
     title: string;
@@ -100,102 +102,179 @@ export function InstancePage() {
     setOutputs((prevOutputs) => [...prevOutputs, output]);
   };
 
-  const onCopy = () => {
-    navigator.clipboard.writeText(contractAddress);
-  };
-
-  const _task =
-    (name: string, callback: (...args: any[]) => void) =>
-    async (...args: any[]) => {
-      setIsWorking(true);
-      await task(name, callback)(...args);
-      setIsWorking(false);
+  const increaseDropNumber = async () => {
+    const newDeployment: Deployment = {
+      ...deployment,
+      dropNumber: deployment.dropNumber + 1,
     };
 
+    await writeProjectInstance(projectDir, {
+      ...instance,
+      deployment: newDeployment,
+    });
+
+    setDeployment(newDeployment);
+  };
+
+  const onConnect = task("connect", async () => {
+    const providerId = uuid();
+    const contractId = uuid();
+
+    const uri = await createProvider(
+      providerId,
+      network,
+      async ({ connected }) => {
+        WalletConnectQRCodeModal.close();
+
+        if (!connected) throw Error("Could not connect");
+
+        await createContract(contractId, providerId, contractAddress, abi);
+        setProviderId(providerId);
+        setContractId(contractId);
+      }
+    );
+    WalletConnectQRCodeModal.open(uri, () => {});
+  });
+
+  const onConnectWithPrivateKey = task(
+    "connect with private key",
+    async ({ privateKey }) => {
+      const providerEngineId = uuid();
+      await createProviderWithKey(
+        providerEngineId,
+        privateKey,
+        deployment.network
+      );
+      setProviderEngineId(providerEngineId);
+    }
+  );
+
   return (
-    <Flex
-      direction="column"
+    <Grid
+      UNSAFE_className="overflow-hidden"
+      areas={["left right"]}
+      columns={["2fr", "1fr"]}
+      rows={["auto"]}
       height="100%"
-      margin="size-100"
       gap="size-100"
-      justifyContent="space-between"
+      margin="size-100"
     >
-      <Flex justifyContent="space-between" alignItems="center">
-        <Flex gap="size-100" alignItems="center">
-          <Heading level={1} marginStart={16}>
-            <pre className="inline">{chopAddress(contractAddress)}</pre> at{" "}
-            {Networks[network].name}
-          </Heading>
-          <ActionButton onPress={onCopy}>
-            <Copy />
-          </ActionButton>
-        </Flex>
-        <Link>
-          <a
-            href={resolveEtherscanUrl(network, contractAddress)}
-            target="_blank"
+      {error ? (
+        <>
+          <Heading level={1}>You need to deploy a contract first</Heading>
+          <ButtonGroup align="end">
+            <Button variant="cta" onPress={onBack}>
+              Back
+            </Button>
+          </ButtonGroup>
+        </>
+      ) : (
+        <>
+          <View
+            UNSAFE_className="p-2 space-y-2"
+            gridArea="left"
+            overflow="auto"
           >
-            Contract at Etherscan.
-          </a>
-        </Link>
-      </Flex>
+            <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
+              <TaskItem name="Connect" onRun={onConnect} />
 
-      <Flex height="70vh" gap="size-100" justifyContent="space-evenly">
-        {configuration.contractType === "721" ? (
-          <Panel721
-            {...{
-              task: _task,
-              contract,
-              contractAddress,
-              addOutput,
-            }}
-          />
-        ) : configuration.contractType === "1155" ? (
-          <Panel1155
-            {...{
-              task: _task,
-              contract,
-              contractAddress,
-              addOutput,
-            }}
-          />
-        ) : null}
+              <TaskItem
+                name="Connect with private key"
+                fields={[
+                  {
+                    key: "privateKey",
+                    type: "password",
+                    label: "Private key",
+                    initial: "",
+                    value: "",
+                  },
+                ]}
+                onRun={onConnectWithPrivateKey}
+              />
 
-        <View>
-          <label className="spectrum-FieldLabel">Output</label>
+              {configuration.contractType === "721" ? (
+                <Panel721
+                  {...{
+                    deployment,
+                    id,
+                    providerId,
+                    contractId,
+                    providerEngineId,
+                    setWorking,
+                    addOutput,
+                    increaseDropNumber,
+                  }}
+                />
+              ) : configuration.contractType === "721_reveal_pause" ? (
+                <Panel721_reveal_pause
+                  {...{
+                    deployment,
+                    id,
+                    providerId,
+                    contractId,
+                    providerEngineId,
+                    setWorking,
+                    addOutput,
+                    increaseDropNumber,
+                  }}
+                />
+              ) : null}
+            </Grid>
+          </View>
 
           <View
-            width="30vw"
-            height="100%"
-            padding="size-100"
+            UNSAFE_className="p-2 space-y-2"
+            gridArea="right"
             overflow="auto"
-            borderWidth="thin"
-            borderColor="dark"
-            borderRadius="medium"
           >
-            <Flex direction="column" gap="size-100">
-              {outputs.map(({ title, text, isCopiable }, i) => (
-                <OutputItem
-                  key={i}
-                  title={title}
-                  text={text}
-                  isCopiable={isCopiable}
-                />
-              ))}
+            <Flex
+              zIndex={1001}
+              position="sticky"
+              top={0}
+              gap="size-100"
+              alignItems="center"
+            >
+              <Heading level={1}>
+                {chopAddress(contractAddress)} at {network}
+              </Heading>
+              <ActionButton onPress={onCopy}>
+                <Copy />
+              </ActionButton>
+            </Flex>
+
+            <View
+              padding="size-100"
+              borderWidth="thin"
+              borderColor="dark"
+              borderRadius="medium"
+            >
+              <Flex direction="column" gap="size-100">
+                {outputs.map(({ title, text, isCopiable }, i) => (
+                  <OutputItem
+                    key={i}
+                    title={title}
+                    text={text}
+                    isCopiable={isCopiable}
+                  />
+                ))}
+              </Flex>
+            </View>
+
+            <Flex
+              zIndex={1001}
+              position="sticky"
+              bottom={0}
+              direction="row-reverse"
+            >
+              <ProgressBar
+                UNSAFE_className={working ? "opacity-100" : "opacity-0"}
+                label="Loading…"
+                isIndeterminate
+              />
             </Flex>
           </View>
-        </View>
-      </Flex>
-
-      <Flex marginBottom={8} marginX={8} justifyContent="space-between">
-        <Text>Made with love by KODKOD ❤️</Text>
-
-        <ProgressBar
-          UNSAFE_className={isWorking ? "opacity-100" : "opacity-0"}
-          label="Loading…"
-          isIndeterminate
-        />
-      </Flex>
-    </Flex>
+        </>
+      )}
+    </Grid>
   );
 }

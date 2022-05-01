@@ -15,14 +15,19 @@ declare global {
 // #endregion
 
 import { v4 as uuid } from "uuid";
+
 import {
   Collection,
   CollectionItem,
   Configuration,
+  Deployment,
+  Drop,
+  Generation,
   Instance,
   Layer,
-  NodesAndEdges,
-  Secrets,
+  MetadataItem,
+  Network,
+  Template,
   Trait,
 } from "./typings";
 import { capitalize } from "./utils";
@@ -45,7 +50,7 @@ const ipcTask =
 const ipcTaskWithProgress =
   (task: string) =>
   (
-    onProgress: (...args: any[]) => void | undefined,
+    onProgress: ((...args: any[]) => void) | undefined,
     id: string,
     ...args: any[]
   ) =>
@@ -98,105 +103,72 @@ const ipcTaskWithRequestId =
     });
   };
 
-const ipcSetterAndGetter = (
+const ipcSetterAndGetter = <T,>(
   property: string
-): [(value: any) => void, () => void] => [
+): [(value: T) => void, () => Promise<T>] => [
   (value: any) => ipcTask(`set${capitalize(property)}`)(value),
-  () => ipcTask(`get${capitalize(property)}`)(),
+  () => ipcTask(`get${capitalize(property)}`)() as Promise<T>,
 ];
 
 // #endregion
 
-// #region General
+// #region Property
 export const [setPinataApiKey, getPinataApiKey] =
-  ipcSetterAndGetter("pinataApiKey");
+  ipcSetterAndGetter<string>("pinataApiKey");
 
 export const [setPinataSecretApiKey, getPinataSecretApiKey] =
-  ipcSetterAndGetter("pinataSecretApiKey");
+  ipcSetterAndGetter<string>("pinataSecretApiKey");
 
-export const [setInfuraId, getInfuraId] = ipcSetterAndGetter("infuraId");
+export const [setInfuraProjectId, getInfuraProjectId] =
+  ipcSetterAndGetter<string>("infuraProjectId");
 
 export const [setEtherscanApiKey, getEtherscanApiKey] =
-  ipcSetterAndGetter("etherscanApiKey");
+  ipcSetterAndGetter<string>("etherscanApiKey");
 
-export const mkDir = (dir: string, options: any) =>
-  ipcTask("mkDir")(dir, options);
+export const [setOpenseaApiKey, getOpenseaApiKey] =
+  ipcSetterAndGetter<string>("openseaApiKey");
+// #endregion
 
-export const writeFile = (file: string, data: any, options: any) =>
-  ipcTask("writeFile")(file, data, options);
-
+// #region General
 export const showOpenDialog = (options: any) =>
-  ipcTask("showOpenDialog")(options);
+  ipcTask("showOpenDialog")(options) as Promise<{
+    canceled: boolean;
+    filePaths: string[];
+  }>;
 
-export const showSaveDialog = (options: any) =>
-  ipcTask("showSaveDialog")(options);
-
-export const layersNames = (inputDir: string) =>
-  ipcTask("layersNames")(inputDir);
-
-export const getContract = (name: string) => ipcTask("getContract")(name);
-
-export const getContractSource = (name: string) =>
-  ipcTask("getContractSource")(name);
-
-export const getOutputDir = (inputDir: string) =>
-  ipcTask("getOutputDir")(inputDir);
-
-export const compose = (buffers: Buffer[], configuration: any) =>
-  ipcTaskWithRequestId("compose")(buffers, configuration);
-
-export const name = (inputDir: string) => ipcTask("name")(inputDir);
-
-export const sizeOf = (inputDir: string) => ipcTask("sizeOf")(inputDir);
-
-export const verifyContract = (
-  apiKey: string,
-  sourceCode: string,
-  network: string,
-  contractaddress: string,
-  codeformat: string,
-  contractname: string,
-  compilerversion: string,
-  optimizationUsed: number
-) =>
-  ipcTask("verifyContract")(
-    apiKey,
-    sourceCode,
-    network,
-    contractaddress,
-    codeformat,
-    contractname,
-    compilerversion,
-    optimizationUsed
-  );
-
-export const isValidInputDir = (inputDir: string) =>
-  ipcTask("isValidInputDir")(inputDir);
-
+export const openInExplorer = (...paths: string[]) =>
+  ipcTask("openInExplorer")(paths);
 // #endregion
 
 // #region Factory
+export const readProjectInstance = (projectDir: string) =>
+  ipcTask("readProjectInstance")(projectDir) as Promise<Instance>;
+
+export const ensureProjectStructure = (projectDir: string) =>
+  ipcTask("ensureProjectStructure")(projectDir);
+
+export const writeProjectInstance = (projectDir: string, instance: Instance) =>
+  ipcTask("writeProjectInstance")(projectDir, instance);
+
+export const readProjectAvailableLayers = (projectDir: string) =>
+  ipcTask("readProjectAvailableLayers")(projectDir) as Promise<string[]>;
+
+export const hasFactory = (id: string) =>
+  ipcTask("hasFactory")(id) as Promise<boolean>;
+
 export const createFactory = (
   id: string,
   configuration: Partial<Configuration>,
-  inputDir: string,
-  outputDir: string,
-  instance?: Partial<Instance>
-) => ipcTask("createFactory")(id, configuration, inputDir, outputDir, instance);
+  projectDir: string
+) => ipcTask("createFactory")(id, configuration, projectDir);
 
-export const createFactoryFromInstance = (id: string, instancePath: string) =>
-  ipcTask("createFactoryFromInstance")(id, instancePath);
+export const factoryReloadConfiguration = (
+  id: string,
+  configuration: Configuration
+) => ipcTask("factoryReloadConfiguration")(id, configuration);
 
-export const factoryInstance = (id: string) => ipcTask("factoryInstance")(id);
-
-export const factoryLoadInstance = (id: string, instance: Partial<Instance>) =>
-  ipcTask("factoryLoadInstance")(id, instance);
-
-export const factorySaveInstance = (id: string) =>
-  ipcTask("factorySaveInstance")(id);
-
-export const factoryLoadSecrets = (id: string, secrets: Secrets) =>
-  ipcTask("factoryLoadSecrets")(id, secrets);
+export const factoryReloadLayers = (id: string) =>
+  ipcTask("factoryReloadLayers")(id);
 
 export const factoryGetLayerByName = (id: string, layerName: string) =>
   ipcTaskWithRequestId("factoryGetLayerByName")(
@@ -209,37 +181,93 @@ export const factoryGetTraitsByLayerName = (id: string, layerName: string) =>
     Trait[]
   >;
 
-export const factoryGenerateCollection = (
+export const factoryMakeGeneration = (
   id: string,
-  nodesAndEdges: NodesAndEdges
+  name: string,
+  template: Template
 ) =>
-  ipcTask("factoryGenerateCollection")(
+  ipcTask("factoryMakeGeneration")(id, name, template) as Promise<Generation>;
+
+export const factoryComputeMaxCombinations = (id: string, layers: Layer[]) =>
+  ipcTaskWithRequestId("factoryComputeMaxCombinations")(
     id,
-    nodesAndEdges
-  ) as Promise<Collection>;
+    layers
+  ) as Promise<number>;
+
+export const factoryComposeTraits = (
+  id: string,
+  traits: Trait[],
+  maxSize?: number
+) =>
+  ipcTaskWithRequestId("factoryComposeTraits")(
+    id,
+    traits,
+    maxSize
+  ) as Promise<string>;
 
 export const factoryGenerateImages = (
   id: string,
-  collection: Collection,
+  generation: Generation,
   onProgress?: (name: string) => void
-) => ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, collection);
+) => ipcTaskWithProgress("factoryGenerateImages")(onProgress, id, generation);
 
 export const factoryGenerateMetadata = (
   id: string,
+  generation: Generation,
+  items: MetadataItem[],
   onProgress?: (name: string) => void
-) => ipcTaskWithProgress("factoryGenerateMetadata")(onProgress, id);
+) =>
+  ipcTaskWithProgress("factoryGenerateMetadata")(
+    onProgress,
+    id,
+    generation,
+    items
+  );
 
-export const factoryDeployImages = (id: string) =>
-  ipcTask("factoryDeployImages")(id);
+export const factoryDeploy = (
+  id: string,
+  providerId: string,
+  generation: Generation,
+  notRevealedGeneration: Generation,
 
-export const factoryDeployMetadata = (id: string) =>
-  ipcTask("factoryDeployMetadata")(id);
+  imagesCid: string,
+  metadataCid: string,
+  notRevealedImageCid: string,
+  notRevealedMetadataCid: string,
+  contractAddress: string
+) =>
+  ipcTask("factoryDeploy")(
+    id,
+    providerId,
+    generation,
+    notRevealedGeneration,
+
+    imagesCid,
+    metadataCid,
+    notRevealedImageCid,
+    notRevealedMetadataCid,
+    contractAddress
+  ) as Promise<{
+    imagesCid: string;
+    metadataCid: string;
+    notRevealedImageCid?: string;
+    notRevealedMetadataCid?: string;
+    contractAddress: string;
+    abi: any;
+    compilerVersion: string;
+    transactionHash: string;
+  }>;
 
 export const factoryGetTraitImage = (
   id: string,
   trait: Trait,
   maxSize?: number
-) => ipcTaskWithRequestId("factoryGetTraitImage")(id, trait, maxSize);
+) =>
+  ipcTaskWithRequestId("factoryGetTraitImage")(
+    id,
+    trait,
+    maxSize
+  ) as Promise<string>;
 
 export const factoryGetRandomTraitImage = (
   id: string,
@@ -250,29 +278,222 @@ export const factoryGetRandomTraitImage = (
     id,
     layer,
     maxSize
-  ) as Promise<Buffer>;
+  ) as Promise<[Trait, string]>;
 
 export const factoryGetImage = (
   id: string,
-  collectionItem: CollectionItem,
+  generation: Generation,
+  item: CollectionItem,
   maxSize?: number
-) => ipcTaskWithRequestId("factoryGetImage")(id, collectionItem, maxSize);
-
-export const factoryGetRandomImage = (id: string, maxSize?: number) =>
-  ipcTask("factoryGetRandomImage")(id, maxSize);
-
-export const factoryRewriteImage = (
-  id: string,
-  collectionItem: CollectionItem,
-  dataUrl: string
-) => ipcTask("factoryRewriteImage")(id, collectionItem, dataUrl);
-
-export const factoryRemoveCollectionItems = (
-  id: string,
-  collectionItems: Collection
 ) =>
-  ipcTask("factoryRemoveCollectionItems")(
+  ipcTaskWithRequestId("factoryGetImage")(
     id,
-    collectionItems
-  ) as Promise<Collection>;
+    generation,
+    item,
+    maxSize
+  ) as Promise<string>;
+
+export const factoryGetRandomImage = (
+  id: string,
+  generation: Generation,
+  maxSize?: number
+) =>
+  ipcTask("factoryGetRandomImage")(id, generation, maxSize) as Promise<
+    [CollectionItem, string]
+  >;
+
+export const factoryRemoveItems = (
+  id: string,
+  generation: Generation,
+  items: Collection
+) =>
+  ipcTask("factoryRemoveItems")(id, generation, items) as Promise<Generation>;
+
+export const factoryRegenerateItems = (
+  id: string,
+  generation: Generation,
+  items: Collection
+) =>
+  ipcTask("factoryRegenerateItems")(
+    id,
+    generation,
+    items
+  ) as Promise<Generation>;
+
+export const factoryReplaceItems = (
+  id: string,
+  generation: Generation,
+  _with: Collection
+) =>
+  ipcTask("factoryReplaceItems")(id, generation, _with) as Promise<Generation>;
+
+export const factoryUnify = (
+  id: string,
+  name: string,
+  generations: Generation[]
+) => ipcTask("factoryUnify")(id, name, generations) as Promise<Generation>;
+
+export const factoryRemove = (id: string, generation: Generation) =>
+  ipcTask("factoryRemove")(id, generation);
+
+export const factoryReconstruct = (id: string, generation: Generation) =>
+  ipcTask("factoryReconstruct")(id, generation) as Promise<Generation>;
+
+export const factoryHydrateMetadata = (
+  id: string,
+  generation: Generation,
+  imagesCid: string
+) => ipcTask("factoryHydrateMetadata")(id, generation, imagesCid);
+
+// export const getCost = (id: string, contractId: string) =>
+//   ipcTask("getCost")(id, contractId);
+
+export const getBalanceOf = (id: string, contractId: string, address: string) =>
+  ipcTask("getBalanceOf")(id, contractId, address);
+
+export const getTokenOfOwnerByIndex = (
+  id: string,
+  contractId: string,
+  address: string,
+  index: number
+) => ipcTask("getTokenOfOwnerByIndex")(id, contractId, address, index);
+
+export const getTokenUri = (id: string, contractId: string, index: number) =>
+  ipcTask("getTokenUri")(id, contractId, index);
+
+export const mint = (
+  id: string,
+  contractId: string,
+  payable: string,
+  mint: number
+) => ipcTask("mint")(id, contractId, payable, mint);
+
+export const getWalletOfOwner = (
+  id: string,
+  contractId: string,
+  owner: string
+) => ipcTask("getWalletOfOwner")(id, contractId, owner);
+
+// export const setCost = (id: string, contractId: string, cost: string) =>
+//   ipcTask("setCost")(id, contractId, cost);
+
+// export const setMaxMintAmount = (
+//   id: string,
+//   contractId: string,
+//   amount: number
+// ) => ipcTask("setMaxMintAmount")(id, contractId, amount);
+
+export const withdraw = (id: string, contractId: string) =>
+  ipcTask("withdraw")(id, contractId);
+
+export const pause = (id: string, contractId: string) =>
+  ipcTask("pause")(id, contractId);
+
+export const setBaseUri = (id: string, contractId: string, baseUri: string) =>
+  ipcTask("setBaseUri")(id, contractId, baseUri);
+
+export const reveal = (id: string, contractId: string) =>
+  ipcTask("reveal")(id, contractId);
+
+export const mintDrop = (
+  id: string,
+  providerId: string,
+  contractId: string,
+  drop: Drop,
+  gasLimit?: number
+) => ipcTask("mintDrop")(id, providerId, contractId, drop, gasLimit);
+
+export const sellDropBundles = (
+  id: string,
+  providerEngineId: string,
+  deployment: Deployment,
+  drop: Drop
+) => ipcTask("sellDropBundles")(id, providerEngineId, deployment, drop);
+
+export const sellDropItems = (
+  id: string,
+  providerEngineId: string,
+  deployment: Deployment,
+  drop: Drop
+) => ipcTask("sellDropItems")(id, providerEngineId, deployment, drop);
+
+export const sellDrop = (
+  id: string,
+  providerEngineId: string,
+  deployment: Deployment,
+  drop: Drop
+) => ipcTask("sellDrop")(id, providerEngineId, deployment, drop);
+
+export const factoryGetResolution = (id: string) =>
+  ipcTask("factoryGetResolution")(id) as Promise<{
+    width: number;
+    height: number;
+  }>;
+
+// #endregion
+
+// #region Provider
+export const createProvider = (
+  id: string,
+  network: Network,
+  callback: ({ connected }: { connected: boolean }) => void
+) =>
+  new Promise<string>((resolve) => {
+    const onCreateProviderUri = ({
+      id: _id,
+      uri,
+    }: {
+      id: string;
+      uri: string;
+    }) => {
+      if (_id !== id) return;
+      window.ipcRenderer.removeListener(
+        "createProviderUri",
+        onCreateProviderUri
+      );
+      resolve(uri);
+    };
+
+    const onCreateProviderResult = ({
+      id: _id,
+      connected,
+    }: {
+      id: string;
+      connected: boolean;
+    }) => {
+      if (_id !== id) return;
+      window.ipcRenderer.removeListener(
+        "createProviderResult",
+        onCreateProviderResult
+      );
+      callback({ connected });
+    };
+
+    window.ipcRenderer.on("createProviderUri", onCreateProviderUri);
+    window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
+    window.ipcRenderer.send("createProvider", id, network);
+  });
+
+export const createProviderWithKey = (
+  id: string,
+  privateKey: string,
+  network: Network
+) => ipcTask("createProviderWithKey")(id, privateKey, network);
+
+// #endregion
+
+// #region Contract
+export const createContract = (
+  id: string,
+  providerId: string,
+  contractAddress: string,
+  abi: any
+) =>
+  ipcTask("createContract")(
+    id,
+    providerId,
+    contractAddress,
+    abi
+  ) as Promise<string>;
+
 // #endregion

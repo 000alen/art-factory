@@ -1,9 +1,13 @@
 import React from "react";
-import { Flex, ProgressBar, ButtonGroup, Button } from "@adobe/react-spectrum";
+
+import {
+    Button, ButtonGroup, Content, ContextualHelp, Flex, Heading, ProgressBar, Text
+} from "@adobe/react-spectrum";
 
 interface TriStateButtonProps {
   preLabel: string;
   preAction: () => void;
+  preDisabled?: boolean;
 
   loadingLabel: string;
   loadingMaxValue?: number;
@@ -13,11 +17,16 @@ interface TriStateButtonProps {
 
   postLabel: string;
   postAction: () => void;
+  postDisabled?: boolean;
+  postTooltip?: boolean;
+  postTooltipHeading?: string;
+  postTooltipText?: string;
 }
 
 export const TriStateButton: React.FC<TriStateButtonProps> = ({
   preLabel,
   preAction,
+  preDisabled,
 
   loadingLabel,
   loadingMaxValue,
@@ -27,6 +36,11 @@ export const TriStateButton: React.FC<TriStateButtonProps> = ({
 
   postLabel,
   postAction,
+  postDisabled,
+
+  postTooltip,
+  postTooltipHeading,
+  postTooltipText,
 }) => {
   return loading ? (
     <Flex marginBottom={8} marginX={8} justifyContent="end">
@@ -45,11 +59,27 @@ export const TriStateButton: React.FC<TriStateButtonProps> = ({
   ) : (
     <ButtonGroup align="end" marginBottom={8} marginEnd={8}>
       {loadingDone ? (
-        <Button variant="cta" onPress={postAction}>
-          {postLabel}
-        </Button>
+        <Flex gap="size-100" alignItems="center">
+          {postTooltip && (
+            <ContextualHelp variant="info" defaultOpen>
+              <Heading>{postTooltipHeading}</Heading>
+              <Content>
+                <Flex direction="column" gap="size-100">
+                  <Text>{postTooltipText}</Text>
+                </Flex>
+              </Content>
+            </ContextualHelp>
+          )}
+          <Button
+            variant="cta"
+            onPress={postAction}
+            isDisabled={!!postDisabled}
+          >
+            {postLabel}
+          </Button>
+        </Flex>
       ) : (
-        <Button variant="cta" onPress={preAction}>
+        <Button variant="cta" onPress={preAction} isDisabled={!!preDisabled}>
           {preLabel}
         </Button>
       )}

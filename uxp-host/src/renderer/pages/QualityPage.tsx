@@ -1,280 +1,553 @@
-import {
-  Flex,
-  Heading,
-  ActionGroup,
-  DialogTrigger,
-  Item,
-  Button,
-} from "@adobe/react-spectrum";
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import {
+  ActionButton,
+  Flex,
+  Grid,
+  Heading,
+  Item,
+  NumberField,
+  TabList,
+  Tabs,
+  View,
+} from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
-import Forward from "@spectrum-icons/workflow/Forward";
-import FastForward from "@spectrum-icons/workflow/FastForward";
+import Folder from "@spectrum-icons/workflow/Folder";
+import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
+
+import {
+  computeGenerationRepeats,
+  regenerateItems,
+  replaceItems,
+} from "../commands";
+import { useErrorHandler } from "../components/ErrorHandler";
+import { Filters } from "../components/Filters";
+import { GalleryBundles } from "../components/GalleryBundles";
+import { GalleryItems } from "../components/GalleryItems";
+import { Loading } from "../components/Loading";
+import { Properties } from "../components/Properties";
+import { ToolbarContext } from "../components/Toolbar";
+import { UXPContext } from "../components/UXPContext";
+import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
+import {
+  Filters as IFilters,
+  useBundlesFilters,
+  useFilters,
+} from "../hooks/useFilters";
 import {
   factoryGetImage,
-  factoryRemoveCollectionItems,
-  factoryRewriteImage,
-  factorySaveInstance,
+  factoryGetTraitsByLayerName,
+  factoryRemoveItems,
+  openInExplorer,
 } from "../ipc";
-import { EditorDialog } from "../components/EditorDialog";
-import { GenericDialogContext } from "../components/GenericDialog";
-import { UXPContext } from "../components/UXPContext";
-import { ToolbarContext } from "../components/Toolbar";
-import Close from "@spectrum-icons/workflow/Close";
-import { Collection, CollectionItem, Configuration } from "../typings";
-import { useErrorHandler } from "../components/ErrorHandler";
-import { ImageItem } from "../components/ImageItem";
+import { Bundles, Collection, Generation, Instance, Trait } from "../typings";
 
 interface QualityPageState {
+  projectDir: string;
   id: string;
-  collection: Collection;
-  inputDir: string;
-  outputDir: string;
-  photoshopId: string;
-  photoshop: boolean;
-  configuration: Partial<Configuration>;
+  instance: Instance;
+  generationId: string;
+  dirty: boolean;
 }
 
-export function QualityPage() {
+export interface QualityItem {
+  name: string;
+  url: string;
+}
+
+export interface BundleItem {
+  bundleName: string;
+  names: string[];
+  urls: string[];
+}
+
+export const QualityPage = () => {
   const toolbarContext = useContext(ToolbarContext);
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
-  const task = useErrorHandler();
+
+  const [working, setWorking] = useState(false);
+  const [workingTitle, setWorkingTitle] = useState("");
 
   const {
+    projectDir,
     id,
-    collection,
-    inputDir,
-    outputDir,
-    photoshopId,
-    photoshop,
-    configuration,
+    instance,
+    generationId,
+    dirty: _dirty,
   } = state as QualityPageState;
 
-  const [index, setIndex] = useState(0);
-  const [imagesUrls, setImagesUrls] = useState([]);
-  const [editorShown, setEditorShown] = useState(false);
-  const [editorI, setEditorI] = useState(null);
-  const [collectionItem, setCollectionItem] = useState(null);
-  const [indexesToRemove, setIndexesToRemove] = useState([]);
+  const { configuration, generations, sources } = instance;
 
+  const [dirty, setDirty] = useState(_dirty);
+
+  const [selectedTab, setSelectedTab] = useState("items");
+
+  const [generation] = useState(
+    generations.find((generation) => generation.id === generationId)
+  );
+  const [name] = useState(generation.name);
+  const [collection, setCollection] = useState(generation.collection);
+  const [bundles] = useState(generation.bundles);
+  const [traits, setTraits] = useState<Record<string, Trait[]>>(null);
+
+  const [filtersInfo, setFiltersInfo] = useState<IFilters>({});
+  const { filters, addFilter, hasFilter, removeFilter } = useFilters();
+
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
+  const [filteredCollection, setFilteredCollection] =
+    useState<Collection>(collection);
+  const [items, setItems] = useState<QualityItem[]>([]);
+
+  const [selectedItem, setSelectedItem] = useState<string>(null);
+  const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
+
+  const [repeatedFilter, setRepeatedFilter] = useState<boolean>(false);
+  const [stringFilter, setStringFilter] = useState<string>(null);
+
+  const [bundlesFiltersInfo, setBundlesFiltersInfo] = useState<string[]>([]);
+  const { bundlesFilters, addBundlesFilter, removeBundlesFilter } =
+    useBundlesFilters();
+  const [bundlesPage, setBundlesPage] = useState(1);
+  const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
+  const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
+  const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
+  const task = useErrorHandler(setWorking);
+
+  // #region Setups
+  // ? Toolbar setup
   useEffect(() => {
-    const uxpReload = async ({
-      photoshopId,
-      name,
-    }: {
-      photoshopId: string;
-      name: string;
-    }) => {
-      const i = Number(name) - index - 1;
-      const buffer = await factoryGetImage(id, collection[index + i], 500);
-      const url = URL.createObjectURL(
-        new Blob([buffer as BlobPart], { type: "image/png" })
-      );
-
-      setImagesUrls((prevUrls) =>
-        prevUrls.map((prevUrl, j) => (j === i ? url : prevUrl))
-      );
-    };
-
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    uxpContext.on("uxp-reload", uxpReload);
-
-    task("loading previews", async () => {
-      const urls = (
-        await Promise.all(
-          Array.from({ length: 25 }).map(async (_, i) => {
-            if (index + i >= collection.length) return null;
-            const buffer = await factoryGetImage(
-              id,
-              collection[index + i],
-              500
-            );
-            const url = URL.createObjectURL(
-              new Blob([buffer as BlobPart], { type: "image/png" })
-            );
-            return url;
-          })
-        )
-      ).filter((url) => url !== null);
-      setImagesUrls(urls);
-    })();
+    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
+    toolbarContext.addButton(
+      "open-explorer",
+      "Open in Explorer",
+      <Folder />,
+      () => openInExplorer(projectDir, BUILD_DIR_NAME, "images", name)
+    );
 
     return () => {
-      toolbarContext.removeButton("close");
+      toolbarContext.removeButton("back");
+      toolbarContext.removeButton("open-explorer");
+    };
+  }, []);
+
+  // ? UXP setup
+  useEffect(() => {
+    const uxpReload = async () => loadPreviews();
+
+    uxpContext.on("uxp-reload", uxpReload);
+
+    return () => {
       uxpContext.off("uxp-reload", uxpReload);
     };
-  }, [index, id]);
+  }, []);
 
-  const onShowEditor = () => {
-    setEditorShown(true);
-  };
+  // ? Traits setup
+  useEffect(() => {
+    task("traits", async () => {
+      setTraits(
+        Object.fromEntries(
+          await Promise.all(
+            configuration.layers.map(async (layerName) => [
+              layerName,
+              await factoryGetTraitsByLayerName(id, layerName),
+            ])
+          )
+        )
+      );
+    })();
+  }, []);
 
-  const onSetEditor = (
-    i: number,
-    collectionItem: CollectionItem,
-    show: boolean
-  ) => {
-    setEditorI(i);
-    setCollectionItem(collectionItem);
-    if (show) onShowEditor();
-  };
+  // ? Collection filters setup
+  useEffect(() => {
+    const filtersInfo: IFilters = {};
+    for (const { traits } of collection)
+      for (const { name, value } of traits)
+        if (name in filtersInfo && !filtersInfo[name].includes(value))
+          filtersInfo[name].push(value);
+        else if (!(name in filtersInfo)) filtersInfo[name] = [value];
 
-  const onHideEditor = () => {
-    setEditorShown(false);
-  };
+    setFiltersInfo(filtersInfo);
+  }, [collection]);
 
-  const onEdit = (i: number) => {
-    if (photoshop) {
-      uxpContext.hostEdit({
-        photoshopId,
-        ...collection[i],
-      });
-    } else {
-      onSetEditor(i, collection[i], true);
-    }
-  };
+  // ? Bundles filters setup
+  useEffect(() => {
+    const bundlesFiltersInfo: string[] = [];
+    for (const { name } of bundles)
+      if (!bundlesFiltersInfo.includes(name)) bundlesFiltersInfo.push(name);
+    setBundlesFiltersInfo(bundlesFiltersInfo);
+  }, [bundles]);
 
-  const onSave = task("saving", async (i: number, dataURL: string) => {
-    await factoryRewriteImage(id, collection[i], dataURL);
-    setImagesUrls((prevUrls) => {
-      const urls = [...prevUrls];
-      urls[i % 25] = [dataURL, i];
-      return urls;
+  // ? Collection filtering
+  useEffect(() => {
+    let filteredCollection = Object.entries(filters)
+      .reduce((filtered, [name, values]) => {
+        if (values.length === 0) return filtered;
+        else
+          return filtered.filter(({ traits }) =>
+            traits.some(
+              ({ name: n, value: v }) => n === name && values.includes(v)
+            )
+          );
+      }, collection)
+      .filter(({ name }) =>
+        stringFilter ? name.includes(stringFilter) : true
+      );
+
+    if (repeatedFilter)
+      filteredCollection = computeGenerationRepeats({
+        collection: filteredCollection,
+      } as Generation);
+
+    setPage((p) => {
+      // if (filteredCollection.some((i) => i.name === p))
+
+      return 1;
     });
+    setSelectedItem((p) =>
+      filteredCollection.some((i) => i.name === p)
+        ? p
+        : filteredCollection.length > 0
+        ? filteredCollection[0].name
+        : null
+    );
+    setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
+    setFilteredCollection(filteredCollection);
+  }, [collection, filters, stringFilter, repeatedFilter]);
+
+  // ? Bundles filtering
+  useEffect(() => {
+    const filteredBundles = bundles
+      .filter(({ name }) =>
+        bundlesFilters.length > 0 ? bundlesFilters.includes(name) : true
+      )
+      .filter(({ name }) =>
+        stringFilter ? name.includes(stringFilter) : true
+      );
+
+    setBundlesPage(1);
+    setBundlesMaxPage(Math.ceil(filteredBundles.length / PAGE_N));
+    setFilteredBundles(filteredBundles);
+  }, [bundles, bundlesFilters, stringFilter]);
+
+  useEffect(() => {
+    loadPreviews();
+  }, [filteredCollection, page]);
+
+  useEffect(() => {
+    loadBundlesPreviews();
+  }, [filteredBundles, bundlesPage]);
+  // #endregion
+
+  const loadPreviews = task("loading previews", async () =>
+    setItems(
+      (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            const cursor = (page - 1) * PAGE_N;
+            if (cursor + i >= filteredCollection.length) return null;
+            const item = filteredCollection[cursor + i];
+            const url = `data:image/png;base64,${await factoryGetImage(
+              id,
+              generation,
+              item,
+              MAX_SIZE
+            )}`;
+            return { name: item.name, url };
+          })
+        )
+      ).filter((item) => item !== null)
+    )
+  );
+
+  const loadBundlesPreviews = task("loading bundles previews", async () => {
+    const flatFilteredBundles: { name: string; ids: string[] }[] =
+      filteredBundles.reduce(
+        (p, { name, ids }) => [...p, ...ids.map((ids) => ({ name, ids }))],
+        []
+      );
+
+    setBundleSItems(
+      (
+        await Promise.all(
+          Array.from({ length: PAGE_N }).map(async (_, i) => {
+            const bundlesCursor = (bundlesPage - 1) * PAGE_N;
+            if (bundlesCursor + i >= flatFilteredBundles.length) return null;
+            const { ids: names, name: bundleName } =
+              flatFilteredBundles[bundlesCursor + i];
+            const items = names.map((id) =>
+              collection.find((item) => item.name === id)
+            );
+            const urls = await Promise.all(
+              items.map(
+                async (item) =>
+                  `data:image/png;base64,${await factoryGetImage(
+                    id,
+                    generation,
+                    item,
+                    MAX_SIZE
+                  )}`
+              )
+            );
+            return { bundleName, names, urls };
+          })
+        )
+      ).filter((item) => item !== null)
+    );
   });
 
-  const onAction = (action: string) => {
-    switch (action) {
-      case "back":
-        onBack();
-        break;
-      case "forward":
-        onForward();
-        break;
-      case "fastForward":
-        onFastForward();
-        break;
-      default:
-        break;
-    }
-  };
+  const onBack = () =>
+    navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
-  const onBack = () => {
-    if (index === 0) return;
-    setImagesUrls([]);
-    setIndex((prevIndex) => Math.max(prevIndex - 25, 0));
-  };
-
-  const onForward = () => {
-    if (index >= collection.length - 25) return;
-    setImagesUrls([]);
-    setIndex((prevIndex) => prevIndex + 25);
-  };
-
-  const onFastForward = task("filtering", async () => {
-    const collectionItemsToRemove: Collection = indexesToRemove.map(
-      (i) => collection[i]
-    );
-    const _collection = await factoryRemoveCollectionItems(
+  // #region Tasks
+  const onSave = task("filtering", async () => {
+    setWorkingTitle("Saving...");
+    const { collection: _collection, drops: _drops } = await factoryRemoveItems(
       id,
-      collectionItemsToRemove
+      generation,
+      itemsToRemove.map((n) => collection.find((i) => i.name === n))
     );
-    const _configuration = {
-      ...configuration,
-      n: _collection.length,
-    };
-    await factorySaveInstance(id);
 
-    navigate("/deploy", {
+    const generations = instance.generations.map((g) =>
+      g.id === generationId
+        ? { ...g, collection: _collection, drops: _drops }
+        : g
+    );
+
+    navigate("/factory", {
       state: {
+        projectDir,
         id,
-        inputDir,
-        outputDir,
-        collection: _collection,
-        configuration: _configuration,
+        instance: {
+          ...instance,
+          generations,
+        },
+        dirty: true,
       },
     });
   });
 
+  const onSelect = (n: string) => setSelectedItem(n);
+
+  const onRemoveRepeated = () =>
+    computeGenerationRepeats(generation).forEach(({ name }) => onRemove(name));
+
+  const onRemove = (n: string) => setItemsToRemove((p) => [...p, n]);
+
+  const onUndoRemove = (n: string) =>
+    setItemsToRemove((p) => p.filter((p_n) => p_n !== n));
+
+  const onEdit = task("edit", async (n: string) => {
+    const { name, traits } = collection.find((i) => i.name === n);
+
+    const traitsSources = traits.map((trait) =>
+      sources.find(({ items }) =>
+        items.some(
+          ({ name, value }) => trait.name === name && trait.value === value
+        )
+      )
+    );
+
+    const photoshopTraitsLayers = traits.map(
+      (trait, i) =>
+        traitsSources[i].items.find(
+          (item) => item.name === trait.name && item.value === trait.value
+        ).photoshopTraitLayer
+    );
+
+    const layers = traits.map((trait, i) => ({
+      document: traitsSources[i].name,
+      photoshopTraitLayer: photoshopTraitsLayers[i],
+      name: trait.name,
+      value: trait.value,
+    }));
+
+    uxpContext.hostEdit({
+      width: configuration.width,
+      height: configuration.height,
+      name,
+      generation: generation.name,
+      layers,
+    });
+  });
+
+  const onRegenerateRepeated = task("regenerating repeated", async () => {
+    setWorkingTitle("Regenerating repeated...");
+    const { collection: _collection } = await regenerateItems(
+      id,
+      { ...generation, collection },
+      computeGenerationRepeats(generation)
+    );
+    setCollection(_collection);
+    setDirty(true);
+  });
+
+  const onRegenerate = task("regenerating", async (n: string) => {
+    setWorkingTitle("Regenerating item...");
+    const { collection: _collection } = await regenerateItems(
+      id,
+      { ...generation, collection },
+      [collection.find((i) => i.name === n)]
+    );
+    setCollection(_collection);
+    setDirty(true);
+  });
+
+  const onReplace = task("replacing", async (n: string, traits: Trait[]) => {
+    setWorkingTitle("Replacing traits...");
+    const { collection: _collection } = await replaceItems(
+      id,
+      { ...generation, collection },
+      [
+        {
+          ...collection.find((i) => i.name === n),
+          traits,
+        },
+      ]
+    );
+    setCollection(_collection);
+    setDirty(true);
+  });
+  // #endregion
+
   return (
-    <Flex
-      direction="column"
+    <Grid
+      UNSAFE_className="overflow-hidden"
+      areas={["left center right"]}
+      columns={["1fr", "4fr", "1fr"]}
+      rows={["auto"]}
       height="100%"
-      margin="size-100"
       gap="size-100"
-      justifyContent="space-between"
+      margin="size-100"
     >
-      <DialogTrigger isOpen={editorShown}>
-        {null}
-        <EditorDialog
-          id={id}
-          configuration={configuration}
-          onHide={onHideEditor}
-          onSave={onSave}
-          i={editorI}
-          collectionItem={collectionItem}
+      {working && <Loading title={workingTitle} />}
+
+      <View UNSAFE_className="p-2 space-y-2" gridArea="left" overflow="auto">
+        <Filters
+          {...{
+            setStringFilter,
+            repeatedFilter,
+            setRepeatedFilter,
+            onRegenerateRepeated,
+            onRemoveRepeated,
+            bundlesFiltersInfo,
+            bundlesFilters,
+            addBundlesFilter,
+            removeBundlesFilter,
+            filtersInfo,
+            hasFilter,
+            addFilter,
+            removeFilter,
+          }}
         />
-      </DialogTrigger>
+      </View>
 
-      <Heading level={1} marginStart={16}>
-        {Math.floor(index / 25) + 1} of {Math.ceil(collection.length / 25)}
-      </Heading>
+      <View UNSAFE_className="p-2 space-y-2" gridArea="center" overflow="auto">
+        <Flex
+          zIndex={1001}
+          position="sticky"
+          top={0}
+          gap="size-100"
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Tabs
+            isQuiet={true}
+            selectedKey={selectedTab}
+            onSelectionChange={(selectedKey) =>
+              setSelectedTab(selectedKey as string)
+            }
+          >
+            <TabList>
+              <Item key="items">Items</Item>
+              <Item key="bundles">Bundles</Item>
+            </TabList>
+          </Tabs>
 
-      <div className="grid grid-cols-5 grid-rows-5 place-content-center place-self-center gap-5 overflow-auto">
-        {imagesUrls.map((url, i) =>
-          indexesToRemove.includes(index + i) ? (
-            <div
-              key={`d-${url.slice(10)}-${index + i}`}
-              className="w-32 h-32 m-auto rounded border-2 border-dashed border-white flex justify-center items-center"
-            >
-              <Button
-                variant="secondary"
-                onPress={() =>
-                  setIndexesToRemove(
-                    indexesToRemove.filter((j) => j !== index + i)
-                  )
-                }
-              >
-                Undo
-              </Button>
-            </div>
-          ) : (
-            <ImageItem
-              key={`i-${url.slice(10)}-${index + i}`}
-              name={`${index + i + 1}`}
-              src={url}
-              actions={[
-                {
-                  label: "Edit",
-                  onClick: () => onEdit(index + i),
-                },
-                {
-                  label: "Remove",
-                  onClick: () =>
-                    setIndexesToRemove((prev) => [...prev, index + i]),
-                },
-              ]}
-            />
-          )
-        )}
-      </div>
+          <Flex
+            width="100%"
+            gap="size-100"
+            justifyContent="end"
+            alignItems="center"
+          >
+            Page{" "}
+            <NumberField
+              aria-label="page"
+              value={
+                selectedTab === "items"
+                  ? page
+                  : selectedTab === "bundles"
+                  ? bundlesPage
+                  : 0
+              }
+              minValue={1}
+              maxValue={
+                selectedTab === "items"
+                  ? maxPage
+                  : selectedTab === "bundles"
+                  ? bundlesMaxPage
+                  : 0
+              }
+              onChange={(value: number) => {
+                if (selectedTab === "items") setPage(value);
+                else if (selectedTab === "bundles") setBundlesPage(value);
+              }}
+            />{" "}
+            of{" "}
+            {selectedTab === "items"
+              ? maxPage
+              : selectedTab === "bundles"
+              ? bundlesMaxPage
+              : 0}
+          </Flex>
+        </Flex>
 
-      <Flex direction="row-reverse">
-        <ActionGroup onAction={onAction}>
-          <Item key="back">
-            <Back />
-          </Item>
-          <Item key="forward">
-            <Forward />
-          </Item>
-          <Item key="fastForward">
-            <FastForward />
-          </Item>
-        </ActionGroup>
-      </Flex>
-    </Flex>
+        {selectedTab === "items" ? (
+          <GalleryItems
+            {...{
+              selectedItem,
+              items,
+              itemsToRemove,
+              onRemove,
+              onUndoRemove,
+              onEdit,
+              onSelect,
+              onRegenerate,
+            }}
+          />
+        ) : selectedTab === "bundles" ? (
+          <GalleryBundles
+            {...{
+              bundlesItems,
+            }}
+          />
+        ) : null}
+      </View>
+
+      <View UNSAFE_className="p-2 space-y-2" gridArea="right" overflow="auto">
+        <Flex gap="size-100" alignItems="center">
+          <Heading level={1}>
+            {dirty && "*"} {configuration.name}
+          </Heading>
+
+          <ActionButton onPress={onSave}>
+            <SaveFloppy />
+          </ActionButton>
+        </Flex>
+
+        <Properties
+          traits={traits}
+          filteredCollection={filteredCollection}
+          items={items}
+          selectedItem={selectedItem}
+          onReplace={onReplace}
+          onRegenerate={onRegenerate}
+          onEdit={onEdit}
+        />
+      </View>
+    </Grid>
   );
-}
+};

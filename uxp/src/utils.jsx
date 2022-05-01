@@ -1,8 +1,22 @@
-export const getConnectionStatus = () => {
-  const connectionStatus = localStorage.getItem("connectionStatus");
-  return connectionStatus === null ? false : connectionStatus;
+import {
+  adjectives,
+  animals,
+  colors,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
+
+const spacedNameConfiguration = {
+  dictionaries: [colors, adjectives, animals],
+  separator: " ",
+  length: 2,
 };
 
-export const setConnectionStatus = (connectionStatus) => {
-  localStorage.setItem("connectionStatus", connectionStatus);
+const dashedNameConfiguration = {
+  dictionaries: [colors, adjectives, animals],
+  separator: "-",
+  length: 2,
 };
+
+export const spacedName = () => uniqueNamesGenerator(spacedNameConfiguration);
+
+export const dashedName = () => uniqueNamesGenerator(dashedNameConfiguration);

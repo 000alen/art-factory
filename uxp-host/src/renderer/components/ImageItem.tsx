@@ -1,5 +1,6 @@
-import { Button, Text } from "@adobe/react-spectrum";
 import React from "react";
+
+import { Button, Text } from "@adobe/react-spectrum";
 
 interface ImageItemAction {
   label: string;
@@ -10,24 +11,40 @@ interface ImageItemProps {
   name?: string;
   src: string;
   actions?: ImageItemAction[];
+  maxSize?: number;
 }
 
-export const ImageItem: React.FC<ImageItemProps> = ({ name, src, actions }) => {
+export const ImageItem: React.FC<ImageItemProps> = ({
+  name,
+  src,
+  actions,
+  maxSize,
+}) => {
   return (
-    <div className="relative w-32 h-32 m-auto rounded">
+    <div className="relative w-auto h-auto mx-auto rounded">
       {actions && (
-        <div className="absolute w-full h-full space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
+        <div className="absolute w-[calc(100%-0.5rem)] h-[calc(100%-0.5rem)] p-2 space-y-2 flex flex-col bg-gray-600 bg-opacity-75 justify-center items-center opacity-0 hover:opacity-100">
           <Text>{name}</Text>
-          {actions.map((action, i) => (
-            <Button key={i} variant="secondary" onPress={action.onClick}>
-              {action.label}
-            </Button>
-          ))}
+          <div>
+            {actions.map((action, i) => (
+              <Button key={i} variant="secondary" onPress={action.onClick}>
+                {action.label}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 
       <img
-        className="w-full h-full select-none rounded"
+        style={
+          maxSize
+            ? {
+                maxWidth: maxSize,
+                maxHeight: maxSize,
+              }
+            : {}
+        }
+        className="w-auto h-auto select-none rounded"
         draggable="false"
         src={src}
         alt={name}
