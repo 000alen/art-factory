@@ -819,7 +819,7 @@ export class Factory {
 
     let intermidiateDrops = drops.map(({ name, ids }) => ({
       name,
-      ids: ids.filter((id) => items.some((item) => item.name === id)),
+      ids: ids.filter((id) => !items.some((item) => item.name === id)),
       bundles: bundles.map(({ name }) => name),
     }));
 

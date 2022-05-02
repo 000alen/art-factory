@@ -315,6 +315,8 @@ export const QualityPage = () => {
       itemsToRemove.map((n) => collection.find((i) => i.name === n))
     );
 
+    console.log(_drops);
+
     const generations = instance.generations.map((g) =>
       g.id === generationId
         ? { ...g, collection: _collection, bundles: _bundles, drops: _drops }
