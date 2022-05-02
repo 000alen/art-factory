@@ -2,8 +2,20 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-    ActionButton, Button, ButtonGroup, Flex, Heading, Item, ListBox, NumberField, Radio, RadioGroup,
-    Slider, Switch, TextArea, TextField
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Heading,
+  Item,
+  ListBox,
+  NumberField,
+  Radio,
+  RadioGroup,
+  Slider,
+  Switch,
+  TextArea,
+  TextField,
 } from "@adobe/react-spectrum";
 import { parseColor } from "@react-stately/color";
 import Back from "@spectrum-icons/workflow/Back";
@@ -11,9 +23,10 @@ import Refresh from "@spectrum-icons/workflow/Refresh";
 
 import { ColorPicker } from "../components/ColorPicker";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { ToolbarContext } from "../components/Toolbar";
+import { useToolbar } from "../components/Toolbar";
 import { factoryGetResolution, readProjectAvailableLayers } from "../ipc";
 import { Configuration, ContractType, Instance } from "../typings";
+import { save } from "../commands";
 
 interface ConfigurationPageState {
   projectDir: string;
@@ -23,7 +36,15 @@ interface ConfigurationPageState {
 }
 
 export function ConfigurationPage() {
-  const toolbarContext = useContext(ToolbarContext);
+  useToolbar([
+    {
+      key: "back",
+      label: "Back",
+      icon: <Back />,
+      onClick: () => onBack(),
+    },
+  ]);
+
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -83,14 +104,6 @@ export function ConfigurationPage() {
   };
 
   useEffect(() => {
-    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    return () => {
-      toolbarContext.removeButton("back");
-    };
-  }, []);
-
-  useEffect(() => {
     task("available layers", async () =>
       setAvailableLayers(await readProjectAvailableLayers(projectDir))
     )();
@@ -99,7 +112,7 @@ export function ConfigurationPage() {
   const onBack = () =>
     navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
-  const onSave = () => {
+  const onSave = async () => {
     const configuration: Configuration = {
       name,
       description,
@@ -117,16 +130,20 @@ export function ConfigurationPage() {
       layers,
     };
 
+    const newInstance = {
+      ...instance,
+      configuration,
+      frozen,
+    };
+
+    await save(projectDir, newInstance);
+
     navigate("/factory", {
       state: {
         projectDir,
         id,
-        instance: {
-          ...instance,
-          configuration,
-          frozen,
-        },
-        dirty,
+        instance: newInstance,
+        dirty: false,
       },
     });
   };

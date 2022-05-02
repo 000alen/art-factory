@@ -50,6 +50,7 @@ const ipcTask = (task: string, callback: (...args: any[]) => any) => {
     } catch (_error) {
       error = _error;
     } finally {
+      console.log("ipcTask", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -64,6 +65,7 @@ const ipcAsyncTask = (task: string, callback: (...args: any[]) => any) => {
     } catch (_error) {
       error = _error;
     } finally {
+      console.log("ipcAsync", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -87,6 +89,7 @@ const ipcTaskWithProgress = (
     } catch (_error) {
       error = _error;
     } finally {
+      console.log("ipcTaskWithProgress", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -104,6 +107,7 @@ const ipcTaskWithRequestId = (
     } catch (_error) {
       error = _error;
     } finally {
+      console.log("ipcTaskWithRequestId", task);
       event.reply(`${task}Result`, { requestId, error, result });
     }
   });

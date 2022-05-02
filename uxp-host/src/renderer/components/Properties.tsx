@@ -66,7 +66,7 @@ export const Properties: React.FC<PropertiesProps> = ({
 
   return (
     <>
-      {items.length > 0 && traits && (
+      {items.length > 0 && filteredCollection.length > 0 && traits && (
         <>
           <Heading zIndex={1001} position="sticky" top={0} level={2}>
             {filteredCollection.find((i) => i.name === selectedItem).name}

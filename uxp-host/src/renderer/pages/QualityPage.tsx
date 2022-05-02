@@ -27,7 +27,7 @@ import { GalleryBundles } from "../components/GalleryBundles";
 import { GalleryItems } from "../components/GalleryItems";
 import { Loading } from "../components/Loading";
 import { Properties } from "../components/Properties";
-import { ToolbarContext } from "../components/Toolbar";
+import { useToolbar } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
@@ -63,7 +63,21 @@ export interface BundleItem {
 }
 
 export const QualityPage = () => {
-  const toolbarContext = useContext(ToolbarContext);
+  useToolbar([
+    {
+      key: "back",
+      label: "Back",
+      icon: <Back />,
+      onClick: () => onBack(),
+    },
+    {
+      key: "open-explorer",
+      label: "Open in Explorer",
+      icon: <Folder />,
+      onClick: () => openInExplorer(projectDir, BUILD_DIR_NAME, "images", name),
+    },
+  ]);
+
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -118,22 +132,6 @@ export const QualityPage = () => {
   const task = useErrorHandler(setWorking);
 
   // #region Setups
-  // ? Toolbar setup
-  useEffect(() => {
-    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-    toolbarContext.addButton(
-      "open-explorer",
-      "Open in Explorer",
-      <Folder />,
-      () => openInExplorer(projectDir, BUILD_DIR_NAME, "images", name)
-    );
-
-    return () => {
-      toolbarContext.removeButton("back");
-      toolbarContext.removeButton("open-explorer");
-    };
-  }, []);
-
   // ? UXP setup
   useEffect(() => {
     const uxpReload = async () => loadPreviews();
@@ -317,14 +315,16 @@ export const QualityPage = () => {
         : g
     );
 
+    const newInstance = {
+      ...instance,
+      generations,
+    };
+
     navigate("/factory", {
       state: {
         projectDir,
         id,
-        instance: {
-          ...instance,
-          generations,
-        },
+        instance: newInstance,
         dirty: true,
       },
     });

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
@@ -6,9 +6,13 @@ import { Button, Flex, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
 import { useErrorHandler } from "../components/ErrorHandler";
-import { Nodes, NodesContextProvider, NodesInstance } from "../components/NodesContext";
+import {
+  Nodes,
+  NodesContextProvider,
+  NodesInstance,
+} from "../components/NodesContext";
 import { Sidebar } from "../components/NodesPageSidebar";
-import { ToolbarContext } from "../components/Toolbar";
+import { useToolbar } from "../components/Toolbar";
 import { factoryGetTraitsByLayerName } from "../ipc";
 import { Instance } from "../typings";
 import { spacedName } from "../utils";
@@ -22,7 +26,15 @@ interface TemplatePageState {
 }
 
 export function TemplatePage() {
-  const toolbarContext = useContext(ToolbarContext);
+  useToolbar([
+    {
+      key: "back",
+      label: "Back",
+      icon: <Back />,
+      onClick: () => onBack(),
+    },
+  ]);
+
   const task = useErrorHandler();
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -65,14 +77,6 @@ export function TemplatePage() {
 
   const [traits, setTraits] = useState(templateId ? template.traits : []);
   const getterRef = useRef<() => NodesInstance>(null);
-
-  useEffect(() => {
-    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    return () => {
-      toolbarContext.removeButton("back");
-    };
-  }, []);
 
   useEffect(() => {
     task("preview", async () => {

@@ -27,6 +27,7 @@ import {
   hydrateMetadata,
   reconstructGeneration,
   removeGeneration,
+  save,
   unifyGenerations,
 } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
@@ -34,16 +35,14 @@ import { useErrorHandler } from "../components/ErrorHandler";
 import { Loading } from "../components/Loading";
 import { Preview } from "../components/Preview";
 import { CustomField, TaskItem } from "../components/TaskItem";
-import { ToolbarContext } from "../components/Toolbar";
+import { useToolbar } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import {
   createFactory,
-  factoryReconstruct,
   factoryReloadConfiguration,
   factoryReloadLayers,
   hasFactory,
   openInExplorer,
-  writeProjectInstance,
 } from "../ipc";
 import { Instance, SourceItem } from "../typings";
 import { makeSource } from "../utils";
@@ -61,7 +60,21 @@ interface GenerationItemProps {
 }
 
 export const FactoryPage: React.FC = () => {
-  const toolbarContext = useContext(ToolbarContext);
+  useToolbar([
+    {
+      key: "close",
+      label: "Close",
+      icon: <Close />,
+      onClick: () => navigate("/"),
+    },
+    {
+      key: "open-explorer",
+      label: "Open in Explorer",
+      icon: <Folder />,
+      onClick: () => openInExplorer(projectDir),
+    },
+  ]);
+
   const uxpContext = useContext(UXPContext);
   const navigate = useNavigate();
 
@@ -82,21 +95,6 @@ export const FactoryPage: React.FC = () => {
   const [templatesPreviews, setTemplatesPreviews] = useState<string[]>(null);
   const [generationPreviews, setGenerationPreviews] = useState<string[]>(null);
   const task = useErrorHandler(setWorking);
-
-  useEffect(() => {
-    toolbarContext.addButton("close", "Close", <Close />, () => navigate("/"));
-    toolbarContext.addButton(
-      "open-explorer",
-      "Open in Explorer",
-      <Folder />,
-      () => openInExplorer(projectDir)
-    );
-
-    return () => {
-      toolbarContext.removeButton("close");
-      toolbarContext.removeButton("open-explorer");
-    };
-  }, []);
 
   useEffect(() => {
     const onUxpExport = ({
@@ -153,13 +151,14 @@ export const FactoryPage: React.FC = () => {
   );
 
   const onSave = task("save", async () => {
-    await writeProjectInstance(projectDir, {
+    await save(projectDir, {
       ...instance,
       configuration,
       templates,
       generations,
       sources,
     });
+
     setDirty(false);
   });
 
@@ -236,6 +235,7 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
+    console.log("post navigate");
   });
 
   const onDeploy = task("deploy", () => {
