@@ -128,7 +128,7 @@ export const QualityPage = () => {
   const [bundlesPage, setBundlesPage] = useState(1);
   const [bundlesMaxPage, setBundlesMaxPage] = useState(1);
   const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
-  const [bundlesItems, setBundleSItems] = useState<BundleItem[]>([]);
+  const [bundlesItems, setBundlesItems] = useState<BundleItem[]>([]);
   const task = useErrorHandler(setWorking);
 
   // #region Setups
@@ -237,7 +237,7 @@ export const QualityPage = () => {
 
   useEffect(() => {
     loadBundlesPreviews();
-  }, [filteredBundles, bundlesPage]);
+  }, [filteredBundles, bundlesPage, collection]);
   // #endregion
 
   const loadPreviews = task("loading previews", async () =>
@@ -268,7 +268,7 @@ export const QualityPage = () => {
         []
       );
 
-    setBundleSItems(
+    setBundlesItems(
       (
         await Promise.all(
           Array.from({ length: PAGE_N }).map(async (_, i) => {
@@ -276,9 +276,11 @@ export const QualityPage = () => {
             if (bundlesCursor + i >= flatFilteredBundles.length) return null;
             const { ids: names, name: bundleName } =
               flatFilteredBundles[bundlesCursor + i];
+
             const items = names.map((id) =>
               collection.find((item) => item.name === id)
             );
+
             const urls = await Promise.all(
               items.map(
                 async (item) =>
@@ -303,7 +305,11 @@ export const QualityPage = () => {
   // #region Tasks
   const onSave = task("filtering", async () => {
     setWorkingTitle("Saving...");
-    const { collection: _collection, drops: _drops } = await factoryRemoveItems(
+    const {
+      collection: _collection,
+      bundles: _bundles,
+      drops: _drops,
+    } = await factoryRemoveItems(
       id,
       generation,
       itemsToRemove.map((n) => collection.find((i) => i.name === n))
@@ -311,7 +317,7 @@ export const QualityPage = () => {
 
     const generations = instance.generations.map((g) =>
       g.id === generationId
-        ? { ...g, collection: _collection, drops: _drops }
+        ? { ...g, collection: _collection, bundles: _bundles, drops: _drops }
         : g
     );
 
@@ -522,6 +528,11 @@ export const QualityPage = () => {
           <GalleryBundles
             {...{
               bundlesItems,
+              itemsToRemove,
+              onSelect,
+              onRemove,
+              onUndoRemove,
+              onRegenerate,
             }}
           />
         ) : null}

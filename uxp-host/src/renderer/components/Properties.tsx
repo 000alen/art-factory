@@ -43,7 +43,7 @@ export const Properties: React.FC<PropertiesProps> = ({
           )
         )
       );
-  }, [filteredCollection, selectedItem]);
+  }, [filteredCollection, items, selectedItem]);
 
   const onSelectedTraitsChange = (n: string, v: string) =>
     setSelectedTraits((p) =>

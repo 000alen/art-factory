@@ -148,7 +148,7 @@ ipcAsyncTask(
   async (options) => await dialog.showOpenDialog(options)
 );
 
-ipcTask("openInExplorer", (paths: string[]) =>
+ipcAsyncTask("openInExplorer", (paths: string[]) =>
   shell.openPath(path.join(...paths))
 );
 // #endregion
