@@ -26,7 +26,7 @@ export const useFilters = () => {
       n in p
         ? {
             ...p,
-            [n]: p[n].filter((v) => v !== v),
+            [n]: p[n].filter((pv) => pv !== v),
           }
         : p
     );
