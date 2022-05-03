@@ -31,7 +31,7 @@ export const GenerationPage: React.FC = () => {
   useToolbar([
     {
       key: "back",
-      label: "Back",
+      label: "Exit without saving",
       icon: <Back />,
       onClick: () => onBack(),
     },

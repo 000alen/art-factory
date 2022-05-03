@@ -46,6 +46,7 @@ import {
 } from "../ipc";
 import { Instance, SourceItem } from "../typings";
 import { makeSource } from "../utils";
+import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
 interface FactoryPageState {
   projectDir: string;
@@ -527,13 +528,17 @@ export const FactoryPage: React.FC = () => {
           <Heading level={1}>
             {dirty && "*"} {frozen && "[frozen]"} {configuration.name}
           </Heading>
-          <ActionButton onPress={onConfiguration}>
+          {/* <ActionButton onPress={onConfiguration}>
             <Settings />
+          </ActionButton> */}
+          <ActionButton onPress={onSave}>
+            <SaveFloppy />
           </ActionButton>
         </Flex>
 
         <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
-          <TaskItem name="Save" onRun={onSave} />
+          {/* <TaskItem name="Save" onRun={onSave} /> */}
+          <TaskItem name="Configuration" onRun={onConfiguration} />
 
           <TaskItem
             isDisabled={frozen}

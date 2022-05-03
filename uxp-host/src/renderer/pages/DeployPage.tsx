@@ -38,7 +38,7 @@ export function DeployPage() {
   useToolbar([
     {
       key: "back",
-      label: "Back",
+      label: "Exit without saving",
       icon: <Back />,
       onClick: () => onBack(),
     },

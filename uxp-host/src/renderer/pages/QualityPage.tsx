@@ -33,6 +33,7 @@ import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
   Filters as IFilters,
   useBundlesFilters,
+  useDropsFilter,
   useFilters,
 } from "../hooks/useFilters";
 import {
@@ -66,7 +67,7 @@ export const QualityPage = () => {
   useToolbar([
     {
       key: "back",
-      label: "Back",
+      label: "Exit without saving",
       icon: <Back />,
       onClick: () => onBack(),
     },
@@ -105,6 +106,7 @@ export const QualityPage = () => {
   const [name] = useState(generation.name);
   const [collection, setCollection] = useState(generation.collection);
   const [bundles] = useState(generation.bundles);
+  const [drops] = useState(generation.drops);
   const [traits, setTraits] = useState<Record<string, Trait[]>>(null);
 
   const [filtersInfo, setFiltersInfo] = useState<IFilters>({});
@@ -130,6 +132,9 @@ export const QualityPage = () => {
   const [filteredBundles, setFilteredBundles] = useState<Bundles>(bundles);
   const [bundlesItems, setBundlesItems] = useState<BundleItem[]>([]);
   const task = useErrorHandler(setWorking);
+
+  const [dropsFiltersInfo, setDropsFiltersInfo] = useState<string[]>([]);
+  const { dropsFilters, addDropsFilter, removeDropsFilter } = useDropsFilter();
 
   // #region Setups
   // ? UXP setup
@@ -172,6 +177,7 @@ export const QualityPage = () => {
   }, [collection]);
 
   // ? Bundles filters setup
+  // TODO
   useEffect(() => {
     const bundlesFiltersInfo: string[] = [];
     for (const { name } of bundles)
@@ -179,10 +185,19 @@ export const QualityPage = () => {
     setBundlesFiltersInfo(bundlesFiltersInfo);
   }, [bundles]);
 
+  // ? Drops filters setup
+  // TODO
+  useEffect(() => {
+    const dropsFiltersInfo: string[] = [];
+    for (const { name } of drops)
+      if (!dropsFiltersInfo.includes(name)) dropsFiltersInfo.push(name);
+    setDropsFiltersInfo(dropsFiltersInfo);
+  }, [drops]);
+
   // ? Collection filtering
   useEffect(() => {
-    let filteredCollection = Object.entries(filters)
-      .reduce((filtered, [name, values]) => {
+    let filteredCollection = Object.entries(filters).reduce(
+      (filtered, [name, values]) => {
         if (values.length === 0) return filtered;
         else
           return filtered.filter(({ traits }) =>
@@ -190,9 +205,22 @@ export const QualityPage = () => {
               ({ name: n, value: v }) => n === name && values.includes(v)
             )
           );
-      }, collection)
-      .filter(({ name }) =>
-        stringFilter ? name.includes(stringFilter) : true
+      },
+      collection
+    );
+
+    if (dropsFilters.length > 0) {
+      const ids = dropsFilters
+        .map((drop) => drops.find(({ name }) => name === drop).ids)
+        .reduce((p, c) => [...p, ...c], []);
+      filteredCollection = filteredCollection.filter(({ name }) =>
+        ids.includes(name)
+      );
+    }
+
+    if (stringFilter)
+      filteredCollection = filteredCollection.filter(({ name }) =>
+        name.includes(stringFilter)
       );
 
     if (repeatedFilter)
@@ -200,11 +228,7 @@ export const QualityPage = () => {
         collection: filteredCollection,
       } as Generation);
 
-    setPage((p) => {
-      // if (filteredCollection.some((i) => i.name === p))
-
-      return 1;
-    });
+    setPage((p) => 1);
     setSelectedItem((p) =>
       filteredCollection.some((i) => i.name === p)
         ? p
@@ -214,22 +238,32 @@ export const QualityPage = () => {
     );
     setMaxPage(Math.ceil(filteredCollection.length / PAGE_N));
     setFilteredCollection(filteredCollection);
-  }, [collection, filters, stringFilter, repeatedFilter]);
+  }, [collection, filters, stringFilter, repeatedFilter, dropsFilters]);
 
   // ? Bundles filtering
   useEffect(() => {
-    const filteredBundles = bundles
-      .filter(({ name }) =>
-        bundlesFilters.length > 0 ? bundlesFilters.includes(name) : true
-      )
-      .filter(({ name }) =>
-        stringFilter ? name.includes(stringFilter) : true
+    let filteredBundles = bundles.filter(({ name }) =>
+      bundlesFilters.length > 0 ? bundlesFilters.includes(name) : true
+    );
+
+    if (dropsFilters.length > 0) {
+      const ids = dropsFilters
+        .map((drop) => drops.find(({ name }) => name === drop).bundles)
+        .reduce((p, c) => [...p, ...c], []);
+      filteredBundles = filteredBundles.filter(({ name }) =>
+        ids.includes(name)
+      );
+    }
+
+    if (stringFilter)
+      filteredBundles = filteredBundles.filter(({ name }) =>
+        name.includes(stringFilter)
       );
 
     setBundlesPage(1);
     setBundlesMaxPage(Math.ceil(filteredBundles.length / PAGE_N));
     setFilteredBundles(filteredBundles);
-  }, [bundles, bundlesFilters, stringFilter]);
+  }, [bundles, bundlesFilters, stringFilter, dropsFilters]);
 
   useEffect(() => {
     loadPreviews();
@@ -449,6 +483,10 @@ export const QualityPage = () => {
             hasFilter,
             addFilter,
             removeFilter,
+            dropsFiltersInfo,
+            dropsFilters,
+            addDropsFilter,
+            removeDropsFilter,
           }}
         />
       </View>

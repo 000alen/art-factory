@@ -49,3 +49,19 @@ export const useBundlesFilters = () => {
     removeBundlesFilter,
   };
 };
+
+export const useDropsFilter = () => {
+  const [dropsFilters, setDropsFilters] = useState<string[]>([]);
+
+  const addDropsFilter = (d: string) => setDropsFilters((p) => [...p, d]);
+
+  const removeDropsFilter = (d: string) =>
+    setDropsFilters((p) => p.filter((v) => v !== d));
+
+  return {
+    dropsFilters,
+    setDropsFilters,
+    addDropsFilter,
+    removeDropsFilter,
+  };
+};

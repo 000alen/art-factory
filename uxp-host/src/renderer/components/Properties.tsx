@@ -112,7 +112,7 @@ export const Properties: React.FC<PropertiesProps> = ({
           Regenerate
         </Button>
         <Button variant="cta" onPress={onEdit}>
-          Edit
+          Edit in Photoshop
         </Button>
       </ButtonGroup>
     </>
