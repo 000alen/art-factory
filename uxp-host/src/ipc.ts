@@ -39,6 +39,7 @@ import {
   Trait,
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
+import { OrderSide } from "./opensea/types";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -595,3 +596,15 @@ ipcAsyncTask(
   }
 );
 // #endregion
+
+// ipcAsyncTask("XXX", async (providerEngineId: string) => {
+//   const seaport = seaports[providerEngineId];
+//   const { orders, count } = await seaport.api.getOrders(
+//     {
+//       asset_contract_address: tokenAddress,
+//       token_id: "1",
+//       side: OrderSide.Sell,
+//     },
+//     2
+//   );
+// });
