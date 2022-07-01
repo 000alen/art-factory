@@ -6,6 +6,11 @@ export enum ContractType {
   ERC721_CLIENT_MINT = "721_client_mint",
 }
 
+export enum PolygonNetwork {
+  MATIC = "matic",
+  MUMBAI = "mumbai"
+}
+
 export enum Network {
   MAIN = "main",
   RINKEBY = "rinkeby",

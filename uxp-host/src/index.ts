@@ -36,8 +36,8 @@ const createWindow = (): void => {
     autoHideMenuBar: true,
     minWidth: 1024,
     minHeight: 1024,
-    width: 1024,
-    height: 1024,
+    // width: 1024,
+    // height: 1024,
     // titleBarStyle: "hidden",
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,

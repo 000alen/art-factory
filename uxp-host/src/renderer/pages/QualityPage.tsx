@@ -2,25 +2,13 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  ActionButton,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  NumberField,
-  TabList,
-  Tabs,
-  View,
+    ActionButton, Flex, Grid, Heading, Item, NumberField, TabList, Tabs, View
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Folder from "@spectrum-icons/workflow/Folder";
 import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
-import {
-  computeGenerationRepeats,
-  regenerateItems,
-  replaceItems,
-} from "../commands";
+import { computeGenerationRepeats, regenerateItems, replaceItems } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Filters } from "../components/Filters";
 import { GalleryBundles } from "../components/GalleryBundles";
@@ -31,16 +19,10 @@ import { useToolbar } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import { BUILD_DIR_NAME, MAX_SIZE, PAGE_N } from "../constants";
 import {
-  Filters as IFilters,
-  useBundlesFilters,
-  useDropsFilter,
-  useFilters,
+    Filters as IFilters, useBundlesFilters, useDropsFilter, useFilters
 } from "../hooks/useFilters";
 import {
-  factoryGetImage,
-  factoryGetTraitsByLayerName,
-  factoryRemoveItems,
-  openInExplorer,
+    factoryGetImage, factoryGetTraitsByLayerName, factoryRemoveItems, openInExplorer
 } from "../ipc";
 import { Bundles, Collection, Generation, Instance, Trait } from "../typings";
 
@@ -348,8 +330,6 @@ export const QualityPage = () => {
       generation,
       itemsToRemove.map((n) => collection.find((i) => i.name === n))
     );
-
-    console.log(_drops);
 
     const generations = instance.generations.map((g) =>
       g.id === generationId

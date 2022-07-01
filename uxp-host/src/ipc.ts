@@ -1,8 +1,7 @@
 import { dialog, ipcMain, shell } from "electron";
-import { Contract, providers as ethersProviders } from "ethers";
+import { Contract, ethers, providers as ethersProviders } from "ethers";
 import fs from "fs";
 import path from "path";
-import { Eth } from "web3-eth";
 import Web3ProviderEngine from "web3-provider-engine";
 import RPCSubprovider from "web3-provider-engine/subproviders/rpc";
 
@@ -14,32 +13,15 @@ import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
 import { Network as OpenSeaNetwork, OpenSeaPort } from "./opensea";
 import {
-  getEtherscanApiKey,
-  getInfuraProjectId,
-  getOpenseaApiKey,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setEtherscanApiKey,
-  setInfuraProjectId,
-  setOpenseaApiKey,
-  setPinataApiKey,
-  setPinataSecretApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getMaticVigilApiKey, getOpenseaApiKey, getPinataApiKey,
+    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setMaticVigilApiKey,
+    setOpenseaApiKey, setPinataApiKey, setPinataSecretApiKey
 } from "./store";
 import {
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  Network,
-  Template,
-  Trait,
+    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
+    Network, PolygonNetwork, Template, Trait
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
-import { OrderSide } from "./opensea/types";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -51,7 +33,6 @@ const ipcTask = (task: string, callback: (...args: any[]) => any) => {
     } catch (_error) {
       error = _error;
     } finally {
-      console.log("ipcTask", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -66,7 +47,6 @@ const ipcAsyncTask = (task: string, callback: (...args: any[]) => any) => {
     } catch (_error) {
       error = _error;
     } finally {
-      console.log("ipcAsync", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -90,7 +70,6 @@ const ipcTaskWithProgress = (
     } catch (_error) {
       error = _error;
     } finally {
-      console.log("ipcTaskWithProgress", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -108,7 +87,6 @@ const ipcTaskWithRequestId = (
     } catch (_error) {
       error = _error;
     } finally {
-      console.log("ipcTaskWithRequestId", task);
       event.reply(`${task}Result`, { requestId, error, result });
     }
   });
@@ -141,6 +119,13 @@ ipcSetterAndGetter("infuraProjectId", setInfuraProjectId, getInfuraProjectId);
 ipcSetterAndGetter("etherscanApiKey", setEtherscanApiKey, getEtherscanApiKey);
 
 ipcSetterAndGetter("openseaApiKey", setOpenseaApiKey, getOpenseaApiKey);
+
+ipcSetterAndGetter(
+  "maticVigilApiKey",
+  setMaticVigilApiKey,
+  getMaticVigilApiKey
+);
+
 // #endregion
 
 // #region General
@@ -496,14 +481,9 @@ ipcAsyncTask(
 export const providers: Record<string, WalletConnectProvider> = {};
 export const providerEngines: Record<string, any> = {};
 export const accounts: Record<string, string> = {};
-// export const eths: Record<string, Eth> = {};
 export const seaports: Record<string, OpenSeaPort> = {};
+export const polygonProviders: Record<string, any> = {};
 
-/*
--> createProvider
-<- createProviderUri
-<- createProviderResult (connected | error)
-*/
 ipcMain.on("createProvider", async (event, id: string, network: Network) => {
   const connector = new NodeWalletConnect(
     {
@@ -579,6 +559,19 @@ ipcAsyncTask(
   }
 );
 
+ipcAsyncTask(
+  "createPolygonProviderWithKey",
+  async (id: string, privateKey: string, network: PolygonNetwork) => {
+    const provider = new ethers.providers.JsonRpcProvider(
+      network === PolygonNetwork.MATIC
+        ? `https://rpc-mainnet.maticvigil.com/v1/${getMaticVigilApiKey()}`
+        : `https://rpc-mumbai.maticvigil.com/v1/${getMaticVigilApiKey()}`
+    );
+    const signer = new ethers.Wallet(privateKey, provider);
+    polygonProviders[id] = signer;
+  }
+);
+
 // #endregion
 
 // #region Contract
@@ -596,15 +589,3 @@ ipcAsyncTask(
   }
 );
 // #endregion
-
-// ipcAsyncTask("XXX", async (providerEngineId: string) => {
-//   const seaport = seaports[providerEngineId];
-//   const { orders, count } = await seaport.api.getOrders(
-//     {
-//       asset_contract_address: tokenAddress,
-//       token_id: "1",
-//       side: OrderSide.Sell,
-//     },
-//     2
-//   );
-// });

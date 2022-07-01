@@ -6,9 +6,9 @@ import {
 } from "@adobe/react-spectrum";
 
 import {
-    getEtherscanApiKey, getInfuraProjectId, getOpenseaApiKey, getPinataApiKey,
-    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setOpenseaApiKey,
-    setPinataApiKey, setPinataSecretApiKey
+    getEtherscanApiKey, getInfuraProjectId, getMaticVigilApiKey, getOpenseaApiKey, getPinataApiKey,
+    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setMaticVigilApiKey,
+    setOpenseaApiKey, setPinataApiKey, setPinataSecretApiKey
 } from "../ipc";
 import { useErrorHandler } from "./ErrorHandler";
 
@@ -22,6 +22,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
   const [infuraProjectId, _setInfuraProjectId] = useState("");
   const [etherscanApiKey, _setEtherscanApiKey] = useState("");
   const [openseaApiKey, _setOpenseaApiKey] = useState("");
+  const [maticVigilApiKey, _setMaticVigilApiKey] = useState("");
   const task = useErrorHandler();
 
   useEffect(() => {
@@ -36,11 +37,14 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
         ((await getEtherscanApiKey()) as unknown as string) || "";
       const openseaApiKey =
         ((await getOpenseaApiKey()) as unknown as string) || "";
+      const maticVigilApiKey =
+        ((await getMaticVigilApiKey()) as unknown as string) || "";
       _setPinataApiKey(pinataApiKey);
       _setPinataSecretApiKey(pinataSecretApiKey);
       _setInfuraProjectId(infuraProjectId);
       _setEtherscanApiKey(etherscanApiKey);
       _setOpenseaApiKey(openseaApiKey);
+      _setMaticVigilApiKey(maticVigilApiKey);
     })();
   }, []);
 
@@ -50,6 +54,7 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
     await setInfuraProjectId(infuraProjectId);
     await setEtherscanApiKey(etherscanApiKey);
     await setOpenseaApiKey(openseaApiKey);
+    await setMaticVigilApiKey(maticVigilApiKey);
     close();
   });
 
@@ -122,6 +127,12 @@ export const SecretsDialog: React.FC<SecretsDialogProps> = ({ close }) => {
             onChange={_setOpenseaApiKey}
             type="password"
             label="Opensea API Key"
+          />
+          <TextField
+            value={maticVigilApiKey}
+            onChange={_setMaticVigilApiKey}
+            type="password"
+            label="Matic Vigil API Key"
           />
         </Form>
       </Content>

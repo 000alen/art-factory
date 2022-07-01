@@ -4,16 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  Button,
-  ButtonGroup,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  Switch,
-  TextField,
+    ActionButton, Button, ButtonGroup, Flex, Heading, Item, Menu, MenuTrigger, Switch, TextField
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import More from "@spectrum-icons/workflow/More";
@@ -183,6 +174,19 @@ export function DeployPage() {
     );
     WalletConnectQRCodeModal.open(uri, () => {});
   });
+
+  // const onConnectWithPrivateKey = task(
+  //   "connect with private key",
+  //   async ({ privateKey }) => {
+  //     const providerEngineId = uuid();
+  //     await createProviderWithKey(
+  //       providerEngineId,
+  //       privateKey,
+  //       deployment.network
+  //     );
+  //     setProviderEngineId(providerEngineId);
+  //   }
+  // );
 
   const onSave = async () => {
     const deployment: Deployment = {

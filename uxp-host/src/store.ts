@@ -47,3 +47,13 @@ export function getOpenseaApiKey() {
 export function setOpenseaApiKey(openseaApiKey: string) {
   store.set("openseaApiKey", openseaApiKey);
 }
+
+export function setMaticVigilApiKey(maticVigilApiKey: string) {
+  store.set("maticVigilApiKey", maticVigilApiKey);
+}
+
+export function getMaticVigilApiKey() {
+  return store.has("maticVigilApiKey")
+    ? store.get("maticVigilApiKey")
+    : undefined;
+}

@@ -17,18 +17,8 @@ declare global {
 import { v4 as uuid } from "uuid";
 
 import {
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Instance,
-  Layer,
-  MetadataItem,
-  Network,
-  Template,
-  Trait,
+    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Instance, Layer,
+    MetadataItem, Network, Template, Trait
 } from "./typings";
 import { capitalize } from "./utils";
 
@@ -127,6 +117,9 @@ export const [setEtherscanApiKey, getEtherscanApiKey] =
 
 export const [setOpenseaApiKey, getOpenseaApiKey] =
   ipcSetterAndGetter<string>("openseaApiKey");
+
+export const [setMaticVigilApiKey, getMaticVigilApiKey] =
+  ipcSetterAndGetter<string>("maticVigilApiKey");
 // #endregion
 
 // #region General
