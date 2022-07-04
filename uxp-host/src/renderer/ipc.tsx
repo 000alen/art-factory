@@ -426,52 +426,52 @@ export const factoryGetResolution = (id: string) =>
 // #endregion
 
 // #region Provider
-export const createProvider = (
-  id: string,
-  network: Network,
-  callback: ({ connected }: { connected: boolean }) => void
-) =>
-  new Promise<string>((resolve) => {
-    const onCreateProviderUri = ({
-      id: _id,
-      uri,
-    }: {
-      id: string;
-      uri: string;
-    }) => {
-      if (_id !== id) return;
-      window.ipcRenderer.removeListener(
-        "createProviderUri",
-        onCreateProviderUri
-      );
-      resolve(uri);
-    };
+// export const createProvider = (
+//   id: string,
+//   network: Network,
+//   callback: ({ connected }: { connected: boolean }) => void
+// ) =>
+//   new Promise<string>((resolve) => {
+//     const onCreateProviderUri = ({
+//       id: _id,
+//       uri,
+//     }: {
+//       id: string;
+//       uri: string;
+//     }) => {
+//       if (_id !== id) return;
+//       window.ipcRenderer.removeListener(
+//         "createProviderUri",
+//         onCreateProviderUri
+//       );
+//       resolve(uri);
+//     };
 
-    const onCreateProviderResult = ({
-      id: _id,
-      connected,
-    }: {
-      id: string;
-      connected: boolean;
-    }) => {
-      if (_id !== id) return;
-      window.ipcRenderer.removeListener(
-        "createProviderResult",
-        onCreateProviderResult
-      );
-      callback({ connected });
-    };
+//     const onCreateProviderResult = ({
+//       id: _id,
+//       connected,
+//     }: {
+//       id: string;
+//       connected: boolean;
+//     }) => {
+//       if (_id !== id) return;
+//       window.ipcRenderer.removeListener(
+//         "createProviderResult",
+//         onCreateProviderResult
+//       );
+//       callback({ connected });
+//     };
 
-    window.ipcRenderer.on("createProviderUri", onCreateProviderUri);
-    window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
-    window.ipcRenderer.send("createProvider", id, network);
-  });
+//     window.ipcRenderer.on("createProviderUri", onCreateProviderUri);
+//     window.ipcRenderer.on("createProviderResult", onCreateProviderResult);
+//     window.ipcRenderer.send("createProvider", id, network);
+//   });
 
-export const createProviderWithKey = (
-  id: string,
-  privateKey: string,
-  network: Network
-) => ipcTask("createProviderWithKey")(id, privateKey, network);
+// export const createProviderWithKey = (
+//   id: string,
+//   privateKey: string,
+//   network: Network
+// ) => ipcTask("createProviderWithKey")(id, privateKey, network);
 
 // #endregion
 

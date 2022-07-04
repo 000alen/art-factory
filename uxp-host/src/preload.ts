@@ -1,7 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-// import { Titlebar } from "custom-electron-titlebar";
-
 const sendWhitelist = [
   "getPinataApiKey",
   "getPinataSecretApiKey",
@@ -49,14 +47,11 @@ const sendWhitelist = [
   "factoryGetResolution",
   "factoryHydrateMetadata",
 
-  // "getCost",
   "getBalanceOf",
   "getTokenOfOwnerByIndex",
   "getTokenUri",
   "mint",
   "getWalletOfOwner",
-  // "setCost",
-  // "setMaxMintAmount",
   "withdraw",
   "pause",
   "setBaseUri",
@@ -67,10 +62,10 @@ const sendWhitelist = [
   "sellDropItems",
   "sellDrop",
 
-  "createProvider",
-  "createProviderUri",
-  "createProviderResult",
-  "createProviderWithKey",
+  // "createProvider",
+  // "createProviderUri",
+  // "createProviderResult",
+  // "createProviderWithKey",
 
   "createContract",
 ];
@@ -124,14 +119,11 @@ const onWhitelist = [
   "factoryGetResolutionResult",
   "factoryHydrateMetadataResult",
 
-  // "getCostResult",
   "getBalanceOfResult",
   "getTokenOfOwnerByIndexResult",
   "getTokenUriResult",
   "mintResult",
   "getWalletOfOwnerResult",
-  // "setCostResult",
-  // "setMaxMintAmountResult",
   "withdrawResult",
   "pauseResult",
   "setBaseUriResult",
@@ -142,17 +134,13 @@ const onWhitelist = [
   "sellDropItemsResult",
   "sellDropResult",
 
-  "createProvider",
-  "createProviderUri",
-  "createProviderResult",
-  "createProviderWithKeyResult",
+  // "createProvider",
+  // "createProviderUri",
+  // "createProviderResult",
+  // "createProviderWithKeyResult",
 
   "createContractResult",
 ];
-
-// window.addEventListener("DOMContentLoaded", () => {
-//   new Titlebar();
-// });
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
   send: (channel: string, ...args: any[]) => {

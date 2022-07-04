@@ -13,9 +13,10 @@ import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 import { getGenerationPreview, save } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Preview } from "../components/Preview";
+import { TaskItem } from "../components/TaskItem";
 import { useToolbar } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import { createProvider, factoryDeploy } from "../ipc";
+import { factoryDeploy } from "../ipc";
 import { Deployment, Instance, Network } from "../typings";
 
 interface DeployPageState {
@@ -125,68 +126,64 @@ export function DeployPage() {
     navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onDeploy = task("deployment", async () => {
-    setWorking(true);
+    // setWorking(true);
 
-    const providerId = uuid();
-    const uri = await createProvider(
-      providerId,
-      network,
-      async ({ connected }) => {
-        WalletConnectQRCodeModal.close();
+    // const providerId = uuid();
+    // const uri = await createProvider(
+    //   providerId,
+    //   network,
+    //   async ({ connected }) => {
+    //     WalletConnectQRCodeModal.close();
 
-        if (!connected) throw new Error("Could not connect");
+    //     if (!connected) throw new Error("Could not connect");
 
-        const start = moment(performance.now());
-        const {
-          imagesCid: _imagesCid,
-          metadataCid: _metadataCid,
-          notRevealedImageCid: _notRevealedImageCid,
-          notRevealedMetadataCid: _notRevealedMetadataCid,
-          contractAddress: _contractAddress,
-          abi,
-          compilerVersion,
-        } = await factoryDeploy(
-          id,
-          providerId,
-          generation,
-          notRevealedGeneration,
+    //     const start = moment(performance.now());
+    //     const {
+    //       imagesCid: _imagesCid,
+    //       metadataCid: _metadataCid,
+    //       notRevealedImageCid: _notRevealedImageCid,
+    //       notRevealedMetadataCid: _notRevealedMetadataCid,
+    //       contractAddress: _contractAddress,
+    //       abi,
+    //       compilerVersion,
+    //     } = await factoryDeploy(
+    //       id,
+    //       providerId,
+    //       generation,
+    //       notRevealedGeneration,
 
-          imagesCid,
-          metadataCid,
-          notRevealedImageCid,
-          notRevealedMetadataCid,
-          contractAddress
-        );
-        const end = moment(performance.now());
-        const diff = end.diff(start);
+    //       imagesCid,
+    //       metadataCid,
+    //       notRevealedImageCid,
+    //       notRevealedMetadataCid,
+    //       contractAddress
+    //     );
+    //     const end = moment(performance.now());
+    //     const diff = end.diff(start);
 
-        setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
-        setImagesCid(_imagesCid);
-        setMetadataCid(_metadataCid);
-        setNotRevealedImageCid(_notRevealedImageCid);
-        setNotRevealedMetadataCid(_notRevealedMetadataCid);
-        setContractAddress(_contractAddress);
-        setAbi(abi);
-        setCompilerVersion(compilerVersion);
-        setDeployDone(true);
-        setWorking(false);
-      }
-    );
-    WalletConnectQRCodeModal.open(uri, () => {});
+    //     setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
+    //     setImagesCid(_imagesCid);
+    //     setMetadataCid(_metadataCid);
+    //     setNotRevealedImageCid(_notRevealedImageCid);
+    //     setNotRevealedMetadataCid(_notRevealedMetadataCid);
+    //     setContractAddress(_contractAddress);
+    //     setAbi(abi);
+    //     setCompilerVersion(compilerVersion);
+    //     setDeployDone(true);
+    //     setWorking(false);
+    //   }
+    // );
+    // WalletConnectQRCodeModal.open(uri, () => {});
   });
 
-  // const onConnectWithPrivateKey = task(
-  //   "connect with private key",
-  //   async ({ privateKey }) => {
-  //     const providerEngineId = uuid();
-  //     await createProviderWithKey(
-  //       providerEngineId,
-  //       privateKey,
-  //       deployment.network
-  //     );
-  //     setProviderEngineId(providerEngineId);
-  //   }
-  // );
+  const onConnectWithPrivateKey = task(
+    "connect with private key",
+    async ({ privateKey }) => {
+      // const providerEngineId = uuid();
+      // await createProviderWithKey(providerEngineId, privateKey, network);
+      // setProviderEngineId(providerEngineId);
+    }
+  );
 
   const onSave = async () => {
     const deployment: Deployment = {
@@ -262,6 +259,22 @@ export function DeployPage() {
           </Flex>
 
           <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
+            <Flex direction="column" justifyContent="center" gap="size-100">
+              <TaskItem
+                name="Connect with private key"
+                fields={[
+                  {
+                    key: "privateKey",
+                    type: "password",
+                    label: "Private key",
+                    initial: "",
+                    value: "",
+                  },
+                ]}
+                onRun={onConnectWithPrivateKey}
+              />
+            </Flex>
+
             <Flex
               direction="row"
               gap="size-100"
@@ -379,4 +392,7 @@ export function DeployPage() {
       )}
     </Flex>
   );
+}
+function setProviderEngineId(providerEngineId: string) {
+  throw new Error("Function not implemented.");
 }

@@ -9,7 +9,7 @@ import {
     BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY, MAIN_WETH, MINT_N, PARALLEL_LIMIT,
     RINKEBY_WETH
 } from "./constants";
-import { accounts, contracts, providers, seaports } from "./ipc";
+import { accounts, contracts, seaports } from "./ipc";
 import {
     Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
     Layer, MetadataItem, SaleType, Secrets, Template, Trait
@@ -613,50 +613,50 @@ export class Factory {
     notRevealedMetadataCid: string,
     contractAddress: string | null
   ) {
-    const web3Provider = new ethersProviders.Web3Provider(
-      providers[providerId]
-    );
+    // const web3Provider = new ethersProviders.Web3Provider(
+    //   providers[providerId]
+    // );
 
-    const signer = web3Provider.getSigner();
+    // const signer = web3Provider.getSigner();
 
-    const { contracts } = await getContract(this.configuration.contractType);
-    const { NFT } = contracts[this.configuration.contractType];
-    const metadata = JSON.parse(NFT.metadata);
-    const { version: compilerVersion } = metadata.compiler;
-    const { abi, evm } = NFT;
-    const { bytecode } = evm;
+    // const { contracts } = await getContract(this.configuration.contractType);
+    // const { NFT } = contracts[this.configuration.contractType];
+    // const metadata = JSON.parse(NFT.metadata);
+    // const { version: compilerVersion } = metadata.compiler;
+    // const { abi, evm } = NFT;
+    // const { bytecode } = evm;
 
-    let contractFactory, contract, transactionHash;
-    if (!contractAddress) {
-      contractFactory = new ContractFactory(abi, bytecode, signer);
+    // let contractFactory, contract, transactionHash;
+    // if (!contractAddress) {
+    //   contractFactory = new ContractFactory(abi, bytecode, signer);
 
-      contract =
-        this.configuration.contractType === "721"
-          ? await this.deployContract721(
-              generation,
-              contractFactory,
-              metadataCid
-            )
-          : this.configuration.contractType === "721_reveal_pause"
-          ? await this.deployContract721_reveal_pause(
-              generation,
-              contractFactory,
-              metadataCid,
-              notRevealedMetadataCid
-            )
-          : null;
-      transactionHash = contract.deployTransaction.hash;
-    }
+    //   contract =
+    //     this.configuration.contractType === "721"
+    //       ? await this.deployContract721(
+    //           generation,
+    //           contractFactory,
+    //           metadataCid
+    //         )
+    //       : this.configuration.contractType === "721_reveal_pause"
+    //       ? await this.deployContract721_reveal_pause(
+    //           generation,
+    //           contractFactory,
+    //           metadataCid,
+    //           notRevealedMetadataCid
+    //         )
+    //       : null;
+    //   transactionHash = contract.deployTransaction.hash;
+    // }
 
-    const _contractAddress = contractAddress || contract.address;
+    // const _contractAddress = contractAddress || contract.address;
 
-    return {
-      contractAddress: _contractAddress,
-      abi,
-      compilerVersion,
-      transactionHash,
-      wait: contractAddress ? null : contract.deployTransaction.wait(),
-    };
+    // return {
+    //   contractAddress: _contractAddress,
+    //   abi,
+    //   compilerVersion,
+    //   transactionHash,
+    //   wait: contractAddress ? null : contract.deployTransaction.wait(),
+    // };
   }
 
   async deploy(
@@ -669,46 +669,46 @@ export class Factory {
     notRevealedMetadataCid: string | null,
     contractAddress: string | null
   ) {
-    const {
-      imagesCid: _imagesCid,
-      metadataCid: _metadataCid,
-      notRevealedImageCid: _notRevealedImageCid,
-      notRevealedMetadataCid: _notRevealedMetadataCid,
-    } = await this.deployAssets(
-      generation,
-      notRevealedGeneration,
-      imagesCid,
-      metadataCid,
-      notRevealedImageCid,
-      notRevealedMetadataCid
-    );
+    // const {
+    //   imagesCid: _imagesCid,
+    //   metadataCid: _metadataCid,
+    //   notRevealedImageCid: _notRevealedImageCid,
+    //   notRevealedMetadataCid: _notRevealedMetadataCid,
+    // } = await this.deployAssets(
+    //   generation,
+    //   notRevealedGeneration,
+    //   imagesCid,
+    //   metadataCid,
+    //   notRevealedImageCid,
+    //   notRevealedMetadataCid
+    // );
 
-    const {
-      contractAddress: _contractAddress,
-      abi,
-      compilerVersion,
-      transactionHash,
-      wait,
-    } = await this.deployContract(
-      providerId,
-      generation,
-      _metadataCid,
-      _notRevealedMetadataCid,
-      contractAddress
-    );
+    // const {
+    //   contractAddress: _contractAddress,
+    //   abi,
+    //   compilerVersion,
+    //   transactionHash,
+    //   wait,
+    // } = await this.deployContract(
+    //   providerId,
+    //   generation,
+    //   _metadataCid,
+    //   _notRevealedMetadataCid,
+    //   contractAddress
+    // );
 
-    await wait;
+    // await wait;
 
-    return {
-      imagesCid: _imagesCid,
-      metadataCid: _metadataCid,
-      notRevealedImageCid: _notRevealedImageCid,
-      notRevealedMetadataCid: _notRevealedMetadataCid,
-      contractAddress: _contractAddress,
-      abi,
-      compilerVersion,
-      transactionHash,
-    };
+    // return {
+    //   imagesCid: _imagesCid,
+    //   metadataCid: _metadataCid,
+    //   notRevealedImageCid: _notRevealedImageCid,
+    //   notRevealedMetadataCid: _notRevealedMetadataCid,
+    //   contractAddress: _contractAddress,
+    //   abi,
+    //   compilerVersion,
+    //   transactionHash,
+    // };
   }
 
   // #region Getters

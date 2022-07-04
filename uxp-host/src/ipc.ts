@@ -478,86 +478,86 @@ ipcAsyncTask(
 // #endregion
 
 // #region Provider
-export const providers: Record<string, WalletConnectProvider> = {};
-export const providerEngines: Record<string, any> = {};
+// export const providers: Record<string, WalletConnectProvider> = {};
+// export const providerEngines: Record<string, any> = {};
 export const accounts: Record<string, string> = {};
 export const seaports: Record<string, OpenSeaPort> = {};
 export const polygonProviders: Record<string, any> = {};
 
-ipcMain.on("createProvider", async (event, id: string, network: Network) => {
-  const connector = new NodeWalletConnect(
-    {
-      bridge: "https://bridge.walletconnect.org",
-    },
-    {
-      // ! TODO
-      clientMeta: {
-        name: "Art Factory",
-        description: "Art Factory",
-        url: "https://nodejs.org/en/",
-        icons: ["https://nodejs.org/static/images/logo.svg"],
-      },
-    }
-  );
+// ipcMain.on("createProvider", async (event, id: string, network: Network) => {
+//   const connector = new NodeWalletConnect(
+//     {
+//       bridge: "https://bridge.walletconnect.org",
+//     },
+//     {
+//       // ! TODO
+//       clientMeta: {
+//         name: "Art Factory",
+//         description: "Art Factory",
+//         url: "https://nodejs.org/en/",
+//         icons: ["https://nodejs.org/static/images/logo.svg"],
+//       },
+//     }
+//   );
 
-  connector.on("connect", async (error, payload) => {
-    if (error) {
-      event.reply("createProviderResult", { id, connected: false });
-    } else {
-      const provider = new WalletConnectProvider({
-        connector,
-        infuraId: getInfuraProjectId() as string,
-        chainId: ChainId[network],
-      });
-      await provider.enable();
+//   connector.on("connect", async (error, payload) => {
+//     if (error) {
+//       event.reply("createProviderResult", { id, connected: false });
+//     } else {
+//       const provider = new WalletConnectProvider({
+//         connector,
+//         infuraId: getInfuraProjectId() as string,
+//         chainId: ChainId[network],
+//       });
+//       await provider.enable();
 
-      const { accounts: _accounts } = payload.params[0];
+//       const { accounts: _accounts } = payload.params[0];
 
-      const web3Provider = new ethersProviders.Web3Provider(provider);
+//       const web3Provider = new ethersProviders.Web3Provider(provider);
 
-      providers[id] = provider;
-      accounts[id] = _accounts[0];
-      // @ts-ignore
-      // eths[id] = new Eth(web3Provider);
+//       providers[id] = provider;
+//       accounts[id] = _accounts[0];
+//       // @ts-ignore
+//       // eths[id] = new Eth(web3Provider);
 
-      event.reply("createProviderResult", { id, connected: true });
-    }
-  });
+//       event.reply("createProviderResult", { id, connected: true });
+//     }
+//   });
 
-  await connector.createSession();
-  const uri = connector.uri;
-  event.reply("createProviderUri", { id, uri });
-});
+//   await connector.createSession();
+//   const uri = connector.uri;
+//   event.reply("createProviderUri", { id, uri });
+// });
 
-ipcAsyncTask(
-  "createProviderWithKey",
-  async (id: string, privateKey: string, network: Network) => {
-    const privateKeyWalletSubprovider = new PrivateKeyWalletSubprovider(
-      privateKey,
-      ChainId[network]
-    );
+// ipcAsyncTask(
+//   "createProviderWithKey",
+//   async (id: string, privateKey: string, network: Network) => {
+//     const privateKeyWalletSubprovider = new PrivateKeyWalletSubprovider(
+//       privateKey,
+//       ChainId[network]
+//     );
 
-    const infuraRpcSubprovider = new RPCSubprovider({
-      rpcUrl: getInfuraEndpoint(network),
-    });
+//     const infuraRpcSubprovider = new RPCSubprovider({
+//       rpcUrl: getInfuraEndpoint(network),
+//     });
 
-    const providerEngine = new Web3ProviderEngine();
-    providerEngine.addProvider(privateKeyWalletSubprovider);
-    providerEngine.addProvider(infuraRpcSubprovider);
-    providerEngine.start();
+//     const providerEngine = new Web3ProviderEngine();
+//     providerEngine.addProvider(privateKeyWalletSubprovider);
+//     providerEngine.addProvider(infuraRpcSubprovider);
+//     providerEngine.start();
 
-    const openseaApiKey = getOpenseaApiKey();
+//     const openseaApiKey = getOpenseaApiKey();
 
-    providerEngines[id] = providerEngine;
-    accounts[id] = (await privateKeyWalletSubprovider.getAccountsAsync())[0];
-    // eths[id] = new Eth(providerEngine);
-    seaports[id] = new OpenSeaPort(providerEngine, {
-      networkName:
-        network === "main" ? OpenSeaNetwork.Main : OpenSeaNetwork.Rinkeby,
-      ...(openseaApiKey && { apiKey: openseaApiKey as string }),
-    });
-  }
-);
+//     providerEngines[id] = providerEngine;
+//     accounts[id] = (await privateKeyWalletSubprovider.getAccountsAsync())[0];
+//     // eths[id] = new Eth(providerEngine);
+//     seaports[id] = new OpenSeaPort(providerEngine, {
+//       networkName:
+//         network === "main" ? OpenSeaNetwork.Main : OpenSeaNetwork.Rinkeby,
+//       ...(openseaApiKey && { apiKey: openseaApiKey as string }),
+//     });
+//   }
+// );
 
 ipcAsyncTask(
   "createPolygonProviderWithKey",
@@ -580,12 +580,12 @@ export const contracts: Record<string, Contract> = {};
 ipcAsyncTask(
   "createContract",
   async (id: string, providerId: string, contractAddress: string, abi: any) => {
-    const web3Provider = new ethersProviders.Web3Provider(
-      providers[providerId]
-    );
-    const signer = web3Provider.getSigner();
-    const contract = new Contract(contractAddress, abi, signer);
-    contracts[id] = contract;
+    // const web3Provider = new ethersProviders.Web3Provider(
+    //   providers[providerId]
+    // );
+    // const signer = web3Provider.getSigner();
+    // const contract = new Contract(contractAddress, abi, signer);
+    // contracts[id] = contract;
   }
 );
 // #endregion
