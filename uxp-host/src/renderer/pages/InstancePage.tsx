@@ -16,7 +16,7 @@ import { Panel721 } from "../components/Panel721";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { TaskItem } from "../components/TaskItem";
 import { useToolbar } from "../components/Toolbar";
-import { createContract } from "../ipc";
+import { createContract, createSigner } from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
 
@@ -62,30 +62,7 @@ export function InstancePage() {
   const [outputs, setOutputs] = useState<OutputItemProps[]>([]);
   const [providerId, setProviderId] = useState<string>(null);
   const [contractId, setContractId] = useState<string>(null);
-  const [providerEngineId, setProviderEngineId] = useState<string>(null);
-
-  // useEffect(() => {
-  //   task("provider & contract", async () => {
-  //     if (error) return;
-  //     const providerId = uuid();
-  //     const contractId = uuid();
-
-  //     const uri = await createProvider(
-  //       providerId,
-  //       network,
-  //       async ({ connected }) => {
-  //         WalletConnectQRCodeModal.close();
-
-  //         if (!connected) throw Error("Could not connect");
-
-  //         await createContract(contractId, providerId, contractAddress, abi);
-  //         setProviderId(providerId);
-  //         setContractId(contractId);
-  //       }
-  //     );
-  //     WalletConnectQRCodeModal.open(uri, () => {});
-  //   })();
-  // }, []);
+  const [signerId, setSignerId] = useState<string>(null);
 
   const onBack = () =>
     navigate("/factory", { state: { projectDir, id, instance, dirty } });
@@ -115,38 +92,11 @@ export function InstancePage() {
     setDeployment(newDeployment);
   };
 
-  // const onConnect = task("connect", async () => {
-  //   const providerId = uuid();
-  //   const contractId = uuid();
-
-  //   const uri = await createProvider(
-  //     providerId,
-  //     network,
-  //     async ({ connected }) => {
-  //       WalletConnectQRCodeModal.close();
-
-  //       if (!connected) throw Error("Could not connect");
-
-  //       await createContract(contractId, providerId, contractAddress, abi);
-  //       setProviderId(providerId);
-  //       setContractId(contractId);
-  //     }
-  //   );
-  //   WalletConnectQRCodeModal.open(uri, () => {});
-  // });
-
-  const onConnectWithPrivateKey = task(
-    "connect with private key",
-    async ({ privateKey }) => {
-      // const providerEngineId = uuid();
-      // await createProviderWithKey(
-      //   providerEngineId,
-      //   privateKey,
-      //   deployment.network
-      // );
-      // setProviderEngineId(providerEngineId);
-    }
-  );
+  const onConnect = task("connect with private key", async ({ privateKey }) => {
+    const signerId = uuid();
+    await createSigner(signerId, privateKey, deployment.network);
+    setSignerId(signerId);
+  });
 
   return (
     <Grid
@@ -158,7 +108,7 @@ export function InstancePage() {
       gap="size-100"
       margin="size-100"
     >
-      {/* {error ? (
+      {error ? (
         <>
           <Heading level={1}>You need to deploy a contract first</Heading>
           <ButtonGroup align="end">
@@ -167,7 +117,7 @@ export function InstancePage() {
             </Button>
           </ButtonGroup>
         </>
-      ) : ( */}
+      ) : (
         <>
           <View
             UNSAFE_className="p-2 space-y-2"
@@ -175,10 +125,8 @@ export function InstancePage() {
             overflow="auto"
           >
             <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
-              {/* <TaskItem name="Connect" onRun={onConnect} /> */}
-
               <TaskItem
-                name="Connect with private key"
+                name="Connect"
                 fields={[
                   {
                     key: "privateKey",
@@ -188,17 +136,17 @@ export function InstancePage() {
                     value: "",
                   },
                 ]}
-                onRun={onConnectWithPrivateKey}
+                onRun={onConnect}
               />
 
-              {/* {configuration.contractType === "721" ? (
+              {configuration.contractType === "721" ? (
                 <Panel721
                   {...{
                     deployment,
                     id,
                     providerId,
                     contractId,
-                    providerEngineId,
+                    providerEngineId: signerId,
                     setWorking,
                     addOutput,
                     increaseDropNumber,
@@ -211,13 +159,13 @@ export function InstancePage() {
                     id,
                     providerId,
                     contractId,
-                    providerEngineId,
+                    providerEngineId: signerId,
                     setWorking,
                     addOutput,
                     increaseDropNumber,
                   }}
                 />
-              ) : null} */}
+              ) : null}
             </Grid>
           </View>
 
@@ -234,8 +182,7 @@ export function InstancePage() {
               alignItems="center"
             >
               <Heading level={1}>
-                {/* {chopAddress(contractAddress)} at {network} */}
-                {"XXX"} at {network}
+                {chopAddress(contractAddress)} at {network}
               </Heading>
               <ActionButton onPress={onCopy}>
                 <Copy />
@@ -274,7 +221,7 @@ export function InstancePage() {
             </Flex>
           </View>
         </>
-      {/* )} */}
+      )}
     </Grid>
   );
 }

@@ -219,10 +219,9 @@ export const factoryGenerateMetadata = (
 
 export const factoryDeploy = (
   id: string,
-  providerId: string,
+  signerId: string,
   generation: Generation,
   notRevealedGeneration: Generation,
-
   imagesCid: string,
   metadataCid: string,
   notRevealedImageCid: string,
@@ -231,10 +230,9 @@ export const factoryDeploy = (
 ) =>
   ipcTask("factoryDeploy")(
     id,
-    providerId,
+    signerId,
     generation,
     notRevealedGeneration,
-
     imagesCid,
     metadataCid,
     notRevealedImageCid,
@@ -390,11 +388,10 @@ export const reveal = (id: string, contractId: string) =>
 
 export const mintDrop = (
   id: string,
-  providerId: string,
   contractId: string,
   drop: Drop,
   gasLimit?: number
-) => ipcTask("mintDrop")(id, providerId, contractId, drop, gasLimit);
+) => ipcTask("mintDrop")(id, contractId, drop, gasLimit);
 
 export const sellDropBundles = (
   id: string,

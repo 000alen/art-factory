@@ -418,19 +418,8 @@ ipcAsyncTask(
 
 ipcAsyncTask(
   "mintDrop",
-  async (
-    id: string,
-    // providerId: string,
-    contractId: string,
-    drop: Drop,
-    gasLimit?: number
-  ) =>
-    await factories[id].mintDrop(
-      // providerId,
-      contractId,
-      drop,
-      gasLimit
-    )
+  async (id: string, contractId: string, drop: Drop, gasLimit?: number) =>
+    await factories[id].mintDrop(contractId, drop, gasLimit)
 );
 
 ipcAsyncTask(

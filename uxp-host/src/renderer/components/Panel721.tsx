@@ -1,24 +1,15 @@
 import React, { useMemo, useState } from "react";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  NumberField,
-  Switch,
-  View,
-  Well,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Switch, View, Well
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
+import { MINT_N } from "../constants";
 import { mintDrop, sellDrop } from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
-import { MINT_N } from "../constants";
 
 interface Panel721Props {
   deployment: Deployment;
@@ -66,7 +57,6 @@ export const Panel721: React.FC<Panel721Props> = ({
 
     await mintDrop(
       id,
-      providerId,
       contractId,
       drops.find(({ name }) => name === dropToMint),
       gasLimit

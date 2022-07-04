@@ -1,25 +1,16 @@
 import React, { useMemo, useState } from "react";
 
 import {
-  ActionButton,
-  Flex,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  NumberField,
-  Switch,
-  View,
-  Well,
+    ActionButton, Flex, Heading, Item, Menu, MenuTrigger, NumberField, Switch, View, Well
 } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 
+import { MINT_N } from "../constants";
 import { mintDrop, pause, reveal, sellDrop } from "../ipc";
 import { Deployment } from "../typings";
 import { useErrorHandler } from "./ErrorHandler";
 import { OutputItemProps } from "./OutputItem";
 import { TaskItem } from "./TaskItem";
-import { MINT_N } from "../constants";
 
 interface Panel721_reveal_pauseProps {
   deployment: Deployment;
@@ -67,7 +58,6 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
 
     await mintDrop(
       id,
-      providerId,
       contractId,
       drops.find(({ name }) => name === dropToMint),
       gasLimit

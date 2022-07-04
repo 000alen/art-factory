@@ -135,7 +135,8 @@ export interface Deployment {
   metadataCid: string;
   notRevealedImageCid?: string;
   notRevealedMetadataCid?: string;
-  network: Network;
+  // network: Network;
+  network: PolygonNetwork;
   contractAddress: string;
   abi: any[];
   compilerVersion: string;

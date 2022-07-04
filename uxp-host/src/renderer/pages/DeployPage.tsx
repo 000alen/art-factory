@@ -8,7 +8,6 @@ import {
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import More from "@spectrum-icons/workflow/More";
-import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
 import { getGenerationPreview, save } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
@@ -16,8 +15,8 @@ import { Preview } from "../components/Preview";
 import { TaskItem } from "../components/TaskItem";
 import { useToolbar } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import { factoryDeploy } from "../ipc";
-import { Deployment, Instance, Network } from "../typings";
+import { createSigner, factoryDeploy } from "../ipc";
+import { Deployment, Instance, PolygonNetwork } from "../typings";
 
 interface DeployPageState {
   projectDir: string;
@@ -79,13 +78,15 @@ export function DeployPage() {
   const [contractAddress, setContractAddress] = useState<string>(null);
   const [abi, setAbi] = useState<any>(null);
   const [compilerVersion, setCompilerVersion] = useState<string>(null);
-  const [network, setNetwork] = useState<Network>(Network.RINKEBY);
+  const [network, setNetwork] = useState<PolygonNetwork>(PolygonNetwork.MUMBAI);
 
   const [automatic, setAutomatic] = useState(true);
 
   const [working, setWorking] = useState(false);
   const [deployDone, setDeployDone] = useState(false);
   const [elapsedTime, setElapsedTime] = useState<string>(null);
+
+  const [signerId, setSignerId] = useState<string>(null);
 
   // const task = useErrorHandler(setWorking);
   const task = useErrorHandler();
@@ -126,62 +127,49 @@ export function DeployPage() {
     navigate("/factory", { state: { projectDir, id, instance, dirty } });
 
   const onDeploy = task("deployment", async () => {
-    // setWorking(true);
+    setWorking(true);
 
-    // const providerId = uuid();
-    // const uri = await createProvider(
-    //   providerId,
-    //   network,
-    //   async ({ connected }) => {
-    //     WalletConnectQRCodeModal.close();
+    const start = moment(performance.now());
+    const {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+    } = await factoryDeploy(
+      id,
+      signerId,
+      generation,
+      notRevealedGeneration,
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid,
+      contractAddress
+    );
+    const end = moment(performance.now());
+    const diff = end.diff(start);
 
-    //     if (!connected) throw new Error("Could not connect");
-
-    //     const start = moment(performance.now());
-    //     const {
-    //       imagesCid: _imagesCid,
-    //       metadataCid: _metadataCid,
-    //       notRevealedImageCid: _notRevealedImageCid,
-    //       notRevealedMetadataCid: _notRevealedMetadataCid,
-    //       contractAddress: _contractAddress,
-    //       abi,
-    //       compilerVersion,
-    //     } = await factoryDeploy(
-    //       id,
-    //       providerId,
-    //       generation,
-    //       notRevealedGeneration,
-
-    //       imagesCid,
-    //       metadataCid,
-    //       notRevealedImageCid,
-    //       notRevealedMetadataCid,
-    //       contractAddress
-    //     );
-    //     const end = moment(performance.now());
-    //     const diff = end.diff(start);
-
-    //     setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
-    //     setImagesCid(_imagesCid);
-    //     setMetadataCid(_metadataCid);
-    //     setNotRevealedImageCid(_notRevealedImageCid);
-    //     setNotRevealedMetadataCid(_notRevealedMetadataCid);
-    //     setContractAddress(_contractAddress);
-    //     setAbi(abi);
-    //     setCompilerVersion(compilerVersion);
-    //     setDeployDone(true);
-    //     setWorking(false);
-    //   }
-    // );
-    // WalletConnectQRCodeModal.open(uri, () => {});
+    setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
+    setImagesCid(_imagesCid);
+    setMetadataCid(_metadataCid);
+    setNotRevealedImageCid(_notRevealedImageCid);
+    setNotRevealedMetadataCid(_notRevealedMetadataCid);
+    setContractAddress(_contractAddress);
+    setAbi(abi);
+    setCompilerVersion(compilerVersion);
+    setDeployDone(true);
+    setWorking(false);
   });
 
-  const onConnectWithPrivateKey = task(
+  const onConnect = task(
     "connect with private key",
     async ({ privateKey }) => {
-      // const providerEngineId = uuid();
-      // await createProviderWithKey(providerEngineId, privateKey, network);
-      // setProviderEngineId(providerEngineId);
+      const signerId = uuid();
+      await createSigner(signerId, privateKey, network);
+      setSignerId(signerId);
     }
   );
 
@@ -249,11 +237,11 @@ export function DeployPage() {
                 disallowEmptySelection={true}
                 selectedKeys={[network]}
                 onSelectionChange={(selectedKeys: Set<string>) =>
-                  setNetwork([...selectedKeys].shift() as Network)
+                  setNetwork([...selectedKeys].shift() as PolygonNetwork)
                 }
               >
-                <Item key="rinkeby">{Network.RINKEBY}</Item>
-                <Item key="mainnet">{Network.MAIN}</Item>
+                <Item key="matic">{PolygonNetwork.MATIC}</Item>
+                <Item key="mumbai">{PolygonNetwork.MUMBAI}</Item>
               </Menu>
             </MenuTrigger>
           </Flex>
@@ -261,7 +249,7 @@ export function DeployPage() {
           <Flex height="60vh" gap="size-100" justifyContent="space-evenly">
             <Flex direction="column" justifyContent="center" gap="size-100">
               <TaskItem
-                name="Connect with private key"
+                name="Connect"
                 fields={[
                   {
                     key: "privateKey",
@@ -271,7 +259,7 @@ export function DeployPage() {
                     value: "",
                   },
                 ]}
-                onRun={onConnectWithPrivateKey}
+                onRun={onConnect}
               />
             </Flex>
 
@@ -392,7 +380,4 @@ export function DeployPage() {
       )}
     </Flex>
   );
-}
-function setProviderEngineId(providerEngineId: string) {
-  throw new Error("Function not implemented.");
 }

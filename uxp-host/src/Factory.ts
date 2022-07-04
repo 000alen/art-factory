@@ -1068,12 +1068,7 @@ export class Factory {
   }
   // #endregion
 
-  async mintDrop(
-    // providerId: string,
-    contractId: string,
-    drop: Drop,
-    gasLimit?: number
-  ) {
+  async mintDrop(contractId: string, drop: Drop, gasLimit?: number) {
     const contract = contracts[contractId];
 
     const txs = [];
