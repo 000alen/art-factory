@@ -658,6 +658,8 @@ export class Factory {
     notRevealedMetadataCid: string | null,
     contractAddress: string | null
   ) {
+    console.log("deploy deployAssets start");
+
     const {
       imagesCid: _imagesCid,
       metadataCid: _metadataCid,
@@ -672,6 +674,14 @@ export class Factory {
       notRevealedMetadataCid
     );
 
+    console.log("deploy deployAssets end");
+    console.log("    imagesCid", _imagesCid);
+    console.log("    metadataCid", _metadataCid);
+    console.log("    notRevealedImageCid", _notRevealedImageCid);
+    console.log("    notRevealedMetadataCid", _notRevealedMetadataCid);
+
+    console.log("deploy deployContract start");
+
     const {
       contractAddress: _contractAddress,
       abi,
@@ -685,6 +695,10 @@ export class Factory {
       _notRevealedMetadataCid,
       contractAddress
     );
+
+    console.log("deploy deployContract end");
+    console.log("    contractAddress", _contractAddress);
+    console.log("    transactionHash", transactionHash);
 
     await wait;
 

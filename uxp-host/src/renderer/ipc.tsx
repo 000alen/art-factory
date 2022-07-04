@@ -493,3 +493,6 @@ export const createContract = (
   ) as Promise<string>;
 
 // #endregion
+
+export const XXX = (privateKey: string, network: PolygonNetwork) =>
+  ipcTask("XXX")(privateKey, network);

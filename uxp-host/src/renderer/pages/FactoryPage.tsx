@@ -25,9 +25,9 @@ import { CustomField, TaskItem } from "../components/TaskItem";
 import { useToolbar } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import {
-    createFactory, factoryReloadConfiguration, factoryReloadLayers, hasFactory, openInExplorer
+    createFactory, factoryReloadConfiguration, factoryReloadLayers, hasFactory, openInExplorer, XXX
 } from "../ipc";
-import { Instance, SourceItem } from "../typings";
+import { Instance, PolygonNetwork, SourceItem } from "../typings";
 import { makeSource } from "../utils";
 
 interface FactoryPageState {
@@ -409,6 +409,10 @@ export const FactoryPage: React.FC = () => {
     }
   );
 
+  const _XXX = task("XXX", async ({ privateKey }) => {
+    console.log(await XXX(privateKey, PolygonNetwork.MUMBAI));
+  });
+
   return (
     <Grid
       areas={["left right"]}
@@ -519,6 +523,21 @@ export const FactoryPage: React.FC = () => {
 
         <Grid columns={repeat("auto-fit", "300px")} gap="size-100">
           {/* <TaskItem name="Save" onRun={onSave} /> */}
+
+          <TaskItem
+            name="XXX"
+            fields={[
+              {
+                key: "privateKey",
+                type: "password",
+                label: "Private key",
+                initial: "",
+                value: "",
+              },
+            ]}
+            onRun={_XXX}
+          />
+
           <TaskItem name="Configuration" onRun={onConfiguration} />
 
           <TaskItem

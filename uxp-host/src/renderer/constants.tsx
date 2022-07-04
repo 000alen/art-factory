@@ -1,8 +1,13 @@
-import { Network } from "./typings";
+import { Network, PolygonNetwork } from "./typings";
 
 export const ChainId = {
   [Network.MAIN]: 1,
   [Network.RINKEBY]: 4,
+};
+
+export const PolygonChainId = {
+  [PolygonNetwork.MATIC]: 137,
+  [PolygonNetwork.MUMBAI]: 80001,
 };
 
 export const METADATA_FIELDS = ["external_url", "animation_url", "youtube_url"];

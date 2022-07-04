@@ -1,5 +1,5 @@
 import { dialog, ipcMain, shell } from "electron";
-import { Contract, ethers, providers as ethersProviders } from "ethers";
+import { Contract, ContractFactory, ethers, providers as ethersProviders } from "ethers";
 import fs from "fs";
 import path from "path";
 import Web3ProviderEngine from "web3-provider-engine";
@@ -9,7 +9,7 @@ import { PrivateKeyWalletSubprovider } from "@0x/subproviders";
 import NodeWalletConnect from "@walletconnect/node";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
-import { BUILD_DIR_NAME, ChainId } from "./constants";
+import { BUILD_DIR_NAME, ChainId, PolygonChainId } from "./constants";
 import { Factory } from "./Factory";
 import { Network as OpenSeaNetwork, OpenSeaPort } from "./opensea";
 import {
@@ -21,7 +21,7 @@ import {
     Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
     Network, PolygonNetwork, Template, Trait
 } from "./typings";
-import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
+import { capitalize, getContract, getInfuraEndpoint, layersNames } from "./utils";
 
 // #region Helpers
 const ipcTask = (task: string, callback: (...args: any[]) => any) => {
@@ -545,11 +545,15 @@ export const polygonSigners: Record<string, any> = {};
 ipcAsyncTask(
   "createSigner",
   async (id: string, privateKey: string, network: PolygonNetwork) => {
-    const provider = new ethers.providers.JsonRpcProvider(
+    const rpcUrl =
       network === PolygonNetwork.MATIC
         ? `https://rpc-mainnet.maticvigil.com/v1/${getMaticVigilApiKey()}`
-        : `https://rpc-mumbai.maticvigil.com/v1/${getMaticVigilApiKey()}`
-    );
+        : `https://rpc-mumbai.maticvigil.com/v1/${getMaticVigilApiKey()}`;
+    const chainId = PolygonChainId[network];
+
+    console.log("rpcUrl", chainId, rpcUrl);
+
+    const provider = new ethers.providers.JsonRpcProvider(rpcUrl, chainId);
     const signer = new ethers.Wallet(privateKey, provider);
     polygonSigners[id] = signer;
   }
@@ -569,3 +573,44 @@ ipcAsyncTask(
   }
 );
 // #endregion
+
+ipcAsyncTask("XXX", async (privateKey: string, network: PolygonNetwork) => {
+  console.log("provider");
+  // const rpcUrl =
+  //   network === PolygonNetwork.MATIC
+  //     ? `https://rpc-mainnet.maticvigil.com/v1/${getMaticVigilApiKey()}`
+  //     : `https://rpc-mumbai.maticvigil.com/v1/${getMaticVigilApiKey()}`;
+  const rpcUrl =
+    "https://rpc-mumbai.maticvigil.com/v1/1d08647d37e2c9a8b43601ff8cbe8bb50e4a3caa";
+  // const chainId = PolygonChainId[network];
+
+  const result = await ethers.utils.fetchJson(
+    rpcUrl,
+    '{ "id": 42, "jsonrpc": "2.0", "method": "eth_chainId", "params": [ ] }'
+  );
+  console.log("result", result);
+
+  return result;
+
+  // const provider = new ethers.providers.JsonRpcProvider(rpcUrl, chainId);
+
+  // console.log("signer");
+  // const signer = new ethers.Wallet(privateKey, provider);
+
+  // console.log("contractFactory");
+  // const { contracts } = await getContract("721");
+  // const { NFT } = contracts["721"];
+  // const { abi, evm } = NFT;
+  // const { bytecode } = evm;
+  // const contractFactory = new ContractFactory(abi, bytecode, signer);
+
+  // console.log("contract");
+  // const contract = await contractFactory.deploy("TEST", "TEST", `TEST`, 10);
+
+  // console.log("contractAddress", contract.address);
+  // await contract.deployTransaction.wait();
+  // const contractAddress = contract.address;
+  // console.log("    contractAddress", contractAddress);
+
+  // return contractAddress;
+});

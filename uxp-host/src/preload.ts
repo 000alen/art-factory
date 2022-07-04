@@ -61,14 +61,10 @@ const sendWhitelist = [
   "sellDropBundles",
   "sellDropItems",
   "sellDrop",
-
-  // "createProvider",
-  // "createProviderUri",
-  // "createProviderResult",
-  // "createProviderWithKey",
-
   "createSigner",
   "createContract",
+
+  "XXX"
 ];
 
 const onWhitelist = [
@@ -134,14 +130,10 @@ const onWhitelist = [
   "sellDropBundlesResult",
   "sellDropItemsResult",
   "sellDropResult",
-
-  // "createProvider",
-  // "createProviderUri",
-  // "createProviderResult",
-  // "createProviderWithKeyResult",
-
   "createSignerResult",
   "createContractResult",
+
+  "XXXResult"
 ];
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
