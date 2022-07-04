@@ -392,18 +392,6 @@ ipcAsyncTask(
     await factories[id].getWalletOfOwner(contractId, owner)
 );
 
-// ipcAsyncTask(
-//   "setCost",
-//   async (id: string, contractId: string, cost: string) =>
-//     await factories[id].setCost(contractId, cost)
-// );
-
-// ipcAsyncTask(
-//   "setMaxMintAmount",
-//   async (id: string, contractId: string, amount: number) =>
-//     await factories[id].setMaxMintAmount(contractId, amount)
-// );
-
 ipcAsyncTask(
   "withdraw",
   async (id: string, contractId: string) =>
@@ -432,11 +420,17 @@ ipcAsyncTask(
   "mintDrop",
   async (
     id: string,
-    providerId: string,
+    // providerId: string,
     contractId: string,
     drop: Drop,
     gasLimit?: number
-  ) => await factories[id].mintDrop(providerId, contractId, drop, gasLimit)
+  ) =>
+    await factories[id].mintDrop(
+      // providerId,
+      contractId,
+      drop,
+      gasLimit
+    )
 );
 
 ipcAsyncTask(
@@ -480,9 +474,9 @@ ipcAsyncTask(
 // #region Provider
 // export const providers: Record<string, WalletConnectProvider> = {};
 // export const providerEngines: Record<string, any> = {};
-export const accounts: Record<string, string> = {};
-export const seaports: Record<string, OpenSeaPort> = {};
-export const polygonProviders: Record<string, any> = {};
+// export const accounts: Record<string, string> = {};
+// export const seaports: Record<string, OpenSeaPort> = {};
+export const polygonSigners: Record<string, any> = {};
 
 // ipcMain.on("createProvider", async (event, id: string, network: Network) => {
 //   const connector = new NodeWalletConnect(
@@ -560,7 +554,7 @@ export const polygonProviders: Record<string, any> = {};
 // );
 
 ipcAsyncTask(
-  "createPolygonProviderWithKey",
+  "createSigner",
   async (id: string, privateKey: string, network: PolygonNetwork) => {
     const provider = new ethers.providers.JsonRpcProvider(
       network === PolygonNetwork.MATIC
@@ -568,7 +562,7 @@ ipcAsyncTask(
         : `https://rpc-mumbai.maticvigil.com/v1/${getMaticVigilApiKey()}`
     );
     const signer = new ethers.Wallet(privateKey, provider);
-    polygonProviders[id] = signer;
+    polygonSigners[id] = signer;
   }
 );
 
@@ -579,13 +573,10 @@ export const contracts: Record<string, Contract> = {};
 
 ipcAsyncTask(
   "createContract",
-  async (id: string, providerId: string, contractAddress: string, abi: any) => {
-    // const web3Provider = new ethersProviders.Web3Provider(
-    //   providers[providerId]
-    // );
-    // const signer = web3Provider.getSigner();
-    // const contract = new Contract(contractAddress, abi, signer);
-    // contracts[id] = contract;
+  async (id: string, signerId: string, contractAddress: string, abi: any) => {
+    const signer = polygonSigners[signerId];
+    const contract = new Contract(contractAddress, abi, signer);
+    contracts[id] = contract;
   }
 );
 // #endregion

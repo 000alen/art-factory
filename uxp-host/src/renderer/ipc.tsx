@@ -18,7 +18,7 @@ import { v4 as uuid } from "uuid";
 
 import {
     Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Instance, Layer,
-    MetadataItem, Network, Template, Trait
+    MetadataItem, Network, PolygonNetwork, Template, Trait
 } from "./typings";
 import { capitalize } from "./utils";
 
@@ -473,18 +473,24 @@ export const factoryGetResolution = (id: string) =>
 //   network: Network
 // ) => ipcTask("createProviderWithKey")(id, privateKey, network);
 
+export const createSigner = (
+  id: string,
+  privateKey: string,
+  network: PolygonNetwork
+) => ipcTask("createSigner")(id, privateKey, network);
+
 // #endregion
 
 // #region Contract
 export const createContract = (
   id: string,
-  providerId: string,
+  signerId: string,
   contractAddress: string,
   abi: any
 ) =>
   ipcTask("createContract")(
     id,
-    providerId,
+    signerId,
     contractAddress,
     abi
   ) as Promise<string>;

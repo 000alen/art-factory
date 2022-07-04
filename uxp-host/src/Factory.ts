@@ -6,18 +6,16 @@ import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
 
 import {
-    BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY, MAIN_WETH, MINT_N, PARALLEL_LIMIT,
-    RINKEBY_WETH
+    BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY, MINT_N, PARALLEL_LIMIT
 } from "./constants";
-import { accounts, contracts, seaports } from "./ipc";
+import { contracts, polygonSigners } from "./ipc";
 import {
     Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
-    Layer, MetadataItem, SaleType, Secrets, Template, Trait
+    Layer, MetadataItem, Secrets, Template, Trait
 } from "./typings";
 import {
-    append, arrayDifference, choose, computeBundlesNs, computeTraitsNs, getBranches, getContract,
-    hash, pinDirectoryToIPFS, pinFileToIPFS, rarity, readDir, removeRarity, replaceAll,
-    restrictImage
+    append, choose, computeBundlesNs, computeTraitsNs, getBranches, getContract, hash,
+    pinDirectoryToIPFS, pinFileToIPFS, rarity, readDir, removeRarity, replaceAll, restrictImage
 } from "./utils";
 
 export class Factory {
@@ -607,60 +605,51 @@ export class Factory {
   }
 
   async deployContract(
-    providerId: string,
+    signerId: string,
     generation: Generation,
     metadataCid: string,
     notRevealedMetadataCid: string,
     contractAddress: string | null
   ) {
-    // const web3Provider = new ethersProviders.Web3Provider(
-    //   providers[providerId]
-    // );
-
-    // const signer = web3Provider.getSigner();
-
-    // const { contracts } = await getContract(this.configuration.contractType);
-    // const { NFT } = contracts[this.configuration.contractType];
-    // const metadata = JSON.parse(NFT.metadata);
-    // const { version: compilerVersion } = metadata.compiler;
-    // const { abi, evm } = NFT;
-    // const { bytecode } = evm;
-
-    // let contractFactory, contract, transactionHash;
-    // if (!contractAddress) {
-    //   contractFactory = new ContractFactory(abi, bytecode, signer);
-
-    //   contract =
-    //     this.configuration.contractType === "721"
-    //       ? await this.deployContract721(
-    //           generation,
-    //           contractFactory,
-    //           metadataCid
-    //         )
-    //       : this.configuration.contractType === "721_reveal_pause"
-    //       ? await this.deployContract721_reveal_pause(
-    //           generation,
-    //           contractFactory,
-    //           metadataCid,
-    //           notRevealedMetadataCid
-    //         )
-    //       : null;
-    //   transactionHash = contract.deployTransaction.hash;
-    // }
-
-    // const _contractAddress = contractAddress || contract.address;
-
-    // return {
-    //   contractAddress: _contractAddress,
-    //   abi,
-    //   compilerVersion,
-    //   transactionHash,
-    //   wait: contractAddress ? null : contract.deployTransaction.wait(),
-    // };
+    const signer = polygonSigners[signerId];
+    const { contracts } = await getContract(this.configuration.contractType);
+    const { NFT } = contracts[this.configuration.contractType];
+    const metadata = JSON.parse(NFT.metadata);
+    const { version: compilerVersion } = metadata.compiler;
+    const { abi, evm } = NFT;
+    const { bytecode } = evm;
+    let contractFactory, contract, transactionHash;
+    if (!contractAddress) {
+      contractFactory = new ContractFactory(abi, bytecode, signer);
+      contract =
+        this.configuration.contractType === "721"
+          ? await this.deployContract721(
+              generation,
+              contractFactory,
+              metadataCid
+            )
+          : this.configuration.contractType === "721_reveal_pause"
+          ? await this.deployContract721_reveal_pause(
+              generation,
+              contractFactory,
+              metadataCid,
+              notRevealedMetadataCid
+            )
+          : null;
+      transactionHash = contract.deployTransaction.hash;
+    }
+    const _contractAddress = contractAddress || contract.address;
+    return {
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+      wait: contractAddress ? null : contract.deployTransaction.wait(),
+    };
   }
 
   async deploy(
-    providerId: string,
+    signerId: string,
     generation: Generation,
     notRevealedGeneration: Generation,
     imagesCid: string | null,
@@ -669,46 +658,46 @@ export class Factory {
     notRevealedMetadataCid: string | null,
     contractAddress: string | null
   ) {
-    // const {
-    //   imagesCid: _imagesCid,
-    //   metadataCid: _metadataCid,
-    //   notRevealedImageCid: _notRevealedImageCid,
-    //   notRevealedMetadataCid: _notRevealedMetadataCid,
-    // } = await this.deployAssets(
-    //   generation,
-    //   notRevealedGeneration,
-    //   imagesCid,
-    //   metadataCid,
-    //   notRevealedImageCid,
-    //   notRevealedMetadataCid
-    // );
+    const {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+    } = await this.deployAssets(
+      generation,
+      notRevealedGeneration,
+      imagesCid,
+      metadataCid,
+      notRevealedImageCid,
+      notRevealedMetadataCid
+    );
 
-    // const {
-    //   contractAddress: _contractAddress,
-    //   abi,
-    //   compilerVersion,
-    //   transactionHash,
-    //   wait,
-    // } = await this.deployContract(
-    //   providerId,
-    //   generation,
-    //   _metadataCid,
-    //   _notRevealedMetadataCid,
-    //   contractAddress
-    // );
+    const {
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+      wait,
+    } = await this.deployContract(
+      signerId,
+      generation,
+      _metadataCid,
+      _notRevealedMetadataCid,
+      contractAddress
+    );
 
-    // await wait;
+    await wait;
 
-    // return {
-    //   imagesCid: _imagesCid,
-    //   metadataCid: _metadataCid,
-    //   notRevealedImageCid: _notRevealedImageCid,
-    //   notRevealedMetadataCid: _notRevealedMetadataCid,
-    //   contractAddress: _contractAddress,
-    //   abi,
-    //   compilerVersion,
-    //   transactionHash,
-    // };
+    return {
+      imagesCid: _imagesCid,
+      metadataCid: _metadataCid,
+      notRevealedImageCid: _notRevealedImageCid,
+      notRevealedMetadataCid: _notRevealedMetadataCid,
+      contractAddress: _contractAddress,
+      abi,
+      compilerVersion,
+      transactionHash,
+    };
   }
 
   // #region Getters
@@ -1080,7 +1069,7 @@ export class Factory {
   // #endregion
 
   async mintDrop(
-    providerId: string,
+    // providerId: string,
     contractId: string,
     drop: Drop,
     gasLimit?: number
@@ -1102,60 +1091,54 @@ export class Factory {
     deployment: Deployment,
     drop: Drop
   ) {
-    const seaport = seaports[providerEngineId];
-
-    const { generation, contractAddress } = deployment;
-    const { bundles } = generation;
-
-    const publishedIds = [];
-    for (const bundleName of drop.bundles) {
-      const bundle = bundles.find((bundle) => bundle.name === bundleName);
-
-      for (const _ids of bundle.ids) {
-        const assets = _ids.map((id) => ({
-          tokenId: id,
-          tokenAddress: contractAddress,
-        }));
-
-        switch (bundle.saleType) {
-          case SaleType.FIXED:
-            await seaport.createBundleSellOrder({
-              assets,
-              bundleName,
-              accountAddress: accounts[providerEngineId],
-              startAmount: bundle.startingPrice,
-            });
-            break;
-          case SaleType.DUTCH:
-            await seaport.createBundleSellOrder({
-              assets,
-              bundleName,
-              accountAddress: accounts[providerEngineId],
-              startAmount: bundle.startingPrice,
-              endAmount: bundle.endingPrice,
-              expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
-            });
-            break;
-          case SaleType.ENGLISH: // ? NOTE: Must use WETH
-            await seaport.createBundleSellOrder({
-              assets,
-              bundleName,
-              accountAddress: accounts[providerEngineId],
-              paymentTokenAddress:
-                deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
-              startAmount: bundle.startingPrice,
-              endAmount: bundle.endingPrice,
-              expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
-              waitForHighestBid: true,
-            });
-            break;
-        }
-
-        publishedIds.push(..._ids);
-      }
-    }
-
-    return publishedIds;
+    // const seaport = seaports[providerEngineId];
+    // const { generation, contractAddress } = deployment;
+    // const { bundles } = generation;
+    // const publishedIds = [];
+    // for (const bundleName of drop.bundles) {
+    //   const bundle = bundles.find((bundle) => bundle.name === bundleName);
+    //   for (const _ids of bundle.ids) {
+    //     const assets = _ids.map((id) => ({
+    //       tokenId: id,
+    //       tokenAddress: contractAddress,
+    //     }));
+    //     switch (bundle.saleType) {
+    //       case SaleType.FIXED:
+    //         await seaport.createBundleSellOrder({
+    //           assets,
+    //           bundleName,
+    //           accountAddress: accounts[providerEngineId],
+    //           startAmount: bundle.startingPrice,
+    //         });
+    //         break;
+    //       case SaleType.DUTCH:
+    //         await seaport.createBundleSellOrder({
+    //           assets,
+    //           bundleName,
+    //           accountAddress: accounts[providerEngineId],
+    //           startAmount: bundle.startingPrice,
+    //           endAmount: bundle.endingPrice,
+    //           expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
+    //         });
+    //         break;
+    //       case SaleType.ENGLISH: // ? NOTE: Must use WETH
+    //         await seaport.createBundleSellOrder({
+    //           assets,
+    //           bundleName,
+    //           accountAddress: accounts[providerEngineId],
+    //           paymentTokenAddress:
+    //             deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
+    //           startAmount: bundle.startingPrice,
+    //           endAmount: bundle.endingPrice,
+    //           expirationTime: Math.floor(Date.now() / 1000 + bundle.saleTime),
+    //           waitForHighestBid: true,
+    //         });
+    //         break;
+    //     }
+    //     publishedIds.push(..._ids);
+    //   }
+    // }
+    // return publishedIds;
   }
 
   async sellDropItems(
@@ -1164,57 +1147,53 @@ export class Factory {
     drop: Drop,
     publishedIds: string[] = []
   ) {
-    const seaport = seaports[providerEngineId];
-
-    const { generation, contractAddress } = deployment;
-    const { collection } = generation;
-
-    for (const id of arrayDifference(drop.ids, publishedIds)) {
-      const item = collection.find((item) => item.name === id);
-
-      const asset = {
-        tokenId: id,
-        tokenAddress: contractAddress,
-      };
-
-      switch (item.saleType) {
-        case SaleType.FIXED:
-          await seaport.createSellOrder({
-            asset,
-            accountAddress: accounts[providerEngineId],
-            startAmount: item.startingPrice,
-          });
-          break;
-        case SaleType.DUTCH:
-          await seaport.createSellOrder({
-            asset,
-            accountAddress: accounts[providerEngineId],
-            startAmount: item.startingPrice,
-            endAmount: item.endingPrice,
-            expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
-          });
-          break;
-        case SaleType.ENGLISH: // ? NOTE: Must use WETH
-          await seaport.createSellOrder({
-            asset,
-            accountAddress: accounts[providerEngineId],
-            paymentTokenAddress:
-              deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
-            startAmount: item.startingPrice,
-            expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
-            waitForHighestBid: true,
-          });
-          break;
-      }
-    }
+    // const seaport = seaports[providerEngineId];
+    // const { generation, contractAddress } = deployment;
+    // const { collection } = generation;
+    // for (const id of arrayDifference(drop.ids, publishedIds)) {
+    //   const item = collection.find((item) => item.name === id);
+    //   const asset = {
+    //     tokenId: id,
+    //     tokenAddress: contractAddress,
+    //   };
+    //   switch (item.saleType) {
+    //     case SaleType.FIXED:
+    //       await seaport.createSellOrder({
+    //         asset,
+    //         accountAddress: accounts[providerEngineId],
+    //         startAmount: item.startingPrice,
+    //       });
+    //       break;
+    //     case SaleType.DUTCH:
+    //       await seaport.createSellOrder({
+    //         asset,
+    //         accountAddress: accounts[providerEngineId],
+    //         startAmount: item.startingPrice,
+    //         endAmount: item.endingPrice,
+    //         expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
+    //       });
+    //       break;
+    //     case SaleType.ENGLISH: // ? NOTE: Must use WETH
+    //       await seaport.createSellOrder({
+    //         asset,
+    //         accountAddress: accounts[providerEngineId],
+    //         paymentTokenAddress:
+    //           deployment.network === "rinkeby" ? RINKEBY_WETH : MAIN_WETH,
+    //         startAmount: item.startingPrice,
+    //         expirationTime: Math.floor(Date.now() / 1000 + item.saleTime),
+    //         waitForHighestBid: true,
+    //       });
+    //       break;
+    //   }
+    // }
   }
 
   async sellDrop(providerEngineId: string, deployment: Deployment, drop: Drop) {
-    const publishedIds = await this.sellDropBundles(
-      providerEngineId,
-      deployment,
-      drop
-    );
-    await this.sellDropItems(providerEngineId, deployment, drop, publishedIds);
+    // const publishedIds = await this.sellDropBundles(
+    //   providerEngineId,
+    //   deployment,
+    //   drop
+    // );
+    // await this.sellDropItems(providerEngineId, deployment, drop, publishedIds);
   }
 }
