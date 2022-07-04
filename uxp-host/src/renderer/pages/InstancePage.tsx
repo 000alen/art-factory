@@ -144,9 +144,8 @@ export function InstancePage() {
                   {...{
                     deployment,
                     id,
-                    providerId,
                     contractId,
-                    providerEngineId: signerId,
+                    signerId,
                     setWorking,
                     addOutput,
                     increaseDropNumber,
@@ -157,9 +156,8 @@ export function InstancePage() {
                   {...{
                     deployment,
                     id,
-                    providerId,
                     contractId,
-                    providerEngineId: signerId,
+                    signerId,
                     setWorking,
                     addOutput,
                     increaseDropNumber,

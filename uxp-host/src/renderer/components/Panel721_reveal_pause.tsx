@@ -15,9 +15,8 @@ import { TaskItem } from "./TaskItem";
 interface Panel721_reveal_pauseProps {
   deployment: Deployment;
   id: string;
-  providerId: string;
   contractId: string;
-  providerEngineId: string;
+  signerId: string;
   setWorking: (working: boolean) => void;
   addOutput: (output: OutputItemProps) => void;
   increaseDropNumber: () => void;
@@ -26,9 +25,8 @@ interface Panel721_reveal_pauseProps {
 export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   deployment,
   id,
-  providerId,
   contractId,
-  providerEngineId,
+  signerId,
   setWorking,
   addOutput,
   increaseDropNumber,
@@ -53,7 +51,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
 
   const onMintDrop = task("mint drop", async () => {
-    if (!providerId || !contractId)
+    if (!signerId || !contractId)
       throw new Error("Must create provider first");
 
     await mintDrop(
@@ -73,7 +71,7 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   });
 
   const onReveal = task("reveal", async () => {
-    if (!providerId || !contractId)
+    if (!signerId || !contractId)
       throw new Error("Must create provider first");
 
     await reveal(id, contractId);
@@ -85,12 +83,12 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
   });
 
   const onSellDrop = task("sell drop", async () => {
-    if (!providerEngineId)
+    if (!signerId)
       throw new Error("Must create provider with private key first");
 
     await sellDrop(
       id,
-      providerEngineId,
+      signerId,
       deployment,
       drops.find(({ name }) => name === dropNameToSell)
     );

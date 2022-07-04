@@ -14,9 +14,8 @@ import { OutputItemProps } from "./OutputItem";
 interface Panel721Props {
   deployment: Deployment;
   id: string;
-  providerId: string;
   contractId: string;
-  providerEngineId: string;
+  signerId: string;
   setWorking: (working: boolean) => void;
   addOutput: (output: OutputItemProps) => void;
   increaseDropNumber: () => void;
@@ -25,9 +24,8 @@ interface Panel721Props {
 export const Panel721: React.FC<Panel721Props> = ({
   deployment,
   id,
-  providerId,
   contractId,
-  providerEngineId,
+  signerId,
   setWorking,
   addOutput,
   increaseDropNumber,
@@ -52,7 +50,7 @@ export const Panel721: React.FC<Panel721Props> = ({
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
 
   const onMintDrop = task("mint drop", async () => {
-    if (!providerId || !contractId)
+    if (!signerId || !contractId)
       throw new Error("Must create provider first");
 
     await mintDrop(
@@ -72,12 +70,12 @@ export const Panel721: React.FC<Panel721Props> = ({
   });
 
   const onSellDrop = task("sell drop", async () => {
-    if (!providerEngineId)
+    if (!signerId)
       throw new Error("Must create provider with private key first");
 
     await sellDrop(
       id,
-      providerEngineId,
+      signerId,
       deployment,
       drops.find(({ name }) => name === dropNameToSell)
     );
