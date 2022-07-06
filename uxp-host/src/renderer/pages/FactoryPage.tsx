@@ -3,32 +3,19 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-  ActionButton,
-  ActionGroup,
-  Flex,
-  Grid,
-  Heading,
-  Item,
-  Menu,
-  MenuTrigger,
-  repeat,
-  View,
+    ActionButton, ActionGroup, Flex, Grid, Heading, Item, Menu, MenuTrigger, repeat, View
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import Close from "@spectrum-icons/workflow/Close";
 import Edit from "@spectrum-icons/workflow/Edit";
 import Folder from "@spectrum-icons/workflow/Folder";
 import Hammer from "@spectrum-icons/workflow/Hammer";
+import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 import Settings from "@spectrum-icons/workflow/Settings";
 
 import {
-  getGenerationPreview,
-  getTemplatePreview,
-  hydrateMetadata,
-  reconstructGeneration,
-  removeGeneration,
-  save,
-  unifyGenerations,
+    getGenerationPreview, getTemplatePreview, hydrateMetadata, reconstructGeneration,
+    removeGeneration, save, unifyGenerations
 } from "../commands";
 import { ArrayOf } from "../components/ArrayOf";
 import { useErrorHandler } from "../components/ErrorHandler";
@@ -38,15 +25,10 @@ import { CustomField, TaskItem } from "../components/TaskItem";
 import { useToolbar } from "../components/Toolbar";
 import { UXPContext } from "../components/UXPContext";
 import {
-  createFactory,
-  factoryReloadConfiguration,
-  factoryReloadLayers,
-  hasFactory,
-  openInExplorer,
+    createFactory, factoryReloadConfiguration, factoryReloadLayers, hasFactory, openInExplorer
 } from "../ipc";
 import { Instance, SourceItem } from "../typings";
 import { makeSource } from "../utils";
-import SaveFloppy from "@spectrum-icons/workflow/SaveFloppy";
 
 interface FactoryPageState {
   projectDir: string;
@@ -236,7 +218,7 @@ export const FactoryPage: React.FC = () => {
         dirty,
       },
     });
-    console.log("post navigate");
+    // console.log("post navigate");
   });
 
   const onDeploy = task("deploy", () => {

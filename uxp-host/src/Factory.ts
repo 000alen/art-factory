@@ -6,47 +6,18 @@ import sharp, { Blend } from "sharp";
 import { v4 as uuid } from "uuid";
 
 import {
-  BUILD_DIR_NAME,
-  DEFAULT_BLENDING,
-  DEFAULT_OPACITY,
-  MAIN_WETH,
-  MINT_N,
-  PARALLEL_LIMIT,
-  RINKEBY_WETH,
+    BUILD_DIR_NAME, DEFAULT_BLENDING, DEFAULT_OPACITY, MAIN_WETH, MINT_N, PARALLEL_LIMIT,
+    RINKEBY_WETH
 } from "./constants";
 import { accounts, contracts, providers, seaports } from "./ipc";
 import {
-  Bundles,
-  BundlesInfo,
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  SaleType,
-  Secrets,
-  Template,
-  Trait,
+    Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
+    Layer, MetadataItem, SaleType, Secrets, Template, Trait
 } from "./typings";
 import {
-  append,
-  arrayDifference,
-  choose,
-  computeBundlesNs,
-  computeTraitsNs,
-  getBranches,
-  getContract,
-  hash,
-  pinDirectoryToIPFS,
-  pinFileToIPFS,
-  rarity,
-  readDir,
-  removeRarity,
-  replaceAll,
-  restrictImage,
+    append, arrayDifference, choose, computeBundlesNs, computeTraitsNs, getBranches, getContract,
+    hash, pinDirectoryToIPFS, pinFileToIPFS, rarity, readDir, removeRarity, replaceAll,
+    restrictImage
 } from "./utils";
 
 export class Factory {
@@ -796,7 +767,9 @@ export class Factory {
 
     if (!filesAlreadyRemoved)
       await Promise.all(
+        // @ts-ignore
         items.reduce(
+        // @ts-ignore
           (p, item) => [
             ...p,
             fs.promises.rm(this.image(name, item.name)),
@@ -1118,7 +1091,7 @@ export class Factory {
 
     for (let i = 0; i < drop.ids.length; i += MINT_N) {
       const n = drop.ids.slice(i, i + MINT_N).length;
-      console.log(n);
+      // console.log(n);
       const tx = await contract.mint(n, { gasLimit });
       txs.push(tx);
     }
