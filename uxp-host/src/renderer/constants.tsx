@@ -38,3 +38,6 @@ export const DEFAULT_MAX_MINT_AMOUNT = 20;
 export const BUILD_DIR_NAME = ".build";
 
 export const MINT_N = 128;
+
+export const DEFAULT_SEED =
+  "Y aquí estoy, ultra solo, pensando en que me cambiaste por otro, pensando en cómo lo perdimos todo.";

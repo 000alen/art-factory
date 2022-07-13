@@ -2,17 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
-import { Button, Flex, TextField } from "@adobe/react-spectrum";
+import { Button, Checkbox, Flex, TextArea, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
 import { useErrorHandler } from "../components/ErrorHandler";
-import {
-  Nodes,
-  NodesContextProvider,
-  NodesInstance,
-} from "../components/NodesContext";
+import { Nodes, NodesContextProvider, NodesInstance } from "../components/NodesContext";
 import { Sidebar } from "../components/NodesPageSidebar";
 import { useToolbar } from "../components/Toolbar";
+import { DEFAULT_SEED } from "../constants";
 import { factoryGetTraitsByLayerName } from "../ipc";
 import { Instance } from "../typings";
 import { spacedName } from "../utils";
@@ -55,6 +52,7 @@ export function TemplatePage() {
 
   const [workingId] = useState(templateId || uuid());
   const [name, setName] = useState(templateId ? template.name : spacedName());
+  const [seed, setSeed] = useState(templateId ? template.seed : DEFAULT_SEED);
   const [initialNodes] = useState(templateId ? template.nodes : undefined);
   const [initialEdges] = useState(templateId ? template.edges : undefined);
   const [initialRenderIds] = useState(
@@ -74,6 +72,8 @@ export function TemplatePage() {
   const [initialSalesTimes] = useState(
     templateId ? template.salesTimes : undefined
   );
+
+  const [customSeed, setCustomSeed] = useState(false);
 
   const [traits, setTraits] = useState(templateId ? template.traits : []);
   const getterRef = useRef<() => NodesInstance>(null);
@@ -142,6 +142,7 @@ export function TemplatePage() {
         {
           id: workingId,
           name,
+          seed,
           traits,
           nodes,
           edges,
@@ -161,6 +162,7 @@ export function TemplatePage() {
               ...template,
               traits,
               name,
+              seed,
               nodes,
               edges,
               renderIds,
@@ -217,15 +219,26 @@ export function TemplatePage() {
           traits={traits}
         />
         <Nodes>
-          <TextField
-            zIndex={1001}
-            position="absolute"
-            top={0}
-            left={0}
-            label="Name"
-            value={name}
-            onChange={setName}
-          />
+          <div className="absolute flex flex-col gap-2 z-[1001] top-0 left-0">
+            <TextField
+              // zIndex={1001}
+              // position="absolute"
+              // top={0}
+              // left={0}
+              label="Name"
+              value={name}
+              onChange={setName}
+            />
+
+            <Checkbox isSelected={customSeed} onChange={setCustomSeed}>
+              Use seed?
+            </Checkbox>
+
+            {customSeed && (
+              <TextArea label="Seed" value={seed} onChange={setSeed} />
+            )}
+          </div>
+
           <Button
             zIndex={1001}
             position="absolute"

@@ -46,6 +46,7 @@ export interface Configuration {
 export interface Template {
   id: string;
   name: string;
+  seed?: string;
   traits: Trait[];
   nodes: FlowNode[];
   edges: FlowEdge[];
