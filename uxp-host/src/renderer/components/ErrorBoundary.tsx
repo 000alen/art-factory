@@ -1,7 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button, Divider, Flex, Heading, Text, View } from "@adobe/react-spectrum";
+import {
+  Button,
+  Divider,
+  Flex,
+  Heading,
+  Text,
+  View,
+} from "@adobe/react-spectrum";
 import Bug from "@spectrum-icons/workflow/Bug";
 import Home from "@spectrum-icons/workflow/Home";
 
@@ -26,7 +33,7 @@ const GoHomeButton: React.FC<{
     <>
       <Button variant="cta" alignSelf="end" onPress={_onPress} {...rest}>
         <Home />
-        <Text> Go home!</Text>
+        <Text>Go home!</Text>
       </Button>
     </>
   );

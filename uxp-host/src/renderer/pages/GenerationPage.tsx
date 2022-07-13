@@ -1,19 +1,21 @@
 import moment from "moment";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
-import { Flex, Text, TextField } from "@adobe/react-spectrum";
+import { Flex, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
-import { computeTemplateN, generate, getTemplatePreview } from "../commands";
-import { ArrayOf } from "../components/ArrayOf";
+import {
+  computeTemplateN,
+  generate,
+  getTemplatePreview,
+  save,
+} from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
-import { MetadataField } from "../components/MetadataField";
 import { Preview } from "../components/Preview";
-import { ToolbarContext } from "../components/Toolbar";
+import { useToolbar } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
-import { METADATA_FIELDS } from "../constants";
 import { Instance, MetadataItem } from "../typings";
 import { spacedName } from "../utils";
 
@@ -26,7 +28,15 @@ interface GenerationPageState {
 }
 
 export const GenerationPage: React.FC = () => {
-  const toolbarContext = useContext(ToolbarContext);
+  useToolbar([
+    {
+      key: "back",
+      label: "Exit without saving",
+      icon: <Back />,
+      onClick: () => onBack(),
+    },
+  ]);
+
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
@@ -59,14 +69,6 @@ export const GenerationPage: React.FC = () => {
   const [elapsedTime, setElapsedTime] = useState<string>(null);
 
   const task = useErrorHandler(setWorking);
-
-  useEffect(() => {
-    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    return () => {
-      toolbarContext.removeButton("back");
-    };
-  }, []);
 
   useEffect(() => {
     task("preview", async () => {
@@ -109,7 +111,7 @@ export const GenerationPage: React.FC = () => {
     setGenerationDone(true);
   });
 
-  const onSave = () => {
+  const onSave = async () => {
     let generations = [
       ...instance.generations,
       { id: uuid(), name, collection, bundles, drops },
@@ -117,14 +119,18 @@ export const GenerationPage: React.FC = () => {
 
     generations = JSON.parse(JSON.stringify(generations));
 
+    const newInstance = {
+      ...instance,
+      generations,
+    };
+
+    await save(projectDir, newInstance);
+
     navigate("/factory", {
       state: {
         projectDir,
         id,
-        instance: {
-          ...instance,
-          generations,
-        },
+        instance: newInstance,
         dirty,
       },
     });

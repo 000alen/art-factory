@@ -26,7 +26,7 @@ export const useFilters = () => {
       n in p
         ? {
             ...p,
-            [n]: p[n].filter((v) => v !== v),
+            [n]: p[n].filter((pv) => pv !== v),
           }
         : p
     );
@@ -47,5 +47,21 @@ export const useBundlesFilters = () => {
     setBundlesFilters,
     addBundlesFilter,
     removeBundlesFilter,
+  };
+};
+
+export const useDropsFilter = () => {
+  const [dropsFilters, setDropsFilters] = useState<string[]>([]);
+
+  const addDropsFilter = (d: string) => setDropsFilters((p) => [...p, d]);
+
+  const removeDropsFilter = (d: string) =>
+    setDropsFilters((p) => p.filter((v) => v !== d));
+
+  return {
+    dropsFilters,
+    setDropsFilters,
+    addDropsFilter,
+    removeDropsFilter,
   };
 };

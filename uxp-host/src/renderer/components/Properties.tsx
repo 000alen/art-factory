@@ -43,7 +43,7 @@ export const Properties: React.FC<PropertiesProps> = ({
           )
         )
       );
-  }, [filteredCollection, selectedItem]);
+  }, [filteredCollection, items, selectedItem]);
 
   const onSelectedTraitsChange = (n: string, v: string) =>
     setSelectedTraits((p) =>
@@ -66,7 +66,7 @@ export const Properties: React.FC<PropertiesProps> = ({
 
   return (
     <>
-      {items.length > 0 && traits && (
+      {items.length > 0 && filteredCollection.length > 0 && traits && (
         <>
           <Heading zIndex={1001} position="sticky" top={0} level={2}>
             {filteredCollection.find((i) => i.name === selectedItem).name}
@@ -112,7 +112,7 @@ export const Properties: React.FC<PropertiesProps> = ({
           Regenerate
         </Button>
         <Button variant="cta" onPress={onEdit}>
-          Edit
+          Edit in Photoshop
         </Button>
       </ButtonGroup>
     </>

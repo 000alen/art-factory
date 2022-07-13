@@ -209,3 +209,7 @@ export const hydrateMetadata = async (
 ) => {
   return await factoryHydrateMetadata(id, generation, imagesCid);
 };
+
+export const save = async (projectDir: string, instance: Instance) => {
+  await writeProjectInstance(projectDir, instance);
+};

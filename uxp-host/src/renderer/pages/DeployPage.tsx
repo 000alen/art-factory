@@ -1,5 +1,5 @@
 import moment from "moment";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
@@ -19,10 +19,10 @@ import Back from "@spectrum-icons/workflow/Back";
 import More from "@spectrum-icons/workflow/More";
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 
-import { getGenerationPreview } from "../commands";
+import { getGenerationPreview, save } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Preview } from "../components/Preview";
-import { ToolbarContext } from "../components/Toolbar";
+import { useToolbar } from "../components/Toolbar";
 import { TriStateButton } from "../components/TriStateButton";
 import { createProvider, factoryDeploy } from "../ipc";
 import { Deployment, Instance, Network } from "../typings";
@@ -35,7 +35,14 @@ interface DeployPageState {
 }
 
 export function DeployPage() {
-  const toolbarContext = useContext(ToolbarContext);
+  useToolbar([
+    {
+      key: "back",
+      label: "Exit without saving",
+      icon: <Back />,
+      onClick: () => onBack(),
+    },
+  ]);
 
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -90,14 +97,6 @@ export function DeployPage() {
 
   // const task = useErrorHandler(setWorking);
   const task = useErrorHandler();
-
-  useEffect(() => {
-    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    return () => {
-      toolbarContext.removeButton("back");
-    };
-  }, []);
 
   useEffect(() => {
     task("preview", async () => {
@@ -185,7 +184,7 @@ export function DeployPage() {
     WalletConnectQRCodeModal.open(uri, () => {});
   });
 
-  const onSave = () => {
+  const onSave = async () => {
     const deployment: Deployment = {
       imagesCid,
       metadataCid,
@@ -199,16 +198,20 @@ export function DeployPage() {
       dropNumber: 0,
     };
 
+    const newInstance = {
+      ...instance,
+      deployment,
+      frozen: true,
+    };
+
+    await save(projectDir, newInstance);
+
     navigate("/factory", {
       state: {
         projectDir,
         id,
-        instance: {
-          ...instance,
-          deployment,
-          frozen: true,
-        },
-        dirty: true,
+        instance: newInstance,
+        dirty: false,
       },
     });
   };

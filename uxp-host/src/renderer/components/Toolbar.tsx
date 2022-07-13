@@ -1,11 +1,12 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 import { ActionButton, DialogTrigger, Flex, Text } from "@adobe/react-spectrum";
 import Settings from "@spectrum-icons/workflow/Settings";
 
 import { SecretsDialog } from "./SecretsDialog";
 
-interface ButtonItemProps {
+interface ButtonProps {
+  key: string;
   label: string;
   icon: JSX.Element;
   onClick: () => void;
@@ -15,32 +16,20 @@ interface ToolbarProviderProps {
   autoPlace: boolean;
 }
 
-export function useToolbar() {
-  const [buttons, setButtons] = useState([]);
+export function useToolbar(buttons?: ButtonProps[]) {
+  const toolbarContext = useContext(ToolbarContext);
 
-  const addButton = (
-    key: string,
-    label: string,
-    icon: JSX.Element,
-    onClick: () => void
-  ) => {
-    setButtons((prevButtons) => [
-      ...prevButtons,
-      { key, label, icon, onClick },
-    ]);
-  };
-
-  const removeButton = (key: string) => {
-    setButtons((prevButtons) =>
-      prevButtons.filter((button) => button.key !== key)
+  useEffect(() => {
+    if (!buttons) return;
+    buttons.map(({ key, label, icon, onClick }) =>
+      toolbarContext.addButton(key, label, icon, onClick)
     );
-  };
 
-  return {
-    buttons,
-    addButton,
-    removeButton,
-  };
+    return () => {
+      if (!buttons) return;
+      buttons.map(({ key }) => toolbarContext.removeButton(key));
+    };
+  }, []);
 }
 
 export const ToolbarContext = createContext({
@@ -54,7 +43,7 @@ export const ToolbarContext = createContext({
   removeButton: (key: string) => {},
 });
 
-const ButtonItem: React.FC<ButtonItemProps> = ({ label, icon, onClick }) => {
+const ButtonItem: React.FC<ButtonProps> = ({ label, icon, onClick }) => {
   return (
     <ActionButton onPress={() => onClick && onClick()}>
       {icon}
@@ -89,7 +78,25 @@ export const ToolbarProvider: React.FC<ToolbarProviderProps> = ({
   autoPlace = true,
   children,
 }) => {
-  const { buttons, addButton, removeButton } = useToolbar();
+  const [buttons, setButtons] = useState([]);
+
+  const addButton = (
+    key: string,
+    label: string,
+    icon: JSX.Element,
+    onClick: () => void
+  ) => {
+    setButtons((prevButtons) => [
+      ...prevButtons,
+      { key, label, icon, onClick },
+    ]);
+  };
+
+  const removeButton = (key: string) => {
+    setButtons((prevButtons) =>
+      prevButtons.filter((button) => button.key !== key)
+    );
+  };
 
   return (
     <ToolbarContext.Provider value={{ buttons, addButton, removeButton }}>

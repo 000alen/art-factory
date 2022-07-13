@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, ButtonGroup, Flex, Heading } from "@adobe/react-spectrum";
 
-import { newProject, openProject } from "../commands";
+import { newProject, openProject, save } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 
 export function HomePage() {
@@ -13,12 +13,14 @@ export function HomePage() {
   const onNew = task("new", async () => {
     const { projectDir, instance, id } = await newProject();
 
+    await save(projectDir, instance);
+
     navigate("/factory", {
       state: {
         projectDir,
         id,
         instance,
-        dirty: true,
+        dirty: false,
       },
     });
   });

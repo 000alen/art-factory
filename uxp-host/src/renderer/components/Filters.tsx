@@ -18,6 +18,10 @@ interface FiltersProps {
   hasFilter: (name: string, value: string) => boolean;
   addFilter: (name: string, value: string) => void;
   removeFilter: (name: string, value: string) => void;
+  dropsFiltersInfo: string[];
+  dropsFilters: string[];
+  addDropsFilter: (drop: string) => void;
+  removeDropsFilter: (drop: string) => void;
 }
 
 export const Filters: React.FC<FiltersProps> = ({
@@ -34,6 +38,10 @@ export const Filters: React.FC<FiltersProps> = ({
   hasFilter,
   addFilter,
   removeFilter,
+  dropsFiltersInfo,
+  dropsFilters,
+  addDropsFilter,
+  removeDropsFilter,
 }) => {
   return (
     <>
@@ -57,6 +65,24 @@ export const Filters: React.FC<FiltersProps> = ({
         <Button variant="secondary" onPress={onRemoveRepeated}>
           Remove
         </Button>
+      </details>
+
+      <details className="space-x-2 space-y-2">
+        <summary>
+          <Heading UNSAFE_className="inline-block">Drops</Heading>
+        </summary>
+        {dropsFiltersInfo.map((drop, i) => (
+          <Checkbox
+            key={i}
+            isSelected={dropsFilters.includes(drop)}
+            onChange={(isSelected) => {
+              if (isSelected) addDropsFilter(drop);
+              else removeDropsFilter(drop);
+            }}
+          >
+            {drop}
+          </Checkbox>
+        ))}
       </details>
 
       <details>

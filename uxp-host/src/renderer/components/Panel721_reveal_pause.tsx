@@ -8,6 +8,7 @@ import {
   Menu,
   MenuTrigger,
   NumberField,
+  Switch,
   View,
   Well,
 } from "@adobe/react-spectrum";
@@ -53,10 +54,10 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     [deployment]
   );
 
-  const dropToMint = useMemo(
-    () => (hasUnmintedDrops ? drops[dropNumber] : null),
-    [deployment, hasUnmintedDrops]
+  const [dropToMint, setDropToMint] = useState(
+    hasUnmintedDrops ? drops[dropNumber].name : drops[0].name
   );
+  const [automaticDropToMint, setAutomaticDropToMint] = useState(true);
 
   const [dropNameToSell, setDropNameToSell] = useState(drops[0].name);
 
@@ -64,7 +65,13 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
     if (!providerId || !contractId)
       throw new Error("Must create provider first");
 
-    await mintDrop(id, providerId, contractId, dropToMint, gasLimit);
+    await mintDrop(
+      id,
+      providerId,
+      contractId,
+      drops.find(({ name }) => name === dropToMint),
+      gasLimit
+    );
 
     addOutput({
       title: "Minted",
@@ -74,18 +81,6 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
 
     increaseDropNumber();
   });
-
-  // const onPause = task("pause", async () => {
-  //   if (!providerId || !contractId)
-  //     throw new Error("Must create provider first");
-
-  //   await pause(id, contractId);
-  //   addOutput({
-  //     title: "Paused",
-  //     text: "",
-  //     isCopiable: true,
-  //   });
-  // });
 
   const onReveal = task("reveal", async () => {
     if (!providerId || !contractId)
@@ -138,7 +133,31 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
               <Play />
             </ActionButton>
           </Flex>
-          {dropToMint && <Well>{dropToMint.name}</Well>}
+
+          <Switch
+            isSelected={automaticDropToMint}
+            onChange={setAutomaticDropToMint}
+          >
+            Automatic
+          </Switch>
+
+          <MenuTrigger>
+            <ActionButton width="100%" isDisabled={automaticDropToMint}>
+              {dropToMint}
+            </ActionButton>
+            <Menu
+              items={dropsItems}
+              selectionMode="single"
+              disallowEmptySelection={true}
+              selectedKeys={[dropToMint]}
+              onSelectionChange={(selectedKeys) => {
+                const selectedKey = [...selectedKeys].shift() as string;
+                setDropToMint(selectedKey);
+              }}
+            >
+              {({ name }) => <Item key={name}>{name}</Item>}
+            </Menu>
+          </MenuTrigger>
 
           <NumberField
             width="100%"
@@ -147,11 +166,14 @@ export const Panel721_reveal_pause: React.FC<Panel721_reveal_pauseProps> = ({
             onChange={setGasLimit}
           />
 
-          <Well>{Math.ceil(dropToMint.ids.length / MINT_N)} transactions</Well>
+          <Well>
+            {Math.ceil(
+              drops.find(({ name }) => name === dropToMint).ids.length / MINT_N
+            )}{" "}
+            transactions
+          </Well>
         </Flex>
       </View>
-
-      {/* <TaskItem name="Pause" onRun={onPause} /> */}
 
       <TaskItem name="Reveal" onRun={onReveal} />
 

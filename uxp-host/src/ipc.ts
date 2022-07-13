@@ -13,30 +13,15 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import { BUILD_DIR_NAME, ChainId } from "./constants";
 import { Factory } from "./Factory";
 import { Network as OpenSeaNetwork, OpenSeaPort } from "./opensea";
+import { OrderSide } from "./opensea/types";
 import {
-  getEtherscanApiKey,
-  getInfuraProjectId,
-  getOpenseaApiKey,
-  getPinataApiKey,
-  getPinataSecretApiKey,
-  setEtherscanApiKey,
-  setInfuraProjectId,
-  setOpenseaApiKey,
-  setPinataApiKey,
-  setPinataSecretApiKey,
+    getEtherscanApiKey, getInfuraProjectId, getOpenseaApiKey, getPinataApiKey,
+    getPinataSecretApiKey, setEtherscanApiKey, setInfuraProjectId, setOpenseaApiKey,
+    setPinataApiKey, setPinataSecretApiKey
 } from "./store";
 import {
-  Collection,
-  CollectionItem,
-  Configuration,
-  Deployment,
-  Drop,
-  Generation,
-  Layer,
-  MetadataItem,
-  Network,
-  Template,
-  Trait,
+    Collection, CollectionItem, Configuration, Deployment, Drop, Generation, Layer, MetadataItem,
+    Network, Template, Trait
 } from "./typings";
 import { capitalize, getInfuraEndpoint, layersNames } from "./utils";
 
@@ -50,6 +35,7 @@ const ipcTask = (task: string, callback: (...args: any[]) => any) => {
     } catch (_error) {
       error = _error;
     } finally {
+      // console.log("ipcTask", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -64,6 +50,7 @@ const ipcAsyncTask = (task: string, callback: (...args: any[]) => any) => {
     } catch (_error) {
       error = _error;
     } finally {
+      // console.log("ipcAsync", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -87,6 +74,7 @@ const ipcTaskWithProgress = (
     } catch (_error) {
       error = _error;
     } finally {
+      // console.log("ipcTaskWithProgress", task);
       event.reply(`${task}Result`, { error, result });
     }
   });
@@ -104,6 +92,7 @@ const ipcTaskWithRequestId = (
     } catch (_error) {
       error = _error;
     } finally {
+      // console.log("ipcTaskWithRequestId", task);
       event.reply(`${task}Result`, { requestId, error, result });
     }
   });
@@ -144,7 +133,7 @@ ipcAsyncTask(
   async (options) => await dialog.showOpenDialog(options)
 );
 
-ipcTask("openInExplorer", (paths: string[]) =>
+ipcAsyncTask("openInExplorer", (paths: string[]) =>
   shell.openPath(path.join(...paths))
 );
 // #endregion
@@ -591,3 +580,15 @@ ipcAsyncTask(
   }
 );
 // #endregion
+
+// ipcAsyncTask("XXX", async (providerEngineId: string) => {
+//   const seaport = seaports[providerEngineId];
+//   const { orders, count } = await seaport.api.getOrders(
+//     {
+//       asset_contract_address: tokenAddress,
+//       token_id: "1",
+//       side: OrderSide.Sell,
+//     },
+//     2
+//   );
+// });

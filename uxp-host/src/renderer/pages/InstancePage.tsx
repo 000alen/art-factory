@@ -1,9 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 
 import {
-    ActionButton, Button, ButtonGroup, Flex, Grid, Heading, ProgressBar, repeat, View
+  ActionButton,
+  Button,
+  ButtonGroup,
+  Flex,
+  Grid,
+  Heading,
+  ProgressBar,
+  repeat,
+  View,
 } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 import Copy from "@spectrum-icons/workflow/Copy";
@@ -14,12 +22,11 @@ import { OutputItem, OutputItemProps } from "../components/OutputItem";
 import { Panel721 } from "../components/Panel721";
 import { Panel721_reveal_pause } from "../components/Panel721_reveal_pause";
 import { TaskItem } from "../components/TaskItem";
-import { ToolbarContext } from "../components/Toolbar";
-import {
-    createContract, createProvider, createProviderWithKey, writeProjectInstance
-} from "../ipc";
+import { useToolbar } from "../components/Toolbar";
+import { createContract, createProvider, createProviderWithKey } from "../ipc";
 import { Deployment, Instance } from "../typings";
 import { chopAddress } from "../utils";
+import { save } from "../commands";
 
 interface InstancePageState {
   projectDir: string;
@@ -29,8 +36,16 @@ interface InstancePageState {
 }
 
 export function InstancePage() {
+  useToolbar([
+    {
+      key: "back",
+      label: "Exit without saving",
+      icon: <Back />,
+      onClick: () => onBack(),
+    },
+  ]);
+
   const task = useErrorHandler();
-  const toolbarContext = useContext(ToolbarContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const {
@@ -56,14 +71,6 @@ export function InstancePage() {
   const [providerId, setProviderId] = useState<string>(null);
   const [contractId, setContractId] = useState<string>(null);
   const [providerEngineId, setProviderEngineId] = useState<string>(null);
-
-  useEffect(() => {
-    toolbarContext.addButton("back", "Back", <Back />, () => onBack());
-
-    return () => {
-      toolbarContext.removeButton("back");
-    };
-  }, []);
 
   useEffect(() => {
     task("provider & contract", async () => {
@@ -108,7 +115,7 @@ export function InstancePage() {
       dropNumber: deployment.dropNumber + 1,
     };
 
-    await writeProjectInstance(projectDir, {
+    await save(projectDir, {
       ...instance,
       deployment: newDeployment,
     });
