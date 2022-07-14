@@ -38,8 +38,8 @@ export const readDir = async (dir: string): Promise<string[]> =>
 
 export function choose(
   traits: Trait[],
-  temperature = 50,
   randomFunction = Math.random,
+  temperature = 50,
   influence = 2
 ): Trait {
   const T = (temperature - 50) / 50;

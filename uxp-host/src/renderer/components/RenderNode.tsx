@@ -24,16 +24,20 @@ export interface RenderNodeComponentData {
   startingPrices?: Record<string, number>;
   endingPrices?: Record<string, number>;
   salesTimes?: Record<string, number>;
+  orders?: Record<string, number>;
 
   requestComposedUrl?: (traits: Trait[]) => void;
   requestRenderId?: (traits: Trait[]) => void;
   requestMaxNs?: (traits: Trait[]) => void;
+  requestOrder?: (traits: Trait[]) => void;
   updateNs?: (traits: Trait[], n: number) => void;
   updateIgnored?: (traits: Trait[], ignored: boolean) => void;
   updateSalesTypes?: (traits: Trait[], salesType: string) => void;
   updateStartingPrices?: (traits: Trait[], price: number) => void;
   updateEndingPrices?: (traits: Trait[], price: number) => void;
   updateSalesTimes?: (traits: Trait[], time: number) => void;
+  // updateOrders?: (traits: Trait[], order: number) => void;
+  updateOrders: (traits: Trait[], order: number) => void;
 }
 
 interface RenderNodeProps {
@@ -47,6 +51,8 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
   const [cacheKey, setCacheKey] = useState<string>(null);
   const [keys, setKeys] = useState<string[]>([]);
   const [nTraits, setNTraits] = useState<Trait[][]>([]);
+
+  console.log(data.orders);
 
   useEffect(() => {
     const nTraits: Trait[][] = (
@@ -73,8 +79,11 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     for (const [i, key] of keys.entries()) {
       if (!(key in data.composedUrls)) data.requestComposedUrl(nTraits[i]);
       if (!(key in data.renderIds)) data.requestRenderId(nTraits[i]);
-      if (!(key in data.ns)) data.updateNs(nTraits[i], DEFAULT_N);
       if (!(key in data.maxNs)) data.requestMaxNs(nTraits[i]);
+
+      if (!(key in data.orders)) data.requestOrder(nTraits[i]);
+
+      if (!(key in data.ns)) data.updateNs(nTraits[i], DEFAULT_N);
       if (!(key in data.salesTypes))
         data.updateSalesTypes(nTraits[i], DEFAULT_SALE_TYPE);
       if (!(key in data.startingPrices))
@@ -99,6 +108,7 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
     const startingPrice = data.startingPrices[key];
     const endingPrice = data.endingPrices[key];
     const salesTime = data.salesTimes[key];
+    const order = data.orders[key];
 
     return data.ignored.includes(key) ? (
       <></>
@@ -109,6 +119,13 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
             <Text>{nTraits[i].map((trait) => trait.name).join(", ")}</Text>
           </ImageItem>
           <Heading>{renderId}</Heading>
+
+          <NumberField
+            label="Order"
+            value={order}
+            onChange={(value) => data.updateOrders(nTraits[i], value)}
+            isQuiet
+          />
 
           <RadioGroup
             label="Sale type"
@@ -179,8 +196,8 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
 
   return (
     <Flex direction="column" gap="size-100">
-      {/* <div className="w-48 p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all"> */}
-      <div className="p-3 border-1 border-dashed border-white rounded opacity-5 hover:opacity-100 transition-all">
+      {/* <div className="w-48 p-3 transition-all border-white border-dashed rounded border-1 opacity-5 hover:opacity-100"> */}
+      <div className="p-3 transition-all border-white border-dashed rounded border-1 opacity-5 hover:opacity-100">
         <MenuTrigger>
           <ActionButton width="100%">Hidden</ActionButton>
           <Menu
@@ -196,8 +213,8 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
         </MenuTrigger>
       </div>
 
-      {/* <div className="relative w-48 p-3 border-1 border-solid border-white rounded"> */}
-      <div className="relative p-3 border-1 border-solid border-white rounded">
+      {/* <div className="relative w-48 p-3 border-white border-solid rounded border-1"> */}
+      <div className="relative p-3 border-white border-solid rounded border-1">
         <Handle
           className="!w-4 !h-4 !left-0 !translate-x-[-50%] !translate-y-[-50%]"
           id="renderIn"
@@ -210,8 +227,8 @@ export const RenderNode: React.FC<RenderNodeProps> = memo(({ id, data }) => {
           {visibleKeys.length > 0 ? (
             keys.map(renderItem)
           ) : (
-            // <div className="h-48 flex justify-center items-center">
-            <div className="w-48 h-48 flex justify-center items-center">
+            // <div className="flex items-center justify-center h-48">
+            <div className="flex items-center justify-center w-48 h-48">
               <Text>Nothing to render yet</Text>
             </div>
           )}

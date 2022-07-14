@@ -57,6 +57,7 @@ export interface Template {
   startingPrices: Record<string, number>;
   endingPrices: Record<string, number>;
   salesTimes: Record<string, number>;
+  orders: Record<string, number>;
 }
 
 export interface Layer {

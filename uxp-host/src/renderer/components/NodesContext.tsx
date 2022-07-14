@@ -34,6 +34,7 @@ interface NodesContextProviderProps {
   initialStartingPrices?: Record<string, number>;
   initialEndingPrices?: Record<string, number>;
   initialSalesTimes?: Record<string, number>;
+  initialOrders?: Record<string, number>;
 
   setDirty: (dirty: boolean) => void;
 }
@@ -67,6 +68,7 @@ export interface NodesInstance {
   startingPrices: Record<string, number>;
   endingPrices: Record<string, number>;
   salesTimes: Record<string, number>;
+  orders: Record<string, number>;
 }
 
 export const NODE_TYPES = {
@@ -79,6 +81,8 @@ export const NODE_TYPES = {
 export const EDGE_TYPES = {
   customEdge: CustomEdge,
 };
+
+let counter = 0;
 
 export function useNodes(
   id: string,
@@ -94,6 +98,7 @@ export function useNodes(
   initialStartingPrices?: Record<string, number>,
   initialEndingPrices?: Record<string, number>,
   initialSalesTimes?: Record<string, number>,
+  initialOrders?: Record<string, number>,
   setDirty?: (dirty: boolean) => void
 ) {
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -122,6 +127,11 @@ export function useNodes(
     initialSalesTimes || {}
   );
 
+  // ! TODO
+  const [orders, setOrders] = useState<Record<string, number>>(
+    initialOrders || {}
+  );
+
   useEffect(() => {
     if (traits.length === 0) return;
     if (initialNodes) setNodes(hydrateNodes(initialNodes));
@@ -141,6 +151,7 @@ export function useNodes(
       startingPrices,
       endingPrices,
       salesTimes,
+      orders
     }));
   }, [
     setter,
@@ -155,6 +166,7 @@ export function useNodes(
     startingPrices,
     endingPrices,
     salesTimes,
+    orders
   ]);
 
   const onNodesChange = (changes: FlowNodeChange[]) => {
@@ -273,6 +285,10 @@ export function useNodes(
     ["renderNode"],
     "salesTimes"
   );
+  const onUpdateOrders = onUpdate<Record<string, number>>(
+    ["renderNode"],
+    "orders"
+  );
 
   const updateNs = update<number>(setNs, onUpdateNs);
   const updateSalesTypes = update<string>(setSalesTypes, onUpdateSalesTypes);
@@ -285,6 +301,7 @@ export function useNodes(
     onUpdateEndingPrices
   );
   const updateSalesTimes = update<number>(setSalesTimes, onUpdateSalesTimes);
+  const updateOrders = update<number>(setOrders, onUpdateOrders);
 
   const requestComposedUrl = request(
     setComposedUrls,
@@ -305,6 +322,12 @@ export function useNodes(
     setMaxNs,
     onUpdateMaxNs,
     async (traits: Trait[]) => await factoryComputeMaxCombinations(id, traits)
+  );
+
+  const requestOrder = request(
+    setOrders,
+    onUpdateOrders,
+    async (traits: Trait[]) => ++counter
   );
 
   const requestUrl = async (trait: Trait) => {
@@ -409,16 +432,20 @@ export function useNodes(
           startingPrices,
           endingPrices,
           salesTimes,
+          orders,
 
           requestComposedUrl,
           requestRenderId,
           requestMaxNs,
+          requestOrder,
+
           updateNs,
           updateIgnored,
           updateSalesTypes,
           updateStartingPrices,
           updateEndingPrices,
           updateSalesTimes,
+          updateOrders,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
@@ -489,16 +516,20 @@ export function useNodes(
           startingPrices,
           endingPrices,
           salesTimes,
+          orders,
 
           requestComposedUrl,
           requestRenderId,
           requestMaxNs,
+          requestOrder,
+
           updateNs,
           updateIgnored,
           updateSalesTypes,
           updateStartingPrices,
           updateEndingPrices,
           updateSalesTimes,
+          updateOrders,
         } as RenderNodeComponentData;
       case "bundleNode":
         return {
@@ -618,6 +649,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
   initialStartingPrices,
   initialEndingPrices,
   initialSalesTimes,
+  initialOrders,
 
   setDirty,
 }) => {
@@ -635,6 +667,7 @@ export const NodesContextProvider: React.FC<NodesContextProviderProps> = ({
     initialStartingPrices,
     initialEndingPrices,
     initialSalesTimes,
+    initialOrders,
     setDirty
   );
 

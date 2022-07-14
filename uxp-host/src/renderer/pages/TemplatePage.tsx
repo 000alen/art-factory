@@ -72,6 +72,7 @@ export function TemplatePage() {
   const [initialSalesTimes] = useState(
     templateId ? template.salesTimes : undefined
   );
+  const [initialOrders] = useState(templateId ? template.orders : undefined);
 
   const [customSeed, setCustomSeed] = useState(false);
 
@@ -106,6 +107,7 @@ export function TemplatePage() {
       startingPrices,
       endingPrices,
       salesTimes,
+      orders,
     } = getterRef.current();
 
     nodes = nodes.map((node) => {
@@ -153,6 +155,7 @@ export function TemplatePage() {
           startingPrices,
           endingPrices,
           salesTimes,
+          orders,
         },
       ];
     else
@@ -172,6 +175,7 @@ export function TemplatePage() {
               startingPrices,
               endingPrices,
               salesTimes,
+              orders,
             }
           : template
       );
@@ -204,6 +208,7 @@ export function TemplatePage() {
       initialStartingPrices={initialStartingPrices}
       initialEndingPrices={initialEndingPrices}
       initialSalesTimes={initialSalesTimes}
+      initialOrders={initialOrders}
       setDirty={setDirty}
     >
       <Flex
@@ -220,18 +225,10 @@ export function TemplatePage() {
         />
         <Nodes>
           <div className="absolute flex flex-col gap-2 z-[1001] top-0 left-0">
-            <TextField
-              // zIndex={1001}
-              // position="absolute"
-              // top={0}
-              // left={0}
-              label="Name"
-              value={name}
-              onChange={setName}
-            />
+            <TextField label="Name" value={name} onChange={setName} />
 
             <Checkbox isSelected={customSeed} onChange={setCustomSeed}>
-              Use seed?
+              Custom seed?
             </Checkbox>
 
             {customSeed && (
@@ -239,16 +236,11 @@ export function TemplatePage() {
             )}
           </div>
 
-          <Button
-            zIndex={1001}
-            position="absolute"
-            bottom={0}
-            right={0}
-            variant="cta"
-            onPress={onSave}
-          >
-            {dirty && "* "}Save
-          </Button>
+          <div className="absolute flex flex-col gap-2 z-[1001] bottom-0 right-0">
+            <Button variant="cta" onPress={onSave}>
+              {dirty && "* "}Save
+            </Button>
+          </div>
         </Nodes>
       </Flex>
     </NodesContextProvider>

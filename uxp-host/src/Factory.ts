@@ -10,6 +10,7 @@ import {
     RINKEBY_WETH
 } from "./constants";
 import { accounts, contracts, providers, seaports } from "./ipc";
+import { isaacCSPRNG } from "./lib/isaacCSPRNG";
 import {
     Bundles, BundlesInfo, Collection, CollectionItem, Configuration, Deployment, Drop, Generation,
     Layer, MetadataItem, SaleType, Secrets, Template, Trait
@@ -184,6 +185,20 @@ export class Factory {
   }
 
   makeGeneration(name: string, template: Template): Generation {
+    const {
+      seed,
+      nodes,
+      edges,
+      ns,
+      ignored,
+      salesTypes,
+      startingPrices,
+      endingPrices,
+      salesTimes,
+    } = template;
+
+    const isaac = isaacCSPRNG(seed);
+
     // #region Helper functions
     const computeNTraits = (layer: Layer, n: number) => {
       const nTraits: Trait[] = [];
@@ -191,7 +206,7 @@ export class Factory {
       const { name } = layer;
       for (let i = 0; i < n; i++) {
         const traits = this.traitsByLayerName.get(name);
-        const trait = choose(traits);
+        const trait = choose(traits, isaac.random);
         nTraits.push(trait);
       }
 
@@ -209,17 +224,6 @@ export class Factory {
       return cache;
     };
     // #endregion
-
-    const {
-      nodes,
-      edges,
-      ns,
-      ignored,
-      salesTypes,
-      startingPrices,
-      endingPrices,
-      salesTimes,
-    } = template;
 
     // #region Data preparation
     const nData = getBranches(nodes, edges)
@@ -769,7 +773,7 @@ export class Factory {
       await Promise.all(
         // @ts-ignore
         items.reduce(
-        // @ts-ignore
+          // @ts-ignore
           (p, item) => [
             ...p,
             fs.promises.rm(this.image(name, item.name)),
