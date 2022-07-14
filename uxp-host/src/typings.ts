@@ -122,6 +122,7 @@ export interface Drop {
 export interface Generation {
   id: string;
   name: string;
+  seed: string;
   collection: Collection;
   bundles: Bundles;
   drops: Drop[];

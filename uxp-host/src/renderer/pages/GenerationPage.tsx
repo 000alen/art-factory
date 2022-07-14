@@ -6,12 +6,7 @@ import { v4 as uuid } from "uuid";
 import { Flex, TextField } from "@adobe/react-spectrum";
 import Back from "@spectrum-icons/workflow/Back";
 
-import {
-  computeTemplateN,
-  generate,
-  getTemplatePreview,
-  save,
-} from "../commands";
+import { computeTemplateN, generate, getTemplatePreview, save } from "../commands";
 import { useErrorHandler } from "../components/ErrorHandler";
 import { Preview } from "../components/Preview";
 import { useToolbar } from "../components/Toolbar";
@@ -56,6 +51,7 @@ export const GenerationPage: React.FC = () => {
   );
 
   const [name, setName] = useState(spacedName());
+  const [seed, setSeed] = useState(null);
   const [collection, setCollection] = useState(null);
   const [bundles, setBundles] = useState(null);
   const [drops, setDrops] = useState(null);
@@ -93,7 +89,7 @@ export const GenerationPage: React.FC = () => {
 
   const onGenerate = task("generation", async () => {
     const start = moment(performance.now());
-    const { collection, bundles, drops } = await generate(
+    const { seed, collection, bundles, drops } = await generate(
       id,
       name,
       metadataItems,
@@ -104,6 +100,7 @@ export const GenerationPage: React.FC = () => {
     const diff = end.diff(start);
 
     setElapsedTime(moment.utc(diff).format("HH:mm:ss.SSS"));
+    setSeed(seed);
     setCollection(collection);
     setBundles(bundles);
     setDrops(drops);
@@ -114,7 +111,7 @@ export const GenerationPage: React.FC = () => {
   const onSave = async () => {
     let generations = [
       ...instance.generations,
-      { id: uuid(), name, collection, bundles, drops },
+      { id: uuid(), name, seed, collection, bundles, drops },
     ];
 
     generations = JSON.parse(JSON.stringify(generations));

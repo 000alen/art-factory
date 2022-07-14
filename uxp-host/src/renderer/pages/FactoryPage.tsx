@@ -351,6 +351,7 @@ export const FactoryPage: React.FC = () => {
         {
           id: uuid(),
           name: newName,
+          seed: "",
           collection,
           bundles,
           drops,

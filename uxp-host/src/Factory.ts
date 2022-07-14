@@ -195,6 +195,7 @@ export class Factory {
       startingPrices,
       endingPrices,
       salesTimes,
+      orders,
     } = template;
 
     const isaac = isaacCSPRNG(seed);
@@ -234,18 +235,25 @@ export class Factory {
       .map((branch) => branch.map(({ trait, id }) => ({ ...trait, id })))
       .map(hash);
 
-    const nTraits: Trait[][] = nData
-      .map((branch) =>
-        branch.map(({ trait, id, opacity, blending }) => ({
-          ...trait,
-          id,
-          opacity,
-          blending,
-        }))
-      )
-      .filter((_, i) => !ignored.includes(keys[i]));
+    let nTraits: Trait[][] = nData.map((branch) =>
+      branch.map(({ trait, id, opacity, blending }) => ({
+        ...trait,
+        id,
+        opacity,
+        blending,
+      }))
+    );
 
-    keys = keys.filter((key) => !ignored.includes(key));
+    const _ = nTraits
+      .map((traits, i) => ({
+        traits,
+        key: keys[i],
+      }))
+      .sort(({ key: a }, { key: b }) => orders[a] - orders[b])
+      .filter(({ key }) => !ignored.includes(key));
+
+    nTraits = _.map(({ traits }) => traits);
+    keys = _.map(({ key }) => key);
 
     const bundlesInfo: BundlesInfo = nodes
       .filter((node) => node.type === "bundleNode")
@@ -330,6 +338,7 @@ export class Factory {
     return {
       id: uuid(),
       name,
+      seed,
       collection,
       bundles,
       drops,
@@ -344,7 +353,7 @@ export class Factory {
     );
   }
 
-  async composeTraits(traits: Trait[], maxSize?: number) {
+  async composeTraits(traits: Trait[], maxSize?: number, r?, g?, b?) {
     const keys = await Promise.all(
       traits.map(async (trait) => await this._ensureTraitBuffer(trait))
     );
@@ -359,9 +368,9 @@ export class Factory {
           channels: 4,
           background: this.configuration.generateBackground
             ? {
-                r: Math.floor(Math.random() * 255),
-                g: Math.floor(Math.random() * 255),
-                b: Math.floor(Math.random() * 255),
+                r: Math.floor((r || Math.random()) * 255),
+                g: Math.floor((g || Math.random()) * 255),
+                b: Math.floor((b || Math.random()) * 255),
                 alpha: 1,
               }
             : {
@@ -387,7 +396,13 @@ export class Factory {
     );
   }
 
-  async generateImage(generation: Generation, item: CollectionItem) {
+  async generateImage(
+    generation: Generation,
+    item: CollectionItem,
+    r?,
+    g?,
+    b?
+  ) {
     const keys = await Promise.all(
       item.traits.map(async (trait) => await this._ensureTraitBuffer(trait))
     );
@@ -401,9 +416,9 @@ export class Factory {
         channels: 4,
         background: this.configuration.generateBackground
           ? {
-              r: Math.floor(Math.random() * 255),
-              g: Math.floor(Math.random() * 255),
-              b: Math.floor(Math.random() * 255),
+              r: Math.floor((r || Math.random()) * 255),
+              g: Math.floor((g || Math.random()) * 255),
+              b: Math.floor((b || Math.random()) * 255),
               alpha: 1,
             }
           : {
@@ -431,13 +446,21 @@ export class Factory {
     generation: Generation,
     callback?: (name: string) => void
   ) {
-    const { name, collection } = generation;
+    const { name, seed, collection } = generation;
     if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
+
+    const isaac = isaacCSPRNG(seed);
 
     for (let i = 0; i < collection.length; i += PARALLEL_LIMIT) {
       await Promise.all(
         collection.slice(i, i + PARALLEL_LIMIT).map(async (item) => {
-          await this.generateImage(generation, item);
+          await this.generateImage(
+            generation,
+            item,
+            isaac.random(),
+            isaac.random(),
+            isaac.random()
+          );
           if (callback) callback(item.name);
         })
       );
@@ -739,10 +762,14 @@ export class Factory {
     );
   }
 
-  async getRandomImage(generation: Generation, maxSize?: number) {
+  async getRandomImage(
+    generation: Generation,
+    maxSize?: number,
+    randomFunction = Math.random
+  ) {
     const item =
       generation.collection[
-        Math.floor(Math.random() * generation.collection.length)
+        Math.floor(randomFunction() * generation.collection.length)
       ];
     return [item, await this.getImage(generation, item, maxSize)];
   }
@@ -753,10 +780,13 @@ export class Factory {
     );
   }
 
-  async getRandomMetadata(generation: Generation) {
+  async getRandomMetadata(
+    generation: Generation,
+    randomFunction = Math.random
+  ) {
     const item =
       generation.collection[
-        Math.floor(Math.random() * generation.collection.length)
+        Math.floor(randomFunction() * generation.collection.length)
       ];
     return [item, await this.getMetadata(generation, item)];
   }
@@ -924,6 +954,7 @@ export class Factory {
     };
   }
 
+  // ? NOTE: Seed is lost
   async unify(name: string, generations: Generation[]) {
     if (!fs.existsSync(this.image(name))) fs.mkdirSync(this.image(name));
     if (!fs.existsSync(this.json(name))) fs.mkdirSync(this.json(name));
